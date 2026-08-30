@@ -1,0 +1,9 @@
+agent: <role>
+task_id: TC-000
+produced: <artifact>
+completed_work: <summary of what was done>
+key_decisions: [<decisions made>]
+conflicts_raised: [<conflict ids>]
+risks_left: <open risks>
+handoff_to: [<roles needing this result>]
+status: <Done | Blocked>

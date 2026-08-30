@@ -37,3 +37,25 @@ If collaboration quality degrades, review:
 - missing supporting agents
 - weak handoff format
 - unbalanced lead responsibility
+
+## Phase 4.1 future record fields
+
+Once multi-agent team execution starts (Phase 4.2+), each collaboration record will use these fields:
+
+```yaml
+task:
+team:
+agents:
+execution_order:
+conflicts:
+quality_score:
+```
+
+Field meanings:
+
+- task: task id and short description
+- team: the team plan / pattern used
+- agents: roles that participated
+- execution_order: actual dependency-ordered execution sequence
+- conflicts: conflicts found and how they were resolved
+- quality_score: final quality signal from the evaluation layer

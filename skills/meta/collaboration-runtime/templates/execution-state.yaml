@@ -1,0 +1,10 @@
+task_id: <team-level task id>
+team_id: <team plan id>
+status: <Created | Planned | Assigned | Executing | Reviewing | Integrated | Completed | Blocked>
+current_agent: <role currently working>
+completed_agents: [<roles finished>]
+pending_agents: [<roles in current or future layers>]
+dependencies:
+  <role>: [<upstream roles>]
+created_at: <timestamp>
+updated_at: <timestamp>

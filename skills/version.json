@@ -142,10 +142,27 @@
     ]
   },
   "evolution-engine": {
+    "version": "1.1",
+    "updated": "2026-08-30",
+    "changes": [
+      "Added evolution automation workflow, benchmark-driven improvement pipeline, and human-in-the-loop governance.",
+      "Added failure Type E (Coordination Failure) for multi-agent collaboration."
+    ]
+  },
+  "agent-orchestrator": {
+    "version": "1.2",
+    "updated": "2026-08-30",
+    "changes": [
+      "Initial introduction as the multi-agent team orchestrator. Phase 4.1 infrastructure. Not yet production validated.",
+      "Added team pattern library integration, team selection rules, and conflict rules. Phase 4.2.",
+      "Added Phase 7 delegation to the collaboration-runtime."
+    ]
+  },
+  "collaboration-runtime": {
     "version": "1.0",
     "updated": "2026-08-30",
     "changes": [
-      "Added evolution automation workflow, benchmark-driven improvement pipeline, and human-in-the-loop governance."
+      "Initial introduction as the Phase 4.3 collaboration runtime: layered scheduling, execution state, handoff enforcement, conflict routing, result aggregation. Planning and coordination only; no autonomous execution."
     ]
   }
 }

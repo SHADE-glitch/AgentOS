@@ -1,0 +1,13 @@
+event_id: E-000
+timestamp: 2026-08-30T15:00:00Z
+team_id: <team plan id>
+task_id: TC-000
+matched_pattern: <pattern>
+agents: [<roles>]
+execution_result: "Excellent / Good / Needs Improvement"
+handoffs_count: 0
+conflicts_count: 0
+success: true
+failure_id: "F-000"
+quality_score: 0.85
+status: "recorded"

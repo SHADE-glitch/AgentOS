@@ -222,6 +222,7 @@ error_type: "A"
 # Type B: Missing Support Skill
 # Type C: Skill Boundary Conflict
 # Type D: Fallback Failure
+# Type E: Coordination Failure
 root_cause: "Why the system selected the wrong route or missed a required skill"
 impact: "Impact on task quality, runtime, or user trust"
 frequency: 1
@@ -229,6 +230,8 @@ recommended_fix: "Specific route rule, skill boundary, or prompt change to fix t
 verification_method: "Benchmark case, route test, or validation plan required to verify the fix"
 status: "pending"
 ```
+
+Type E (Coordination Failure) covers handoff information loss, wrong agent dependency, unresolvable conflict, and un-integrable output. These records are written by the collaboration-runtime to `runtime/feedback/failures/pending/`.
 
 ## 13. Evolution Data Pipeline
 

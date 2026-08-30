@@ -69,6 +69,8 @@ When one agent hands off to another, use:
 
 This ensures continuity and keeps work disciplined.
 
+For team execution, use the structured handoff record in section 14.
+
 ## 7. Workflow
 
 ### Phase 1: Define the objective
@@ -143,3 +145,58 @@ Use:
 - Risks:
 - Next step:
 ```
+
+## 11. Structured Task Card
+
+Every delegated task uses one task card (see `templates/task-card.yaml`):
+
+```yaml
+task_id: <unique id>
+owner: <single role name>
+role: <role title>
+objective: <what this task must achieve>
+input: <upstream artifacts consumed>
+expected_output: <artifact to produce>
+dependencies: [<task ids this task waits on>]
+status: <Created | Planned | Assigned | Executing | Reviewing | Integrated | Completed>
+quality_criteria: <measurable acceptance conditions>
+```
+
+## 12. Task Lifecycle
+
+```text
+Created -> Planned -> Assigned -> Executing -> Reviewing -> Integrated -> Completed
+                                  \-> Blocked -> (re-plan) -> Assigned
+                                  \-> Rejected (terminal; recorded as a failure)
+```
+
+Transitions are controlled by the orchestrator (planning, assignment, integration) or by the human gate (approval, rejection).
+
+## 13. Communication Rules
+
+- No free-form agent chat. All inter-agent communication is structured handoffs.
+- One owner per task card at any time.
+- Every handoff uses the handoff template (`templates/handoff.yaml`) and is recorded.
+- Blocked tasks report to the orchestrator only, never to other agents.
+
+## 14. Structured Handoff Record
+
+For team execution, every handoff uses `templates/handoff.yaml`:
+
+```yaml
+handoff_id: H-000
+from_agent: <role>
+to_agent: <role>
+task_id: TC-000
+completed_work: <what was finished>
+important_context: <context the receiver must know>
+artifacts: [<artifact ids or paths>]
+known_risks: <open risks>
+next_action: <what the receiver must do next>
+```
+
+Rules:
+
+- No contextless handoff: completed work and next action are required.
+- `important_context` must carry everything the receiver needs to continue.
+- Every handoff is recorded in `runtime/logs/collaboration-execution.md`.

@@ -1,0 +1,9 @@
+handoff_id: H-000
+from_agent: <role>
+to_agent: <role>
+task_id: TC-000
+completed_work: <what was finished>
+important_context: <context the receiver must know>
+artifacts: [<artifact ids or paths>]
+known_risks: <open risks>
+next_action: <what the receiver must do next>

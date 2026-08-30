@@ -12,6 +12,7 @@ error_type: "A"
 # Type B: Missing Support Skill
 # Type C: Skill Boundary Conflict
 # Type D: Fallback Failure
+# Type E: Coordination Failure
 root_cause: "Why the system selected the wrong route or missed a required skill"
 impact: "Impact on task quality, runtime, or user trust"
 frequency: 1
