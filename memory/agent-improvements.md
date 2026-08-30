@@ -1,16 +1,14 @@
 # Agent Improvements
 
-## Improvement log
+## Runtime Summary
+- Added a runtime validation directory: `~/.agents/tests`
+- Added routing matrix and skill-version tracking
+- Added collaboration protocol for multi-agent coordination
+- Added a project lifecycle model to connect learning and memory
+- Strengthened knowledge structure into reusable engineering artifacts
 
-### 2026-08-30
-- added explicit separation between `skills`, `knowledge`, and `memory`
-- added `learning-strategist` for learning strategy and capability assessment
-- upgraded `project-mentor` to Senior Technical Mentor mode
-- upgraded `agent-router` to an actual scheduler with context and fallback logic
-- upgraded `agent-evolution-engineer` to a self-improvement loop for the skill system
-
-## Rules
-- keep skills focused on professional behavior and role execution
-- keep knowledge for domain facts, reusable patterns, and examples
-- keep memory for growth records, user learning history, and system evolution
-- upgrade skills only when a real engineering gap or quality issue exists
+## Improvement rules
+- validate routing decisions with scenarios
+- define collaboration lead/support roles explicitly
+- record project outcomes in memory
+- refine skills only based on real quality observations
