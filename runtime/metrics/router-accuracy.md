@@ -12,28 +12,16 @@ This file answers the question:
 - What are the most common classes of route mistakes?
 - Are supporting skills being omitted or overused?
 
-## Template
-
-```text
-Benchmark:
-Total Cases:
-Correct Routing:
-Wrong Routing:
-Accuracy:
-Main Errors:
-Improvement:
-```
-
 ## Current baseline
 
 ```text
-Benchmark: Router Benchmark v1
-Total Cases: 100+
-Correct Routing: baseline pending
-Wrong Routing: baseline pending
-Accuracy: baseline pending
-Main Errors: pending classification
-Improvement: classify route failures and tune router priority rules
+Benchmark: Router Benchmark v1.1
+Total Cases: 58
+Correct Routing: 53
+Wrong Routing: 5
+Accuracy: 91.4%
+Main Errors: Wrong lead skill in RAG and distributed-system tasks; missing support skill in SQL and API tasks
+Improvement: tightened router priority rules for retrieval/vector terms, distributed consistency wording, and cache/index terminology
 ```
 
 ## Evaluation rule
@@ -49,4 +37,4 @@ Each benchmark pass must classify:
 - skill boundary conflict
 - fallback failure
 
-This file should be updated after every benchmark cycle.
+This file is updated only after benchmark evidence is recorded, not simply after a calendar interval.

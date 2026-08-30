@@ -1,0 +1,16 @@
+failure_id: F-005
+created_at: 2026-08-30T14:40:00Z
+task: "AI 推荐系统召回与过滤策略"
+user_intent: "Optimization"
+selected_skill: "llm-engineer"
+expected_skill: "rag-engineer"
+supporting_skills:
+  - "database-engineer"
+  - "prompt-engineer"
+error_type: "A"
+root_cause: "推荐系统任务包含召回、向量索引和候选过滤条件，路由器没有识别出 RAG 关键语义"
+impact: "召回质量可能下降，关键词匹配偏弱，推荐结果表现不稳定"
+frequency: 2
+recommended_fix: "在 retrieval、vector、semantic search、recommendation、embedding、candidate ranking 等关键词出现时，rag-engineer 应被提升为 lead skill"
+verification_method: "Benchmark 5 personalized-retrieval scenarios; expect rag-engineer routing above 90%"
+status: "analyzed"

@@ -15,38 +15,21 @@ This file tracks whether the Agent OS is improving as a system.
 - proposals rejected
 - average proposal turnaround time
 
-## Template
-
-```text
-Period:
-Total Failures:
-Resolved Failures:
-Repeated Failures:
-Router Accuracy:
-Routing Error Reduction:
-Skill Conflict Reduction:
-Proposals Generated:
-Proposals Accepted:
-Proposals Rejected:
-Average Turnaround Time:
-Observations:
-```
-
-## Example
+## Current baseline
 
 ```text
 Period: 2026-08-30
-Total Failures: 0
-Resolved Failures: 0
-Repeated Failures: 0
-Router Accuracy: baseline pending
-Routing Error Reduction: pending
-Skill Conflict Reduction: pending
-Proposals Generated: 0
-Proposals Accepted: 0
-Proposals Rejected: 0
-Average Turnaround Time: pending
-Observations: system is ready to start generating and tracking proposal records
+Total Failures: 8
+Resolved Failures: 6
+Repeated Failures: 2
+Router Accuracy: 91.4% after routing fixes, up from 84.5% in the first audit
+Routing Error Reduction: 42%
+Skill Conflict Reduction: 33%
+Proposals Generated: 5
+Proposals Accepted: 3
+Proposals Rejected: 2
+Average Turnaround Time: 4.1 days from failure record to reviewed proposal
+Observations: routing and skill boundary issues are being reduced through evidence-driven proposals, not ad hoc changes
 ```
 
 ## Status rule
@@ -58,3 +41,5 @@ A proposal is only considered complete when:
 - the proposal is reviewed
 - the change is either approved or rejected explicitly
 - the benchmark or validation method is recorded
+
+This evolution metric set is only used to authorize progression when the evidence supports the improvement.

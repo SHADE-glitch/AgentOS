@@ -1,0 +1,16 @@
+failure_id: F-004
+created_at: 2026-08-30T14:30:00Z
+task: "支付系统接口设计与风控评审"
+user_intent: "Architecture"
+selected_skill: "backend-architect"
+expected_skill: "backend-architect"
+supporting_skills:
+  - "security-engineer"
+  - "database-engineer"
+error_type: "B"
+root_cause: "支持角色被遗漏，接口安全和数据一致性问题在需求评审中没有被强制补齐"
+impact: "支付接口被审核为功能完整，但忽略了幂等、限流和审计要求"
+frequency: 2
+recommended_fix: "在支付、授权、风控、身份校验和审计任务中要求 security-engineer 参与并要求明确幂等策略"
+verification_method: "Benchmark on payment API cases; require support role presence and security checklist completion"
+status: "analyzed"
