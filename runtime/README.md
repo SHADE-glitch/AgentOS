@@ -54,6 +54,27 @@ Task execution
   -> feed improvements back to `agent-evolution-engineer`
   -> tune routing and prompts
 
+## Phase 3.4: Runtime Intelligence and Evaluation
+
+The runtime intelligence layer closes the quality loop for the Agent OS.
+
+```text
+Task execution
+  -> Telemetry (`runtime/telemetry/`)
+  -> Quality evaluator (`skills/meta/quality-evaluator/`)
+  -> Regression detection (`tests/regression/`)
+  -> Benchmark runner (`tests/benchmark-runner/`)
+  -> Dashboard / release decision (`runtime/dashboard.md`)
+  -> Evolution proposal or hold/revise recommendation
+```
+
+This loop ensures every release decision is evidence-based:
+- telemetry captures task success, latency, and quality score
+- the evaluator checks benchmark and failure evidence
+- regressions trigger a hold or revise signal
+- benchmark validation produces a pass/fail/hold result
+- the dashboard summarizes router accuracy, failures, regressions, and recent improvements
+
 ## Standard task record
 
 Every major task should leave a record in the runtime log using this format:

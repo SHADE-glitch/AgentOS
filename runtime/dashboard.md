@@ -4,44 +4,51 @@
 
 ```text
 Skills:
-- Total count: 18-20 core skills
-- Health: Stable
+- Total count: stable domain-specific set
+- Health: stable
 
 Router:
-- Accuracy: monitor and improve
-- Fallback: limited but active
+- Accuracy: monitor and improve using benchmark evidence
+- Fallback: active
 - Multi-turn continuity: enabled
 
-Knowledge:
-- Domain separation: active
-- Reusable engineering experience: growing
+Runtime:
+- Telemetry: active
+- Failure intake: active
+- Review gate: active
 
-Memory:
-- Project history: active
-- User progress: active
-- Agent improvement history: active
+Quality:
+- Regression detection: enabled
+- Quality gate: enabled
+- Benchmark runner: configured
 
 Evolution:
-- Review loop: active
-- Runtime feedback: newly added
+- Improvement proposals: active
+- Review process: human-in-the-loop
+- Version governance: active
 ```
 
-## Current focus
+## Current indicators
 
-- stabilize route accuracy
-- reduce wrong skill selection
-- capture execution quality
-- feed actual failures back into the system
+```text
+Agent OS Status
+Router Accuracy: baseline + benchmark-driven monitoring
+Skill Health: reviewed via success/failure and conflict metrics
+Evolution: proposal-driven and review-gated
+Failures: tracked through runtime/feedback/failures/
+Regression: monitored via tests/regression/
+Quality Gate: required before release
+```
 
 ## Summary template
 
 ```text
 Agent OS Status
-Skills: <healthy / needs tuning>
 Router: <accuracy>
-Knowledge: <maturity>
-Memory: <status>
-Evolution: <status>
-Recent changes: <summary>
+Skills: <stable / degraded>
+Failures: <count>
+Regressions: <count>
+Evolution: <proposals generated / approved>
+Quality Gate: <pass / hold / reject>
 Priority issue: <one sentence>
 ```

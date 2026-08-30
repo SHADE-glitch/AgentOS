@@ -1,0 +1,13 @@
+event_id: E-000
+timestamp: 2026-08-30T15:00:00Z
+task_type: "Architecture / Coding / Debug / Review / Optimization / Learning / Research"
+selected_skill: "primary_skill"
+support_skills:
+  - "support_skill_a"
+  - "support_skill_b"
+execution_result: "Excellent / Good / Needs Improvement"
+success: true
+failure_id: "F-000"
+latency_ms: 3000
+quality_score: 0.85
+status: "recorded"
