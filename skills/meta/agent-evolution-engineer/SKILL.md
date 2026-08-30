@@ -195,3 +195,17 @@ Use this format:
 - Test scenarios:
 - Expected outcome:
 ```
+
+## 12. Router Health Report
+
+When the user asks for router audit or benchmark review, output the following structure:
+
+```markdown
+## Router Health Report
+- Benchmark size:
+- Current accuracy:
+- Top error types:
+- Skill conflicts:
+- Optimization suggestions:
+- Next benchmark plan:
+```

@@ -542,12 +542,56 @@ This is interview communication and strong design articulation.
 
 The list above is intentionally structured as a benchmark core. In real use, the benchmark should be expanded to at least 100 scenarios, but these entries already provide good coverage of routing intent and specialization boundaries.
 
+## Benchmark evaluation method
+
+After each run, evaluate:
+
+- correct routing count
+- wrong lead count
+- missing support count
+- route accuracy rate
+- high-conflict task count
+- fallback behavior
+
+## Optimization target
+
+The benchmark should be used to answer the question:
+
+"What is the router actually doing in realistic engineering tasks?"
+
+not:
+
+"What do we expect it to do in theory?"
+
+## Expanded benchmark coverage plan
+
+The routing benchmark should grow toward 100+ realistic tasks. The first pass focuses on the most error-prone boundaries:
+
+- `backend-architect` vs `system-architect`
+- `database-engineer` vs `distributed-system`
+- `rag-engineer` vs `llm-engineer`
+- `project-mentor` vs `learning-strategist`
+
+Each additional benchmark case should include:
+
+- source task description
+- expected lead skill
+- expected support skills
+- route quality verdict
+- reason for route choice
+- whether the task should fall back instead
+
 ## Benchmark rules
 
 - score each route as correct / needs review / wrong
 - record whether supporting skills were missing
 - identify route ambiguity and fallback quality
 - review repeated error patterns after each benchmark run
+
+## Benchmark acceptance rule
+
+A benchmark pass is considered useful when it reveals at least one actionable route improvement.
+If no route error or boundary conflict appears, the benchmark is not yet discriminating enough.
 
 ## Benchmark outcome
 

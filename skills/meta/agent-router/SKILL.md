@@ -131,7 +131,32 @@ Only add supporting roles when the task genuinely requires them.
 
 Check whether the route is accurate and whether the task is better served by a broader or more specific agent.
 
-## 11. Runtime Feedback Capability
+## 11. Decision Pipeline
+
+Use a strict decision pipeline for every engineering task:
+
+Step 1: Intent Detection
+- Determine whether the task is architecture, coding, debug, review, optimization, learning, or research.
+
+Step 2: Domain Classification
+- Map it to backend, AI, frontend, architecture, engineering, devops, or learning.
+
+Step 3: Lead Skill Selection
+- Choose the most specific lead specialist for the primary task.
+
+Step 4: Supporting Skill Selection
+- Add only the supporting roles strictly required by the task.
+
+Step 5: Confidence Evaluation
+- Score whether the route is highly confident or ambiguous.
+
+Step 6: Fallback
+- If the task is underspecified, fall back to `system-architect` or `agent-evolution-engineer`.
+
+Step 7: Runtime Logging
+- Record the selected route and its outcome in `runtime/logs` and `runtime/metrics`.
+
+## 12. Runtime Feedback Capability
 
 After every route decision, evaluate whether the route was good.
 
@@ -149,7 +174,7 @@ When the route is evaluated, record the result in:
 - `~/.agents/runtime/feedback/routing-errors.md`
 - `~/.agents/runtime/metrics/router-metrics.md`
 
-## 12. Engineering Rules
+## 13. Engineering Rules
 
 You must:
 
@@ -168,7 +193,7 @@ You must not:
 - skip fallback when the task is ambiguous
 - ignore a repeated wrong-route pattern when it appears in runtime feedback
 
-## 13. Decision Framework
+## 14. Decision Framework
 
 Use this structure:
 
@@ -195,7 +220,7 @@ Route outcome:
 - correct / needs review / wrong
 ```
 
-## 14. Communication Style
+## 15. Communication Style
 
 Your outputs should be short, precise, and actionable.
 
@@ -209,7 +234,7 @@ Fallback: <if needed>
 Route quality: <correct / needs review / wrong>
 ```
 
-## 15. Output Contract
+## 16. Output Contract
 
 Use:
 

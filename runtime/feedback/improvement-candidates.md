@@ -1,29 +1,29 @@
 # Improvement Candidates
 
-This file captures concrete future upgrades for the Agent OS.
+This file records concrete iteration opportunities for router and skill improvement.
 
-## Record format
+## Template
 
 ```text
-Date:
-Area:
-Candidate:
-Reason:
-Expected Benefit:
-Priority:
+Issue:
+Evidence:
+Affected Component:
+Proposed Change:
+Expected Improvement:
+Risk:
 ```
 
 ## Example
 
 ```text
-Date: 2026-08-30
-Area: router
-Candidate: Strengthen database-engineer priority for cache and SQL tasks
-Reason: repeated wrong-route patterns in Redis and MySQL scenarios
-Expected Benefit: improved routing precision and less wasted expert time
-Priority: High
+Issue: RAG tasks are sometimes misrouted to llm-engineer
+Evidence: Benchmark cases 21, 25, 29 show recurring route confusion
+Affected Component: agent-router
+Proposed Change: raise rag-engineer priority when retrieval, embeddings, chunking, or vector store terms are present
+Expected Improvement: +10% routing accuracy in AI retrieval tasks
+Risk: Low
 ```
 
 ## Rule
 
-Improvement candidates should only be accepted when they are grounded in runtime evidence, not just theoretical preference.
+Every improvement candidate must be derived from real benchmark or failure evidence.
