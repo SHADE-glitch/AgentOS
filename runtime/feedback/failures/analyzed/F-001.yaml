@@ -1,0 +1,16 @@
+failure_id: F-001
+created_at: 2026-08-30T14:00:00Z
+task: "RAG 面向知识库问答系统设计"
+user_intent: "Architecture"
+selected_skill: "llm-engineer"
+expected_skill: "rag-engineer"
+supporting_skills:
+  - "prompt-engineer"
+  - "database-engineer"
+error_type: "A"
+root_cause: "路由器过度关注模型接入，低估了 retrieval 与 embedding 关键字"
+impact: "检索策略、chunking 和向量存储能力被遗漏，输出质量下降"
+frequency: 3
+recommended_fix: "当任务包含 retrieval, embedding, vector DB, chunking, semantic search 等词时提高 rag-engineer 优先级并补充 database-engineer 支持"
+verification_method: "Run 5 new benchmark cases for RAG and vector retrieval classification; expect correct lead skill rate above 90%"
+status: "analyzed"

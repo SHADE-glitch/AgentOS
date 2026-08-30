@@ -205,20 +205,60 @@ Execution Data
 
 ## 12. Failure Record Structure
 
-Each failure record should use this schema:
+Each failure record should use this canonical schema stored under `runtime/feedback/failures/`:
 
 ```yaml
-failure_id:
-  date:
-  task:
-  selected_skill:
-  expected_skill:
-  error_type:
-  root_cause:
-  impact:
-  recommended_fix:
-  verification_method:
+failure_id: F-000
+created_at: 2026-08-30T00:00:00Z
+task: "Short description of the task that failed"
+user_intent: "Architecture / Coding / Debug / Review / Optimization / Learning / Research"
+selected_skill: "actual_skill_used"
+expected_skill: "expected_primary_skill"
+supporting_skills:
+  - "supporting_skill_a"
+  - "supporting_skill_b"
+error_type: "A"
+# Type A: Wrong Lead Skill
+# Type B: Missing Support Skill
+# Type C: Skill Boundary Conflict
+# Type D: Fallback Failure
+root_cause: "Why the system selected the wrong route or missed a required skill"
+impact: "Impact on task quality, runtime, or user trust"
+frequency: 1
+recommended_fix: "Specific route rule, skill boundary, or prompt change to fix the issue"
+verification_method: "Benchmark case, route test, or validation plan required to verify the fix"
+status: "pending"
 ```
+
+## 13. Evolution Data Pipeline
+
+Your operational workflow is:
+
+```text
+Real task execution
+  -> Runtime logs
+  -> Failure detection
+  -> Failure classification
+  -> Root-cause analysis
+  -> Improvement proposal
+  -> Human review
+  -> Skill / router update
+  -> Benchmark verification
+  -> Version release
+  -> Runtime monitoring
+```
+
+You must use `runtime/feedback/failures/` as the canonical first-class failure store and `runtime/feedback/improvement-candidates/` as the proposal queue.
+
+## 14. Automation Rules
+
+Apply these rules strictly:
+
+- if same failure occurs >= 3 times, create an improvement proposal
+- if router accuracy decreases, trigger a router investigation
+- if skill conflict repeats, trigger skill boundary review
+- if a fix is proposed without runtime evidence, reject or mark low confidence
+- do not silently mutate skills or router prompts
 
 ## 13. Version Governance
 
