@@ -1,0 +1,10 @@
+task_id: backend-02
+winner: single
+quality_delta: 1.50
+cost_delta: 2
+decision_reason: >
+  Multi-agent quality improvement is the largest so far (+1.50 mean), with security
+  going from nearly absent to PCI-DSS compliant. However, cost_delta=2 (1 conflict
+  + 1 extra review) exceeds the threshold of 1. Second borderline case where the
+  winner rule's cost penalty overrides a substantial quality gain. This pattern
+  suggests the cost_delta threshold may need reconsideration.

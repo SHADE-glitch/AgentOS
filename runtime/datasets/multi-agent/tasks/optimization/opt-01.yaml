@@ -1,0 +1,13 @@
+task_id: opt-01
+category: optimization
+difficulty: hard
+description: Optimize a high-concurrency API whose latency and throughput degrade under load: locate the bottleneck across service, cache, and database, and produce a staged optimization plan.
+expected_roles: [distributed-system, backend-architect, database-engineer]
+evaluation_points:
+  - bottleneck identification methodology
+  - concurrency model and connection pool tuning
+  - cache design and consistency
+  - database access pattern optimization
+  - staged rollout plan with rollback
+baseline_expectation: a single distributed-system engineer finds the obvious bottleneck but the cache-consistency and database-side fixes are shallow.
+multi_agent_expectation: distributed-system owns the concurrency and cache design, database-engineer owns query and index optimization, backend-architect owns the service-side changes; the staged plan is reviewed layer by layer.

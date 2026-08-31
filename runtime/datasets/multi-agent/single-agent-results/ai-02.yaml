@@ -1,0 +1,16 @@
+task_id: ai-02
+mode: single
+executed_roles: [llm-engineer]
+quality_scores:
+  completeness: 3
+  correctness: 3
+  architecture_quality: 3
+  maintainability: 2
+conflicts: 0
+human_review_count: 1
+notes: >
+  Single llm-engineer covers the basic tool calling loop: schema definition, LLM decision,
+  execution, result feedback. Missing: tool call error handling (timeout, invalid args,
+  hallucinated tool names), loop control (max iterations, termination conditions),
+  parallel tool calling support, and structured evaluation. The evaluation set is
+  only 20 manual scenarios with no regression automation.

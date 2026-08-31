@@ -1,0 +1,207 @@
+# Pipeline Validation - Execution Summary
+run_id: phase_5_5_2_2_2_pipeline_validation
+timestamp: 2026-08-30T00:00:00Z
+evidence_level: benchmark_evaluated
+
+# ============================================================
+# Execution Summary
+# ============================================================
+execution:
+  total_tasks: 10
+  total_conditions: 2
+  total_execution_records: 20
+  execution_order: "randomized"
+  off_first_count: 6
+  on_first_count: 4
+  all_records_complete: true
+
+# ============================================================
+# Pipeline Metrics
+# ============================================================
+pipeline_metrics:
+  pipeline_success_rate: 1.0
+  pipeline_success_count: 10
+  pipeline_failure_count: 0
+  pipeline_correct_rate: 1.0
+  evidence_level: "benchmark_evaluated"
+  notes: "All 10 tasks completed with correct pipeline execution in both conditions."
+
+# ============================================================
+# Memory Influence Metrics
+# ============================================================
+memory_metrics:
+  memory_influence_rate: 1.0
+  memory_influence_count: 10
+  influence_types:
+    confirmation: 9
+    risk_changed: 1
+    role_added: 0
+    role_removed: 0
+    strategy_changed: 0
+    priority_changed: 0
+    none: 0
+  decision_change_rate: 0.0
+  decision_change_count: 0
+
+# ============================================================
+# Decision Change Analysis
+# ============================================================
+decision_change:
+  total_changes: 0
+  change_rate: 0.0
+  memory_induced_regression_rate: 0.0
+  memory_induced_regression_count: 0
+  notes: "No decision changes detected. Memory influence is confirmation/risk_changed only."
+
+# ============================================================
+# Context Compatibility
+# ============================================================
+context_compatibility:
+  high: 7
+  medium: 2
+  low: 1
+  notes: "RT-005 (LOW: MySQL≠Redis), RT-010 (MEDIUM: concurrency≠transaction), RT-009 (HIGH)."
+
+# ============================================================
+# Key Observations
+# ============================================================
+key_observations:
+  - id: OBS-001
+    severity: info
+    content: "Strongest memory match: RT-001 (seckill), T-002 at 0.45. Weakest: RT-009 (order), T-003 at 0.29."
+  - id: OBS-002
+    severity: info
+    content: "Risk-changed: RT-004. F-002 (payment security failure) raised risk awareness without changing decision."
+  - id: OBS-003
+    severity: info
+    content: "Context compatibility guard validated: RT-005 (T-010 MySQL≠Redis) and RT-010 (T-009 concurrency≠transaction) correctly did not force decisions."
+  - id: OBS-004
+    severity: info
+    content: "Anti-pattern alert: RT-003 (AP-001 team-inflation) confirmed single-agent. RT-005 also triggered AP-001 but team size was justified."
+  - id: OBS-005
+    severity: info
+    content: "Memory usage rate: 83.7% (36/43). 7 memories rejected due to low relevance."
+  - id: OBS-006
+    severity: info
+    content: "No hypothesis contamination. No memory-induced regression. All fallback scenarios pass."
+
+# ============================================================
+# Execution Record Inventory
+# ============================================================
+record_inventory:
+  - file: "PV-RT001-OFF.yaml"
+    task_id: RT-001
+    mode: memory_off
+    status: complete
+  - file: "PV-RT001-ON.yaml"
+    task_id: RT-001
+    mode: memory_on
+    status: complete
+  - file: "PV-RT002-OFF.yaml"
+    task_id: RT-002
+    mode: memory_off
+    status: complete
+  - file: "PV-RT002-ON.yaml"
+    task_id: RT-002
+    mode: memory_on
+    status: complete
+  - file: "PV-RT003-OFF.yaml"
+    task_id: RT-003
+    mode: memory_off
+    status: complete
+  - file: "PV-RT003-ON.yaml"
+    task_id: RT-003
+    mode: memory_on
+    status: complete
+  - file: "PV-RT004-OFF.yaml"
+    task_id: RT-004
+    mode: memory_off
+    status: complete
+  - file: "PV-RT004-ON.yaml"
+    task_id: RT-004
+    mode: memory_on
+    status: complete
+  - file: "PV-RT005-OFF.yaml"
+    task_id: RT-005
+    mode: memory_off
+    status: complete
+  - file: "PV-RT005-ON.yaml"
+    task_id: RT-005
+    mode: memory_on
+    status: complete
+  - file: "PV-RT006-OFF.yaml"
+    task_id: RT-006
+    mode: memory_off
+    status: complete
+  - file: "PV-RT006-ON.yaml"
+    task_id: RT-006
+    mode: memory_on
+    status: complete
+  - file: "PV-RT009-OFF.yaml"
+    task_id: RT-009
+    mode: memory_off
+    status: complete
+  - file: "PV-RT009-ON.yaml"
+    task_id: RT-009
+    mode: memory_on
+    status: complete
+  - file: "PV-RT010-OFF.yaml"
+    task_id: RT-010
+    mode: memory_off
+    status: complete
+  - file: "PV-RT010-ON.yaml"
+    task_id: RT-010
+    mode: memory_on
+    status: complete
+  - file: "PV-RT011-OFF.yaml"
+    task_id: RT-011
+    mode: memory_off
+    status: complete
+  - file: "PV-RT011-ON.yaml"
+    task_id: RT-011
+    mode: memory_on
+    status: complete
+  - file: "PV-RT012-OFF.yaml"
+    task_id: RT-012
+    mode: memory_off
+    status: complete
+  - file: "PV-RT012-ON.yaml"
+    task_id: RT-012
+    mode: memory_on
+    status: complete
+
+# ============================================================
+# Comparison File Inventory
+# ============================================================
+comparison_inventory:
+  - file: "RT-001-comparison.yaml"
+    status: complete
+  - file: "RT-002-comparison.yaml"
+    status: complete
+  - file: "RT-003-comparison.yaml"
+    status: complete
+  - file: "RT-004-comparison.yaml"
+    status: complete
+  - file: "RT-005-comparison.yaml"
+    status: complete
+  - file: "RT-006-comparison.yaml"
+    status: complete
+  - file: "RT-009-comparison.yaml"
+    status: complete
+  - file: "RT-010-comparison.yaml"
+    status: complete
+  - file: "RT-011-comparison.yaml"
+    status: complete
+  - file: "RT-012-comparison.yaml"
+    status: complete
+
+# ============================================================
+# Final Status
+# ============================================================
+final_status:
+  phase: "5.5.2.2.2"
+  status: "COMPLETE"
+  all_checks_pass: true
+  critical_issues: 0
+  warnings: 0
+  ready_for_next_phase: true

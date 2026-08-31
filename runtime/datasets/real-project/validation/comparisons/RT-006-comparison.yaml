@@ -1,0 +1,29 @@
+# Pipeline Validation Comparison
+
+task_id: RT-006
+domain: Architecture
+difficulty: hard
+
+memory_off:
+  router_decision: {lead: backend-architect, support: [system-architect, devops-engineer]}
+  orchestrator_decision: {team_formed: true, team_size: 3, pattern: P-001}
+  roles: [backend-architect, system-architect, devops-engineer]
+
+memory_on:
+  retrieved_memories: [P-001 (0.350), T-002 (0.300), T-001 (0.270), E-001 (0.300), S-002 (0.270)]
+  memory_used: [P-001, T-002, T-001, E-001, S-002]
+  memory_influence: confirmation
+  router_decision: {lead: backend-architect, support: [system-architect, devops-engineer]}
+  orchestrator_decision: {team_formed: true, team_size: 3, pattern: P-001}
+  roles: [backend-architect, system-architect, devops-engineer]
+
+decision_changed: false
+decision_change_type: null
+memory_induced_regression: false
+fallback: false
+comparison_valid: true
+context_compatibility: high
+memory_misapplication: false
+hypothesis_contamination: false
+cross_condition_contamination: none
+evidence_level: benchmark_evaluated

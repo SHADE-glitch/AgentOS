@@ -1,0 +1,407 @@
+version: '1.0'
+phase: '5.8'
+generated_at: '2026-08-31T01:09:48.880487+00:00'
+test_tasks: 10
+results:
+- task_index: 1
+  query:
+    task_text: Design a payment system with PCI-DSS compliance
+    category: backend
+    domains:
+    - payment
+    - security
+    roles:
+    - backend-architect
+    - security-engineer
+    keywords:
+    - pci-dss
+    - compliance
+    - payment
+    - kms
+    difficulty: medium
+  top_5:
+  - F-002
+  - E-007
+  - T-004
+  - T-005
+  - P-001
+  top_5_scores:
+  - 0.486
+  - 0.469
+  - 0.455
+  - 0.398
+  - 0.378
+- task_index: 2
+  query:
+    task_text: Analyze MySQL slow query performance
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    - indexing
+    - optimization
+    difficulty: easy
+  top_5:
+  - T-010
+  - AP-001
+  - T-005
+  - S-002
+  - P-001
+  top_5_scores:
+  - 0.441
+  - 0.427
+  - 0.395
+  - 0.375
+  - 0.375
+- task_index: 3
+  query:
+    task_text: Build a RAG system with vector retrieval
+    category: ai
+    domains:
+    - rag
+    - vector-store
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - vector
+    - retrieval
+    - embedding
+    - reranking
+    difficulty: medium
+  top_5:
+  - T-005
+  - E-004
+  - S-001
+  - E-005
+  - P-001
+  top_5_scores:
+  - 0.577
+  - 0.513
+  - 0.445
+  - 0.429
+  - 0.421
+- task_index: 4
+  query:
+    task_text: Design a distributed seckill system
+    category: architecture
+    domains:
+    - architecture
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    keywords:
+    - seckill
+    - high-concurrency
+    - lua
+    - distributed
+    difficulty: hard
+  top_5:
+  - S-002
+  - T-002
+  - P-001
+  - E-001
+  - T-005
+  top_5_scores:
+  - 0.464
+  - 0.422
+  - 0.422
+  - 0.409
+  - 0.395
+- task_index: 5
+  query:
+    task_text: Implement tool-calling for an LLM agent
+    category: ai
+    domains:
+    - agent
+    - tool-calling
+    roles:
+    - llm-engineer
+    - agent-engineer
+    - prompt-engineer
+    keywords:
+    - tool-calling
+    - agent
+    - llm
+    - prompt
+    difficulty: medium
+  top_5:
+  - T-005
+  - S-001
+  - E-005
+  - P-001
+  - E-004
+  top_5_scores:
+  - 0.486
+  - 0.464
+  - 0.429
+  - 0.422
+  - 0.402
+- task_index: 6
+  query:
+    task_text: Build a multi-tenant AI SaaS platform
+    category: architecture
+    domains:
+    - architecture
+    - ai
+    - multi-tenant
+    roles:
+    - system-architect
+    - rag-engineer
+    - backend-architect
+    keywords:
+    - ai-saas
+    - multi-tenant
+    - rag
+    - isolation
+    difficulty: hard
+  top_5:
+  - T-001
+  - T-005
+  - S-002
+  - E-001
+  - P-001
+  top_5_scores:
+  - 0.41
+  - 0.404
+  - 0.399
+  - 0.398
+  - 0.387
+- task_index: 7
+  query:
+    task_text: Optimize high-concurrency distributed system
+    category: optimization
+    domains:
+    - distributed
+    - concurrency
+    roles:
+    - distributed-system
+    - backend-architect
+    keywords:
+    - high-concurrency
+    - distributed
+    - optimization
+    - rollback
+    difficulty: hard
+  top_5:
+  - T-009
+  - P-001
+  - S-002
+  - T-010
+  - AP-001
+  top_5_scores:
+  - 0.431
+  - 0.422
+  - 0.42
+  - 0.419
+  - 0.419
+- task_index: 8
+  query:
+    task_text: Build an admin platform with RBAC
+    category: frontend
+    domains:
+    - frontend
+    - backend
+    roles:
+    - frontend-architect
+    - backend-architect
+    - code-reviewer
+    keywords:
+    - admin
+    - rbac
+    - api-contract
+    - frontend-backend
+    difficulty: medium
+  top_5:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - AP-001
+  top_5_scores:
+  - 0.411
+  - 0.398
+  - 0.378
+  - 0.332
+  - 0.332
+- task_index: 9
+  query:
+    task_text: Design a cross-domain distributed architecture
+    category: architecture
+    domains:
+    - architecture
+    - backend
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    - database-engineer
+    keywords:
+    - cross-domain
+    - architecture
+    - backend
+    - saga
+    - seckill
+    difficulty: hard
+  top_5:
+  - S-002
+  - P-001
+  - E-001
+  - T-005
+  - T-002
+  top_5_scores:
+  - 0.481
+  - 0.409
+  - 0.4
+  - 0.395
+  - 0.383
+- task_index: 10
+  query:
+    task_text: Optimize SPA frontend performance
+    category: frontend
+    domains:
+    - frontend
+    roles:
+    - frontend-performance
+    - frontend-architect
+    keywords:
+    - spa
+    - performance
+    - frontend
+    - optimization
+    difficulty: easy
+  top_5:
+  - T-005
+  - S-002
+  - P-001
+  - AP-001
+  - E-009
+  top_5_scores:
+  - 0.395
+  - 0.375
+  - 0.375
+  - 0.349
+  - 0.336
+memory_appearances:
+  P-001:
+    count: 10
+    avg_score: 0.399
+    scores:
+    - 0.378
+    - 0.375
+    - 0.421
+    - 0.422
+    - 0.422
+    - 0.387
+    - 0.422
+    - 0.378
+    - 0.409
+    - 0.375
+  T-005:
+    count: 9
+    avg_score: 0.427
+    scores:
+    - 0.398
+    - 0.395
+    - 0.577
+    - 0.395
+    - 0.486
+    - 0.404
+    - 0.398
+    - 0.395
+    - 0.395
+  S-002:
+    count: 7
+    avg_score: 0.418
+    scores:
+    - 0.375
+    - 0.464
+    - 0.399
+    - 0.42
+    - 0.411
+    - 0.481
+    - 0.375
+  AP-001:
+    count: 4
+    avg_score: 0.382
+    scores:
+    - 0.427
+    - 0.419
+    - 0.332
+    - 0.349
+  T-010:
+    count: 3
+    avg_score: 0.397
+    scores:
+    - 0.441
+    - 0.419
+    - 0.332
+  E-001:
+    count: 3
+    avg_score: 0.402
+    scores:
+    - 0.409
+    - 0.398
+    - 0.4
+  E-004:
+    count: 2
+    avg_score: 0.458
+    scores:
+    - 0.513
+    - 0.402
+  S-001:
+    count: 2
+    avg_score: 0.455
+    scores:
+    - 0.445
+    - 0.464
+  E-005:
+    count: 2
+    avg_score: 0.429
+    scores:
+    - 0.429
+    - 0.429
+  T-002:
+    count: 2
+    avg_score: 0.402
+    scores:
+    - 0.422
+    - 0.383
+  F-002:
+    count: 1
+    avg_score: 0.486
+    scores:
+    - 0.486
+  E-007:
+    count: 1
+    avg_score: 0.469
+    scores:
+    - 0.469
+  T-004:
+    count: 1
+    avg_score: 0.455
+    scores:
+    - 0.455
+  T-001:
+    count: 1
+    avg_score: 0.41
+    scores:
+    - 0.41
+  T-009:
+    count: 1
+    avg_score: 0.431
+    scores:
+    - 0.431
+  E-009:
+    count: 1
+    avg_score: 0.336
+    scores:
+    - 0.336

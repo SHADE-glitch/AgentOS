@@ -1,0 +1,96 @@
+execution_id: PV-RT002-ON
+task_id: RT-002
+mode: memory_on
+execution_order: second
+contamination_risk: low
+
+task:
+  user_request: "设计企业知识库问答系统"
+  domain: "AI / RAG"
+  difficulty: "medium"
+  expected_skills: ["rag-engineer", "llm-engineer", "prompt-engineer"]
+
+memory_on:
+  retrieved_memories:
+    - memory_id: "T-005"
+      type: "task"
+      category: "ai"
+      relevance_score: 0.833
+      evidence_weight: 0.6
+      final_score: 0.500
+      used: true
+      match_reasons: ["category=ai", "domain=rag,vector-store,retrieval,reranking,evaluation", "role=rag-engineer,llm-engineer,database-engineer", "keyword=rag", "difficulty=medium"]
+    - memory_id: "S-001"
+      type: "success"
+      category: "ai"
+      relevance_score: 0.700
+      evidence_weight: 0.6
+      final_score: 0.420
+      used: true
+      match_reasons: ["category=ai", "domain=rag,tool-calling,specialist-synergy,multi-agent,llm,prompt", "role=rag-engineer,llm-engineer,database-engineer,prompt-engineer,agent-engineer", "keyword=rag"]
+    - memory_id: "E-004"
+      type: "effectiveness"
+      category: "ai"
+      relevance_score: 0.600
+      evidence_weight: 0.6
+      final_score: 0.360
+      used: true
+      match_reasons: ["category=ai", "domain=rag,retrieval,vector-store,evaluation", "role=rag-engineer", "keyword=rag"]
+    - memory_id: "E-005"
+      type: "effectiveness"
+      category: "ai"
+      relevance_score: 0.500
+      evidence_weight: 0.6
+      final_score: 0.300
+      used: true
+      match_reasons: ["category=ai", "domain=llm,model-integration,error-handling", "role=llm-engineer", "keyword=llm"]
+    - memory_id: "E-010"
+      type: "effectiveness"
+      category: "ai"
+      relevance_score: 0.400
+      evidence_weight: 0.6
+      final_score: 0.240
+      used: false
+      rejection_reason: "Prompt-engineer role not directly matched by keywords."
+      match_reasons: ["category=ai", "role=prompt-engineer"]
+  memory_influence:
+    type: "confirmation"
+    reason: "T-005 (RAG task) confirms multi-agent team with rag-engineer lead. S-001 (AI specialist synergy) confirms multi-agent value for AI tasks. Memory reinforces baseline but does not change it."
+  router_decision:
+    intent: "Architecture Design"
+    lead_agent: "rag-engineer"
+    support_agents: ["llm-engineer", "prompt-engineer"]
+    confidence: "high"
+    fallback_used: false
+    reason: "RAG system → rag-engineer lead. Memory (T-005, S-001) confirms three-role team is correct."
+  orchestrator_decision:
+    team_formed: true
+    activation_reason: "domains=2 (AI, RAG). R4, R5 apply."
+    team_size: 3
+    lead_role: "rag-engineer"
+    support_roles: ["llm-engineer", "prompt-engineer"]
+    pattern_used: "P-001 (cross-domain collaboration)"
+  selected_roles: ["rag-engineer", "llm-engineer", "prompt-engineer"]
+  decision_provenance:
+    memories_considered: 5
+    memories_used: 4
+    memories_rejected: 1
+    router_rules: ["RAG → rag-engineer lead", "LLM → llm-engineer", "AI specialist synergy"]
+    reason: "Strong memory match. T-005 (0.50) and S-001 (0.42) confirm team structure."
+
+comparison:
+  decision_changed: false
+  router_changed: false
+  orchestrator_changed: false
+  team_changed: false
+  strategy_changed: false
+  memory_influence: "confirmation"
+  regression: false
+  fallback_required: false
+
+outcome:
+  pipeline_correct: true
+  result: "decision_preserved"
+  human_feedback: "unknown"
+  evidence_level: "benchmark_evaluated"
+  notes: "Strong memory match (T-005=0.50, S-001=0.42). Memory confirms baseline. No change needed."

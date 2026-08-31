@@ -1,0 +1,11 @@
+task_id: arch-01
+winner: single
+quality_delta: 1.0
+cost_delta: 2
+decision_reason: >
+  Multi-agent output quality is substantially higher (+1.0 mean, from 3.25 to 4.25).
+  Completeness improved from 3 to 5, architecture_quality from 3 to 4, maintainability from 3 to 4.
+  However, cost_delta=2 (1 conflict + 1 extra human review) exceeds the threshold of 1.
+  Per winner rule, cost_delta > 1 → winner = single. Note: this is a borderline case where
+  the quality gain is significant but the rule penalizes coordination overhead. The rule may
+  need recalibration if this pattern repeats across tasks.

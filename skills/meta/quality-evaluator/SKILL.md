@@ -110,5 +110,30 @@ Read from:
 - `runtime/telemetry/`
 - `runtime/metrics/`
 - `runtime/feedback/failures/`
+- `runtime/datasets/multi-agent/` (single vs multi evidence)
+- `runtime/metrics/multi-agent-quality.md`
 - `tests/router-benchmark.md`
 - `tests/evolution-tests.md`
+
+## 10. Multi-Agent Evaluation
+
+Evaluate the multi-agent layer on three axes:
+
+### Role selection
+
+- the formed team matches the task's `expected_roles`
+- exactly one lead
+- no unjustified roles (guard: `opt-02` in the benchmark dataset)
+
+### Collaboration efficiency
+
+- handoffs are valid per the Phase 4.3 handoff rules
+- conflicts are resolved or escalated per the conflict protocol
+- execution order adheres to the dependency layers
+
+### Final output quality
+
+- the integration report covers `baseline_expectation` at minimum, and `multi_agent_expectation` when a team is justified
+- score per the comparison rubric in `tests/multi-agent/comparison/comparison-framework.md`
+
+Gate rule: never declare multi-agent superior without comparison records in `runtime/datasets/multi-agent/comparison/`.

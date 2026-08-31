@@ -1,0 +1,37 @@
+execution_id: PV-RT002-OFF
+task_id: RT-002
+mode: memory_off
+execution_order: first
+contamination_risk: low
+
+task:
+  user_request: "设计企业知识库问答系统"
+  domain: "AI / RAG"
+  difficulty: "medium"
+  expected_skills: ["rag-engineer", "llm-engineer", "prompt-engineer"]
+
+memory_off:
+  router_decision:
+    intent: "Architecture Design"
+    lead_agent: "rag-engineer"
+    support_agents: ["llm-engineer", "prompt-engineer"]
+    confidence: "high"
+    fallback_used: false
+    reason: "RAG system → rag-engineer lead. LLM integration → llm-engineer. Prompt design → prompt-engineer."
+  orchestrator_decision:
+    team_formed: true
+    activation_reason: "domains=2 (AI, RAG). R4: AI+retrieval → rag-engineer. R5: AI+LLM → llm-engineer."
+    team_size: 3
+    lead_role: "rag-engineer"
+    support_roles: ["llm-engineer", "prompt-engineer"]
+    pattern_used: "P-001 (cross-domain collaboration)"
+  selected_roles: ["rag-engineer", "llm-engineer", "prompt-engineer"]
+  decision_provenance:
+    router_rules: ["RAG system → rag-engineer lead + llm-engineer + prompt-engineer"]
+    reason: "RAG system design. Three specialists needed: retrieval, LLM, prompt."
+
+outcome:
+  pipeline_correct: true
+  result: "decision_preserved"
+  human_feedback: "unknown"
+  evidence_level: "benchmark_evaluated"

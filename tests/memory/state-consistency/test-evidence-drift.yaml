@@ -1,0 +1,615 @@
+memories:
+- memory_id: T-001
+  file: memory/tasks/architecture/ai-saas.md
+  type: task
+  category: architecture
+  difficulty: hard
+  source_task: arch-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - ai-saas
+  - multi-tenant
+  - rag
+  - isolation-strategy
+  roles:
+  - system-architect
+  - backend-architect
+  - database-engineer
+  - rag-engineer
+  quality_delta: 1.0
+  winner: single
+  cost_delta: 2
+  status: observed
+- memory_id: T-002
+  file: memory/tasks/architecture/seckill.md
+  type: task
+  category: architecture
+  difficulty: hard
+  source_task: arch-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - seckill
+  - high-concurrency
+  - lua
+  - idempotency
+  - distributed
+  roles:
+  - system-architect
+  - backend-architect
+  - database-engineer
+  - distributed-system
+  quality_delta: 1.25
+  winner: multi
+  cost_delta: 1
+  status: observed
+- memory_id: T-003
+  file: memory/tasks/backend/order-system.md
+  type: task
+  category: backend
+  difficulty: medium
+  source_task: backend-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - order-system
+  - saga
+  - optimistic-locking
+  - distributed-transaction
+  roles:
+  - backend-architect
+  - database-engineer
+  - distributed-system
+  quality_delta: 1.0
+  winner: multi
+  cost_delta: 1
+  status: observed
+- memory_id: T-004
+  file: memory/tasks/backend/payment-system.md
+  type: task
+  category: backend
+  difficulty: medium
+  source_task: backend-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - payment-system
+  - pci-dss
+  - security
+  - kms
+  - exactly-once
+  - compliance
+  roles:
+  - backend-architect
+  - database-engineer
+  - distributed-system
+  - security-engineer
+  quality_delta: 1.5
+  winner: single
+  cost_delta: 2
+  status: observed
+- memory_id: T-005
+  file: memory/tasks/ai/rag.md
+  type: task
+  category: ai
+  difficulty: medium
+  source_task: ai-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - rag
+  - vector-store
+  - retrieval
+  - reranking
+  - evaluation
+  roles:
+  - rag-engineer
+  - llm-engineer
+  - database-engineer
+  quality_delta: 1.25
+  winner: multi
+  cost_delta: 1
+  status: observed
+- memory_id: T-006
+  file: memory/tasks/ai/tool-calling.md
+  type: task
+  category: ai
+  difficulty: medium
+  source_task: ai-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - tool-calling
+  - agent
+  - llm
+  - prompt-engineering
+  - evaluation
+  roles:
+  - llm-engineer
+  - prompt-engineer
+  - agent-engineer
+  quality_delta: 1.5
+  winner: multi
+  cost_delta: 1
+  status: observed
+- memory_id: T-007
+  file: memory/tasks/frontend/admin-platform.md
+  type: task
+  category: frontend
+  difficulty: medium
+  source_task: fe-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - admin-platform
+  - rbac
+  - api-contract
+  - frontend-backend
+  roles:
+  - frontend-architect
+  - backend-architect
+  - code-reviewer
+  quality_delta: 1.0
+  winner: multi
+  cost_delta: 1
+  status: observed
+- memory_id: T-008
+  file: memory/tasks/frontend/spa-performance.md
+  type: task
+  category: frontend
+  difficulty: easy
+  source_task: fe-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - spa
+  - performance
+  - frontend-only
+  - marginal-benefit
+  roles:
+  - frontend-performance
+  - frontend-architect
+  quality_delta: 0.75
+  winner: multi
+  cost_delta: 1
+  status: observed
+- memory_id: T-009
+  file: memory/tasks/optimization/high-concurrency.md
+  type: task
+  category: optimization
+  difficulty: hard
+  source_task: opt-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - high-concurrency
+  - layer-optimization
+  - rollback
+  - distributed
+  roles:
+  - distributed-system
+  - backend-architect
+  - database-engineer
+  quality_delta: 1.0
+  winner: multi
+  cost_delta: 1
+  status: observed
+- memory_id: T-010
+  file: memory/tasks/optimization/mysql-slow-query.md
+  type: task
+  category: optimization
+  difficulty: easy
+  source_task: opt-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - mysql
+  - slow-query
+  - single-domain
+  - team-inflation-guard
+  roles:
+  - database-engineer
+  quality_delta: 0.0
+  winner: single
+  cost_delta: 0
+  status: observed
+- memory_id: F-001
+  file: memory/failures/f-001-isolation-conflict.md
+  type: failure
+  category: architecture
+  source_task: arch-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - collaboration
+  - isolation-strategy
+  - conflict
+  - productive-conflict
+  - multi-tenant
+  roles:
+  - system-architect
+  - database-engineer
+  status: observed
+- memory_id: F-002
+  file: memory/failures/f-002-card-data-conflict.md
+  type: failure
+  category: backend
+  source_task: backend-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - collaboration
+  - security
+  - card-data
+  - conflict
+  - productive-conflict
+  - payment
+  - pci-dss
+  roles:
+  - security-engineer
+  - backend-architect
+  status: observed
+- memory_id: S-001
+  file: memory/successes/s-001-ai-specialist-synergy.md
+  type: success
+  category: ai
+  source_tasks:
+  - ai-01
+  - ai-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - ai
+  - rag
+  - tool-calling
+  - specialist-synergy
+  - multi-agent
+  - llm
+  - prompt
+  roles:
+  - rag-engineer
+  - llm-engineer
+  - database-engineer
+  - prompt-engineer
+  - agent-engineer
+  status: observed
+- memory_id: S-002
+  file: memory/successes/s-002-cross-domain-architecture.md
+  type: success
+  category: cross-cutting
+  source_tasks:
+  - arch-02
+  - backend-01
+  evidence_level: benchmark_evaluated
+  confidence: medium
+  tags:
+  - cross-domain
+  - architecture
+  - backend
+  - distributed
+  - specialist
+  - saga
+  - seckill
+  roles:
+  - system-architect
+  - backend-architect
+  - database-engineer
+  - distributed-system
+  observation_count: 2
+  status: observed
+  last_validated_at: '2026-08-30'
+- memory_id: P-001
+  file: memory/patterns/p-001-cross-domain-collaboration.md
+  type: pattern
+  category: cross-cutting
+  source_tasks:
+  - arch-02
+  - backend-01
+  - ai-01
+  - ai-02
+  evidence_level: runtime_validated
+  confidence: medium
+  tags:
+  - cross-domain
+  - specialist
+  - team-formation
+  - multi-agent
+  - collaboration
+  - distributed
+  - rag
+  - agent
+  roles:
+  - system-architect
+  - backend-architect
+  - database-engineer
+  - distributed-system
+  - rag-engineer
+  - llm-engineer
+  - prompt-engineer
+  - agent-engineer
+  observation_count: 2
+  status: observed
+  last_validated_at: '2026-08-30'
+- memory_id: P-002
+  file: memory/patterns/p-002-security-first.md
+  type: pattern
+  category: cross-cutting
+  source_tasks:
+  - backend-02
+  - fe-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - security
+  - team-formation
+  - role-ordering
+  - pci-dss
+  - rbac
+  - compliance
+  roles:
+  - security-engineer
+  - frontend-architect
+  - backend-architect
+  - code-reviewer
+  status: observed
+- memory_id: AP-001
+  file: memory/anti-patterns/ap-001-team-inflation.md
+  type: anti-pattern
+  category: optimization
+  source_tasks:
+  - opt-02
+  - fe-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - team-inflation
+  - single-domain
+  - unnecessary-team
+  - orchestrator
+  - guard
+  - performance
+  roles:
+  - database-engineer
+  - frontend-performance
+  - frontend-architect
+  status: observed
+- memory_id: H-001
+  file: memory/hypotheses/h-001-cost-delta-threshold.md
+  type: hypothesis
+  category: cross-cutting
+  source_tasks:
+  - arch-01
+  - backend-02
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - winner-rule
+  - cost-delta
+  - threshold
+  - calibration
+  - quality-assessment
+  - rule
+  roles: []
+  status: observed
+- memory_id: H-002
+  file: memory/hypotheses/h-002-multi-agent-preference.md
+  type: hypothesis
+  category: cross-cutting
+  source_tasks:
+  - arch-02
+  - backend-01
+  - ai-01
+  - ai-02
+  - fe-01
+  - opt-01
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - multi-agent
+  - complexity
+  - routing
+  - team-formation
+  - task-classification
+  - cross-domain
+  roles: []
+  status: observed
+- memory_id: E-001
+  file: memory/effectiveness/system-architect.md
+  type: effectiveness
+  category: architecture
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - system-architect
+  - architecture
+  - multi-agent
+  - quality
+  roles:
+  - system-architect
+  status: observed
+- memory_id: E-002
+  file: memory/effectiveness/backend-architect.md
+  type: effectiveness
+  category: backend
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - backend-architect
+  - backend
+  - api-design
+  - service-design
+  - multi-agent
+  roles:
+  - backend-architect
+  status: observed
+- memory_id: E-003
+  file: memory/effectiveness/database-engineer.md
+  type: effectiveness
+  category: backend
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - database-engineer
+  - database
+  - data-model
+  - indexing
+  - optimization
+  roles:
+  - database-engineer
+  status: observed
+- memory_id: E-004
+  file: memory/effectiveness/rag-engineer.md
+  type: effectiveness
+  category: ai
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - rag-engineer
+  - rag
+  - retrieval
+  - vector-store
+  - evaluation
+  roles:
+  - rag-engineer
+  status: observed
+- memory_id: E-005
+  file: memory/effectiveness/llm-engineer.md
+  type: effectiveness
+  category: ai
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - llm-engineer
+  - llm
+  - model-integration
+  - error-handling
+  roles:
+  - llm-engineer
+  status: observed
+- memory_id: E-006
+  file: memory/effectiveness/distributed-system.md
+  type: effectiveness
+  category: backend
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - distributed-system
+  - concurrency
+  - messaging
+  - fault-tolerance
+  roles:
+  - distributed-system
+  status: observed
+- memory_id: E-007
+  file: memory/effectiveness/security-engineer.md
+  type: effectiveness
+  category: backend
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - security-engineer
+  - security
+  - pci-dss
+  - encryption
+  - compliance
+  roles:
+  - security-engineer
+  status: observed
+- memory_id: E-008
+  file: memory/effectiveness/frontend-architect.md
+  type: effectiveness
+  category: frontend
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - frontend-architect
+  - frontend
+  - architecture
+  - api-contract
+  roles:
+  - frontend-architect
+  status: observed
+- memory_id: E-009
+  file: memory/effectiveness/frontend-performance.md
+  type: effectiveness
+  category: frontend
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - frontend-performance
+  - frontend
+  - performance
+  - optimization
+  roles:
+  - frontend-performance
+  status: observed
+- memory_id: E-010
+  file: memory/effectiveness/prompt-engineer.md
+  type: effectiveness
+  category: ai
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - prompt-engineer
+  - prompt
+  - tool-description
+  - few-shot
+  roles:
+  - prompt-engineer
+  status: observed
+- memory_id: E-011
+  file: memory/effectiveness/agent-engineer.md
+  type: effectiveness
+  category: ai
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - agent-engineer
+  - agent
+  - workflow
+  - orchestration
+  - tool-calling
+  roles:
+  - agent-engineer
+  status: observed
+- memory_id: E-012
+  file: memory/effectiveness/code-reviewer.md
+  type: effectiveness
+  category: frontend
+  evidence_level: benchmark_evaluated
+  confidence: low
+  tags:
+  - code-reviewer
+  - review
+  - quality-gate
+  - process
+  roles:
+  - code-reviewer
+  status: observed
+evidence_weights:
+  hypothesis: 0.3
+  benchmark_evaluated: 0.6
+  independent_validated: 0.8
+  real_project_validated: 0.95
+  production_validated: 1.0
+scoring_weights:
+  category_match: 0.25
+  domain_match: 0.2
+  type_boost: 0.15
+  role_match: 0.15
+  keyword_match: 0.1
+  difficulty_match: 0.1
+  tag_overlap: 0.05
+type_boosts:
+  failure: 0.15
+  anti_pattern: 0.15
+  pattern: 0.05
+  hypothesis: 0.0
+  success: 0.0
+  task: 0.0
+  effectiveness: 0.0
+top_k: 5
+index_version: 1
+last_reconciled_at: '2026-08-30T13:47:50.622520+00:00'
+last_reconciled_changes: 39

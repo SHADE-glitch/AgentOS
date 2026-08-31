@@ -1,0 +1,137 @@
+# Runtime Event Schema
+# Phase 5.6.3 — Telemetry Layer
+# Every event is linked to an execution_id for full traceability
+
+schema_version: "1.0"
+phase: "5.6.3"
+
+# ============================================================
+# Event Types
+# ============================================================
+
+event_types:
+  # --- Pipeline Lifecycle ---
+  task_received:
+    description: "Task entered the pipeline"
+    payload:
+      execution_id: "<string>"       # unique execution identifier
+      task_id: "<RT-XXX>"            # task reference
+      task_text: "<string>"          # user request
+      domain: "<string>"             # task domain
+      difficulty: "<easy|medium|hard>"
+      memory_mode: "<on|off>"
+      model: "<provider/model>"
+      backend: "<string>"
+
+  routing_completed:
+    description: "Router classified intent and selected lead agent"
+    payload:
+      execution_id: "<string>"
+      intent: "<string>"             # Router classification
+      lead_agent: "<role>"           # primary specialist
+      support_agents: ["<roles>"]    # supporting roles
+      confidence: "<low|medium|high>"
+      rules_applied: ["<rules>"]
+      reason: "<string>"
+
+  memory_retrieved:
+    description: "Memory Retrieval completed — raw retrieval results"
+    payload:
+      execution_id: "<string>"
+      total_retrieved: "<int>"
+      total_considered: "<int>"
+      threshold: "<float>"           # minimum score threshold
+      memories:                     # all retrieved memories
+        - memory_id: "<string>"
+          type: "<task|failure|success|pattern|anti-pattern|hypothesis>"
+          relevance_score: "<float>"
+          evidence_weight: "<float>"
+          final_score: "<float>"
+          used: "<bool>"
+          match_reasons: ["<reasons>"]
+          warning: "<string|null>"
+
+  memory_applied:
+    description: "Memory was applied to decision — tracks influence"
+    payload:
+      execution_id: "<string>"
+      memories_used: ["<memory_ids>"]
+      memory_influence: "<none|confirmation|role_added|role_removed|strategy_changed|risk_changed|priority_changed>"
+      decision_changed: "<bool>"
+      memory_induced_regression: "<bool>"
+      hypothesis_contamination: "<bool>"
+
+  orchestration_completed:
+    description: "Orchestrator formed team plan"
+    payload:
+      execution_id: "<string>"
+      team_formed: "<bool>"
+      team_size: "<int>"
+      lead_role: "<role>"
+      support_roles: ["<roles>"]
+      anti_pattern_alert: "<bool>"
+      anti_pattern_id: "<string|null>"
+      reason: "<string>"
+      rules_applied: ["<rules>"]
+
+  agent_started:
+    description: "Agent/Model invocation started"
+    payload:
+      execution_id: "<string>"
+      backend: "<string>"
+      model: "<provider/model>"
+      command: "<string>"           # actual CLI command
+      prompt_summary: "<string>"    # truncated prompt
+
+  agent_completed:
+    description: "Agent/Model returned response"
+    payload:
+      execution_id: "<string>"
+      session_id: "<string>"        # backend session ID
+      message_id: "<string>"
+      response_length: "<int>"      # chars
+      response_summary: "<string>"  # truncated first 200 chars
+      tokens:
+        total: "<int>"
+        input: "<int>"
+        output: "<int>"
+        reasoning: "<int>"
+        cache_read: "<int>"
+        cache_write: "<int>"
+      cost: "<float>"
+      latency_ms: "<int>"
+
+  execution_completed:
+    description: "Full pipeline execution completed"
+    payload:
+      execution_id: "<string>"
+      status: "<success|partial|error|timeout>"
+      total_latency_ms: "<int>"
+      trace_file: "<path>"
+      errors: ["<error messages>"]
+
+  # --- Failure Events ---
+  failure:
+    description: "Any failure in the pipeline"
+    payload:
+      execution_id: "<string>"
+      failure_type: "<provider_failure|timeout|invalid_output|fallback_triggered|parse_error|memory_error|router_error|orchestrator_error>"
+      failure_detail: "<string>"
+      step: "<task_received|routing|memory|orchestration|agent|result>"
+      fallback_used: "<bool>"
+      recovery: "<string|null>"
+
+# ============================================================
+# Event Correlation
+# ============================================================
+
+correlation:
+  primary_key: execution_id
+  ordering: timestamp
+  rules:
+    - "Every event MUST have an execution_id"
+    - "Events within an execution are ordered by timestamp"
+    - "task_received is always the first event"
+    - "execution_completed or failure is always the last event"
+    - "memory_retrieved always precedes memory_applied"
+    - "agent_started always precedes agent_completed"

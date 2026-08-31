@@ -1,0 +1,88 @@
+execution_id: PV-RT009-ON
+task_id: RT-009
+mode: memory_on
+execution_order: first
+contamination_risk: low
+
+task:
+  user_request: "订单服务拆分方案"
+  domain: "Backend / Architecture"
+  difficulty: "medium"
+  expected_skills: ["backend-architect", "system-architect"]
+
+memory_on:
+  retrieved_memories:
+    - memory_id: "T-003"
+      type: "task"
+      category: "backend"
+      relevance_score: 0.483
+      evidence_weight: 0.6
+      final_score: 0.290
+      used: true
+      match_reasons: ["category=backend", "domain=order-system,saga,optimistic-locking,distributed-transaction", "role=backend-architect,database-engineer,distributed-system", "difficulty=medium"]
+    - memory_id: "E-002"
+      type: "effectiveness"
+      category: "backend"
+      relevance_score: 0.500
+      evidence_weight: 0.6
+      final_score: 0.300
+      used: true
+      match_reasons: ["category=backend", "domain=backend,api-design,service-design,multi-agent", "role=backend-architect"]
+    - memory_id: "T-004"
+      type: "task"
+      category: "backend"
+      relevance_score: 0.400
+      evidence_weight: 0.6
+      final_score: 0.240
+      used: false
+      rejection_reason: "Payment system, not order system. Different domain."
+      match_reasons: ["category=backend", "role=backend-architect"]
+    - memory_id: "P-001"
+      type: "pattern"
+      category: "cross-cutting"
+      relevance_score: 0.350
+      evidence_weight: 0.6
+      final_score: 0.210
+      used: true
+      match_reasons: ["category=cross-cutting", "role=backend-architect,system-architect"]
+  memory_influence:
+    type: "confirmation"
+    reason: "T-003 (order system) is the best match, confirms backend-architect lead. E-002 confirms backend-architect effectiveness. Signal is weak (scores < 0.30) but directionally correct."
+  router_decision:
+    intent: "Architecture Design"
+    lead_agent: "backend-architect"
+    support_agents: ["system-architect"]
+    confidence: "high"
+    fallback_used: false
+    reason: "Order system → backend-architect. Service split → system-architect support. Memory confirms weakly."
+  orchestrator_decision:
+    team_formed: true
+    activation_reason: "domains=2 (backend, architecture). Service split needs architectural oversight."
+    team_size: 2
+    lead_role: "backend-architect"
+    support_roles: ["system-architect"]
+    pattern_used: "P-001 (cross-domain collaboration)"
+  selected_roles: ["backend-architect", "system-architect"]
+  decision_provenance:
+    memories_considered: 4
+    memories_used: 3
+    memories_rejected: 1
+    router_rules: ["backend → backend-architect", "architecture → system-architect"]
+    reason: "Weak memory signal (T-003=0.29, E-002=0.30). Confirms baseline without change."
+
+comparison:
+  decision_changed: false
+  router_changed: false
+  orchestrator_changed: false
+  team_changed: false
+  strategy_changed: false
+  memory_influence: "confirmation"
+  regression: false
+  fallback_required: false
+
+outcome:
+  pipeline_correct: true
+  result: "decision_preserved"
+  human_feedback: "unknown"
+  evidence_level: "benchmark_evaluated"
+  notes: "Weakest memory signal in pilot set. T-003 (0.29) is below high-confidence threshold. Memory does not force change."

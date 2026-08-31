@@ -1,0 +1,8 @@
+task_id: fe-02
+winner: multi
+quality_delta: 0.75
+cost_delta: 1
+decision_reason: >
+  Modest quality gain (+0.75), cost_delta=1 within threshold. Multi wins but the
+  improvement is marginal. This easy task with 2 roles is at the boundary of
+  multi-agent justification.

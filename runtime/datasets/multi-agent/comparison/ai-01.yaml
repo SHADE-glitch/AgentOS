@@ -1,0 +1,7 @@
+task_id: ai-01
+winner: multi
+quality_delta: 1.25
+cost_delta: 1
+decision_reason: >
+  Multi-agent added concrete vector store comparison, two-stage retrieval with reranking,
+  and automated evaluation methodology. cost_delta=1 within threshold. Multi win.

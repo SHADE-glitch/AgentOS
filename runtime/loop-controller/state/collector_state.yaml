@@ -1,0 +1,37 @@
+version: '1.0'
+phase: 5.8.2.2
+last_scan: '2026-08-31T02:23:55.974462+00:00'
+processed_traces:
+- trace_id: EXEC-1788137160
+  processed_at: '2026-08-31T00:47:23.574413+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788090990
+  processed_at: '2026-08-31T00:47:57.788261+00:00'
+  candidates_generated: 2
+- trace_id: EXEC-1788091359
+  processed_at: '2026-08-31T00:47:57.791863+00:00'
+  candidates_generated: 8
+- trace_id: EXEC-1788091469
+  processed_at: '2026-08-31T00:47:57.795247+00:00'
+  candidates_generated: 4
+- trace_id: EXEC-1788091972
+  processed_at: '2026-08-31T00:47:57.799221+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788092568
+  processed_at: '2026-08-31T00:47:57.802986+00:00'
+  candidates_generated: 3
+- trace_id: EXEC-1788092974
+  processed_at: '2026-08-31T00:47:57.806282+00:00'
+  candidates_generated: 2
+- trace_id: EXEC-FALLBACK-1788094743
+  processed_at: '2026-08-31T00:47:57.810141+00:00'
+  candidates_generated: 2
+- trace_id: EXEC-1788137999
+  processed_at: '2026-08-31T01:02:15.069541+00:00'
+  candidates_generated: 6
+- trace_id: EXEC-1788139504
+  processed_at: '2026-08-31T01:25:37.062757+00:00'
+  candidates_generated: 6
+- trace_id: EXEC-1788143000
+  processed_at: '2026-08-31T02:23:55.974372+00:00'
+  candidates_generated: 5

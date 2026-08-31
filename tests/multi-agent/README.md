@@ -7,6 +7,8 @@ This directory validates the multi-agent collaboration layer of the Agent OS.
 - `phase-4.1-tests.md` — infrastructure validation: orchestrator triggering, team plan generation, and registry conformance.
 - `team-formation/` — Phase 4.2 pattern matching and role selection benchmark.
 - `collaboration-runtime/` — Phase 4.3 scheduling, handoff, conflict, and aggregation benchmark.
+- `comparison/` — Phase 4.4 single vs multi comparison framework and report template.
+- `regression/` — Phase 4.4 regression gates for formation, collaboration, and quality.
 
 ## How to run
 

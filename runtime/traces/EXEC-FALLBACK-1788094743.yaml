@@ -1,0 +1,95 @@
+# Execution Trace — FALLBACK TEST (Memory ON)
+# Phase 5.6.4 — Runtime Integrity Verification
+# timeout → retry → fallback → success chain
+
+execution_id: EXEC-FALLBACK-1788094743
+trace_id: TRACE-FALLBACK-1788094743000001
+task_id: RT-FALLBACK
+task_text: "解释什么是分布式一致性"
+domain: "Distributed System"
+difficulty: "easy"
+memory_mode: "on"
+backend: "opencode"
+model: "opencode/big-pickle"
+status: "success"
+
+pipeline:
+  step_timestamps:
+    router_start: "2026-08-30T12:57:43Z"
+    router_end: "2026-08-30T12:57:43Z"
+    memory_start: "2026-08-30T12:57:43Z"
+    memory_end: "2026-08-30T12:57:43Z"
+    orchestrator_start: "2026-08-30T12:57:43Z"
+    orchestrator_end: "2026-08-30T12:57:43Z"
+    agent_start: "2026-08-30T12:57:43Z"
+    agent_end: "2026-08-30T12:58:38Z"
+
+router:
+  intent: "Concept Explanation"
+  lead_agent: "distributed-system"
+  support_agents: []
+  confidence: "high"
+  reason: "Distributed consistency → distributed-system specialist"
+
+memory_retrieval:
+  mode: "on"
+  memories_used: ["T-009", "E-006"]
+  memory_influence: "confirmation"
+  memory_summary: |
+    T-009 (High Concurrency): Related distributed system knowledge.
+    E-006 (Distributed Evaluation): Confirms distributed specialist.
+
+orchestrator:
+  team_formed: false
+  team_size: 1
+  lead_role: "distributed-system"
+  support_roles: []
+  anti_pattern_alert: false
+  reason: "domains=1, roles=1 → single-agent"
+
+agent_invocation:
+  backend: "opencode"
+  session_id: "ses_fad3fcdf3ffe7D0xv4r7ynGjeK"
+  model: "opencode/big-pickle"
+  tokens: {total: 23521, input: 21487, output: 242, reasoning: 0, cache_read: 1792}
+  cost: 0
+  latency_ms: 55000
+
+agent_response: |
+  分布式一致性指在分布式系统中，多个节点对同一份数据的副本最终保持相同状态的性质。
+  核心关注多节点并发读写时，各副本数据能否保持一致。
+
+  主要类型：
+  - 强一致性：写完后任何读都立即看到最新值（如 Raft、Paxos 多数派）
+  - 弱一致性：不保证立即一致，最终会一致（如异步复制）
+  - 最终一致性：无并发写时可趋同（如 Dynamo、DNS）
+  - 线性一致性：所有操作按全局实时次序，像单机执行一样
+
+  CAP 定理是核心限制：网络分区（P）时只能在一致性（C）和可用性（A）间二选一。
+  工程常用 CP（一致优先，如 ZooKeeper）或 AP（可用优先，如 Cassandra）。
+
+fallback_chain:
+  - attempt: 1
+    model: "opencode/ling-3.0-flash-fin-free"
+    timeout: "30s"
+    result: "timeout"
+    exit_code: 124
+    failure_id: "FAIL-FALLBACK-001"
+  - attempt: 2
+    model: "opencode/big-pickle"
+    timeout: "120s"
+    result: "success"
+    session_id: "ses_fad3fcdf3ffe7D0xv4r7ynGjeK"
+    latency: "55s"
+
+evidence:
+  level: "Level 2 — Runtime Validated"
+  is_real_execution: true
+  is_ai_generated_yaml: false
+  verification:
+    - "ling: 30s timeout → exit 124"
+    - "big-pickle: 120s fallback → success"
+    - "session_id: ses_fad3fcdf3ffe7D0xv4r7ynGjeK"
+    - "tokens: 242 output"
+    - "cost: $0"
+    - "fallback_chain: fully verified"

@@ -1,0 +1,97 @@
+# PROJ-001-T001 Human Review Decision
+# Phase 5.9.2.3 — Engineering Review
+# Generated: 2026-08-31
+
+task_id: PROJ-001-T001
+reviewer: human
+review_date: 2026-08-31
+
+recommendations:
+
+  - recommendation: chunking
+    classification: PARTIAL_EVIDENCE
+    accepted: false
+    reason: |
+      Current implementation (RagService.java:179-203) already uses paragraph-aware
+      splitting with sliding window (500/50). The agent's recommendation is a
+      generic Python LangChain example that is not applicable to this Java project.
+      The existing chunking is reasonable and no code evidence shows it causes problems.
+
+  - recommendation: query_enhancement
+    classification: GENERIC_RECOMMENDATION
+    accepted: false
+    reason: |
+      No code evidence of query problems. HyDE and Query Decomposition would
+      require LLM integration infrastructure not present in the codebase.
+      The agent did not analyze whether the project has an LLM client available
+      for query rewriting. This is a premature optimization.
+
+  - recommendation: hybrid_search
+    classification: PARTIAL_EVIDENCE
+    accepted: false
+    reason: |
+      The search() method (RagService.java:138-148) only uses cosine similarity
+      — no keyword search. However, the agent's BM25 recommendation is Python-specific.
+      A simpler Java-native alternative (MySQL FULLTEXT or LIKE-based keyword search)
+      would be more appropriate. No evidence of keyword search failures in current usage.
+
+  - recommendation: reranking
+    classification: GENERIC_RECOMMENDATION
+    accepted: false
+    reason: |
+      Current code sorts by cosine similarity only (line 147). The agent's
+      CrossEncoder recommendation is Python-specific (sentence_transformers library).
+      No Java-native reranking approach was proposed. The existing topK=3 default
+      makes reranking less critical at current scale.
+
+  - recommendation: metadata_filtering
+    classification: PARTIAL_EVIDENCE
+    accepted: false
+    reason: |
+      Search filters by userId only (line 124-128). No kb_id filtering.
+      The agent's metadata suggestions (doc_type, version, language) do not match
+      the KnowledgeChunk entity schema (id, kbId, title, content, embedding, createdAt).
+      Adding kb_id as an optional filter would be a simple and useful change.
+
+overall:
+  helpful: false
+  neutral: true
+  harmful: false
+  unknown: false
+
+implementation_decision: DEFER
+
+review_notes: |
+  The agent's 5 recommendations are all generic RAG best practices translated
+  into Python code examples. None are specific to this Java/Spring Boot/MyBatis-Plus
+  codebase. The agent did not reference specific line numbers, did not analyze
+  the actual Java implementation, and did not propose Java-native solutions.
+
+  The code review reveals actual code-level issues the agent missed:
+  1. O(n) linear scan of all chunks (line 124-148)
+  2. JSON vector storage in MySQL (line 33, embedding field)
+  3. SQL injection risk in inSql (line 126-127, userId concatenation)
+  4. No kb_id filtering option in search API
+  5. No pagination/batch processing for large datasets
+
+  These are concrete, code-evidenced issues that could be addressed with
+  minimal, safe changes. The agent's generic recommendations should be deferred
+  in favor of code-specific fixes.
+
+  Also notable: the agent proposed Python code (LangChain, sentence_transformers,
+  CrossEncoder) for a Java project. This suggests the agent was not effectively
+  using the project context to tailor its recommendations.
+
+evidence_level: real_project_candidate
+
+# Memory Influence Reclassification
+
+memory_influence:
+  original: confirmation
+  reclassified: confirmation
+  detail: |
+    All 5 retrieved memories (E-004, T-005, P-001, T-001, S-001) had low
+    relevance scores (0.306-0.358) and the agent output was generic RAG advice.
+    No evidence that any specific memory caused a decision change or improvement.
+    The memories confirmed the agent's generic approach but did not provide
+    project-specific guidance.

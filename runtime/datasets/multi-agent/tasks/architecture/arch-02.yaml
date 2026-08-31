@@ -1,0 +1,13 @@
+task_id: arch-02
+category: architecture
+difficulty: hard
+description: Design a flash-sale (seckill) system handling 1M concurrent requests with inventory consistency, anti-oversell guarantees, and order flow separation from the normal shopping path.
+expected_roles: [system-architect, backend-architect, database-engineer, distributed-system]
+evaluation_points:
+  - traffic shunting and queueing design
+  - inventory consistency and idempotency
+  - hot-spot data handling
+  - order flow isolation
+  - degradation strategy under overload
+baseline_expectation: a single system-architect covers queueing and caching at a high level but under-specifies consistency primitives and failure recovery.
+multi_agent_expectation: distributed-system owns consistency and concurrency primitives, database-engineer owns hot-spot storage design, backend-architect owns the isolated order flow; the lead integrates them into one coherent plan.

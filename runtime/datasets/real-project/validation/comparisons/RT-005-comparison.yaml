@@ -1,0 +1,30 @@
+# Pipeline Validation Comparison
+
+task_id: RT-005
+domain: Database / Cache
+difficulty: easy
+
+memory_off:
+  router_decision: {lead: database-engineer, support: [backend-architect]}
+  orchestrator_decision: {team_formed: true, team_size: 2}
+  roles: [database-engineer, backend-architect]
+
+memory_on:
+  retrieved_memories: [T-010 (0.255), AP-001 (0.255), T-009 (0.240), P-001 (0.180)]
+  memory_used: [T-010, AP-001]
+  memory_influence: confirmation
+  router_decision: {lead: database-engineer, support: [backend-architect]}
+  orchestrator_decision: {team_formed: true, team_size: 2, anti_pattern_alert: true}
+  roles: [database-engineer, backend-architect]
+
+decision_changed: false
+decision_change_type: null
+memory_induced_regression: false
+fallback: false
+comparison_valid: true
+context_compatibility: low
+context_compatibility_note: "T-010 is MySQL, not Redis. Memory correctly did not force change."
+memory_misapplication: false
+hypothesis_contamination: false
+cross_condition_contamination: none
+evidence_level: benchmark_evaluated

@@ -164,5 +164,12 @@
     "changes": [
       "Initial introduction as the Phase 4.3 collaboration runtime: layered scheduling, execution state, handoff enforcement, conflict routing, result aggregation. Planning and coordination only; no autonomous execution."
     ]
+  },
+  "quality-evaluator": {
+    "version": "1.0",
+    "updated": "2026-08-30",
+    "changes": [
+      "Added multi-agent evaluation: role selection, collaboration efficiency, and final output quality assessment."
+    ]
   }
 }

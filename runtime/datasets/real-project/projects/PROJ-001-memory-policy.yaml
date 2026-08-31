@@ -1,0 +1,91 @@
+# Memory Policy — PROJ-001 (aiview)
+# Phase 5.9.1 — Real Project Onboarding
+# Generated: 2026-08-31
+
+project_id: PROJ-001
+project_name: "aiview — AI 面试陪练与智能反馈平台"
+
+# ── Retrieval Policy ──
+
+retrieval:
+  enabled: true
+  mode: auto
+  max_memories: 5
+  min_relevance_score: 0.2
+  evidence_weight_enabled: true
+  note: |
+    Memory retrieval 在任务执行时自动触发。
+    检索结果作为 Router 和 Orchestrator 的辅助输入，不覆盖 Agent 决策。
+
+# ── Feedback Policy ──
+
+feedback:
+  enabled: true
+  auto_collect: true
+  human_review_required: true
+  feedback_types:
+    - helpful
+    - neutral
+    - harmful
+    - unknown
+
+# ── Promotion Policy ──
+
+promotion:
+  automatic: false
+  human_review: true
+  safety_gate:
+    - benchmark_evaluated
+    - runtime_validated
+    - real_project_candidate
+    - human_review
+    - real_project_validated
+  minimum_observations: 2
+  minimum_independent_executions: 2
+  note: |
+    第一个真实项目阶段数据非常珍贵，
+    不能让早期噪声自动污染长期 Memory。
+    所有 Promotion 必须经过人工审核。
+
+# ── Memory Compatibility ──
+
+memory_compatibility:
+  high:
+    - T-003  # Spring Boot 微服务拆分
+    - T-004  # 支付系统
+    - E-001  # 架构评审
+    - S-001  # 成功模式
+    - P-001  # 通用技能
+    - T-001  # 高并发秒杀
+    - T-002  # 企业知识库问答系统
+  medium:
+    - T-005  # RAG 系统设计 (partial match: aiview has RAG module)
+    - E-004  # 代码质量
+    - E-005  # 测试策略
+  low:
+    - E-002  # 安全审计
+    - E-003  # 性能优化
+
+# ── Privacy Policy ──
+
+privacy:
+  sensitive_fields:
+    - DEEPSEEK_API_KEY
+    - OPENAI_API_KEY
+    - JWT_SECRET
+    - MYSQL_PASSWORD
+    - MYSQL_ROOT_PASSWORD
+    - password_hash
+    - OLLAMA_BASE_URL
+  allowed_in_memory:
+    - technology_stack
+    - architecture_patterns
+    - module_names
+    - api_endpoints (public)
+  forbidden_in_memory:
+    - api_keys
+    - passwords
+    - tokens
+    - secrets
+    - private_keys
+    - user_data

@@ -1,0 +1,37 @@
+execution_id: PV-RT012-OFF
+task_id: RT-012
+mode: memory_off
+execution_order: first
+contamination_risk: low
+
+task:
+  user_request: "前端性能优化与缓存策略"
+  domain: "Frontend"
+  difficulty: "medium"
+  expected_skills: ["frontend-architect", "backend-architect"]
+
+memory_off:
+  router_decision:
+    intent: "Optimization"
+    lead_agent: "frontend-architect"
+    support_agents: ["backend-architect"]
+    confidence: "high"
+    fallback_used: false
+    reason: "Frontend performance → frontend-architect lead. Cache strategy → backend-architect support."
+  orchestrator_decision:
+    team_formed: true
+    activation_reason: "domains=2 (frontend, cache/backend). R7: frontend deliverable → frontend-architect."
+    team_size: 2
+    lead_role: "frontend-architect"
+    support_roles: ["backend-architect"]
+    pattern_used: null
+  selected_roles: ["frontend-architect", "backend-architect"]
+  decision_provenance:
+    router_rules: ["frontend → frontend-architect", "cache → backend-architect"]
+    reason: "Cross-domain frontend+backend. Frontend lead, backend support for cache."
+
+outcome:
+  pipeline_correct: true
+  result: "decision_preserved"
+  human_feedback: "unknown"
+  evidence_level: "benchmark_evaluated"

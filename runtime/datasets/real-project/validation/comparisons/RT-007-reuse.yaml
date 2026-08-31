@@ -1,0 +1,148 @@
+# Phase 5.8.2.4 — RT-007 Reuse Comparison
+# Generated: 2026-08-31
+
+task_id: RT-007
+task_text: "LLM 应用接入层设计"
+domain: AI / Model Integration
+difficulty: medium
+
+# ── Memory OFF ──────────────────────────────────────────────────────
+
+memory_off:
+  execution_id: EXEC-1788139408
+  trace_id: TRACE-EXEC-1788139408-7a9550ca39db
+  session_id: ses_faa95cef8ffe0SgvD346sglbbV
+  model: opencode/big-pickle
+  status: success
+  latency_ms: 33864
+  tokens:
+    total: 24564
+    input: 245
+    output: 1535
+  memory_mode: 'off'
+  memories_retrieved: 0
+  decision:
+    lead_agent: llm-engineer
+    support_agents: []
+    team_size: 1
+    team_formed: false
+  roles:
+    lead: llm-engineer
+    support: []
+  result: success
+  agent_says: "No relevant memory. This is a self-contained design task."
+
+# ── Memory ON ───────────────────────────────────────────────────────
+
+memory_on:
+  execution_id: EXEC-1788139504
+  trace_id: TRACE-EXEC-1788139504-225aa279d9e1
+  session_id: ses_faa9456faffe6j6d3VsWuqV94e
+  model: opencode/big-pickle
+  status: success
+  latency_ms: 32638
+  tokens:
+    total: 24897
+    input: 269
+    output: 1588
+  memory_mode: 'on'
+  memories_retrieved: 5
+  retrieved_memories:
+    - memory_id: E-005
+      type: effectiveness
+      relevance_score: 0.502
+      final_score: 0.49
+      used: true
+    - memory_id: T-005
+      type: task
+      relevance_score: 0.26
+      evidence_weight: 0.4
+      final_score: 0.486
+      used: true
+    - memory_id: P-001
+      type: pattern
+      relevance_score: 0.203
+      final_score: 0.446
+      used: true
+    - memory_id: S-001
+      type: success
+      relevance_score: 0.352
+      final_score: 0.438
+      used: true
+    - memory_id: E-004
+      type: effectiveness
+      relevance_score: 0.25
+      final_score: 0.402
+      used: true
+  memory_influence: confirmation
+  decision:
+    lead_agent: llm-engineer
+    support_agents: []
+    team_size: 1
+    team_formed: false
+  roles:
+    lead: llm-engineer
+    support: []
+  result: success
+
+# ── T-005 Specific ──────────────────────────────────────────────────
+
+t005_retrieval:
+  target_memory: T-005
+  retrieved: true
+  rank: 2
+  total_retrieved: 5
+  relevance_score: 0.26
+  evidence_weight: 0.4
+  final_score: 0.486
+  used: true
+  influence: confirmation
+  reason: "Low relevance (0.26) offset by evidence_weight (0.4) → 0.486 final score, ranked #2"
+
+# ── Comparison ──────────────────────────────────────────────────────
+
+comparison:
+  decision_changed: false
+  role_changed: false
+  strategy_changed: false
+  regression: false
+  memory_induced_regression: 0
+  comparison_valid: true
+
+  # Both OFF and ON: single-agent, llm-engineer
+  # Memory ON added RAG mention in agent response (context enrichment)
+  # No change in Router decision, Orchestrator team, or Agent role
+
+# ── Context Compatibility ───────────────────────────────────────────
+
+context_compatibility:
+  architecture: "medium — T-005 is RAG system design, RT-007 is LLM access layer"
+  technology: "medium — both involve LLM infrastructure, different layers"
+  scale: "medium — both enterprise-level"
+  constraints: "low — T-005 focuses on retrieval quality, RT-007 on API resilience"
+  project_stage: "medium"
+  overall: "medium"
+
+# ── Regression ──────────────────────────────────────────────────────
+
+regression_check:
+  memory_off_result: success
+  memory_on_result: success
+  decision_unchanged: true
+  no_incorrect_guidance: true
+  memory_induced_regression: 0
+
+# ── State Stability ─────────────────────────────────────────────────
+
+state_stability:
+  t005_before:
+    evidence_level: runtime_validated
+    confidence: medium
+    observation_count: 2
+    promoted: true
+  t005_after:
+    evidence_level: runtime_validated
+    confidence: medium
+    observation_count: 2
+    promoted: true
+  state_changed: false

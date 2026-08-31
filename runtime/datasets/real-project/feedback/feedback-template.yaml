@@ -1,0 +1,25 @@
+# Real Project Feedback Template
+
+# This is a template. Fill in real data only.
+
+feedback_id: ""           # e.g. "FB-<project_id>-<task_id>"
+project_id: ""            # References projects/<project-id>.yaml
+task_id: ""               # References tasks/<task-id>.yaml
+execution_id: ""          # From loop_controller output
+
+# ── Feedback ──
+# Only allowed values: helpful | neutral | harmful | unknown
+feedback_type: ""
+
+# Why this feedback was given
+reason: ""
+
+# Who provided the feedback
+reviewer_role: ""         # e.g. "developer", "tech-lead", "reviewer"
+timestamp: ""             # ISO8601
+
+# ── Memory Impact ──
+memory_used: []           # List of memory_ids used in this execution
+memory_helpful: []        # Which memories were helpful
+memory_harmful: []        # Which memories were harmful
+memory_misapplied: []     # Which memories were retrieved but should not have been

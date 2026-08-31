@@ -1,0 +1,171 @@
+version: '1.0'
+phase: 5.8.2.2
+generated_at: '2026-08-31T01:02:15Z'
+generated_by: collector.py (Phase 5.8.2.2 Loop Controller)
+source_executions:
+- EXEC-1788091469
+- EXEC-1788137999
+candidates:
+- candidate_id: CAND-EXEC-1788137999-E-004
+  source_execution: EXEC-1788137999
+  target_memory: E-004
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory E-004 was used in EXEC-1788137999 (RT-011). Execution succeeded. Memory influence: confirmation. This
+    confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: &id001
+      total: 27689
+      input: 58
+      output: 2318
+      reasoning: 132
+      cache_read: 25181
+      cache_write: 0
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788091469-T-005
+  source_execution: EXEC-1788091469
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 2.95
+  quality_breakdown:
+    completeness: 4
+    accuracy: 2
+    structure: 3
+    actionability: 3
+    novelty: 3
+  reasoning: 'Memory T-005 was used in EXEC-1788091469 (RT-002). Memory influence: confirmation. This confirms the memory
+    is valid and useful for RAG-related tasks.'
+  evidence:
+    session_id: ses_fad713c63ffeNKdUnTt19ljGId
+    model: opencode/ling-3.0-flash-fin-free
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 54000
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-T-005
+  source_execution: EXEC-1788137999
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory T-005 was used in EXEC-1788137999 (RT-011). Execution succeeded. Memory influence: confirmation. This
+    confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-S-001
+  source_execution: EXEC-1788137999
+  target_memory: S-001
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory S-001 was used in EXEC-1788137999 (RT-011). Execution succeeded. Memory influence: confirmation. This
+    confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-P-001
+  source_execution: EXEC-1788137999
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory P-001 was used in EXEC-1788137999 (RT-011). Execution succeeded. Memory influence: confirmation. This
+    confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-E-005
+  source_execution: EXEC-1788137999
+  target_memory: E-005
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory E-005 was used in EXEC-1788137999 (RT-011). Execution succeeded. Memory influence: confirmation. This
+    confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-AP-001
+  source_execution: EXEC-1788137999
+  target_memory: AP-001
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: Anti-pattern alert triggered in EXEC-1788137999. Execution succeeded. AP-001 (Team Inflation Guard) correctly
+    prevented unnecessary team formation.
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+cycle_summary:
+  total_candidates: 6
+  reinforce: 6
+  weaken: 0
+  create_hypothesis: 0
+  safety_checks:
+    no_memory_off_processed: PASS
+    all_candidates_from_real_traces: PASS
+    no_direct_memory_modification: PASS
+    hypotheses_held_not_promoted: PASS
+    idempotency: PASS — collector_state.yaml prevents duplicates

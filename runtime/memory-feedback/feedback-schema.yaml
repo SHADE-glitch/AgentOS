@@ -1,0 +1,182 @@
+# Memory Feedback Schema
+# Phase 5.7 — Self-Improving Memory System
+# Defines the pipeline from execution result to memory promotion/rejection
+
+version: "1.0"
+phase: "5.7"
+status: "active"
+
+# =============================================================================
+# 1. Feedback Pipeline
+# =============================================================================
+# 
+# execution_result         ← from Runtime (trace + telemetry)
+#        ↓
+# quality_evaluation       ← assess output quality
+#        ↓
+# memory_candidate         ← propose memory changes
+#        ↓
+# validation               ← verify against gates + evidence
+#        ↓
+# promotion/rejection      ← apply or discard
+#
+# =============================================================================
+
+pipeline:
+  stages:
+    - stage: stage_1_execution_result
+      description: "Extract execution result from Runtime trace"
+      input: "runtime/traces/EXEC-*.yaml"
+      required_fields:
+        - execution_id
+        - task_id
+        - task_text
+        - domain
+        - difficulty
+        - memory_mode
+        - status
+        - agent_invocation.session_id
+        - agent_invocation.model
+        - agent_invocation.tokens
+        - agent_invocation.latency_ms
+        - agent_response
+      produced: "execution_summary"
+
+    - stage: stage_2_quality_evaluation
+      description: "Evaluate the quality of the execution output"
+      input: "execution_summary"
+      evaluation_dimensions:
+        completeness:
+          weight: 0.25
+          description: "Does the response address all aspects of the task?"
+          scale: [1, 2, 3, 4, 5]
+        accuracy:
+          weight: 0.30
+          description: "Is the technical content correct and well-reasoned?"
+          scale: [1, 2, 3, 4, 5]
+        structure:
+          weight: 0.15
+          description: "Is the response well-organized and readable?"
+          scale: [1, 2, 3, 4, 5]
+        actionability:
+          weight: 0.20
+          description: "Can the output be directly used or implemented?"
+          scale: [1, 2, 3, 4, 5]
+        novelty:
+          weight: 0.10
+          description: "Does the response provide new insights beyond existing memories?"
+          scale: [1, 2, 3, 4, 5]
+      quality_thresholds:
+        promote: 4.0    # score >= 4.0 → candidate for promotion
+        review: 3.0     # 3.0 <= score < 4.0 → manual review
+        reject: 0.0     # score < 3.0 → auto-reject
+      produced: "quality_score"
+
+    - stage: stage_3_memory_candidate
+      description: "Propose memory changes based on execution quality"
+      input: ["execution_summary", "quality_score"]
+      candidate_types:
+        - type: "memory_confirmation"
+          description: "Execution confirms existing memory — increase evidence"
+          action: "increment_observation_count"
+        - type: "memory_refinement"
+          description: "Execution suggests memory needs updating"
+          action: "update_memory_content"
+        - type: "memory_creation"
+          description: "New insight not covered by existing memories"
+          action: "create_new_memory"
+        - type: "memory_deprecation"
+          description: "Execution contradicts existing memory"
+          action: "mark_for_deprecation"
+      produced: "memory_candidate"
+
+    - stage: stage_4_validation
+      description: "Validate candidate against Memory Gates M1-M6"
+      input: "memory_candidate"
+      gates:
+        - M1_provenance: "source must be traceable"
+        - M2_evidence_level: "evidence_level must be valid"
+        - M3_duplicate: "no duplicate memories"
+        - M4_confidence: "confidence matches observation count"
+        - M5_relevance: "memory is relevant to its category"
+        - M6_staleness: "memory is not stale"
+      validation_rules:
+        # Only promote with runtime-validated evidence
+        min_evidence_level: "runtime_validated"
+        # Must have at least 2 independent observations for confidence upgrade
+        min_observations_for_medium: 2
+        min_observations_for_high: 5
+        # Output hash must be unique (no duplicate responses)
+        require_unique_output_hash: true
+      produced: "validation_result"
+
+    - stage: stage_5_promotion_rejection
+      description: "Apply or reject the memory change"
+      input: "validation_result"
+      outcomes:
+        promote:
+          conditions:
+            - "quality_score >= 4.0"
+            - "all gates pass"
+            - "evidence_level >= runtime_validated"
+          actions:
+            - "increment memory.observation_count"
+            - "update memory.last_validated_at"
+            - "recalculate memory.confidence (M4)"
+            - "update memory.evidence_level if 2+ independent sources"
+            - "record in memory-candidates.yaml with outcome: promoted"
+        reject:
+          conditions:
+            - "quality_score < 3.0"
+            - "OR any gate fails"
+          actions:
+            - "record in memory-candidates.yaml with outcome: rejected"
+            - "include rejection_reason"
+        hold:
+          conditions:
+            - "3.0 <= quality_score < 4.0"
+            - "OR insufficient evidence"
+          actions:
+            - "record in memory-candidates.yaml with outcome: pending"
+            - "require human review or additional evidence"
+
+# =============================================================================
+# 2. Evidence Level Progression
+# =============================================================================
+
+evidence_progression:
+  initial: "benchmark_evaluated"
+  runtime_validated:
+    requirement: "Executed via Runtime with real session_id and token usage"
+    promotion: "Automatic after first runtime execution"
+  independent_validated:
+    requirement: "2+ independent runtime executions confirm the memory"
+    promotion: "After 2+ executions with consistent quality scores"
+  trusted:
+    requirement: "5+ independent runtime executions, no regressions"
+    promotion: "After 5+ consistent observations"
+
+# =============================================================================
+# 3. Feedback Loop Safety
+# =============================================================================
+
+safety:
+  # Never promote without runtime evidence
+  require_runtime_proof: true
+  
+  # Never downgrade evidence_level below source
+  min_evidence_level: "benchmark_evaluated"
+  
+  # Maximum promotions per feedback cycle
+  max_promotions_per_cycle: 5
+  
+  # Regression detection
+  regression:
+    check: "If new execution contradicts existing promoted memory"
+    action: "Rollback promotion, mark for review, do NOT auto-deprecate"
+  
+  # Contamination prevention
+  contamination:
+    - "Feedback from Memory OFF executions is treated as baseline only"
+    - "Only Memory ON executions can modify memory content"
+    - "Hypotheses are NEVER auto-promoted — require human review"

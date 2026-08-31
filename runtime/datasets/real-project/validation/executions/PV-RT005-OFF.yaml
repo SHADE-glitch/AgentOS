@@ -1,0 +1,37 @@
+execution_id: PV-RT005-OFF
+task_id: RT-005
+mode: memory_off
+execution_order: second
+contamination_risk: low
+
+task:
+  user_request: "Redis 缓存击穿排查"
+  domain: "Database / Cache"
+  difficulty: "easy"
+  expected_skills: ["database-engineer", "backend-architect"]
+
+memory_off:
+  router_decision:
+    intent: "Debug"
+    lead_agent: "database-engineer"
+    support_agents: ["backend-architect"]
+    confidence: "high"
+    fallback_used: false
+    reason: "Redis/cache issue → database-engineer (closest specialist). Backend-architect for cache strategy."
+  orchestrator_decision:
+    team_formed: true
+    activation_reason: "domains=2 (database, cache). Need cache strategy from backend-architect."
+    team_size: 2
+    lead_role: "database-engineer"
+    support_roles: ["backend-architect"]
+    pattern_used: null
+  selected_roles: ["database-engineer", "backend-architect"]
+  decision_provenance:
+    router_rules: ["SQL/DB performance → database-engineer"]
+    reason: "Cache + DB issue. database-engineer lead for cache diagnosis, backend-architect for cache strategy."
+
+outcome:
+  pipeline_correct: true
+  result: "decision_preserved"
+  human_feedback: "unknown"
+  evidence_level: "benchmark_evaluated"

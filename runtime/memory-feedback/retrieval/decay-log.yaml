@@ -1,0 +1,1043 @@
+version: '1.0'
+phase: '5.8'
+cycles:
+- timestamp: '2026-08-30T13:39:54.483745+00:00'
+  summary:
+    total_memories: 31
+    active: 0
+    degraded: 31
+    archived_candidate: 0
+  decayed:
+  - memory_id: T-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    - 'low_performance_mild: avg_quality=1.15 vs global=2.03'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: F-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: F-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: S-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: S-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: P-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: P-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: AP-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: H-001
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: H-002
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-011
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-012
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+- timestamp: '2026-08-30T13:50:34.936451+00:00'
+  summary:
+    total_memories: 31
+    active: 2
+    degraded: 29
+    archived_candidate: 0
+  decayed:
+  - memory_id: T-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    - 'low_performance_mild: avg_quality=1.15 vs global=2.03'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: F-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: F-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: S-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: P-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: AP-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: H-001
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: H-002
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-011
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-012
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+- timestamp: '2026-08-30T13:50:49.631029+00:00'
+  summary:
+    total_memories: 31
+    active: 2
+    degraded: 29
+    archived_candidate: 0
+  decayed:
+  - memory_id: T-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    - 'low_performance_mild: avg_quality=1.15 vs global=2.03'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: F-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: F-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: S-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: P-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: AP-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: H-001
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: H-002
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-011
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-012
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+- timestamp: '2026-08-30T13:51:38.152918+00:00'
+  summary:
+    total_memories: 31
+    active: 2
+    degraded: 29
+    archived_candidate: 0
+  decayed:
+  - memory_id: T-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    - 'low_performance_mild: avg_quality=1.15 vs global=2.03'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: T-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: T-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: F-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: F-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: S-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: P-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: AP-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: H-001
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: H-002
+    decay_factor: 0.7
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    - 'hypothesis: default decay'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-001
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-002
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-003
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-004
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-005
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-006
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 2
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-007
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'low_confidence: 0 observations'
+    usage_count: 1
+    success_rate: 1.0
+    observation_count: 0
+  - memory_id: E-008
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-009
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-010
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-011
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0
+  - memory_id: E-012
+    decay_factor: 0.85
+    state: degraded
+    reasons:
+    - 'unused: no usage data'
+    - 'low_confidence: 0 observations'
+    usage_count: 0
+    success_rate: 0.5
+    observation_count: 0

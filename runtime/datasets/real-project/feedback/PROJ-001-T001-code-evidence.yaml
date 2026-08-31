@@ -1,0 +1,211 @@
+# Code Evidence Matrix — PROJ-001-T001
+# Phase 5.9.2.4 — Code-Specific Re-Analysis
+# Generated: 2026-08-31
+
+task_id: PROJ-001-T001
+task_text: RAG 知识库检索优化
+project: aiview (PROJ-001)
+analysis_date: 2026-08-31
+
+findings:
+
+  - id: F-001
+    finding: O(n) 全量分块线性扫描
+    classification: FACT
+    file: backend/src/main/java/com/aiview/rag/service/RagService.java
+    class: RagService
+    method: search
+    line_range: 124-148
+    evidence: |
+      RagService.java:124-128:
+        chunkMapper.selectList(
+            new LambdaQueryWrapper<KnowledgeChunk>()
+                .inSql(KnowledgeChunk::getKbId,
+                    "SELECT id FROM knowledge_base WHERE user_id = " + userId
+                            + " AND deleted = 0"));
+
+      RagService.java:138-146:
+        for (KnowledgeChunk chunk : chunks) {
+            float[] vec = parseVector(chunk.getEmbedding());
+            ...
+            double score = cosine(queryVec, vec);
+        }
+
+      All chunks loaded into memory, no LIMIT, no pagination,
+      no batch processing. Cosine computed per chunk in Java loop.
+    severity: HIGH
+    confidence: HIGH
+    mitigation_existing: none
+
+  - id: F-002
+    finding: JSON 字符串存储 embedding 向量
+    classification: FACT
+    file: backend/src/main/java/com/aiview/rag/entity/KnowledgeChunk.java
+    class: KnowledgeChunk
+    method: N/A (entity field)
+    line_range: 23
+    evidence: |
+      KnowledgeChunk.java:23:
+        private String embedding;
+
+      RagService.java:209-218 (parseVector):
+        var node = objectMapper.readTree(json);
+        float[] vec = new float[node.size()];
+        for (int i = 0; i < node.size(); i++) {
+            vec[i] = (float) node.get(i).asDouble();
+        }
+
+      RagService.java:220-226 (toJson):
+        return objectMapper.writeValueAsString(vec);
+
+      Vector stored as JSON string in MySQL TEXT column.
+      No native vector type, no vector index, no approximate search.
+      JSON parse + deserialize on every search query.
+    severity: HIGH
+    confidence: HIGH
+    mitigation_existing: none
+
+  - id: F-003
+    finding: inSql userId 拼接存在 SQL 注入风险
+    classification: FACT
+    file: backend/src/main/java/com/aiview/rag/service/RagService.java
+    class: RagService
+    method: search
+    line_range: 126-128
+    evidence: |
+      RagService.java:126-128:
+        .inSql(KnowledgeChunk::getKbId,
+            "SELECT id FROM knowledge_base WHERE user_id = " + userId
+                    + " AND deleted = 0")
+
+      userId is a Long parameter concatenated directly into SQL string.
+      MyBatis-Plus inSql() does not parameterize the subquery.
+      While userId comes from UserContext (internal), defensive coding
+      should use parameterized queries.
+    severity: MEDIUM
+    confidence: HIGH
+    mitigation_existing: |
+      userId is Long from UserContext, not from user input directly.
+      But Long concatenation is still a code smell.
+
+  - id: F-004
+    finding: 缺少按知识库过滤的搜索
+    classification: FACT
+    file: backend/src/main/java/com/aiview/rag/service/RagService.java
+    class: RagService
+    method: search
+    line_range: 124-128
+    evidence: |
+      RagService.java:124-128:
+        .inSql(KnowledgeChunk::getKbId,
+            "SELECT id FROM knowledge_base WHERE user_id = ...")
+
+      SearchRequest.java:24-27:
+        public static class SearchRequest {
+            private String query;
+            private Integer topK = 3;
+        }
+
+      SearchRequest has no kbId field. All user knowledge bases
+      are searched together. No way to scope search to one KB.
+    severity: LOW
+    confidence: HIGH
+    mitigation_existing: none
+
+  - id: F-005
+    finding: 无 Embedding 缓存
+    classification: INFERENCE
+    file: backend/src/main/java/com/aiview/rag/service/RagService.java
+    class: RagService
+    method: addContent
+    line_range: 84-99
+    evidence: |
+      RagService.java:84-99:
+        List<String> pieces = chunkText(req.getContent());
+        List<float[]> vectors = embeddingClient.embedAll(pieces);
+        for (int i = 0; i < pieces.size(); i++) {
+            ...
+            chunk.setEmbedding(toJson(vectors.get(i)));
+            chunkMapper.insert(chunk);
+        }
+
+      Re-embedding identical content on every addContent() call.
+      If the same content is added to multiple KBs, it gets re-embedded.
+      No content hash or deduplication.
+    severity: LOW
+    confidence: MEDIUM
+    mitigation_existing: none
+
+recommendations:
+
+  - recommendation: 修复 SQL 注入 (参数化查询)
+    source_finding: F-003
+    classification: DIRECT_EVIDENCE
+    java_native: true
+    evidence: |
+      RagService.java:126-128 — inSql 中 userId 字符串拼接
+    implementation_candidate:
+      title: 使用 MyBatis-Plus 参数化查询替换 inSql
+      files:
+        - backend/src/main/java/com/aiview/rag/service/RagService.java
+      methods:
+        - search
+      current_behavior: |
+        .inSql(KnowledgeChunk::getKbId,
+            "SELECT id FROM knowledge_base WHERE user_id = " + userId + " AND deleted = 0")
+      proposed_change: |
+        先查询 kbId 列表，再使用 .in():
+        List<Long> kbIds = kbMapper.selectList(
+            new LambdaQueryWrapper<KnowledgeBase>()
+                .select(KnowledgeBase::getId)
+                .eq(KnowledgeBase::getUserId, userId))
+            .stream().map(KnowledgeBase::getId).toList();
+        List<KnowledgeChunk> chunks = chunkMapper.selectList(
+            new LambdaQueryWrapper<KnowledgeChunk>()
+                .in(KnowledgeChunk::getKbId, kbIds));
+      expected_benefit: 消除 SQL 注入风险，使用 MyBatis-Plus 参数化查询
+      risk: 多一次 DB 查询 (kbIds fetch)，但 kb 数量通常很少
+      rollback: 恢复原始 inSql 语句
+    verification:
+      baseline: userId 拼接 SQL
+      change: 参数化 .in() 查询
+      metric: correctness (相同搜索结果)
+      success_criteria: 搜索结果与修复前一致，无 SQL 注入向量
+
+  - recommendation: 添加 kbId 可选过滤
+    source_finding: F-004
+    classification: DIRECT_EVIDENCE
+    java_native: true
+    evidence: |
+      SearchRequest 缺少 kbId 字段，RagService.search() 无法按 KB 过滤
+    implementation_candidate:
+      title: 为 SearchRequest 添加可选 kbId 字段
+      files:
+        - backend/src/main/java/com/aiview/rag/dto/RagDtos.java
+        - backend/src/main/java/com/aiview/rag/service/RagService.java
+      methods:
+        - SearchRequest (add field)
+        - search (add filter)
+      current_behavior: 搜索所有用户知识库
+      proposed_change: |
+        SearchRequest 添加:
+          private Long kbId;
+
+        RagService.search() 中:
+          if (req.getKbId() != null) {
+              wrapper.eq(KnowledgeChunk::getKbId, req.getKbId());
+          }
+      expected_benefit: 支持按知识库搜索，减少无关结果
+      risk: 低 (新增字段，向后兼容)
+      rollback: 移除 kbId 字段，恢复原查询
+    verification:
+      baseline: 搜索所有 KB
+      change: 可选 kbId 过滤
+      metric: correctness (有 kbId 时只返回该 KB 的结果)
+      success_criteria: 指定 kbId 时搜索结果只包含该知识库内容
+
+final:
+  strongest_issue: F-001 (O(n) 全量分块线性扫描)
+  strongest_recommendation: F-003 fix (SQL injection, low risk, high confidence)
+  implementation_allowed: true
+  max_candidates: 2

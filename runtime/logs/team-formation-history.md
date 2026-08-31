@@ -16,7 +16,7 @@ quality_result:
 ## Field meanings
 
 - task: task id and short description
-- matched_pattern: the pattern from `memory/agent-team-patterns/` that matched
+- matched_pattern: the pattern from `memory/patterns/` that matched
 - selected_agents: final team (lead first)
 - rejected_agents: roles pruned or avoided, with the rule that rejected them
 - reason: why this pattern matched and why roles were selected or rejected

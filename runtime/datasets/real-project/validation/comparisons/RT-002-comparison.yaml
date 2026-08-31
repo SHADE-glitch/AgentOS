@@ -1,0 +1,29 @@
+# Pipeline Validation Comparison
+
+task_id: RT-002
+domain: AI / RAG
+difficulty: medium
+
+memory_off:
+  router_decision: {lead: rag-engineer, support: [llm-engineer, prompt-engineer]}
+  orchestrator_decision: {team_formed: true, team_size: 3, pattern: P-001}
+  roles: [rag-engineer, llm-engineer, prompt-engineer]
+
+memory_on:
+  retrieved_memories: [T-005 (0.500), S-001 (0.420), E-004 (0.360), E-005 (0.300), E-010 (0.240)]
+  memory_used: [T-005, S-001, E-004, E-005]
+  memory_influence: confirmation
+  router_decision: {lead: rag-engineer, support: [llm-engineer, prompt-engineer]}
+  orchestrator_decision: {team_formed: true, team_size: 3, pattern: P-001}
+  roles: [rag-engineer, llm-engineer, prompt-engineer]
+
+decision_changed: false
+decision_change_type: null
+memory_induced_regression: false
+fallback: false
+comparison_valid: true
+context_compatibility: high
+memory_misapplication: false
+hypothesis_contamination: false
+cross_condition_contamination: none
+evidence_level: benchmark_evaluated

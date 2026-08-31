@@ -1,0 +1,189 @@
+# Execution Trace — PROJ-001-T001 (Memory ON)
+# Phase 5.8.2.2 — Closed-Loop Runtime Controller
+# Generated: 2026-08-31T02:23:55.949905+00:00
+# Backend: OpenCode CLI
+
+execution_id: EXEC-1788143000
+trace_id: TRACE-EXEC-1788143000-00f7962e69d6
+task_id: PROJ-001-T001
+task_text: RAG 知识库检索优化
+domain: Optimization
+difficulty: medium
+memory_mode: 'on'
+backend: opencode
+model: opencode/mimo-v2.5-free
+status: success
+pipeline:
+  step_timestamps:
+    router_start: '2026-08-31T02:23:55.949536+00:00'
+    router_end: '2026-08-31T02:23:55.949536+00:00'
+    memory_start: '2026-08-31T02:23:55.949536+00:00'
+    memory_end: '2026-08-31T02:23:55.949536+00:00'
+    orchestrator_start: '2026-08-31T02:23:55.949536+00:00'
+    orchestrator_end: '2026-08-31T02:23:55.949536+00:00'
+    agent_start: '2026-08-31T02:23:55.949536+00:00'
+    agent_end: '2026-08-31T02:23:55.949536+00:00'
+router:
+  intent: Optimization
+  lead_agent: rag-engineer
+  support_agents: []
+  confidence: high
+  reason: 'Task classification: optimization, domains=[''rag'', ''optimization'']'
+  rules_applied:
+  - Category optimization → rag-engineer
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: E-004
+    type: effectiveness
+    category: ai
+    relevance_score: 0.302
+    evidence_weight: 0.0
+    final_score: 0.358
+    used: true
+    match_reasons: &id001
+    - relevance=0.302
+    - success_rate=0.75
+  - memory_id: T-005
+    type: task
+    category: ai
+    relevance_score: 0.163
+    evidence_weight: 0.4
+    final_score: 0.352
+    used: true
+    match_reasons: &id002
+    - success_rate=0.6
+    - confidence=0.4
+  - memory_id: P-001
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.16
+    evidence_weight: 0.4
+    final_score: 0.337
+    used: true
+    match_reasons: &id003
+    - success_rate=0.625
+    - confidence=0.4
+  - memory_id: T-001
+    type: task
+    category: architecture
+    relevance_score: 0.153
+    evidence_weight: 0.0
+    final_score: 0.322
+    used: true
+    match_reasons: &id004
+    - success_rate=1.0
+  - memory_id: S-001
+    type: success
+    category: ai
+    relevance_score: 0.153
+    evidence_weight: 0.0
+    final_score: 0.306
+    used: true
+    match_reasons: &id005
+    - success_rate=0.75
+  memories_used:
+  - E-004
+  - T-005
+  - P-001
+  - T-001
+  - S-001
+  influence: confirmation
+  memory_summary: Retrieved 5 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+orchestrator:
+  team_formed: true
+  team_size: 1
+  lead_role: rag-engineer
+  support_roles: []
+  anti_pattern_alert: false
+  anti_pattern_id: null
+  anti_pattern_detail: null
+  reason: domains=2, roles=1. Multi-agent mode.
+  rules_applied:
+  - 'R1: domains=2 → multi-agent candidate'
+  - 'R2: roles=1 → no team needed'
+agent_invocation:
+  backend: opencode
+  cli_command: opencode run --format json --auto --model opencode/mimo-v2.5-free '<prompt>'
+  session_id: ses_faa5f1f55ffeuG3OOlOfEsD9HA
+  model: opencode/mimo-v2.5-free
+  tokens:
+    total: 26477
+    input: 1419
+    output: 1442
+    reasoning: 0
+    cache_read: 23616
+    cache_write: 0
+  cost: 0
+  latency_ms: 35688
+agent_response: "# RAG 知识库检索优化方案\n\n## 目标\n- **业务目标**: 提升 RAG 系统的检索召回率和精准度，确保生成内容准确可靠\n\
+  - **当前约束**: 依赖现有文档结构和 Embedding 模型，需平衡性能与效果\n- **成功标准**: 检索相关性提升 20%+，幻觉率降低 15%+\n\
+  \n---\n\n## 问题诊断\n\n常见根因分析：\n\n| 问题类型 | 典型表现 | 根因 |\n|---------|---------|------|\n\
+  | 召回不足 | 回答遗漏关键信息 | chunk 粒度不当、embedding 表达力不足 |\n| 精度不够 | 检索到不相关内容 | 缺乏 rerank、元数据过滤弱\
+  \ |\n| 语义漂移 | 检索结果与 query 意图不匹配 | query 理解能力弱、改写缺失 |\n| 上下文断裂 | 生成内容前后矛盾 | chunk\
+  \ 边界截断、关联文档未连接 |\n\n---\n\n## 优化策略\n\n### 1. 分块策略优化 (Chunking)\n\n**推荐方案**: 滑动窗口\
+  \ + 语义边界分块\n\n```python\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\n\
+  \nsplitter = RecursiveCharacterTextSplitter(\n    chunk_size=512,\n    chunk_overlap=64,\
+  \  # 10-20% 重叠避免信息截断\n    separators=[\"\\n\\n\", \"\\n\", \"。\", \".\", \" \"],\n\
+  \    keep_separator=True\n)\n\n# 优先级分隔符：段落 > 句子 > 词\n```\n\n**关键参数**:\n- `chunk_size`:\
+  \ 300-600 tokens（技术文档偏大，对话偏小）\n- `chunk_overlap`: 10-20%（确保跨块语义连续）\n- 保留元数据：标题层级、来源、位置\n\
+  \n### 2. 查询增强 (Query Enhancement)\n\n**方案 A: HyDE (Hypothetical Document Embeddings)**\n\
+  ```python\n# 先生成假设性答案，用其 embedding 检索\nhypothetical_answer = llm.generate(f\"请回答:\
+  \ {query}\")\nresults = vector_db.search(embed(hypothetical_answer), top_k=10)\n\
+  ```\n\n**方案 B: Query Decomposition（多查询分解）**\n```python\n# 将复杂问题拆分为多个子查询\nsub_queries\
+  \ = decompose_query(query)  # LLM 调用\nall_results = []\nfor sq in sub_queries:\n\
+  \    all_results.extend(vector_db.search(embed(sq)))\nreranked_results = reranker.rerank(query,\
+  \ all_results)\n```\n\n### 3. 混合检索 (Hybrid Search)\n\n```python\n# 语义检索 + 关键词检索\
+  \ 融合\nsemantic_results = vector_db.search(embed(query), top_k=20)\nkeyword_results\
+  \ = bm25_index.search(query, top_k=20)\n\n# RRF (Reciprocal Rank Fusion) 融合\ndef\
+  \ reciprocal_rank_fusion(results_lists, k=60):\n    scores = {}\n    for results\
+  \ in results_lists:\n        for rank, doc in enumerate(results):\n            scores[doc.id]\
+  \ = scores.get(doc.id, 0) + 1 / (k + rank)\n    return sorted(scores.items(), key=lambda\
+  \ x: x[1], reverse=True)\n```\n\n### 4. Reranking（重排序）\n\n```python\nfrom sentence_transformers\
+  \ import CrossEncoder\n\nreranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')\n\
+  \ndef rerank(query, documents, top_k=5):\n    pairs = [(query, doc.content) for\
+  \ doc in documents]\n    scores = reranker.predict(pairs)\n    ranked = sorted(zip(documents,\
+  \ scores), key=lambda x: x[1], reverse=True)\n    return [doc for doc, score in\
+  \ ranked[:top_k]]\n```\n\n### 5. 元数据过滤\n\n```python\n# 结构化过滤条件\nfilters = {\n  \
+  \  \"doc_type\": \"technical\",\n    \"version\": {\"$gte\": \"2.0\"},\n    \"language\"\
+  : \"zh\"\n}\nresults = vector_db.search(\n    embed(query),\n    top_k=10,\n   \
+  \ filter=filters\n)\n```\n\n---\n\n## 实施路径\n\n| 阶段 | 优化项 | 预期效果 | 复杂度 |\n|------|--------|---------|--------|\n\
+  | Phase 1 | 分块优化 + overlap | 召回率 +10% | 低 |\n| Phase 2 | 混合检索 (BM25+Dense) | 鲁棒性\
+  \ +15% | 中 |\n| Phase 3 | Reranking | 精度 +20% | 中 |\n| Phase 4 | Query 改写/分解 | 复杂问题\
+  \ +25% | 高 |\n\n---\n\n## 验证方式\n\n**评估指标**:\n- **召回率@K**: 返回结果中相关文档占比\n- **MRR**:\
+  \ 平均倒数排名\n- **Answer Faithfulness**: 生成答案与检索内容的一致性\n\n**测试方法**:\n```python\n# 构建评估数据集\n\
+  eval_dataset = [\n    {\"query\": \"...\", \"expected_docs\": [\"doc1\", \"doc2\"\
+  ]},\n    ...\n]\n\n# 自动化评估\nfor item in eval_dataset:\n    results = rag_pipeline.retrieve(item[\"\
+  query\"])\n    recall = len(set(results) & set(item[\"expected_docs\"])) / len(item[\"\
+  expected_docs\"])\n    mrr = compute_mrr(results, item[\"expected_docs\"])\n```\n\
+  \n---\n\n## 决策建议\n\n**推荐优先级**: 分块优化 → 混合检索 → Reranking → Query 改写\n\n**理由**: \n\
+  1. 分块优化成本最低，效果直接\n2. 混合检索提升系统鲁棒性，应对不同查询类型\n3. Reranking 在已有结果上精炼，投入产出比高\n4. Query\
+  \ 改写需要 LLM 调用成本，适合最后实施\n\n**风险缓解**:\n- 每阶段进行 A/B 测试，量化收益\n- 监控检索延迟，确保性能达标\n- 保持\
+  \ fallback 机制，reranker 失败时回退到原始排序\n\n需要我针对某个具体优化点展开详细实现代码吗？"
+decision_provenance:
+  router_rules:
+  - Category optimization → rag-engineer
+  memory_match_reasons:
+    E-004: *id001
+    T-005: *id002
+    P-001: *id003
+    T-001: *id004
+    S-001: *id005
+  orchestrator_rules:
+  - 'R1: domains=2'
+  - 'R2: roles=1'
+evidence:
+  level: Level 2 — Runtime Validated
+  description: Real model invocation through OpenCode CLI. Generated by loop-controller
+    runtime_adapter.
+  is_real_execution: true
+  is_ai_generated_yaml: false
+  verification:
+  - 'Router: classification → rag-engineer'
+  - 'Memory: retrieval_adapter → 5 memories, 0 hypotheses'
+  - 'Orchestrator: domains=2 → multi-agent'
+  - 'Agent: opencode run invoked with session ses_faa5f1f55ffeuG3OOlOfEsD9HA'
+  - 'Response: 3459 chars'
+  - 'Tokens: 26477 total, cost=0'

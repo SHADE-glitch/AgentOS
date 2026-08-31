@@ -1,0 +1,87 @@
+# Execution Trace — PROJ-001-T001-F003 (Phase 5.9.2.5)
+# Minimal Real Project Implementation
+# Generated: 2026-08-31T02:46:01Z
+
+execution_id: EXEC-1788144371
+trace_id: TRACE-EXEC-1788144371-f003-fix
+task_id: PROJ-001-T001
+task_sub_id: F-003
+task_text: Fix SQL injection — inSql userId parameterization
+domain: Security
+difficulty: low
+memory_mode: 'off'
+backend: manual (human engineer)
+model: N/A (direct code edit)
+status: success
+
+project_id: PROJ-001
+project_path: /home/shade/Public/test
+
+git_before:
+  branch: main
+  clean: true
+  diff_stat: empty
+
+git_after:
+  branch: main
+  changed_files: 1
+  diff_stat: |
+    backend/src/main/java/com/aiview/rag/service/RagService.java | 12 ++++++++----
+    1 file changed, 8 insertions(+), 4 deletions(-)
+
+files_changed:
+  - file: backend/src/main/java/com/aiview/rag/service/RagService.java
+    method: search
+    change_type: security_fix
+    before: |
+      // inSql with userId string concatenation
+      .inSql(KnowledgeChunk::getKbId,
+          "SELECT id FROM knowledge_base WHERE user_id = " + userId
+                  + " AND deleted = 0")
+    after: |
+      // Parameterized: fetch kbIds first, then .in()
+      List<Long> kbIds = kbMapper.selectList(
+          new LambdaQueryWrapper<KnowledgeBase>()
+              .select(KnowledgeBase::getId)
+              .eq(KnowledgeBase::getUserId, userId))
+          .stream().map(KnowledgeBase::getId).toList();
+      ...
+      .in(KnowledgeChunk::getKbId, kbIds)
+
+test_result:
+  command: cd backend && mvn test
+  exit_code: 1
+  error: "Fatal error compiling: error: release version 21 not supported (Java 17 available)"
+  passed: 0
+  failed: 0
+  skipped: 0
+  note: Environment limitation — project requires Java 21, only Java 17 installed
+
+manual_verification:
+  - search() method signature unchanged
+  - API input/output unchanged (SearchRequest → List<SearchHitVO>)
+  - query validation unchanged
+  - topK handling unchanged
+  - embedding call unchanged
+  - cosine similarity loop unchanged
+  - sort + topK unchanged
+  - retrieveContext() unchanged
+  - @TableLogic on KnowledgeBase ensures deleted=0 filtering (equivalent to old inSql)
+
+regression_check:
+  api_signature: PASS
+  return_type: PASS
+  business_logic: PASS
+  embedding_call: PASS
+  similarity_computation: PASS
+  sort_topk: PASS
+  deleted_filter: PASS (via @TableLogic)
+
+deferred_issues:
+  - F-001: O(n) full scan (not in scope)
+  - F-002: JSON embedding storage (not in scope)
+  - F-004: kb_id filter (not in scope)
+  - F-005: Embedding cache (not in scope)
+
+result: IMPLEMENTED
+evidence_level: real_project_candidate

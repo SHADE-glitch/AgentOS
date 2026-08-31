@@ -51,7 +51,7 @@ Read from:
 - `skills/meta/agent-orchestrator/templates/team-plan.md` (the approved plan: layers, roles, dependencies)
 - `skills/meta/collaboration-protocol/templates/` (task cards, handoffs)
 - `skills/meta/role-registry.md` (role validation)
-- `memory/agent-team-patterns/` (pattern `dependency_order` cross-check)
+- `memory/patterns/` (pattern `dependency_order` cross-check)
 - `templates/execution-state.yaml`, `templates/agent-result.yaml`, `templates/integration-report.md` (this skill's templates)
 - `protocols/execution-flow.md`, `protocols/handoff-rules.md`, `protocols/conflict-resolution.md` (this skill's protocols)
 
@@ -87,7 +87,7 @@ Run the quality-evaluator check, write a `runtime/logs/collaboration-execution.m
 
 ### Phase 8: Evolution feedback
 
-Record Type E failures in `runtime/feedback/failures/pending/` and update the pattern `effectiveness_stats` in `memory/agent-team-patterns/`.
+Record Type E failures in `runtime/feedback/failures/pending/` and update the pattern `effectiveness_stats` in `memory/patterns/`.
 
 ## 7. Dependency Scheduler
 

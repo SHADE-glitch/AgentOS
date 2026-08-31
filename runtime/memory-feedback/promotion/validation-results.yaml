@@ -1,0 +1,169 @@
+version: '1.0'
+phase: 5.8.2.2
+generated_at: '2026-08-31T01:07:53.109252+00:00'
+generated_by: validator.py (Phase 5.8.2.2 Loop Controller)
+source_file: /home/shade/.agents/runtime/memory-feedback/memory-candidates.yaml
+summary:
+  total_candidates_processed: 7
+  total_memories_evaluated: 6
+  validated: 1
+  rejected: 5
+results:
+- memory_id: AP-001
+  best_candidate_id: CAND-EXEC-1788137999-AP-001
+  status: rejected
+  validation_runs: 1
+  quality_score: 4.4
+  all_quality_scores:
+  - 4.4
+  confidence: 0.2
+  gate_results:
+    M1_provenance: fail
+    M2_evidence_level: pass
+    M3_duplicate: skip
+    M4_confidence: fail
+    M5_relevance: pass
+    M6_staleness: pass
+  evidence_sources:
+  - EXEC-1788137999
+  unique_sessions: 1
+  checks:
+    is_real_execution: true
+    has_execution_evidence: true
+    has_independent_verification: false
+    quality_above_threshold: true
+    not_hypothesis: true
+  rejection_reason: Only 1 observation(s). Need >= 2 independent executions (M4).
+  validated_at: '2026-08-31T01:07:52.999061+00:00'
+- memory_id: E-004
+  best_candidate_id: CAND-EXEC-1788137999-E-004
+  status: rejected
+  validation_runs: 1
+  quality_score: 4.4
+  all_quality_scores:
+  - 4.4
+  confidence: 0.2
+  gate_results:
+    M1_provenance: fail
+    M2_evidence_level: pass
+    M3_duplicate: skip
+    M4_confidence: fail
+    M5_relevance: pass
+    M6_staleness: pass
+  evidence_sources:
+  - EXEC-1788137999
+  unique_sessions: 1
+  checks:
+    is_real_execution: true
+    has_execution_evidence: true
+    has_independent_verification: false
+    quality_above_threshold: true
+    not_hypothesis: true
+  rejection_reason: Only 1 observation(s). Need >= 2 independent executions (M4).
+  validated_at: '2026-08-31T01:07:53.021472+00:00'
+- memory_id: E-005
+  best_candidate_id: CAND-EXEC-1788137999-E-005
+  status: rejected
+  validation_runs: 1
+  quality_score: 4.4
+  all_quality_scores:
+  - 4.4
+  confidence: 0.2
+  gate_results:
+    M1_provenance: fail
+    M2_evidence_level: pass
+    M3_duplicate: skip
+    M4_confidence: fail
+    M5_relevance: pass
+    M6_staleness: pass
+  evidence_sources:
+  - EXEC-1788137999
+  unique_sessions: 1
+  checks:
+    is_real_execution: true
+    has_execution_evidence: true
+    has_independent_verification: false
+    quality_above_threshold: true
+    not_hypothesis: true
+  rejection_reason: Only 1 observation(s). Need >= 2 independent executions (M4).
+  validated_at: '2026-08-31T01:07:53.043577+00:00'
+- memory_id: P-001
+  best_candidate_id: CAND-EXEC-1788137999-P-001
+  status: rejected
+  validation_runs: 1
+  quality_score: 4.4
+  all_quality_scores:
+  - 4.4
+  confidence: 0.2
+  gate_results:
+    M1_provenance: fail
+    M2_evidence_level: pass
+    M3_duplicate: skip
+    M4_confidence: fail
+    M5_relevance: pass
+    M6_staleness: pass
+  evidence_sources:
+  - EXEC-1788137999
+  unique_sessions: 1
+  checks:
+    is_real_execution: true
+    has_execution_evidence: true
+    has_independent_verification: false
+    quality_above_threshold: true
+    not_hypothesis: true
+  rejection_reason: Only 1 observation(s). Need >= 2 independent executions (M4).
+  validated_at: '2026-08-31T01:07:53.065507+00:00'
+- memory_id: S-001
+  best_candidate_id: CAND-EXEC-1788137999-S-001
+  status: rejected
+  validation_runs: 1
+  quality_score: 4.4
+  all_quality_scores:
+  - 4.4
+  confidence: 0.2
+  gate_results:
+    M1_provenance: fail
+    M2_evidence_level: pass
+    M3_duplicate: skip
+    M4_confidence: fail
+    M5_relevance: pass
+    M6_staleness: pass
+  evidence_sources:
+  - EXEC-1788137999
+  unique_sessions: 1
+  checks:
+    is_real_execution: true
+    has_execution_evidence: true
+    has_independent_verification: false
+    quality_above_threshold: true
+    not_hypothesis: true
+  rejection_reason: Only 1 observation(s). Need >= 2 independent executions (M4).
+  validated_at: '2026-08-31T01:07:53.087403+00:00'
+- memory_id: T-005
+  best_candidate_id: CAND-EXEC-1788137999-T-005
+  status: validated
+  validation_runs: 2
+  quality_score: 4.4
+  all_quality_scores:
+  - 2.95
+  - 4.4
+  confidence: 0.4
+  gate_results:
+    M1_provenance: pass
+    M2_evidence_level: pass
+    M3_duplicate: skip
+    M4_confidence: pass
+    M5_relevance: pass
+    M6_staleness: pass
+  evidence_sources:
+  - EXEC-1788091469
+  - EXEC-1788137999
+  unique_sessions: 2
+  checks:
+    is_real_execution: true
+    has_execution_evidence: true
+    has_independent_verification: true
+    quality_above_threshold: true
+    not_hypothesis: true
+  rejection_reason: null
+  validated_at: '2026-08-31T01:07:53.109149+00:00'

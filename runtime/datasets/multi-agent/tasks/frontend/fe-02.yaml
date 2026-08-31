@@ -1,0 +1,12 @@
+task_id: fe-02
+category: frontend
+difficulty: easy
+description: Optimize a large SPA: first-load time, bundle splitting, rendering performance, and a performance budget for regression control.
+expected_roles: [frontend-performance, frontend-architect]
+evaluation_points:
+  - bundle splitting and lazy loading plan
+  - render and interaction performance fixes
+  - caching strategy
+  - performance budget and monitoring
+baseline_expectation: a single frontend-performance engineer lists typical optimizations but may not tie them to architecture constraints.
+multi_agent_expectation: frontend-architect validates the optimizations against the module architecture; the combined output is a prioritized, architecture-aware optimization plan with a measurable budget.

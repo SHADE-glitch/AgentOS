@@ -1,0 +1,29 @@
+# Pipeline Validation Comparison
+
+task_id: RT-003
+domain: Database
+difficulty: easy
+
+memory_off:
+  router_decision: {lead: database-engineer, support: []}
+  orchestrator_decision: {team_formed: false, team_size: 1}
+  roles: [database-engineer]
+
+memory_on:
+  retrieved_memories: [AP-001 (0.345), T-010 (0.287), T-009 (0.240), P-001 (0.180)]
+  memory_used: [AP-001, T-010]
+  memory_influence: confirmation
+  router_decision: {lead: database-engineer, support: []}
+  orchestrator_decision: {team_formed: false, team_size: 1, anti_pattern_alert: true}
+  roles: [database-engineer]
+
+decision_changed: false
+decision_change_type: null
+memory_induced_regression: false
+fallback: false
+comparison_valid: true
+context_compatibility: high
+memory_misapplication: false
+hypothesis_contamination: false
+cross_condition_contamination: none
+evidence_level: benchmark_evaluated

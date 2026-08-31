@@ -1,0 +1,889 @@
+version: '1.0'
+phase: '5.8'
+retrievals:
+- timestamp: '2026-08-30T13:39:54.680447+00:00'
+  query:
+    task_text: Design a payment system with PCI-DSS compliance
+    category: backend
+    domains:
+    - payment
+    - security
+    roles:
+    - backend-architect
+    - security-engineer
+    keywords:
+    - pci-dss
+    - compliance
+    - payment
+    - kms
+    difficulty: medium
+  retrieved_memories:
+  - F-002
+  - E-007
+  - T-004
+  - E-006
+  - P-002
+- timestamp: '2026-08-30T13:39:54.742217+00:00'
+  query:
+    task_text: Analyze MySQL slow query performance
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    - indexing
+    - optimization
+    difficulty: easy
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - T-005
+  - S-001
+- timestamp: '2026-08-30T13:39:54.803933+00:00'
+  query:
+    task_text: Build a RAG system with vector retrieval
+    category: ai
+    domains:
+    - rag
+    - vector-store
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - vector
+    - retrieval
+    - embedding
+    - reranking
+    difficulty: medium
+  retrieved_memories:
+  - E-004
+  - T-005
+  - S-001
+  - E-005
+  - P-001
+- timestamp: '2026-08-30T13:39:54.878014+00:00'
+  query:
+    task_text: Design a distributed seckill system
+    category: architecture
+    domains:
+    - architecture
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    keywords:
+    - seckill
+    - high-concurrency
+    - lua
+    - distributed
+    difficulty: hard
+  retrieved_memories:
+  - T-002
+  - E-001
+  - S-002
+  - T-001
+  - P-001
+- timestamp: '2026-08-30T13:39:54.942859+00:00'
+  query:
+    task_text: Implement tool-calling for an LLM agent
+    category: ai
+    domains:
+    - agent
+    - tool-calling
+    roles:
+    - llm-engineer
+    - agent-engineer
+    - prompt-engineer
+    keywords:
+    - tool-calling
+    - agent
+    - llm
+    - prompt
+    difficulty: medium
+  retrieved_memories:
+  - S-001
+  - E-005
+  - T-005
+  - E-004
+  - P-001
+- timestamp: '2026-08-30T13:39:55.007279+00:00'
+  query:
+    task_text: Build a multi-tenant AI SaaS platform
+    category: architecture
+    domains:
+    - architecture
+    - ai
+    - multi-tenant
+    roles:
+    - system-architect
+    - rag-engineer
+    - backend-architect
+    keywords:
+    - ai-saas
+    - multi-tenant
+    - rag
+    - isolation
+    difficulty: hard
+  retrieved_memories:
+  - T-001
+  - E-001
+  - T-002
+  - S-001
+  - E-004
+- timestamp: '2026-08-30T13:39:55.083255+00:00'
+  query:
+    task_text: Optimize high-concurrency distributed system
+    category: optimization
+    domains:
+    - distributed
+    - concurrency
+    roles:
+    - distributed-system
+    - backend-architect
+    keywords:
+    - high-concurrency
+    - distributed
+    - optimization
+    - rollback
+    difficulty: hard
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - P-001
+  - S-002
+- timestamp: '2026-08-30T13:39:55.151729+00:00'
+  query:
+    task_text: Build an admin platform with RBAC
+    category: frontend
+    domains:
+    - frontend
+    - backend
+    roles:
+    - frontend-architect
+    - backend-architect
+    - code-reviewer
+    keywords:
+    - admin
+    - rbac
+    - api-contract
+    - frontend-backend
+    difficulty: medium
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - S-002
+  - T-005
+  - S-001
+- timestamp: '2026-08-30T13:39:55.219692+00:00'
+  query:
+    task_text: Design a cross-domain distributed architecture
+    category: architecture
+    domains:
+    - architecture
+    - backend
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    - database-engineer
+    keywords:
+    - cross-domain
+    - architecture
+    - backend
+    - saga
+    - seckill
+    difficulty: hard
+  retrieved_memories:
+  - S-002
+  - E-001
+  - T-002
+  - T-001
+  - T-010
+- timestamp: '2026-08-30T13:39:55.289357+00:00'
+  query:
+    task_text: Optimize SPA frontend performance
+    category: frontend
+    domains:
+    - frontend
+    roles:
+    - frontend-performance
+    - frontend-architect
+    keywords:
+    - spa
+    - performance
+    - frontend
+    - optimization
+    difficulty: easy
+  retrieved_memories:
+  - AP-001
+  - E-009
+  - T-010
+  - E-008
+  - T-005
+- timestamp: '2026-08-30T13:51:38.477839+00:00'
+  query:
+    task_text: Design a payment system with PCI-DSS compliance
+    category: backend
+    domains:
+    - payment
+    - security
+    roles:
+    - backend-architect
+    - security-engineer
+    keywords:
+    - pci-dss
+    - compliance
+    - payment
+    - kms
+    difficulty: medium
+  retrieved_memories:
+  - F-002
+  - E-007
+  - T-004
+  - P-001
+  - S-002
+- timestamp: '2026-08-30T13:51:38.662421+00:00'
+  query:
+    task_text: Analyze MySQL slow query performance
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    - indexing
+    - optimization
+    difficulty: easy
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - S-002
+  - P-001
+  - T-009
+- timestamp: '2026-08-30T13:51:38.835000+00:00'
+  query:
+    task_text: Build a RAG system with vector retrieval
+    category: ai
+    domains:
+    - rag
+    - vector-store
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - vector
+    - retrieval
+    - embedding
+    - reranking
+    difficulty: medium
+  retrieved_memories:
+  - E-004
+  - T-005
+  - S-001
+  - E-005
+  - P-001
+- timestamp: '2026-08-30T13:51:39.030245+00:00'
+  query:
+    task_text: Design a distributed seckill system
+    category: architecture
+    domains:
+    - architecture
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    keywords:
+    - seckill
+    - high-concurrency
+    - lua
+    - distributed
+    difficulty: hard
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - E-001
+  - T-001
+- timestamp: '2026-08-30T13:51:39.236730+00:00'
+  query:
+    task_text: Implement tool-calling for an LLM agent
+    category: ai
+    domains:
+    - agent
+    - tool-calling
+    roles:
+    - llm-engineer
+    - agent-engineer
+    - prompt-engineer
+    keywords:
+    - tool-calling
+    - agent
+    - llm
+    - prompt
+    difficulty: medium
+  retrieved_memories:
+  - S-001
+  - E-005
+  - P-001
+  - T-005
+  - E-004
+- timestamp: '2026-08-30T13:51:39.437459+00:00'
+  query:
+    task_text: Build a multi-tenant AI SaaS platform
+    category: architecture
+    domains:
+    - architecture
+    - ai
+    - multi-tenant
+    roles:
+    - system-architect
+    - rag-engineer
+    - backend-architect
+    keywords:
+    - ai-saas
+    - multi-tenant
+    - rag
+    - isolation
+    difficulty: hard
+  retrieved_memories:
+  - T-001
+  - S-002
+  - E-001
+  - P-001
+  - T-002
+- timestamp: '2026-08-30T13:51:39.636627+00:00'
+  query:
+    task_text: Optimize high-concurrency distributed system
+    category: optimization
+    domains:
+    - distributed
+    - concurrency
+    roles:
+    - distributed-system
+    - backend-architect
+    keywords:
+    - high-concurrency
+    - distributed
+    - optimization
+    - rollback
+    difficulty: hard
+  retrieved_memories:
+  - T-009
+  - P-001
+  - S-002
+  - T-010
+  - AP-001
+- timestamp: '2026-08-30T13:51:39.839493+00:00'
+  query:
+    task_text: Build an admin platform with RBAC
+    category: frontend
+    domains:
+    - frontend
+    - backend
+    roles:
+    - frontend-architect
+    - backend-architect
+    - code-reviewer
+    keywords:
+    - admin
+    - rbac
+    - api-contract
+    - frontend-backend
+    difficulty: medium
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-010
+  - AP-001
+  - T-005
+- timestamp: '2026-08-30T13:51:40.036432+00:00'
+  query:
+    task_text: Design a cross-domain distributed architecture
+    category: architecture
+    domains:
+    - architecture
+    - backend
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    - database-engineer
+    keywords:
+    - cross-domain
+    - architecture
+    - backend
+    - saga
+    - seckill
+    difficulty: hard
+  retrieved_memories:
+  - S-002
+  - P-001
+  - E-001
+  - T-002
+  - T-001
+- timestamp: '2026-08-30T13:51:40.243440+00:00'
+  query:
+    task_text: Optimize SPA frontend performance
+    category: frontend
+    domains:
+    - frontend
+    roles:
+    - frontend-performance
+    - frontend-architect
+    keywords:
+    - spa
+    - performance
+    - frontend
+    - optimization
+    difficulty: easy
+  retrieved_memories:
+  - S-002
+  - P-001
+  - AP-001
+  - E-009
+  - T-010
+- timestamp: '2026-08-31T00:45:42.864851+00:00'
+  query:
+    task_text: 分析 MySQL 慢查询问题
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - S-002
+  - P-001
+  - T-009
+- timestamp: '2026-08-31T00:46:00.097763+00:00'
+  query:
+    task_text: 分析 MySQL 慢查询问题
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - S-002
+  - P-001
+  - T-009
+- timestamp: '2026-08-31T00:59:59.787869+00:00'
+  query:
+    task_text: 向量库选型与召回策略
+    category: ai
+    domains:
+    - rag
+    roles:
+    - rag-engineer
+    keywords:
+    - vector
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-004
+  - T-005
+  - S-001
+  - P-001
+  - E-005
+- timestamp: '2026-08-31T01:09:46.822843+00:00'
+  query:
+    task_text: Design a payment system with PCI-DSS compliance
+    category: backend
+    domains:
+    - payment
+    - security
+    roles:
+    - backend-architect
+    - security-engineer
+    keywords:
+    - pci-dss
+    - compliance
+    - payment
+    - kms
+    difficulty: medium
+  retrieved_memories:
+  - F-002
+  - E-007
+  - T-004
+  - T-005
+  - P-001
+- timestamp: '2026-08-31T01:09:47.033276+00:00'
+  query:
+    task_text: Analyze MySQL slow query performance
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    - indexing
+    - optimization
+    difficulty: easy
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-005
+  - S-002
+  - P-001
+- timestamp: '2026-08-31T01:09:47.269263+00:00'
+  query:
+    task_text: Build a RAG system with vector retrieval
+    category: ai
+    domains:
+    - rag
+    - vector-store
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - vector
+    - retrieval
+    - embedding
+    - reranking
+    difficulty: medium
+  retrieved_memories:
+  - T-005
+  - E-004
+  - S-001
+  - E-005
+  - P-001
+- timestamp: '2026-08-31T01:09:47.492881+00:00'
+  query:
+    task_text: Design a distributed seckill system
+    category: architecture
+    domains:
+    - architecture
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    keywords:
+    - seckill
+    - high-concurrency
+    - lua
+    - distributed
+    difficulty: hard
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - E-001
+  - T-005
+- timestamp: '2026-08-31T01:09:47.708405+00:00'
+  query:
+    task_text: Implement tool-calling for an LLM agent
+    category: ai
+    domains:
+    - agent
+    - tool-calling
+    roles:
+    - llm-engineer
+    - agent-engineer
+    - prompt-engineer
+    keywords:
+    - tool-calling
+    - agent
+    - llm
+    - prompt
+    difficulty: medium
+  retrieved_memories:
+  - T-005
+  - S-001
+  - E-005
+  - P-001
+  - E-004
+- timestamp: '2026-08-31T01:09:47.939359+00:00'
+  query:
+    task_text: Build a multi-tenant AI SaaS platform
+    category: architecture
+    domains:
+    - architecture
+    - ai
+    - multi-tenant
+    roles:
+    - system-architect
+    - rag-engineer
+    - backend-architect
+    keywords:
+    - ai-saas
+    - multi-tenant
+    - rag
+    - isolation
+    difficulty: hard
+  retrieved_memories:
+  - T-001
+  - T-005
+  - S-002
+  - E-001
+  - P-001
+- timestamp: '2026-08-31T01:09:48.176164+00:00'
+  query:
+    task_text: Optimize high-concurrency distributed system
+    category: optimization
+    domains:
+    - distributed
+    - concurrency
+    roles:
+    - distributed-system
+    - backend-architect
+    keywords:
+    - high-concurrency
+    - distributed
+    - optimization
+    - rollback
+    difficulty: hard
+  retrieved_memories:
+  - T-009
+  - P-001
+  - S-002
+  - T-010
+  - AP-001
+- timestamp: '2026-08-31T01:09:48.415295+00:00'
+  query:
+    task_text: Build an admin platform with RBAC
+    category: frontend
+    domains:
+    - frontend
+    - backend
+    roles:
+    - frontend-architect
+    - backend-architect
+    - code-reviewer
+    keywords:
+    - admin
+    - rbac
+    - api-contract
+    - frontend-backend
+    difficulty: medium
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - AP-001
+- timestamp: '2026-08-31T01:09:48.649783+00:00'
+  query:
+    task_text: Design a cross-domain distributed architecture
+    category: architecture
+    domains:
+    - architecture
+    - backend
+    - distributed
+    roles:
+    - system-architect
+    - backend-architect
+    - distributed-system
+    - database-engineer
+    keywords:
+    - cross-domain
+    - architecture
+    - backend
+    - saga
+    - seckill
+    difficulty: hard
+  retrieved_memories:
+  - S-002
+  - P-001
+  - E-001
+  - T-005
+  - T-002
+- timestamp: '2026-08-31T01:09:48.865832+00:00'
+  query:
+    task_text: Optimize SPA frontend performance
+    category: frontend
+    domains:
+    - frontend
+    roles:
+    - frontend-performance
+    - frontend-architect
+    keywords:
+    - spa
+    - performance
+    - frontend
+    - optimization
+    difficulty: easy
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - AP-001
+  - E-009
+- timestamp: '2026-08-31T01:25:04.382034+00:00'
+  query:
+    task_text: LLM 应用接入层设计
+    category: ai
+    domains:
+    - agent
+    roles:
+    - llm-engineer
+    keywords:
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-005
+  - T-005
+  - P-001
+  - S-001
+  - E-004
+- timestamp: '2026-08-31T01:41:07.201444+00:00'
+  query:
+    task_text: 'RAG 知识库检索优化 — 项目 aiview (PROJ-001), 仓库路径 /home/shade/Public/test。分析现有
+      RagService 的检索链路，定位性能/准确性/召回率问题，提出最小修改方案。如果问题明确且安全，实施代码修改。运行相关测试。汇报修改文件、测试结果、风险。关键文件:
+      src/main/java/com/aiview/rag/service/RagService.java (固定分块500字符, 重叠50字符, 暴力全量余弦相似度搜索,
+      嵌入向量以JSON字符串存储在MySQL), src/main/java/com/aiview/agent/ai/OpenAiCompatibleEmbeddingClient.java
+      (OpenAI兼容嵌入API), src/main/java/com/aiview/rag/controller/RagController.java'
+    category: optimization
+    domains:
+    - database
+    - backend
+    - security
+    - rag
+    - agent
+    - optimization
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - mysql
+    - optimization
+    - api
+    - java
+    - rag
+    - vector
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-005
+  - P-001
+  - S-002
+- timestamp: '2026-08-31T01:43:29.712448+00:00'
+  query:
+    task_text: 'RAG 知识库检索优化 — 项目 aiview (PROJ-001), 仓库路径 /home/shade/Public/test。分析现有
+      RagService 的检索链路，定位性能/准确性/召回率问题，提出最小修改方案。如果问题明确且安全，实施代码修改。运行相关测试。汇报修改文件、测试结果、风险。关键文件:
+      src/main/java/com/aiview/rag/service/RagService.java (固定分块500字符, 重叠50字符, 暴力全量余弦相似度搜索,
+      嵌入向量以JSON字符串存储在MySQL), src/main/java/com/aiview/agent/ai/OpenAiCompatibleEmbeddingClient.java
+      (OpenAI兼容嵌入API), src/main/java/com/aiview/rag/controller/RagController.java'
+    category: optimization
+    domains:
+    - database
+    - backend
+    - security
+    - rag
+    - agent
+    - optimization
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - mysql
+    - optimization
+    - api
+    - java
+    - rag
+    - vector
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-009
+  - T-005
+  - E-004
+  - T-010
+- timestamp: '2026-08-31T01:46:09.405980+00:00'
+  query:
+    task_text: 'RAG 知识库检索优化 — 项目 aiview (PROJ-001), 仓库路径 /home/shade/Public/test。分析现有
+      RagService 的检索链路，定位性能/准确性/召回率问题，提出最小修改方案。如果问题明确且安全，实施代码修改。运行相关测试。汇报修改文件、测试结果、风险。关键文件:
+      src/main/java/com/aiview/rag/service/RagService.java (固定分块500字符, 重叠50字符, 暴力全量余弦相似度搜索,
+      嵌入向量以JSON字符串存储在MySQL), src/main/java/com/aiview/agent/ai/OpenAiCompatibleEmbeddingClient.java
+      (OpenAI兼容嵌入API), src/main/java/com/aiview/rag/controller/RagController.java'
+    category: optimization
+    domains:
+    - database
+    - backend
+    - security
+    - rag
+    - agent
+    - optimization
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - mysql
+    - optimization
+    - api
+    - java
+    - rag
+    - vector
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - AP-001
+  - S-001
+  - E-005
+  - S-002
+- timestamp: '2026-08-31T02:23:20.242553+00:00'
+  query:
+    task_text: RAG 知识库检索优化
+    category: optimization
+    domains:
+    - rag
+    - optimization
+    roles:
+    - rag-engineer
+    keywords:
+    - optimization
+    - rag
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-004
+  - T-005
+  - P-001
+  - T-001
+  - S-001

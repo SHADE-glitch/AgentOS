@@ -1,0 +1,109 @@
+# Task Inventory — PROJ-001 (aiview)
+# Phase 5.9.1 — Real Project Onboarding
+# Generated: 2026-08-31
+
+project_id: PROJ-001
+project_name: "aiview — AI 面试陪练与智能反馈平台"
+
+# ── Task Inventory (>=3 tasks) ──
+
+tasks:
+
+  - task_id: PROJ-001-T001
+    project_id: PROJ-001
+    task_description: "RAG 知识库检索优化 — 提升知识库文本分块策略与向量检索精度"
+    domain: "AI / RAG"
+    complexity: medium
+    status: pending
+    source: real_project
+    module: rag
+    related_files:
+      - backend/src/main/java/com/aiview/rag/service/RagService.java
+      - backend/src/main/java/com/aiview/rag/entity/KnowledgeChunk.java
+      - backend/src/main/java/com/aiview/agent/ai/EmbeddingClient.java
+    context: |
+      当前 RAG 模块使用固定 CHUNK_SIZE=500, CHUNK_OVERLAP=50 分块策略。
+      嵌入使用 OpenAI Compatible Embedding API 或 Ollama 本地模型。
+      需要优化分块策略以提高检索精度，支持语义分块和混合检索。
+    created_at: "2026-08-31"
+
+  - task_id: PROJ-001-T002
+    project_id: PROJ-001
+    task_description: "面试评分模型增强 — 优化四维评分权重与异步评分可靠性"
+    domain: "AI / Evaluation"
+    complexity: medium
+    status: pending
+    source: real_project
+    module: interview
+    related_files:
+      - backend/src/main/java/com/aiview/interview/service/InterviewScoringService.java
+      - backend/src/main/java/com/aiview/interview/service/InterviewService.java
+      - backend/src/main/java/com/aiview/interview/entity/InterviewResult.java
+    context: |
+      当前通过 RabbitMQ 异步消费完成四维评分（知识掌握、表达逻辑、深度广度、实战能力）。
+      需要优化评分 prompt 模板、增加多维度交叉验证，并处理评分失败重试与死信队列。
+    created_at: "2026-08-31"
+
+  - task_id: PROJ-001-T003
+    project_id: PROJ-001
+    task_description: "Dashboard 性能优化 — Redis 缓存策略与大数据量聚合查询优化"
+    domain: "Backend / Performance"
+    complexity: medium
+    status: pending
+    source: real_project
+    module: interview
+    related_files:
+      - backend/src/main/java/com/aiview/interview/service/DashboardService.java
+      - backend/src/main/java/com/aiview/interview/controller/DashboardController.java
+    context: |
+      当前 Dashboard 使用 Redis 缓存 5 分钟 TTL，聚合查询跨面试会话计算四维平均分。
+      需要优化缓存策略（预计算、增量更新）、大数据量下的 SQL 聚合性能、以及前端 ECharts 渲染性能。
+    created_at: "2026-08-31"
+
+  - task_id: PROJ-001-T004
+    project_id: PROJ-001
+    task_description: "面试状态机可靠性增强 — 分布式锁与状态恢复机制"
+    domain: "Backend / Distributed"
+    complexity: medium
+    status: pending
+    source: real_project
+    module: interview
+    related_files:
+      - backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java
+      - backend/src/main/java/com/aiview/interview/service/InterviewStatus.java
+    context: |
+      当前面试状态机使用 Redis + Redisson 存储会话状态，TTL 24h。
+      需要增强分布式锁的可靠性（Redisson 看门狗机制）、状态异常恢复（如 AI 调用超时后的状态回滚）、
+      以及并发场景下的状态一致性保证。
+    created_at: "2026-08-31"
+
+  - task_id: PROJ-001-T005
+    project_id: PROJ-001
+    task_description: "用户认证安全增强 — JWT 刷新策略与 token 黑名单机制"
+    domain: "Backend / Security"
+    complexity: medium
+    status: pending
+    source: real_project
+    module: auth
+    related_files:
+      - backend/src/main/java/com/aiview/auth/security/JwtUtil.java
+      - backend/src/main/java/com/aiview/auth/security/JwtAuthenticationFilter.java
+      - backend/src/main/java/com/aiview/auth/service/AuthService.java
+    context: |
+      当前使用 JWT 双 token 机制 (access 2h + refresh 7d)。
+      需要实现 token 黑名单/撤销机制、refresh token 轮换策略、以及登录态异常检测。
+    created_at: "2026-08-31"
+
+# ── Summary ──
+
+task_count: 5
+status_summary:
+  pending: 5
+  active: 0
+  completed: 0
+domains_covered:
+  - AI / RAG
+  - AI / Evaluation
+  - Backend / Performance
+  - Backend / Distributed
+  - Backend / Security

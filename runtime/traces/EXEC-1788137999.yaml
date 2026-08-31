@@ -1,0 +1,224 @@
+# Execution Trace — RT-011 (Memory ON)
+# Phase 5.8.2.2 — Closed-Loop Runtime Controller
+# Generated: 2026-08-31T01:01:03.414708+00:00
+# Backend: OpenCode CLI
+
+execution_id: EXEC-1788137999
+trace_id: TRACE-EXEC-1788137999-404030e2a6a3
+task_id: RT-011
+task_text: 向量库选型与召回策略
+domain: Ai
+difficulty: medium
+memory_mode: 'on'
+backend: opencode
+model: opencode/ling-3.0-flash-fin-free
+status: success
+pipeline:
+  step_timestamps:
+    router_start: '2026-08-31T01:01:03.414353+00:00'
+    router_end: '2026-08-31T01:01:03.414353+00:00'
+    memory_start: '2026-08-31T01:01:03.414353+00:00'
+    memory_end: '2026-08-31T01:01:03.414353+00:00'
+    orchestrator_start: '2026-08-31T01:01:03.414353+00:00'
+    orchestrator_end: '2026-08-31T01:01:03.414353+00:00'
+    agent_start: '2026-08-31T01:01:03.414353+00:00'
+    agent_end: '2026-08-31T01:01:03.414353+00:00'
+router:
+  intent: AI/ML Engineering
+  lead_agent: rag-engineer
+  support_agents: []
+  confidence: high
+  reason: 'Task classification: ai, domains=[''rag'']'
+  rules_applied:
+  - Category ai → rag-engineer
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: E-004
+    type: effectiveness
+    category: ai
+    relevance_score: 0.602
+    evidence_weight: 0.0
+    final_score: 0.525
+    used: true
+    match_reasons: &id001
+    - relevance=0.602
+    - success_rate=1.0
+  - memory_id: T-005
+    type: task
+    category: ai
+    relevance_score: 0.463
+    evidence_weight: 0.0
+    final_score: 0.477
+    used: true
+    match_reasons: &id002
+    - relevance=0.463
+    - success_rate=1.0
+  - memory_id: S-001
+    type: success
+    category: ai
+    relevance_score: 0.453
+    evidence_weight: 0.0
+    final_score: 0.473
+    used: true
+    match_reasons: &id003
+    - relevance=0.453
+    - success_rate=1.0
+  - memory_id: P-001
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.203
+    evidence_weight: 0.4
+    final_score: 0.446
+    used: true
+    match_reasons: &id004
+    - success_rate=1.0
+    - confidence=0.4
+  - memory_id: E-005
+    type: effectiveness
+    category: ai
+    relevance_score: 0.25
+    evidence_weight: 0.0
+    final_score: 0.402
+    used: true
+    match_reasons: &id005
+    - success_rate=1.0
+  memories_used:
+  - E-004
+  - T-005
+  - S-001
+  - P-001
+  - E-005
+  influence: confirmation
+  memory_summary: Retrieved 5 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+orchestrator:
+  team_formed: false
+  team_size: 1
+  lead_role: rag-engineer
+  support_roles: []
+  anti_pattern_alert: true
+  anti_pattern_id: AP-001
+  anti_pattern_detail: 'Team Inflation Guard: single-domain task should not form a
+    team'
+  reason: domains=1, roles=1. Single-agent mode.
+  rules_applied:
+  - 'R1: domains=1 → single-agent candidate'
+  - 'R2: roles=1 → no team needed'
+agent_invocation:
+  backend: opencode
+  cli_command: opencode run --format json --auto --model opencode/ling-3.0-flash-fin-free
+    '<prompt>'
+  session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+  model: opencode/ling-3.0-flash-fin-free
+  tokens:
+    total: 27689
+    input: 58
+    output: 2318
+    reasoning: 132
+    cache_read: 25181
+    cache_write: 0
+  cost: 0
+  latency_ms: 63607
+agent_response: "# 向量库选型与召回策略\n\n## 一、向量库选型维度\n\n| 维度 | 关键指标 | 说明 |\n|------|---------|------|\n\
+  | **数据规模** | 百万/十亿级向量 | 决定是否需要分布式架构 |\n| **延迟要求** | P50/P99 检索延迟 | 实时场景 vs 离线批量\
+  \ |\n| **精度要求** | 召回率@K | 业务可接受的近似度 |\n| **过滤需求** | 元数据过滤 | 是否需要标量过滤与向量检索协同 |\n\
+  | **部署形态** | 自托管 / 云服务 / 嵌入 | 运维成本考量 |\n| **生态集成** | LangChain / LlamaIndex / 自有框架\
+  \ | 与现有 RAG 链路的对接成本 |\n\n## 二、主流向量库对比\n\n| 向量库 | 底层索引 | 特点 | 适用场景 |\n|--------|---------|------|---------|\n\
+  | **Milvus** | IVF_FLAT/IVF_SQ/HNSW/GPU | 分布式原生、多索引、丰富过滤 | 大规模生产级 |\n| **Qdrant**\
+  \ | HNSW | 内存+磁盘混合、过滤性能好 | 中大规模、需要高效过滤 |\n| **Weaviate** | HNSW | 多模态、GraphQL 接口、模块丰富\
+  \ | 多模态 RAG |\n| **Chroma** | HNSW | 轻量、嵌入即用、Python 优先 | 原型验证、小规模 |\n| **FAISS**\
+  \ | 多种 (IVF/HNSW/Flat) | GPU 加速、极致性能、无服务 | 极致性能、自研链路 |\n| **pgvector** | HNSW (PostgreSQL)\
+  \ | 与业务库合一、SQL 生态 | 已有 PG 基建、避免引入新组件 |\n| **Elasticsearch** | HNSW / 近似 | 全文检索+向量融合\
+  \ | 需要混合搜索的场景 |\n\n## 三、召回策略体系\n\n### 1. 精确检索 vs 近似检索 (ANN)\n\n```\n精确检索 (Brute\
+  \ Force / Flat)\n  └── 全量计算相似度，O(n) 复杂度\n  └── 适用于 < 10万条向量\n\n近似最近邻 (ANN)\n  ├──\
+  \ HNSW (层次化导航小世界图)\n  │   ├── 构建 O(n log n)，查询 O(log n)\n  │   ├── ef_construction\
+  \ 控制建图质量，ef_search 控制查询精度\n  │   └── 召回率-速度权衡最成熟的算法\n  │\n  ├── IVF (倒排文件)\n  │\
+  \   ├── 先聚类到 nlist 个单元，再在候选单元内搜索\n  │   ├── nlist ≈ sqrt(n) 为经验值\n  │   └── IVF_FLAT:\
+  \ 精确搜索候选内向量; IVF_SQ: 量化压缩\n  │\n  └── DiskANN\n      └── 面向磁盘的大规模索引，亿级向量\n```\n\n\
+  ### 2. 混合搜索 (Hybrid Search)\n\n```python\n# 向量检索 + BM25 关键词检索的融合策略\nfrom rank_bm25\
+  \ import BM25Okapi\nimport numpy as np\n\ndef hybrid_search(query, vector_store,\
+  \ bm25_index, documents, alpha=0.5, top_k=10):\n    # 1. 向量检索\n    query_embedding\
+  \ = embedder.encode(query)\n    vec_results = vector_store.search(query_embedding,\
+  \ top_k=top_k * 2)\n    \n    # 2. BM25 检索\n    tokenized_query = query.split()\n\
+  \    bm25_scores = bm25_index.get_scores(tokenized_query)\n    \n    # 3. 加权融合 (RRF\
+  \ 或加权求和)\n    # RRF: score = Σ 1/(k + rank_i)\n    scores = {}\n    for rank, doc\
+  \ in enumerate(vec_results):\n        scores[doc.id] = scores.get(doc.id, 0) + 1.0\
+  \ / (60 + rank)\n    \n    for rank, doc_id in enumerate(np.argsort(bm25_scores)[::-1]):\n\
+  \        scores[doc_id] = scores.get(doc_id, 0) + alpha / (60 + rank)\n    \n  \
+  \  # 4. 按融合分数排序返回\n    sorted_docs = sorted(scores.items(), key=lambda x: x[1],\
+  \ reverse=True)[:top_k]\n    return [docs[did] for did, _ in sorted_docs]\n```\n\
+  \n### 3. 多路召回策略\n\n```python\nclass MultiRouteRetriever:\n    \"\"\"多路召回：向量 + 关键词\
+  \ + 图谱 + 重排序\"\"\"\n    \n    def __init__(self, vector_store, bm25_index, graph_db,\
+  \ reranker):\n        self.vector_store = vector_store\n        self.bm25_index\
+  \ = bm25_index\n        self.graph_db = graph_db\n        self.reranker = reranker\n\
+  \    \n    def retrieve(self, query, top_k=5):\n        # 路1: 向量语义检索\n        semantic_docs\
+  \ = self.vector_store.search(\n            query, top_k=top_k * 3, filter={\"type\"\
+  : \"article\"}\n        )\n        \n        # 路2: BM25 关键词检索\n        keyword_docs\
+  \ = self.bm25_index.search(query, top_k=top_k * 2)\n        \n        # 路3: 图谱关联检索\
+  \ (适用于知识图谱增强)\n        graph_docs = self.graph_db.neighbor_search(query, depth=2)\n\
+  \        \n        # 去重合并\n        candidates = deduplicate(semantic_docs + keyword_docs\
+  \ + graph_docs)\n        \n        # 重排序\n        reranked = self.reranker.rerank(query,\
+  \ candidates, top_k=top_k)\n        \n        return reranked\n```\n\n### 4. 过滤与后处理\n\
+  \n```python\n# 结构化过滤与向量检索协同 (以 Qdrant 为例)\nfrom qdrant_client import QdrantClient,\
+  \ models\n\nclient = QdrantClient(url=\"http://localhost:6333\")\n\n# 带元数据过滤的向量搜索\n\
+  results = client.search(\n    collection_name=\"documents\",\n    query_vector=[...],\n\
+  \    query_filter=models.Filter(\n        must=[\n            models.FieldCondition(\n\
+  \                key=\"category\", match=models.MatchValue(value=\"finance\")\n\
+  \            ),\n            models.FieldCondition(\n                key=\"year\"\
+  , range=models.Range(gte=2023)\n            ),\n            models.FieldCondition(\n\
+  \                key=\"score\", range=models.Range(gte=0.8)\n            ),\n  \
+  \      ]\n    ),\n    limit=10,\n    score_threshold=0.7  # 分数阈值过滤\n)\n\n# 动态阈值\
+  \ (MMR 多样性重排)\ndef mmr_rerank(products, query_embedding, lambda_=0.7, top_k=5):\n\
+  \    \"\"\"Maximal Marginal Relevance - 平衡相关性与多样性\"\"\"\n    selected = []\n   \
+  \ remaining = products[:]\n    \n    while remaining and len(selected) < top_k:\n\
+  \        scores = []\n        for doc in remaining:\n            relevance = cosine_similarity(doc.embedding,\
+  \ query_embedding)\n            if selected:\n                max_sim = max(cosine_similarity(doc.embedding,\
+  \ s.embedding) for s in selected)\n                score = lambda_ * relevance -\
+  \ (1 - lambda_) * max_sim\n            else:\n                score = relevance\n\
+  \            scores.append(score)\n        \n        best_idx = np.argmax(scores)\n\
+  \        selected.append(remaining.pop(best_idx))\n    \n    return selected\n```\n\
+  \n## 四、工程化配置建议\n\n### 索引参数调优\n\n| 参数 | 推荐值 | 说明 |\n|------|--------|------|\n| `ef_construction`\
+  \ (HNSW) | 128–512 | 建图质量，值越大索引越精确 |\n| `M` (HNSW) | 16–48 | 邻居连接数，影响索引大小 |\n| `nlist`\
+  \ (IVF) | `sqrt(n)` 或 `n/100` | 聚类单元数 |\n| `nprobe` (IVF) | `sqrt(nlist)` | 查询时搜索的聚类数\
+  \ |\n| `ef_search` (HNSW) | 64–256 | 查询时遍历的节点数 |\n\n### 召回率评估流程\n\n```python\ndef\
+  \ evaluate_recall(retriever, test_queries, ground_truth, top_k=5):\n    \"\"\"评估召回率@K\"\
+  \"\"\n    results = {k: 0 for k in top_k}\n    \n    for query, relevant_docs in\
+  \ test_queries.items():\n        retrieved = retriever.retrieve(query, top_k=max(top_k))\n\
+  \        retrieved_ids = {d.id for d in retrieved}\n        \n        for k in top_k:\n\
+  \            hits = len(retrieved_ids & set(relevant_docs[:k]))\n            results[k]\
+  \ += hits / len(relevant_docs)\n    \n    for k in top_k:\n        results[k] /=\
+  \ len(test_queries)\n    \n    return results  # {5: 0.85, 10: 0.92, ...}\n```\n\
+  \n## 五、选型决策树\n\n```\n数据量 < 10万?\n  ├─ 是 → 需要多模态? → Weaviate\n  │        └─ 否 → 需要与PG集成?\
+  \ → pgvector\n  │                └─ 否 → 需要快速原型? → Chroma\n  │                  \
+  \      └─ 否 → Qdrant\n  │\n  └─ 否 → 需要分布式? → Milvus\n           └─ 需要极致性能/GPU? →\
+  \ FAISS + 自建服务\n           └─ 需要混合搜索? → Elasticsearch\n           └─ 需要高效过滤? → Qdrant\n\
+  ```\n\n## 六、关键原则\n\n1. **先评估再选型**：用真实数据规模测试，而非仅看文档\n2. **召回率 > 精度**：RAG 场景宁可多召回一些让\
+  \ LLM 过滤，也不要漏召\n3. **多路召回优于单路**：向量+关键词混合能覆盖语义与精确术语\n4. **重排序是性价比最高的优化**：Cross-encoder\
+  \ 重排序显著提升最终效果\n5. **索引参数与数据分布相关**：必须用实际数据做参数扫描\n6. **监控召回率漂移**：数据分布变化时定期评估召回指标"
+decision_provenance:
+  router_rules:
+  - Category ai → rag-engineer
+  memory_match_reasons:
+    E-004: *id001
+    T-005: *id002
+    S-001: *id003
+    P-001: *id004
+    E-005: *id005
+  orchestrator_rules:
+  - 'R1: domains=1'
+  - 'R2: roles=1'
+evidence:
+  level: Level 2 — Runtime Validated
+  description: Real model invocation through OpenCode CLI. Generated by loop-controller
+    runtime_adapter.
+  is_real_execution: true
+  is_ai_generated_yaml: false
+  verification:
+  - 'Router: classification → rag-engineer'
+  - 'Memory: retrieval_adapter → 5 memories, 0 hypotheses'
+  - 'Orchestrator: domains=1 → single-agent'
+  - 'Agent: opencode run invoked with session ses_faaab4c5cffec1NRKSpJ8p12SI'
+  - 'Response: 6052 chars'
+  - 'Tokens: 27689 total, cost=0'

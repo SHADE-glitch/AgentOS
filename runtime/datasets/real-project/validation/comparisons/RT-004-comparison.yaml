@@ -1,0 +1,29 @@
+# Pipeline Validation Comparison
+
+task_id: RT-004
+domain: Backend / Security
+difficulty: medium
+
+memory_off:
+  router_decision: {lead: backend-architect, support: [security-engineer]}
+  orchestrator_decision: {team_formed: true, team_size: 2, pattern: P-002}
+  roles: [backend-architect, security-engineer]
+
+memory_on:
+  retrieved_memories: [F-002 (0.499), T-004 (0.373), P-002 (0.322), E-007 (0.307), T-003 (0.255)]
+  memory_used: [F-002, T-004, P-002, E-007]
+  memory_influence: risk_changed
+  router_decision: {lead: backend-architect, support: [security-engineer]}
+  orchestrator_decision: {team_formed: true, team_size: 2, failure_memory_adjustment: security-engineer priority raised}
+  roles: [backend-architect, security-engineer]
+
+decision_changed: false
+decision_change_type: null
+memory_induced_regression: false
+fallback: false
+comparison_valid: true
+context_compatibility: high
+memory_misapplication: false
+hypothesis_contamination: false
+cross_condition_contamination: none
+evidence_level: benchmark_evaluated

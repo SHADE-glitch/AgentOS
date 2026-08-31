@@ -10,7 +10,7 @@
 
 ## Pattern Used
 - pattern_name:
-- matched_from: `memory/agent-team-patterns/<pattern>.md`
+- matched_from: `memory/patterns/<pattern>.md`
 
 ## Lead Agent
 - <role> (lead) — <responsibility from role-registry>

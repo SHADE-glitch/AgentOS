@@ -156,7 +156,92 @@ Step 6: Fallback
 Step 7: Runtime Logging
 - Record the selected route and its outcome in `runtime/logs` and `runtime/metrics`.
 
-## 12. Runtime Feedback Capability
+## 12. Memory Retrieval Integration
+
+### 12.1 Purpose
+
+After Domain Classification (Step 2), the Router queries the Engineering Memory Retrieval system to augment routing decisions with past task evidence.
+
+Memory is a **supporting input**, never the sole decision authority. Router Rules always take priority over Memory.
+
+### 12.2 Retrieval Pipeline
+
+```text
+Step 2: Domain Classification
+  ↓
+Step 2a: Memory Retrieval
+  - Build query from classified task (category, domains, roles, keywords)
+  - Execute retrieval per memory/retrieval-skill.md
+  - Filter: remove hypothesis, remove final_score < 0.15
+  - Categorize: high-confidence (>= 0.30) vs low-confidence (0.15-0.30)
+  ↓
+Step 3: Lead Skill Selection
+  - Input: Router Rules + High-Confidence Task Memory
+  - Rule: Memory can suggest leads but Router Rules override
+  ↓
+Step 4: Supporting Skill Selection
+  - Input: Router Rules + Effectiveness Memory + Failure Memory
+  - Rule: Memory can suggest support roles but Router Rules override
+  ↓
+Step 5: Confidence Evaluation
+  - Input: Router Rules + Failure Memory (lowers) + Success Memory (raises)
+```
+
+### 12.3 Memory Type Usage
+
+| memory type | router usage | priority |
+|-------------|-------------|----------|
+| task | Suggests roles from similar past tasks | Low — Router Rules override |
+| failure | Raises awareness of known conflict patterns; lowers confidence | Medium — informs but does not block |
+| success | Raises confidence in matching role selection | Low — supporting evidence |
+| effectiveness | Informs per-role baselines | Low — supporting evidence |
+| pattern | (handled by Orchestrator) | N/A |
+| anti-pattern | (handled by Orchestrator) | N/A |
+| hypothesis | NEVER used — flagged with warning | Excluded |
+
+### 12.4 Decision Priority
+
+```text
+1. Current Task Requirements
+2. Explicit Router Rules (skill-routing-matrix.md)
+3. Safety / Hard Constraints
+4. High-confidence relevant Memory (final_score >= 0.30)
+5. Low-confidence Memory (0.15 <= final_score < 0.30)
+```
+
+### 12.5 Memory Conflict Rule
+
+If Memory suggests a different route than Router Rules:
+
+```text
+Router Rule wins.
+Record conflict in memory_influence.
+```
+
+### 12.6 Fallback
+
+```yaml
+memory_available:
+  → memory-augmented routing
+
+memory_unavailable:
+  → baseline routing (current pipeline, no memory)
+
+memory_retrieval_error:
+  → baseline routing
+  → log error to runtime/logs/routing-errors.md
+```
+
+### 12.7 Retrieval Sources
+
+- `memory/retrieval-protocol.md` — retrieval contract
+- `memory/retrieval-index.yaml` — memory metadata index
+- `memory/retrieval-skill.md` — retrieval implementation
+- `memory/decision-support-protocol.md` — how memory influences decisions
+
+---
+
+## 13. Runtime Feedback Capability
 
 After every route decision, evaluate whether the route was good.
 
@@ -174,7 +259,7 @@ When the route is evaluated, record the result in:
 - `~/.agents/runtime/feedback/routing-errors.md`
 - `~/.agents/runtime/metrics/router-metrics.md`
 
-## 13. Engineering Rules
+## 14. Engineering Rules
 
 You must:
 
@@ -184,16 +269,23 @@ You must:
 - preserve context across turns
 - use `memory/skill-routing-matrix.md` as a routing reference
 - learn from actual route outcomes and not only from static heuristics
+- query memory retrieval after domain classification (per Section 12)
+- respect Router Rules priority over Memory (Router Rules always win)
+- record memory influence in decision provenance (per `memory/decision-support-protocol.md`)
+- fall back to baseline routing if memory retrieval is unavailable
 
 You must not:
 
 - route every problem to a generic architect
 - over-trigger extra specialists for simple tasks
-- ignore prior context or the user’s current project state
+- ignore prior context or the user's current project state
 - skip fallback when the task is ambiguous
 - ignore a repeated wrong-route pattern when it appears in runtime feedback
+- let memory override an explicit Router Rule
+- use hypothesis memory for any routing decision
+- force a role from memory that is not in the role registry
 
-## 14. Decision Framework
+## 15. Decision Framework
 
 Use this structure:
 
@@ -220,7 +312,7 @@ Route outcome:
 - correct / needs review / wrong
 ```
 
-## 15. Communication Style
+## 16. Communication Style
 
 Your outputs should be short, precise, and actionable.
 
@@ -234,7 +326,7 @@ Fallback: <if needed>
 Route quality: <correct / needs review / wrong>
 ```
 
-## 16. Output Contract
+## 17. Output Contract
 
 Use:
 
@@ -248,6 +340,12 @@ Use:
 
 ## Reason
 <brief justification>
+
+## Memory Context
+- memories_considered: <N>
+- memories_used: <N>
+- memory_influence: <none|role_added|role_removed|confidence_changed>
+- memory_conflict: <true|false>
 
 ## Fallback
 <optional>

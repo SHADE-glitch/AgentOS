@@ -1,0 +1,151 @@
+# Runtime Diagnostic Matrix — Phase 5.9.2.1
+# Generated: 2026-08-31
+# opencode version: 1.18.25
+
+environment:
+  os: linux
+  opencode_version: 1.18.25
+  credentials: 0
+  env_vars: GITHUB_TOKEN (present but invalid)
+
+tests:
+
+  # ── Smoke Tests ──
+  - test: smoke_test_ling
+    model: opencode/ling-3.0-flash-fin-free
+    workspace: /home/shade/.agents
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 30
+    status: timeout
+    latency: 30000ms
+    session_id: ""
+    error_type: provider_timeout
+    exit_code: 124
+
+  - test: smoke_test_bigpickle
+    model: opencode/big-pickle
+    workspace: /home/shade/.agents
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 30
+    status: timeout
+    latency: 30000ms
+    session_id: ""
+    error_type: provider_timeout
+    exit_code: 124
+
+  - test: smoke_test_nemotron
+    model: opencode/nemotron-3.5-lightning-free
+    workspace: /home/shade/.agents
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 30
+    status: timeout
+    latency: 30000ms
+    session_id: ""
+    error_type: provider_timeout
+    exit_code: 124
+
+  - test: smoke_test_mimo
+    model: opencode/mimo-v2.5-free
+    workspace: /home/shade/.agents
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 30
+    status: success
+    latency: 14200ms
+    session_id: ses_*
+    error_type: none
+    exit_code: 0
+
+  - test: smoke_test_muse
+    model: opencode/muse-spark-1.2-contributor-free
+    workspace: /home/shade/.agents
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 30
+    status: error
+    latency: 8900ms
+    session_id: ""
+    error_type: provider_region_blocked
+    exit_code: 1
+
+  # ── Project Read Tests ──
+  - test: project_read_mimo
+    model: opencode/mimo-v2.5-free
+    workspace: /home/shade/Public/test
+    prompt_level: read_pom_xml
+    timeout_seconds: 60
+    status: success
+    latency: 28400ms
+    session_id: ses_*
+    error_type: none
+    exit_code: 0
+    output: "Java 21"
+
+  # ── Java File Read Tests ──
+  - test: java_read_mimo
+    model: opencode/mimo-v2.5-free
+    workspace: /home/shade/Public/test
+    prompt_level: read_and_summarize_ragservice
+    timeout_seconds: 120
+    status: success
+    latency: 26900ms
+    session_id: ses_*
+    error_type: none
+    exit_code: 0
+    output: "retrieval flow summary"
+
+  # ── T001 Analysis Test ──
+  - test: t001_analysis_mimo
+    model: opencode/mimo-v2.5-free
+    workspace: /home/shade/Public/test
+    prompt_level: analyze_rag_retrieval_no_modify
+    timeout_seconds: 120
+    status: success
+    latency: 97100ms
+    session_id: ses_*
+    error_type: none
+    exit_code: 0
+    output: "comprehensive analysis"
+
+  # ── JSON Format Test ──
+  - test: json_format_mimo_pure
+    model: opencode/mimo-v2.5-free
+    workspace: /home/shade/Public/test
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 30
+    status: success
+    latency: 15300ms
+    session_id: ses_faa65f8ecffeeNBx9IaoKwkYrW
+    error_type: none
+    exit_code: 0
+    tokens: {total: 23354, input: 13, output: 45}
+
+  - test: json_format_mimo_auto
+    model: opencode/mimo-v2.5-free
+    workspace: /home/shade/Public/test
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 60
+    status: success
+    latency: 23300ms
+    session_id: ses_faa654e7cffenvoZEhccTsDTeL
+    error_type: none
+    exit_code: 0
+    tokens: present
+
+  # ── GitHub Copilot ──
+  - test: github_copilot_auth
+    model: github-copilot/claude-haiku-4.5
+    workspace: /home/shade/.agents
+    prompt_level: minimal (say RUNTIME_OK)
+    timeout_seconds: 30
+    status: error
+    latency: 16300ms
+    session_id: ""
+    error_type: provider_auth_failed
+    exit_code: 1
+
+summary:
+  total_tests: 11
+  success: 6
+  timeout: 4
+  error: 1
+  region_blocked: 1
+  auth_failed: 1

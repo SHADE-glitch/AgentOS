@@ -1,0 +1,37 @@
+execution_id: PV-RT011-OFF
+task_id: RT-011
+mode: memory_off
+execution_order: second
+contamination_risk: low
+
+task:
+  user_request: "向量库选型与召回策略"
+  domain: "AI / RAG"
+  difficulty: "medium"
+  expected_skills: ["rag-engineer", "database-engineer"]
+
+memory_off:
+  router_decision:
+    intent: "Architecture Design"
+    lead_agent: "rag-engineer"
+    support_agents: ["database-engineer"]
+    confidence: "high"
+    fallback_used: false
+    reason: "Vector store → rag-engineer. Storage → database-engineer."
+  orchestrator_decision:
+    team_formed: true
+    activation_reason: "domains=2 (AI, database). R4: AI+retrieval → rag-engineer."
+    team_size: 2
+    lead_role: "rag-engineer"
+    support_roles: ["database-engineer"]
+    pattern_used: "P-001 (cross-domain)"
+  selected_roles: ["rag-engineer", "database-engineer"]
+  decision_provenance:
+    router_rules: ["RAG/vector → rag-engineer", "database → database-engineer"]
+    reason: "Vector store selection with database support."
+
+outcome:
+  pipeline_correct: true
+  result: "decision_preserved"
+  human_feedback: "unknown"
+  evidence_level: "benchmark_evaluated"
