@@ -2,18 +2,29 @@
 # Phase 5.8.2.2 — Closed-Loop Runtime Controller
 # This contract defines the Loop Execution lifecycle.
 
-version: "1.0"
-phase: "5.8.2.2"
+version: "1.1"
+phase: "5.10.3"
 
 loop_execution:
   loop_id: ""
   task_id: ""
   task_text: ""
   memory_mode: "enabled"    # enabled | fallback | disabled
-  model: "opencode/ling-3.0-flash-fin-free"
+  model: ""                 # provider-specific, provided by host/env/CLI
+  provider: ""              # opencode | (future) — provided by host/env/CLI
   started_at: ""
   completed_at: ""
   current_stage: "pending"  # pending | running | completed | failed | fallback
+
+  # Entry evidence — populated by AOS bootstrap (Phase 5.10.2)
+  entry:
+    entry_type: ""          # aos_cli | direct | unknown
+    executable: ""          # path to aos binary
+    command: ""             # "aos run"
+    entry_timestamp: ""     # ISO 8601 UTC
+    pid: 0                  # process ID of aos
+    cwd: ""                 # working directory
+    task_id: ""             # AOS-{hex}
 
   retrieval:
     status: "pending"

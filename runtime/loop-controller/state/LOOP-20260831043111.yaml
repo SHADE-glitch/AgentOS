@@ -1,0 +1,93 @@
+loop_id: LOOP-20260831043111
+task_id: AOS-21E93D
+task_text: 分析当前项目的 RAG 结构
+memory_mode: enabled
+model: opencode/mimo-v2.5-free
+started_at: '2026-08-31T04:31:11.283929+00:00'
+completed_at: '2026-08-31T04:32:56.954438+00:00'
+current_stage: completed
+final_status: completed
+retrieval:
+  status: completed
+  retrieved_count: 5
+  memory_ids:
+  - E-004
+  - T-005
+  - S-001
+  - P-001
+  - T-001
+  hypotheses: []
+  error: ''
+  started_at: '2026-08-31T04:31:11.286856+00:00'
+  completed_at: '2026-08-31T04:31:11.593147+00:00'
+decision:
+  status: completed
+  influence: confirmation
+  error: ''
+  started_at: '2026-08-31T04:31:11.593242+00:00'
+  completed_at: '2026-08-31T04:31:11.593244+00:00'
+runtime:
+  status: completed
+  execution_id: EXEC-1788150671
+  trace_id: TRACE-EXEC-1788150671-0a98b197d8ee
+  session_id: ses_fa9ea1124ffe02oHbYHOb12koM
+  provider: opencode
+  model: opencode/mimo-v2.5-free
+  latency_ms: 105124
+  token_usage:
+    total: 56031
+    input: 2345
+    output: 1782
+    reasoning: 0
+    cache_read: 51904
+    cache_write: 0
+  output_hash: d417fa38914f8978
+  status_code: success
+  error: ''
+  started_at: '2026-08-31T04:31:11.593263+00:00'
+  completed_at: '2026-08-31T04:32:56.729773+00:00'
+trace:
+  status: completed
+  trace_file: /home/shade/.agents/runtime/traces/EXEC-1788150671.yaml
+  error: ''
+  started_at: '2026-08-31T04:31:11.593263+00:00'
+  completed_at: '2026-08-31T04:32:56.729773+00:00'
+feedback:
+  status: completed
+  candidate_ids:
+  - CAND-EXEC-1788150671-E-004
+  - CAND-EXEC-1788150671-T-005
+  - CAND-EXEC-1788150671-S-001
+  - CAND-EXEC-1788150671-P-001
+  - CAND-EXEC-1788150671-T-001
+  - CAND-EXEC-1788150671-AP-001
+  error: ''
+  started_at: '2026-08-31T04:32:56.729795+00:00'
+  completed_at: '2026-08-31T04:32:56.750164+00:00'
+validation:
+  status: completed
+  validated_ids: []
+  rejected_ids:
+  - AP-001
+  - E-004
+  - P-001
+  - S-001
+  - T-001
+  - T-005
+  error: ''
+  started_at: '2026-08-31T04:32:56.750185+00:00'
+  completed_at: '2026-08-31T04:32:56.899996+00:00'
+promotion:
+  status: completed
+  promoted_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: '2026-08-31T04:32:56.900010+00:00'
+  completed_at: '2026-08-31T04:32:56.900019+00:00'
+reconciliation:
+  status: completed
+  result: CONSISTENT
+  error: ''
+  started_at: '2026-08-31T04:32:56.900030+00:00'
+  completed_at: '2026-08-31T04:32:56.954418+00:00'
+errors: []

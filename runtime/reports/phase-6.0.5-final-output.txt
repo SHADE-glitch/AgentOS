@@ -1,0 +1,31 @@
+OPENCODE_VERSION: 1.18.25
+PLUGIN_RUNTIME_ENTRY: index.js
+PLUGIN_API: chat.message, experimental.chat.system.transform, event, dispose
+PLUGIN_DEPLOYMENT: file:///home/shade/.agents/runtime/hosts/opencode/plugin
+PLUGIN_LOADED: YES (in subprocesses) / NOT_LOADED (current session - config timing)
+REAL_PROMPT_HOOK: chat.message
+NATURAL_TRIGGER: L2 (simulated) — requires session restart for L3
+HOST_EVENT_CHAIN: PASS (complete chain verified in test)
+AOS_ENTRY: PASS (adapter called with real session_id)
+ROUTER: PASS
+MEMORY: PASS (5 memories retrieved)
+ORCHESTRATOR: PASS (lead_agent=backend-architect)
+CONTEXT_INJECTION: PASS (system prompt modified)
+SESSION_CORRELATION: PASS (session_id→event_id→task_id)
+CURRENT_SESSION_REUSED: NOT_VERIFIED (requires session restart)
+LOOP_CONTROLLER: NOT_USED_BY_HOST_DECISION_PATH
+RUNTIME: NOT_USED_BY_HOST_DECISION_PATH
+TRACE: PASS (telemetry events generated)
+TELEMETRY: PASS (host-events.yaml written)
+SECOND_OPENCODE: NONE
+RECURSION: PASS
+FAIL_OPEN: PASS
+MODEL_NEUTRAL: PASS
+AGENT_NEUTRAL: PARTIAL (safe fallback only)
+PROVIDER_NEUTRAL: PASS
+PROJECT_SAFETY: PASS
+EVIDENCE_LEVEL: L2 (simulated test) / L0-L1 (current session)
+COUNTER_EVIDENCE: Plugin not loaded in current session due to config timing
+SCORE: 72/100
+FINAL: CONDITIONAL_PASS (requires session restart for full L3 verification)
+NEXT: Restart OpenCode session to activate plugin, then re-verify with real prompts

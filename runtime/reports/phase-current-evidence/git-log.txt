@@ -1,0 +1,5 @@
+56788e5 (HEAD -> main, origin/main, origin/HEAD) Web 应用
+3f8b6c8 Phase 8: 数据分析 Dashboard - 雷达图/趋势/薄弱点 + Redis 缓存 + 前端仪表盘
+0ab4e4f Phase 7: 知识图谱 - 掌握度聚合 + ECharts 力导向图 + 前端图谱页
+63a1248 Phase 6: AI 评分 - 四维评分 + RabbitMQ 异步消费 + 能力报告卡片
+23594d0 Phase 5: 面试状态机 - tool calling 决策 + Redis 会话状态 + 分布式锁

@@ -1,0 +1,81 @@
+# Agent OS Runtime Contract
+# Phase 5.10.3 — Runtime Neutralization
+#
+# Defines the provider abstraction layer.
+# Agent OS core never references a specific runtime or model directly.
+# All runtime bindings go through this contract.
+
+version: "1.0"
+phase: "5.10.3"
+
+# ── Runtime Provider Interface ──────────────────────────────────
+# Each provider implements: invoke(prompt, model) → result
+runtime:
+  provider: ""               # opencode | (future)
+  executable: ""             # path to CLI binary or adapter
+  command: "run"             # subcommand
+  model: ""                  # provider-specific model identifier
+  timeout_seconds: 300       # max execution time
+  environment:               # env vars passed to provider
+    AGENT_OS_ROOT: ""
+    AOS_RUNTIME_PROVIDER: ""
+
+# ── Provider Capability Matrix ──────────────────────────────────
+providers:
+  opencode:
+    executable: "opencode"
+    command: "run"
+    flags: ["--format", "json", "--auto"]
+    model_format: "provider/model-id"     # e.g., opencode/mimo-v2.5-free
+    session_tracking: true
+    token_tracking: true
+    latency_tracking: true
+    status: supported
+
+# ── Host Integration Contract ───────────────────────────────────
+# For when Agent OS is embedded inside a host (e.g., OpenCode Plugin)
+host:
+  type: ""                   # opencode | standalone
+  runtime: ""                # provider name
+  session: ""                # host session ID
+  task: ""                   # task injected by host
+  working_directory: ""      # host working directory
+
+# ── Model Selection Policy ──────────────────────────────────────
+# Priority: CLI flag > env var > host default > provider default
+model_selection:
+  priority:
+    - "--model CLI flag"
+    - "AOS_RUNTIME_MODEL env var"
+    - "Host provided model"
+    - "Provider default model"
+  env_var: "AOS_RUNTIME_MODEL"
+  provider_env_var: "AOS_RUNTIME_PROVIDER"
+
+# ── Provider Selection Policy ───────────────────────────────────
+provider_selection:
+  priority:
+    - "--provider CLI flag"
+    - "AOS_RUNTIME_PROVIDER env var"
+    - "Host provided provider"
+    - "default: opencode"
+  env_var: "AOS_RUNTIME_PROVIDER"
+
+# ── Result Contract ─────────────────────────────────────────────
+# Every provider invocation must return this structure:
+result_schema:
+  status: ""                 # success | error | timeout
+  session_id: ""             # provider session ID
+  model: ""                  # actual model used
+  provider: ""               # provider name
+  tokens:
+    total: 0
+    input: 0
+    output: 0
+    reasoning: 0
+    cache_read: 0
+    cache_write: 0
+  cost: 0
+  latency_ms: 0
+  response_text: ""          # agent output
+  error: ""                  # error message if status != success

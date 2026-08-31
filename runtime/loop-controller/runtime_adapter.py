@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-Runtime Adapter — Phase 5.8.2.2
-Bridges DecisionContext → OpenCode CLI → Trace.
+Runtime Adapter — Phase 5.10.3 (Runtime Neutralization)
+Bridges DecisionContext → Runtime Provider → Trace.
 
-DecisionContext + Task → OpenCode CLI → JSONL parse → trace YAML
+DecisionContext + Task → Runtime Provider Abstraction → trace YAML
 
 This adapter:
   1. Constructs a prompt with memory context as SUPPORTING input
-  2. Calls opencode CLI via subprocess
-  3. Parses JSONL output (session_id, tokens, response, latency)
+  2. Dispatches to the appropriate runtime provider via invoke_runtime()
+  3. Parses provider output (session_id, tokens, response, latency)
   4. Writes a trace file to runtime/traces/
   5. Returns ExecutionResult
 
-Memory is supporting input only. It does NOT override Router/Orchestrator rules.
+Provider abstraction: Agent OS core never references a specific runtime.
+Providers are resolved via the runtime contract.
 """
 
 import subprocess
@@ -27,10 +28,11 @@ from datetime import datetime, timezone
 BASE = "/home/shade/.agents"
 TRACES_DIR = os.path.join(BASE, "runtime", "traces")
 
-# Default model
-DEFAULT_MODEL = "opencode/mimo-v2.5-free"
+# Defaults — sourced from environment, host, or CLI (never hardcoded)
+DEFAULT_PROVIDER = os.environ.get("AOS_RUNTIME_PROVIDER", "opencode")
+DEFAULT_MODEL = os.environ.get("AOS_RUNTIME_MODEL", "")
 
-# Timeout for opencode CLI
+# Timeout for provider CLI
 TIMEOUT_SECONDS = 300
 
 
@@ -59,7 +61,7 @@ def compute_output_hash(text):
 
 def build_prompt(task_text, decision_context):
     """
-    Construct the prompt for OpenCode CLI.
+    Construct the prompt for the runtime provider.
     Memory is included as SUPPORTING context only.
 
     The prompt tells the model to act as the appropriate role based on
@@ -122,13 +124,10 @@ def build_prompt(task_text, decision_context):
     return "\n".join(parts)
 
 
-def invoke_opencode(prompt, model=DEFAULT_MODEL):
-    """
-    Call opencode CLI and parse JSONL output.
+# ── Provider Invocation ──────────────────────────────────────────
 
-    Returns:
-        dict with session_id, response_text, tokens, cost, latency_ms, status
-    """
+def _invoke_opencode_provider(prompt, model):
+    """OpenCode provider: call opencode CLI and parse JSONL output."""
     cmd = [
         "opencode", "run",
         "--pure",
@@ -156,6 +155,7 @@ def invoke_opencode(prompt, model=DEFAULT_MODEL):
             "latency_ms": int(TIMEOUT_SECONDS * 1000),
             "status": "timeout",
             "error": f"opencode run exceeded {TIMEOUT_SECONDS}s timeout",
+            "provider": "opencode",
         }
 
     latency_ms = int((time.time() - start_time) * 1000)
@@ -169,6 +169,7 @@ def invoke_opencode(prompt, model=DEFAULT_MODEL):
             "latency_ms": latency_ms,
             "status": "error",
             "error": f"opencode exit code {result.returncode}: {result.stderr[:500]}",
+            "provider": "opencode",
         }
 
     # Parse JSONL output
@@ -217,6 +218,7 @@ def invoke_opencode(prompt, model=DEFAULT_MODEL):
             "latency_ms": latency_ms,
             "status": "error",
             "error": "No text response in OpenCode output",
+            "provider": "opencode",
         }
 
     return {
@@ -226,15 +228,61 @@ def invoke_opencode(prompt, model=DEFAULT_MODEL):
         "cost": cost,
         "latency_ms": latency_ms,
         "status": "success",
+        "provider": "opencode",
     }
 
 
-def build_trace(execution_id, trace_id, task_id, task_text, decision_context, model, opencode_result):
+# Provider dispatch table
+PROVIDER_DISPATCH = {
+    "opencode": _invoke_opencode_provider,
+}
+
+
+def invoke_runtime(provider, prompt, model):
     """
-    Build a trace YAML dict matching the existing trace format.
+    Dispatch to the appropriate runtime provider.
+
+    Args:
+        provider: str, provider name (opencode, ...)
+        prompt: str, the constructed prompt
+        model: str, provider-specific model identifier
+
+    Returns:
+        dict: standard provider result (status, session_id, tokens, etc.)
+    """
+    invoke_fn = PROVIDER_DISPATCH.get(provider)
+    if invoke_fn is None:
+        return {
+            "session_id": "",
+            "response_text": "",
+            "tokens": {"total": 0, "input": 0, "output": 0},
+            "cost": 0,
+            "latency_ms": 0,
+            "status": "error",
+            "error": f"Unknown provider: {provider}",
+            "provider": provider,
+        }
+    return invoke_fn(prompt, model)
+
+
+# ── Trace Building ───────────────────────────────────────────────
+
+def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
+                provider, model, runtime_result, pipeline_timestamps=None):
+    """
+    Build a trace YAML dict. Provider-agnostic.
+
+    pipeline_timestamps: dict with keys:
+        task_received, routing_completed, memory_retrieved,
+        orchestration_completed, agent_started, agent_completed
     """
     now = datetime.now(timezone.utc).isoformat()
     classification = decision_context.get("classification", {})
+
+    if pipeline_timestamps is None:
+        pipeline_timestamps = {}
+
+    ts = pipeline_timestamps
 
     # Memory retrieval section
     mem_list = decision_context.get("memories", [])
@@ -281,7 +329,8 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context, mo
     domains = classification.get("domains", [])
     roles = classification.get("roles", [])
 
-    lead_agent = roles[0] if roles else "backend-architect"
+    # Lead agent from classification; fallback based on category
+    lead_agent = roles[0] if roles else f"{category}-engineer"
     intent_map = {
         "optimization": "Optimization",
         "backend": "Backend Development",
@@ -305,22 +354,25 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context, mo
         "domain": category.capitalize(),
         "difficulty": classification.get("difficulty", "medium"),
         "memory_mode": "on" if decision_context.get("retrieved") else "off",
-        "backend": "opencode",
+        "provider": provider,
         "model": model,
-        "status": opencode_result["status"],
+        "status": runtime_result["status"],
 
         "pipeline": {
             "step_timestamps": {
-                "router_start": now,
-                "router_end": now,
-                "memory_start": now,
-                "memory_end": now,
-                "orchestrator_start": now,
-                "orchestrator_end": now,
-                "agent_start": now,
-                "agent_end": now,
+                "task_received": ts.get("task_received", now),
+                "routing_completed": ts.get("routing_completed", now),
+                "memory_retrieved": ts.get("memory_retrieved", now),
+                "orchestration_completed": ts.get("orchestration_completed", now),
+                "agent_started": ts.get("agent_started", now),
+                "agent_completed": ts.get("agent_completed", now),
             }
         },
+
+        "entry": decision_context.get("entry_metadata", {
+            "entry_type": "unknown",
+            "note": "no entry metadata provided",
+        }),
 
         "router": {
             "intent": intent,
@@ -356,16 +408,16 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context, mo
         },
 
         "agent_invocation": {
-            "backend": "opencode",
-            "cli_command": f"opencode run --format json --auto --model {model} '<prompt>'",
-            "session_id": opencode_result.get("session_id", ""),
+            "provider": provider,
+            "cli_command": f"{provider} run --format json --auto --model {model} '<prompt>'",
+            "session_id": runtime_result.get("session_id", ""),
             "model": model,
-            "tokens": opencode_result.get("tokens", {}),
-            "cost": opencode_result.get("cost", 0),
-            "latency_ms": opencode_result.get("latency_ms", 0),
+            "tokens": runtime_result.get("tokens", {}),
+            "cost": runtime_result.get("cost", 0),
+            "latency_ms": runtime_result.get("latency_ms", 0),
         },
 
-        "agent_response": opencode_result.get("response_text", ""),
+        "agent_response": runtime_result.get("response_text", ""),
 
         "decision_provenance": {
             "router_rules": [f"Category {category} → {lead_agent}"],
@@ -381,16 +433,16 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context, mo
 
         "evidence": {
             "level": "Level 2 — Runtime Validated",
-            "description": "Real model invocation through OpenCode CLI. Generated by loop-controller runtime_adapter.",
+            "description": f"Real model invocation through {provider} CLI. Generated by loop-controller runtime_adapter.",
             "is_real_execution": True,
             "is_ai_generated_yaml": False,
             "verification": [
                 f"Router: classification → {lead_agent}",
                 f"Memory: retrieval_adapter → {len(memories_used)} memories, {len(hyp_list)} hypotheses",
                 f"Orchestrator: domains={len(domains)} → {'single-agent' if single_agent else 'multi-agent'}",
-                f"Agent: opencode run invoked with session {opencode_result.get('session_id', '?')}",
-                f"Response: {len(opencode_result.get('response_text', ''))} chars",
-                f"Tokens: {opencode_result.get('tokens', {}).get('total', 0)} total, cost={opencode_result.get('cost', 0)}",
+                f"Agent: {provider} run invoked with session {runtime_result.get('session_id', '?')}",
+                f"Response: {len(runtime_result.get('response_text', ''))} chars",
+                f"Tokens: {runtime_result.get('tokens', {}).get('total', 0)} total, cost={runtime_result.get('cost', 0)}",
             ],
         },
     }
@@ -398,15 +450,20 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context, mo
     return trace
 
 
-def execute(task_id, task_text, decision_context, model=DEFAULT_MODEL):
+# ── Main Execute ─────────────────────────────────────────────────
+
+def execute(task_id, task_text, decision_context, model="", provider="opencode",
+            pipeline_timestamps=None):
     """
-    Execute a task through OpenCode CLI with memory context.
+    Execute a task through the runtime provider abstraction.
 
     Args:
         task_id: str like "RT-003"
         task_text: str, the task description
         decision_context: dict from retrieval_adapter.adapt()
-        model: str, OpenCode model name
+        model: str, provider-specific model identifier
+        provider: str, provider name (opencode, ...)
+        pipeline_timestamps: dict with real timestamps from loop controller
 
     Returns:
         ExecutionResult dict with execution_id, trace_id, session_id, etc.
@@ -414,28 +471,41 @@ def execute(task_id, task_text, decision_context, model=DEFAULT_MODEL):
     execution_id = generate_execution_id()
     trace_id = generate_trace_id(execution_id)
 
+    if pipeline_timestamps is None:
+        pipeline_timestamps = {}
+
     print(f"[runtime_adapter] execution_id={execution_id}")
     print(f"[runtime_adapter] trace_id={trace_id}")
+    print(f"[runtime_adapter] provider={provider}")
     print(f"[runtime_adapter] model={model}")
 
     # Build prompt
     prompt = build_prompt(task_text, decision_context)
     print(f"[runtime_adapter] prompt_length={len(prompt)} chars")
 
-    # Invoke OpenCode
-    print(f"[runtime_adapter] invoking opencode run...")
-    opencode_result = invoke_opencode(prompt, model)
+    # Record agent start time
+    agent_started = datetime.now(timezone.utc).isoformat()
+    pipeline_timestamps["agent_started"] = agent_started
 
-    print(f"[runtime_adapter] status={opencode_result['status']}")
-    print(f"[runtime_adapter] session_id={opencode_result.get('session_id', '?')}")
-    print(f"[runtime_adapter] tokens={opencode_result.get('tokens', {}).get('total', 0)}")
-    print(f"[runtime_adapter] latency_ms={opencode_result.get('latency_ms', 0)}")
-    print(f"[runtime_adapter] response_length={len(opencode_result.get('response_text', ''))} chars")
+    # Invoke runtime provider
+    print(f"[runtime_adapter] invoking {provider} run...")
+    runtime_result = invoke_runtime(provider, prompt, model)
+
+    # Record agent completion time
+    agent_completed = datetime.now(timezone.utc).isoformat()
+    pipeline_timestamps["agent_completed"] = agent_completed
+
+    print(f"[runtime_adapter] status={runtime_result['status']}")
+    print(f"[runtime_adapter] session_id={runtime_result.get('session_id', '?')}")
+    print(f"[runtime_adapter] tokens={runtime_result.get('tokens', {}).get('total', 0)}")
+    print(f"[runtime_adapter] latency_ms={runtime_result.get('latency_ms', 0)}")
+    print(f"[runtime_adapter] response_length={len(runtime_result.get('response_text', ''))} chars")
 
     # Build trace
     trace = build_trace(
         execution_id, trace_id, task_id, task_text,
-        decision_context, model, opencode_result,
+        decision_context, provider, model, runtime_result,
+        pipeline_timestamps=pipeline_timestamps,
     )
 
     # Write trace file
@@ -443,9 +513,9 @@ def execute(task_id, task_text, decision_context, model=DEFAULT_MODEL):
     trace_path = os.path.join(TRACES_DIR, f"{execution_id}.yaml")
     with open(trace_path, "w") as f:
         f.write(f"# Execution Trace — {task_id} (Memory {'ON' if decision_context.get('retrieved') else 'OFF'})\n")
-        f.write(f"# Phase 5.8.2.2 — Closed-Loop Runtime Controller\n")
+        f.write(f"# Phase 5.10.3 — Runtime Neutralization\n")
         f.write(f"# Generated: {datetime.now(timezone.utc).isoformat()}\n")
-        f.write(f"# Backend: OpenCode CLI\n")
+        f.write(f"# Provider: {provider}\n")
         f.write("\n")
         yaml.dump(trace, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
@@ -454,18 +524,18 @@ def execute(task_id, task_text, decision_context, model=DEFAULT_MODEL):
     return {
         "execution_id": execution_id,
         "trace_id": trace_id,
-        "session_id": opencode_result.get("session_id", ""),
-        "provider": "opencode",
+        "session_id": runtime_result.get("session_id", ""),
+        "provider": provider,
         "model": model,
         "start_time": datetime.now(timezone.utc).isoformat(),
         "end_time": datetime.now(timezone.utc).isoformat(),
-        "latency_ms": opencode_result.get("latency_ms", 0),
-        "token_usage": opencode_result.get("tokens", {}),
-        "output_hash": compute_output_hash(opencode_result.get("response_text", "")),
-        "final_output": opencode_result.get("response_text", ""),
-        "status": opencode_result["status"],
+        "latency_ms": runtime_result.get("latency_ms", 0),
+        "token_usage": runtime_result.get("tokens", {}),
+        "output_hash": compute_output_hash(runtime_result.get("response_text", "")),
+        "final_output": runtime_result.get("response_text", ""),
+        "status": runtime_result["status"],
         "trace_file": trace_path,
-        "error": opencode_result.get("error", ""),
+        "error": runtime_result.get("error", ""),
     }
 
 
@@ -477,28 +547,30 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 3:
-        print("Usage: python3 runtime_adapter.py <task_id> <task_text> [model]")
-        print("Example: python3 runtime_adapter.py RT-003 '分析 MySQL 慢查询问题'")
+        print("Usage: python3 runtime_adapter.py <task_id> <task_text> [provider] [model]")
+        print("Example: python3 runtime_adapter.py RT-003 'Analyze MySQL slow queries' opencode opencode/mimo-v2.5-free")
         sys.exit(1)
 
     task_id = sys.argv[1]
     task_text = sys.argv[2]
-    model = sys.argv[3] if len(sys.argv) > 3 else DEFAULT_MODEL
+    provider = sys.argv[3] if len(sys.argv) > 3 else DEFAULT_PROVIDER
+    model = sys.argv[4] if len(sys.argv) > 4 else DEFAULT_MODEL
 
     # For standalone CLI, create a minimal decision_context
-    # In production, this comes from retrieval_adapter
     decision_context = {
         "retrieved": False,
         "memories": [],
         "hypotheses": [],
-        "classification": {
-            "category": "backend",
-            "domains": [],
-            "roles": [],
-            "keywords": [],
-            "difficulty": "medium",
-        },
+        "total_retrieved": 0,
+        "ranking": [],
+        "classification": {},
+        "entry_metadata": {},
     }
 
-    result = execute(task_id, task_text, decision_context, model)
-    print(yaml.dump(result, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    result = execute(task_id, task_text, decision_context, model=model, provider=provider)
+    print(f"\nResult: {result['status']}")
+    print(f"Execution: {result['execution_id']}")
+    print(f"Trace: {result['trace_id']}")
+    print(f"Session: {result['session_id']}")
+    print(f"Provider: {result['provider']}")
+    print(f"Model: {result['model']}")

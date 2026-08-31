@@ -1,0 +1,264 @@
+#!/usr/bin/env python3
+"""
+Agent OS CLI Bootstrap — Phase 5.10
+
+aos — the Agent OS entry point.
+Routes tasks through Router → Memory → Orchestrator → Runtime (OpenCode).
+
+Usage:
+    aos run "task description"
+    aos run "task description" --memory on
+    aos run "task description" --memory off
+    aos run "task description" --model opencode/mimo-v2.5-free
+    aos run "task description" --cwd /path/to/project
+    aos --version
+    aos --help
+"""
+
+import sys
+import os
+import argparse
+import subprocess
+import uuid
+import json
+from datetime import datetime, timezone
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+AGENT_OS_ROOT = os.environ.get("AGENT_OS_ROOT", os.path.expanduser("~/.agents"))
+LOOP_CONTROLLER = os.path.join(AGENT_OS_ROOT, "runtime", "loop-controller", "loop_controller.py")
+RUNTIME_ADAPTER = os.path.join(AGENT_OS_ROOT, "runtime", "loop-controller", "runtime_adapter.py")
+RETRIEVAL_ADAPTER = os.path.join(AGENT_OS_ROOT, "runtime", "loop-controller", "retrieval_adapter.py")
+DEFAULT_PROVIDER = os.environ.get("AOS_RUNTIME_PROVIDER", "opencode")
+DEFAULT_MODEL = os.environ.get("AOS_RUNTIME_MODEL", "")
+DEFAULT_MEMORY = "on"
+VERSION = "0.2.0"
+
+
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+def validate_environment():
+    """Validate that all required components exist. Runtime-agnostic."""
+    errors = []
+
+    if not os.path.isdir(AGENT_OS_ROOT):
+        errors.append(f"Agent OS root not found: {AGENT_OS_ROOT}")
+
+    if not os.path.isfile(LOOP_CONTROLLER):
+        errors.append(f"Loop controller not found: {LOOP_CONTROLLER}")
+
+    if not os.path.isfile(RUNTIME_ADAPTER):
+        errors.append(f"Runtime adapter not found: {RUNTIME_ADAPTER}")
+
+    if not os.path.isfile(RETRIEVAL_ADAPTER):
+        errors.append(f"Retrieval adapter not found: {RETRIEVAL_ADAPTER}")
+
+    return errors
+
+
+def validate_task(task_text):
+    """Validate that task text is not empty."""
+    if not task_text or not task_text.strip():
+        return "Task description cannot be empty"
+    return None
+
+
+def generate_task_id():
+    """Generate a short task ID."""
+    suffix = uuid.uuid4().hex[:6].upper()
+    return f"AOS-{suffix}"
+
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+def cmd_run(args):
+    """Execute a task through the Agent OS pipeline."""
+    task_text = args.task
+
+    # Validate
+    task_error = validate_task(task_text)
+    if task_error:
+        print(f"Error: {task_error}", file=sys.stderr)
+        sys.exit(1)
+
+    env_errors = validate_environment()
+    if env_errors:
+        print("Agent OS bootstrap failed:", file=sys.stderr)
+        for e in env_errors:
+            print(f"  - {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Determine working directory
+    cwd = args.cwd if args.cwd else os.getcwd()
+    if not os.path.isdir(cwd):
+        print(f"Error: working directory not found: {cwd}", file=sys.stderr)
+        sys.exit(1)
+
+    # Generate task ID
+    task_id = generate_task_id()
+
+    # Map memory mode
+    memory_mode_map = {
+        "on": "enabled",
+        "off": "disabled",
+    }
+    memory_mode = memory_mode_map.get(args.memory, "enabled")
+
+    model = args.model if args.model else DEFAULT_MODEL
+    provider = args.provider if args.provider else DEFAULT_PROVIDER
+
+    print(f"Agent OS — Bootstrap")
+    print(f"  Task ID:   {task_id}")
+    print(f"  Task:      {task_text[:80]}")
+    print(f"  Memory:    {args.memory}")
+    print(f"  Provider:  {provider}")
+    print(f"  Model:     {model}")
+    print(f"  CWD:       {cwd}")
+    print()
+
+    # Build loop_controller command
+    cmd = [
+        sys.executable,
+        LOOP_CONTROLLER,
+        task_id,
+        task_text,
+        memory_mode,
+        model,
+        provider,
+    ]
+
+    # ── entry evidence metadata ────────────────────────────────────
+    entry_metadata = {
+        "entry_type": "aos_cli",
+        "executable": os.path.abspath(sys.argv[0]),
+        "command": "aos run",
+        "entry_timestamp": datetime.now(timezone.utc).isoformat(),
+        "pid": os.getpid(),
+        "cwd": cwd,
+        "task_id": task_id,
+    }
+
+    # Execute
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=cwd,
+            env={
+                **os.environ,
+                "AGENT_OS_ROOT": AGENT_OS_ROOT,
+                "AOS_ENTRY_METADATA": json.dumps(entry_metadata),
+            },
+        )
+        sys.exit(result.returncode)
+    except Exception as e:
+        print(f"Agent OS bootstrap failed: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_doctor(args):
+    """Diagnose Agent OS environment."""
+    print("Agent OS Doctor")
+    print(f"  Agent OS Root: {AGENT_OS_ROOT}")
+    print(f"  Loop Controller: {LOOP_CONTROLLER} {'[OK]' if os.path.isfile(LOOP_CONTROLLER) else '[MISSING]'}")
+    print(f"  Runtime Adapter: {RUNTIME_ADAPTER} {'[OK]' if os.path.isfile(RUNTIME_ADAPTER) else '[MISSING]'}")
+    print(f"  Retrieval Adapter: {RETRIEVAL_ADAPTER} {'[OK]' if os.path.isfile(RETRIEVAL_ADAPTER) else '[MISSING]'}")
+    print()
+
+    errors = validate_environment()
+    if errors:
+        print("Issues found:")
+        for e in errors:
+            print(f"  [FAIL] {e}")
+        print()
+        print("Status: BROKEN")
+    else:
+        print("Status: READY")
+        print()
+
+    # Check traces
+    traces_dir = os.path.join(AGENT_OS_ROOT, "runtime", "traces")
+    if os.path.isdir(traces_dir):
+        traces = [f for f in os.listdir(traces_dir) if f.endswith(".yaml")]
+        print(f"Traces: {len(traces)} trace files")
+    else:
+        print("Traces: no traces directory")
+
+    # Check loop states
+    state_dir = os.path.join(AGENT_OS_ROOT, "runtime", "loop-controller", "state")
+    if os.path.isdir(state_dir):
+        states = [f for f in os.listdir(state_dir) if f.startswith("LOOP-") and f.endswith(".yaml")]
+        print(f"Loop States: {len(states)} state files")
+    else:
+        print("Loop States: no state directory")
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+def main():
+    parser = argparse.ArgumentParser(
+        prog="aos",
+        description="Agent OS CLI — routes tasks through Router → Memory → Orchestrator → Runtime",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  aos run "analyze the current project structure"
+  aos run "fix the bug in LoginService" --memory on
+  aos run "optimize database queries" --memory off --model opencode/mimo-v2.5-free --provider opencode
+  aos run "analyze code" --provider opencode --model opencode/mimo-v2.5-free
+  aos doctor
+  aos --version
+        """,
+    )
+
+    parser.add_argument(
+        "--version", action="store_true",
+        help="Show version and exit"
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # run
+    run_parser = subparsers.add_parser("run", help="Run a task through Agent OS pipeline")
+    run_parser.add_argument("task", help="Task description")
+    run_parser.add_argument(
+        "--memory", choices=["on", "off"], default=DEFAULT_MEMORY,
+        help="Memory retrieval mode (default: on)"
+    )
+    run_parser.add_argument(
+        "--model", default=None,
+        help=f"Model to use (default: AOS_RUNTIME_MODEL env or host-provided)"
+    )
+    run_parser.add_argument(
+        "--provider", "-p", default=None,
+        help=f"Runtime provider (default: {DEFAULT_PROVIDER})"
+    )
+    run_parser.add_argument(
+        "--cwd", default=None,
+        help="Working directory (default: current directory)"
+    )
+
+    # doctor
+    subparsers.add_parser("doctor", help="Diagnose Agent OS environment")
+
+    args = parser.parse_args()
+
+    if args.version:
+        print(f"aos {VERSION}")
+        print(f"Agent OS Root: {AGENT_OS_ROOT}")
+        sys.exit(0)
+
+    if args.command == "run":
+        cmd_run(args)
+    elif args.command == "doctor":
+        cmd_doctor(args)
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

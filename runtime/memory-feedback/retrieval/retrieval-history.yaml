@@ -887,3 +887,1403 @@ retrievals:
   - P-001
   - T-001
   - S-001
+- timestamp: '2026-08-31T04:31:11.574807+00:00'
+  query:
+    task_text: 分析当前项目的 RAG 结构
+    category: ai
+    domains:
+    - rag
+    roles:
+    - rag-engineer
+    keywords:
+    - rag
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-004
+  - T-005
+  - S-001
+  - P-001
+  - T-001
+- timestamp: '2026-08-31T04:38:18.732453+00:00'
+  query:
+    task_text: 审查当前 /home/shade/Public/test 的 No-AI 重构结果。检查 AI/RAG 是否彻底移除、核心业务是否完整、Question
+      Bank/评分/面试流程是否自洽、前后端 API 是否一致、Redis/RabbitMQ 是否仍然有必要。只读分析，不修改任何文件。
+    category: backend
+    domains:
+    - backend
+    - rag
+    roles:
+    - backend-architect
+    - rag-engineer
+    keywords:
+    - api
+    - rag
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - T-005
+  - E-006
+- timestamp: '2026-08-31T04:40:25.273838+00:00'
+  query:
+    task_text: 审查当前 /home/shade/Public/test 的 No-AI 重构结果。检查 AI/RAG 是否彻底移除、核心业务是否完整、Question
+      Bank/评分/面试流程是否自洽、前后端 API 是否一致、Redis/RabbitMQ 是否仍然有必要。只读分析，不修改任何文件。
+    category: backend
+    domains:
+    - backend
+    - rag
+    roles:
+    - backend-architect
+    - rag-engineer
+    keywords:
+    - api
+    - rag
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - T-005
+  - E-006
+- timestamp: '2026-08-31T05:13:42.128499+00:00'
+  query:
+    task_text: 只读取 pom.xml，告诉我 Java 版本，不修改任何文件
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - S-002
+- timestamp: '2026-08-31T05:18:16.659431+00:00'
+  query:
+    task_text: 只读取当前项目 pom.xml，告诉我 Java 版本，不修改任何文件
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - S-002
+- timestamp: '2026-08-31T05:18:54.856415+00:00'
+  query:
+    task_text: 只读取当前项目 pom.xml，告诉我 Java 版本，不修改任何文件
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - S-002
+  - E-006
+- timestamp: '2026-08-31T05:26:45.677829+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - S-002
+  - E-006
+- timestamp: '2026-08-31T05:27:28.668536+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - S-002
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T05:28:03.566062+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T06:09:40.337773+00:00'
+  query:
+    task_text: 检查当前项目登录认证流程，指出安全问题
+    category: backend
+    domains:
+    - backend
+    - security
+    roles:
+    - security-engineer
+    keywords:
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-007
+  - F-002
+  - T-004
+  - S-002
+  - E-006
+- timestamp: '2026-08-31T06:11:54.068714+00:00'
+  query:
+    task_text: 检查当前项目的用户登录与认证流程，找出潜在的安全问题
+    category: backend
+    domains:
+    - backend
+    - security
+    roles:
+    - security-engineer
+    keywords:
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-007
+  - F-002
+  - T-004
+  - S-002
+  - E-006
+- timestamp: '2026-08-31T06:12:40.564302+00:00'
+  query:
+    task_text: Test integration
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T06:34:30.596442+00:00'
+  query:
+    task_text: '"say hello"'
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T06:35:04.633552+00:00'
+  query:
+    task_text: '"say hello"'
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T06:35:42.176962+00:00'
+  query:
+    task_text: '"检查项目 src/main/java/com/aiview/auth 目录下有哪些文件"'
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T06:36:52.597177+00:00'
+  query:
+    task_text: '"list files in src directory"'
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T06:37:30.065695+00:00'
+  query:
+    task_text: '"say hi"'
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T06:50:12.745090+00:00'
+  query:
+    task_text: 检查当前项目的用户登录与认证流程，找出潜在安全问题，并按照优先级给出修复建议
+    category: backend
+    domains:
+    - backend
+    - security
+    roles:
+    - security-engineer
+    keywords:
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-007
+  - F-002
+  - T-004
+  - S-002
+  - E-006
+- timestamp: '2026-08-31T06:50:36.146453+00:00'
+  query:
+    task_text: test fail-open
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T07:02:39.522496+00:00'
+  query:
+    task_text: 'test task: fix a bug in the login function'
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T07:20:09.455829+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T07:20:30.206631+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T07:20:37.873558+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T07:22:52.499839+00:00'
+  query:
+    task_text: test fail-open
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T07:23:02.699121+00:00'
+  query:
+    task_text: test neutrality
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T07:27:55.733059+00:00'
+  query:
+    task_text: 继续
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T07:37:30.436962+00:00'
+  query:
+    task_text: "# Phase 6.0.7 — Real Natural Developer Prompt & Evidence Correlation\
+      \ Repair\n\n你现在是：\n\n> Agent OS Host Integration Engineer\n\n本阶段不是重新设计 Agent\
+      \ OS。\n\n刚刚完成的独立 Trae 审计结论：\n\n```text\nPLUGIN_LOADED:          PARTIAL\nNATURAL_TRIGGER:\
+      \        NOT_VERIFIED\nREAL_PROMPT_HOOK:       PASS\nAOS_ENTRY:            \
+      \  PASS\nROUTER:                 PARTIAL\nMEMORY:                 PARTIAL\n\
+      ORCHESTRATOR:           PARTIAL\nCONTEXT_INJECTION:      PARTIAL\nSESSION_CORRELATION:\
+      \    PARTIAL\nTASK_CORRELATION:       PARTIAL\nCURRENT_SESSION_REUSED: YES\n\
+      SECOND_OPENCODE:        PASS\nRECURSION:              PASS\nFAIL_OPEN:     \
+      \         PARTIAL\nMODEL_NEUTRAL:          PASS\nAGENT_NEUTRAL:          PASS\n\
+      PROVIDER_NEUTRAL:       PASS\nPROJECT_SAFETY:         PASS\nPLUGIN_SOURCE_CONSISTENCY:\
+      \ FAIL\nEVIDENCE_LEVEL:         L2+\nSCORE:                  55/100\nFINAL:\
+      \                  NOT_VERIFIED\n```\n\n当前真正需要解决的问题只有：\n\n```text\n1. 真正的自然开发者\
+      \ Prompt\n2. Host Session / Task / Context Injection 的证据关联\n3. Plugin source/runtime\
+      \ consistency\n```\n\n不要扩展其他 Agent OS 能力。\n\n---\n\n# 一、最重要的目标\n\n本阶段必须证明：\n\
+      \n```text\n真实 OpenCode\n    ↓\n真实 Plugin\n    ↓\n真实普通开发者 Prompt\n    ↓\nchat.message\n\
+      \    ↓\nAOS Host Adapter\n    ↓\nRouter\n    ↓\nMemory\n    ↓\nOrchestrator\n\
+      \    ↓\nContext Injection\n    ↓\n当前 OpenCode Session\n```\n\n其中：\n\n> **Prompt\
+      \ 必须是一个独立的真实开发任务。**\n\n不能再使用：\n\n```text\n继续\n```\n\n作为 Natural Trigger。\n\n\
+      ---\n\n# 二、自然 Prompt\n\n启动一个新的真实 OpenCode Session。\n\n然后由用户在该 Session 中输入：\n\
+      \n```text\n只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。\n```\n\n不要在 Prompt 中出现：\n\n\
+      ```text\nAOS\nAgent OS\nPlugin\nRouter\nMemory\nOrchestrator\nHost Adapter\n\
+      ```\n\n不要执行：\n\n```text\naos run\npython3 aos_host_adapter.py\npython3 host-trace.py\n\
+      node -e ...\n```\n\n来产生测试事件。\n\n---\n\n# 三、不要自己代替用户输入 Prompt\n\n必须明确区分：\n\n\
+      ```text\n用户真实输入\n```\n\n和：\n\n```text\nAgent 内部继续执行\n```\n\n此次测试 Prompt 必须真正出现在\
+      \ OpenCode Session 的用户消息中。\n\n不能通过：\n\n```text\nCLI 参数\n脚本参数\n测试函数\n模拟 Hook\n\
+      ```\n\n代替真实用户消息。\n\n---\n\n# 四、Plugin Load\n\n在新 OpenCode Session 启动前：\n\n确认：\n\
+      \n```text\n/home/shade/.config/opencode/opencode.jsonc\n```\n\n已经注册：\n\n```text\n\
+      /home/shade/.agents/runtime/hosts/opencode/plugin\n```\n\n然后：\n\n```text\nOpenCode\
+      \ 启动\n↓\nPlugin Load\n↓\n新 Session\n```\n\n配置不得在 Session 启动以后再修改。\n\n---\n\n\
+      # 五、修复 Plugin Source Consistency\n\n当前 Trae 发现：\n\n```text\nindex.ts\nindex.js\n\
+      package.json\n```\n\n版本 / 内容不一致。\n\n必须先解决。\n\n当前实际运行入口：\n\n```text\npackage.json\n\
+      main = ./index.js\n```\n\n因此必须建立明确关系：\n\n```text\nindex.ts\n    ↓\n构建 / 同步\n\
+      \    ↓\nindex.js\n    ↓\nOpenCode Runtime\n```\n\n要求：\n\n```text\nindex.ts ==\
+      \ 实际 Source of Truth\nindex.js == 对应 Runtime Build\npackage.json version ==\
+      \ 实际插件版本\n```\n\n不能继续出现：\n\n```text\nindex.ts = 0.2.0\nindex.js = 0.1.0\npackage.json\
+      \ = 0.2.0\n```\n\n这种不一致。\n\n如果当前没有构建系统：\n\n使用项目中最小、可维护的方式解决。\n\n不要引入大型工具链。\n\
+      \n完成后验证：\n\n```text\npackage.json\nindex.ts\nindex.js\n```\n\n三者关系。\n\n---\n\
+      \n# 六、修复 Task Correlation\n\n当前问题：\n\n```text\nhost_adapter_called\ntask_id\
+      \ = HOST-PADO9FBM\n```\n\n但是：\n\n```text\nhost_context_injected\ntask_id = HOST-188670\n\
+      ```\n\n这是不允许的。\n\n同一次真实 Prompt 的生命周期应该具有稳定的：\n\n```text\ntask_id\n```\n\n推荐：\n\
+      \n```text\nsession_id\n      ↓\ntask_id\n      ↓\ncontext injection\n```\n\n\
+      同一次任务始终使用同一个 task_id。\n\n禁止：\n\n```text\nPlugin 生成 task_id A\nAdapter 自己生成 task_id\
+      \ B\nContext Injection 使用 B\n```\n\n造成证据断裂。\n\n---\n\n# 七、Task ID 的唯一来源\n\n\
+      选择一个合理的 Source of Truth。\n\n推荐：\n\n```text\nPlugin\n    ↓\n生成 task_id\n    ↓\n\
+      传给 AOS Adapter\n    ↓\nAdapter 使用该 task_id\n    ↓\n返回 context\n    ↓\nContext\
+      \ Injection 使用同一个 task_id\n```\n\n或者使用已有合理机制。\n\n关键不是必须采用这个设计。\n\n关键是：\n\n>\
+      \ **同一次任务不能出现两个不同 task_id。**\n\n---\n\n# 八、Session ID 必须贯穿整个 Host Pipeline\n\
+      \n当前：\n\n```text\nhost_prompt_received\n```\n\n有：\n\n```text\nsession_id\n```\n\
+      \n而：\n\n```text\nhost_context_injected\n```\n\n没有：\n\n```text\nsession_id\n\
+      ```\n\n这会导致：\n\n```text\nPrompt\n→ Adapter\n→ Context Injection\n```\n\n无法形成完整\
+      \ Session 证据链。\n\n因此修改 Host telemetry，使：\n\n```yaml\nhost_context_injected:\n\
+      \  session_id:\n  task_id:\n  event_id:\n  timestamp:\n```\n\n至少包含：\n\n```text\n\
+      session_id\ntask_id\nevent_id\ntimestamp\n```\n\n---\n\n# 九、建立统一 Host Correlation\
+      \ Model\n\n对于一次真实 Prompt，至少必须得到：\n\n```text\nsession_id\n    ↓\ntask_id\n  \
+      \  ↓\nevent_id(s)\n```\n\n并保持：\n\n```text\nsession_id = same\ntask_id = same\n\
+      ```\n\nEvent ID 可以不同：\n\n```text\nEVT-A\nEVT-B\nEVT-C\n```\n\n但应该能够明确证明：\n\n\
+      ```text\nEVT-A\nEVT-B\nEVT-C\n```\n\n属于：\n\n```text\n同一个 session_id\n同一个 task_id\n\
+      ```\n\n---\n\n# 十、AOS Decision Layer\n\n真实自然 Prompt 必须产生实际：\n\n```text\nclassification\n\
+      memory\norchestration\n```\n\n不要因为 Prompt 太短导致：\n\n```text\ngeneral\n```\n\n\
+      然后把 fallback 当成 Router 成功。\n\n使用真实 Prompt：\n\n```text\n只读取当前项目的 pom.xml，告诉我\
+      \ Java 版本。禁止修改任何文件。\n```\n\n确认至少获得：\n\n```text\ntask_id\nclassification\ncategory\n\
+      domains\nroles\nmemory retrieval\norchestration decision\n```\n\n---\n\n# 十一、Memory\
+      \ 不能只用 count=5 证明\n\n必须让证据能够回答：\n\n```text\n本次 task_id：\nHOST-XXXXXX\n\n本次 memory\
+      \ retrieval：\nN 条\n\n这些 retrieval 是这次 Prompt 实际产生的。\n```\n\n至少记录：\n\n```text\n\
+      task_id\nmemory mode\nretrieved count\n```\n\n必要时记录 memory IDs。\n\n不要只写：\n\n\
+      ```text\nmemory_count: 5\n```\n\n然后声称 Memory PASS。\n\n---\n\n# 十二、Router 不能只靠\
+      \ lead_agent\n\n当前审计发现：\n\n```text\nlead_agent = general\n```\n\n很可能只是 fallback。\n\
+      \n因此真实 Prompt 后，Telemetry 应至少能说明：\n\n```text\nclassification:\ncategory:\ndomains:\n\
+      roles:\nrouting reason:\n```\n\n然后才能判断：\n\n```text\nROUTER = PASS\n```\n\n---\n\
+      \n# 十三、Context Injection 必须与当前任务绑定\n\n真实 Prompt：\n\n```text\n只读取当前项目的 pom.xml...\n\
+      ```\n\n经过：\n\n```text\nchat.message\n```\n\n之后：\n\n```text\nAOS Adapter\n```\n\
+      \n返回：\n\n```text\ntask_id = HOST-XXXX\n```\n\n随后：\n\n```text\nexperimental.chat.system.transform\n\
+      ```\n\n必须产生：\n\n```text\nhost_context_injected\ntask_id = HOST-XXXX\nsession_id\
+      \ = 当前真实 Session\n```\n\n因此最终链路必须类似：\n\n```text\nsession_id = ses_xxx\n\ntask_id\
+      \ = HOST-123456\n\nprompt_received:\n  session_id = ses_xxx\n  task_id = HOST-123456\n\
+      \nadapter_called:\n  session_id = ses_xxx\n  task_id = HOST-123456\n\nadapter_completed:\n\
+      \  session_id = ses_xxx\n  task_id = HOST-123456\n\ncontext_injected:\n  session_id\
+      \ = ses_xxx\n  task_id = HOST-123456\n```\n\n---\n\n# 十四、不要要求 Host Path 进入 Loop\
+      \ Controller\n\n继续保持：\n\n```text\nHOST PATH:\nOpenCode\n → Plugin\n → Host Adapter\n\
+      \ → Router / Memory / Orchestrator\n → Context Injection\n → Current Session\n\
+      ```\n\nStandalone CLI：\n\n```text\naos run\n → Loop Controller\n → Runtime Adapter\n\
+      \ → opencode run\n```\n\n两者分开。\n\n禁止：\n\n```text\nHost Plugin\n → loop_controller\n\
+      \ → runtime_adapter\n → opencode run\n```\n\n这样会重新产生第二 OpenCode 问题。\n\n---\n\
+      \n# 十五、Second OpenCode\n\n测试期间：\n\n```bash\npgrep -af opencode\n```\n\n以及：\n\
+      \n```bash\nps -ef --forest | grep -i opencode\n```\n\n必须确认：\n\n```text\n只有当前\
+      \ OpenCode Host\n```\n\n没有：\n\n```text\nPlugin\n → AOS\n → opencode run\n```\n\
+      \n---\n\n# 十六、Fail-open\n\n必须至少做一次真实可控失败测试。\n\n例如让 Adapter 产生一个可控错误。\n\n然后确认：\n\
+      \n```text\nAOS failure\n    ↓\nPlugin catches error\n    ↓\nOpenCode continues\n\
+      ```\n\n最终：\n\n```text\nFAIL_OPEN:\nPASS\n```\n\n只有真实运行证据才能 PASS。\n\n---\n\n\
+      # 十七、Recursion\n\n确认：\n\n```text\nAOS_HOST_PLUGIN_ACTIVE\nAOS_HOST_ADAPTER_ACTIVE\n\
+      ```\n\n仍然存在。\n\n并验证：\n\n```text\nOpenCode\n → Plugin\n → Adapter\n```\n\n不会重新：\n\
+      \n```text\nOpenCode\n → Plugin\n → Adapter\n → OpenCode\n → Plugin\n```\n\n\
+      ---\n\n# 十八、Project Safety\n\n测试前：\n\n```bash\ncd /home/shade/Public/test\n\
+      git status --short\ngit diff --stat\n```\n\n测试后再次执行。\n\n绝对禁止：\n\n```text\nreset\n\
+      restore\ncheckout\nclean\nstash\ncommit\n```\n\n不要修改现有 PROJ-001 历史改动。\n\n任何新增修改必须明确记录：\n\
+      \n```text\nPhase 6.0.7 change\n```\n\n---\n\n# 十九、真实 L3 判定条件\n\n本阶段只有在以下全部成立时：\n\
+      \n```text\n1. Plugin 在新 OpenCode Session 启动时加载\n2. Plugin Load 有当前 Session /\
+      \ PID 证据\n3. 用户输入真实普通开发任务\n4. chat.message 捕获该 Prompt\n5. session_id 来自真实 OpenCode\n\
+      6. task_id 唯一且贯穿整个请求\n7. AOS Adapter 被真实调用\n8. Router 有真实分类结果\n9. Memory 有真实\
+      \ retrieval\n10. Orchestrator 有真实 decision\n11. Context Injection 与同一个 session_id\
+      \ + task_id 关联\n12. 没有第二 OpenCode\n```\n\n才允许：\n\n```text\nEVIDENCE_LEVEL: L3\n\
+      NATURAL_TRIGGER: PASS\n```\n\n---\n\n# 二十、必须主动寻找反证\n\n完成后检查：\n\n```text\n1.\
+      \ Prompt 是否真的是普通开发任务？\n2. 是否仍然有“继续”之类内部指令？\n3. Plugin 是否真的在新 Session 启动时加载？\n\
+      4. plugin_loaded 是否有真实 Session 关联？\n5. task_id 是否统一？\n6. context_injected 是否包含\
+      \ session_id？\n7. Router 是否真的执行？\n8. Memory 是否真的执行？\n9. Orchestrator 是否真的执行？\n\
+      10. Telemetry 是否由真实 Plugin 产生？\n11. 是否存在历史测试数据混入？\n12. 是否启动第二 OpenCode？\n13.\
+      \ index.ts/index.js/package.json 是否一致？\n```\n\n---\n\n# 二十一、不要自我宣布 VERIFIED\n\
+      \n你可以输出：\n\n```text\nPASS\nPARTIAL\nFAIL\nNOT_VERIFIED\n```\n\n但不要因为本次测试成功就直接宣称：\n\
+      \n```text\nAOS V1 FREEZE\n```\n\n本阶段只完成：\n\n```text\nPhase 6.0.7\n```\n\n---\n\
+      \n# 二十二、最终报告\n\n生成：\n\n```text\n/home/shade/.agents/runtime/reports/phase-6.0.7-real-natural-trigger.md\n\
+      ```\n\n必须包含：\n\n```text\n1. OpenCode Version\n2. New Session ID\n3. Current\
+      \ OpenCode PID\n4. Plugin Runtime Entry\n5. Plugin Load Evidence\n6. Real Prompt\n\
+      7. Prompt Hook Evidence\n8. Task ID\n9. Session ID\n10. Router Evidence\n11.\
+      \ Memory Evidence\n12. Orchestrator Evidence\n13. Context Injection Evidence\n\
+      14. Session Correlation\n15. Task Correlation\n16. Second OpenCode\n17. Recursion\n\
+      18. Fail-open\n19. Source Consistency\n20. Project Safety\n21. Counter Evidence\n\
+      22. Evidence Level\n23. Final Verdict\n```\n\n---\n\n# 二十三、最终输出格式\n\n严格输出：\n\
+      \n```text\nOPENCODE_VERSION:\nNEW_SESSION_ID:\nCURRENT_OPENCODE_PID:\nPLUGIN_RUNTIME_ENTRY:\n\
+      PLUGIN_LOADED:\nREAL_PROMPT:\nREAL_PROMPT_HOOK:\nNATURAL_TRIGGER:\nSESSION_ID:\n\
+      TASK_ID:\nAOS_ENTRY:\nROUTER:\nMEMORY:\nORCHESTRATOR:\nCONTEXT_INJECTION:\n\
+      SESSION_CORRELATION:\nTASK_CORRELATION:\nCURRENT_SESSION_REUSED:\nSECOND_OPENCODE:\n\
+      RECURSION:\nFAIL_OPEN:\nMODEL_NEUTRAL:\nAGENT_NEUTRAL:\nPROVIDER_NEUTRAL:\n\
+      PLUGIN_SOURCE_CONSISTENCY:\nPROJECT_SAFETY:\nEVIDENCE_LEVEL:\nCOUNTER_EVIDENCE:\n\
+      SCORE:\nFINAL:\nNEXT:\n```\n\n---\n\n# 二十四、最终原则\n\n本阶段不是为了让数字从：\n\n```text\n\
+      55\n```\n\n变成：\n\n```text\n85\n```\n\n而是解决三个客观问题：\n\n```text\n自然 Prompt\n+\n\
+      统一 Task Correlation\n+\n完整 Session Correlation\n```\n\n最终理想证据链：\n\n```text\n\
+      Real OpenCode Session\n        │\n        │ session_id = ses_xxx\n        ▼\n\
+      Plugin Loaded\n        │\n        ▼\nReal User Prompt\n        │\n        │\
+      \ task_id = HOST-xxxxxx\n        ▼\nchat.message\n        │\n        ▼\nAOS\
+      \ Host Adapter\n        │\n        ├── Router\n        ├── Memory\n        └──\
+      \ Orchestrator\n        │\n        ▼\nContext Injection\n        │\n       \
+      \ │ same session_id\n        │ same task_id\n        ▼\nCurrent OpenCode Session\n\
+      ```\n\n完成后停止。\n\n不要进入 Phase 6.1。\n\n不要 Freeze。 "
+    category: optimization
+    domains:
+    - database
+    - backend
+    - frontend
+    - rag
+    - agent
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - indexing
+    - java
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-004
+  - P-002
+- timestamp: '2026-08-31T07:41:56.772056+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T07:44:39.369738+00:00'
+  query:
+    task_text: "# Phase 6.0.8 — Final Real Natural Prompt Verification\n\nPhase 6.0.7\
+      \ 已完成代码修复，但没有完成真实 L3 验证。\n\n当前状态：\n\n```text\nPLUGIN_SOURCE_CONSISTENCY: PASS\n\
+      TASK_CORRELATION:          FIXED\nSESSION_CORRELATION:       FIXED\n\nNATURAL_TRIGGER:\
+      \           PENDING\nEVIDENCE_LEVEL:            L2+\nFINAL:                \
+      \     PARTIAL\n```\n\n本阶段：\n\n> **禁止继续修改架构。**\n> **禁止为了测试而自行模拟用户。**\n> **唯一目标是完成一次真正的人工自然\
+      \ Prompt → Plugin → AOS 验证。**\n\n---\n\n## 一、禁止修改\n\n除非发现明确阻断真实测试的 bug，否则不要修改：\n\
+      \n```text\nRouter\nMemory\nOrchestrator\nLoop Controller\nRuntime Adapter\n\
+      Plugin Architecture\n```\n\n也不要继续做无关重构。\n\n---\n\n# 二、先检查当前状态\n\n记录：\n\n```bash\n\
+      opencode --version\n```\n\n记录：\n\n```bash\npgrep -af opencode\n```\n\n确认当前 OpenCode\
+      \ Session。\n\n记录：\n\n```bash\ncd /home/shade/Public/test\ngit status --short\n\
+      git diff --stat\n```\n\n保存为测试前基线。\n\n---\n\n# 三、确认 Plugin 已提前配置\n\n确认：\n\n```text\n\
+      /home/shade/.config/opencode/opencode.jsonc\n```\n\n中存在：\n\n```text\n/home/shade/.agents/runtime/hosts/opencode/plugin\n\
+      ```\n\n确认：\n\n```text\npackage.json\nmain = ./index.js\n```\n\n确认：\n\n```text\n\
+      index.ts\nindex.js\npackage.json\n```\n\n版本一致。\n\n---\n\n# 四、重新启动新的 OpenCode\
+      \ Session\n\n必须：\n\n```text\nPlugin 已配置\n        ↓\n关闭旧 OpenCode\n        ↓\n\
+      确认旧进程结束\n        ↓\n重新启动 OpenCode\n        ↓\nPlugin 在启动阶段加载\n        ↓\n创建新的\
+      \ Session\n```\n\n不要在 OpenCode 已经启动后修改 Plugin 配置。\n\n如果配置发生变化：\n\n必须重新启动 OpenCode。\n\
+      \n---\n\n# 五、这里开始必须由真实用户操作\n\n这是本阶段最关键的规则。\n\n重新启动 OpenCode 后：\n\n> **停止自动执行。**\n\
+      \n不要：\n\n```text\n继续\n```\n\n不要：\n\n```text\naos run\n```\n\n不要：\n\n```text\n\
+      python3 aos_host_adapter.py\n```\n\n不要：\n\n```text\nnode -e\n```\n\n不要：\n\n\
+      ```text\nhost-trace.py\n```\n\n不要使用任何脚本模拟用户 Prompt。\n\n---\n\n# 六、让真实用户输入自然\
+      \ Prompt\n\n在新的 OpenCode Session 中，由真实用户手动输入：\n\n```text\n只读取当前项目的 pom.xml，告诉我\
+      \ Java 版本。禁止修改任何文件。\n```\n\n必须确保：\n\n1. 这是真实 OpenCode UI / Session 中的用户消息；\n\
+      2. 用户没有说明 AOS；\n3. 用户没有说明 Plugin；\n4. 用户没有说明 Router；\n5. 用户没有说明 Memory；\n6.\
+      \ 用户没有说明 Orchestrator；\n7. 用户没有执行 AOS CLI。\n\n这条 Prompt 才是本阶段的：\n\n```text\n\
+      REAL_PROMPT\n```\n\n---\n\n# 七、不要让 Agent 自己“代替用户发送”\n\n如果当前环境无法让你在真实 OpenCode\
+      \ Session 中手动输入 Prompt：\n\n> 不要伪造测试。\n\n直接报告：\n\n```text\nREAL_PROMPT_EXECUTION:\n\
+      BLOCKED\n```\n\n然后停止。\n\n宁可：\n\n```text\nNOT_VERIFIED\n```\n\n也不要生成假的 L3 证据。\n\
+      \n---\n\n# 八、获取当前真实 Session ID\n\n测试前先确定：\n\n```text\nNEW_SESSION_ID\n```\n\n\
+      例如：\n\n```text\nses_xxxxx\n```\n\n然后记录：\n\n```text\nCURRENT_OPENCODE_PID\n```\n\
+      \n---\n\n# 九、验证 Plugin Load\n\n在这次新的 Session 中找到：\n\n```text\nhost_plugin_loaded\n\
+      ```\n\n并验证：\n\n```text\npid\ncwd\nplugin_version\ntimestamp\n```\n\n其中：\n\n\
+      ```text\npid\n```\n\n必须对应当前 OpenCode Plugin Runtime。\n\n如果：\n\n```text\nsession_id\n\
+      ```\n\n为空：\n\n不要直接判定失败。\n\n但是必须通过：\n\n```text\nPID\ntimestamp\nOpenCode Session\n\
+      ```\n\n建立可靠关联。\n\n最终记录：\n\n```text\nPLUGIN_LOAD_EVENT_ID:\nPLUGIN_PID:\nPLUGIN_SESSION_ID:\n\
+      PLUGIN_LOAD_TIMESTAMP:\n```\n\n---\n\n# 十、验证真实 Prompt Hook\n\n寻找本次 Prompt 对应的：\n\
+      \n```text\nhost_prompt_received\n```\n\n要求：\n\n```text\nprompt_summary:\n只读取当前项目的\
+      \ pom.xml，告诉我 Java 版本。禁止修改任何文件。\n```\n\n并且：\n\n```text\nsession_id:\n=\nNEW_SESSION_ID\n\
+      ```\n\n必须确认。\n\n最终记录：\n\n```text\nPROMPT_EVENT_ID:\nPROMPT_SESSION_ID:\nPROMPT_TIMESTAMP:\n\
+      PROMPT_SUMMARY:\n```\n\n---\n\n# 十一、验证 Adapter\n\n继续寻找：\n\n```text\nhost_adapter_called\n\
+      host_adapter_completed\n```\n\n要求：\n\n```text\nsession_id = NEW_SESSION_ID\n\
+      task_id = TASK_ID\n```\n\n两条事件必须使用同一个：\n\n```text\ntask_id\n```\n\n并记录：\n\n\
+      ```text\nTASK_ID:\nADAPTER_CALLED_EVENT_ID:\nADAPTER_COMPLETED_EVENT_ID:\n```\n\
+      \n---\n\n# 十二、验证 AOS Decision Layer\n\n本次自然 Prompt 必须产生：\n\n```text\nclassification\n\
+      routing\nmemory retrieval\norchestration\n```\n\n特别是这个 Prompt：\n\n```text\n\
+      只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。\n```\n\n不应仅仅得到：\n\n```text\ngeneral\n\
+      ```\n\n然后把 fallback 当成成功。\n\n至少应该找到：\n\n```text\ncategory\ndomains\nroles\n\
+      difficulty\nmemory retrieval\norchestration decision\n```\n\n如果现有 telemetry\
+      \ 没有完整字段：\n\n通过对应 AOS 输出、Trace 或日志建立证据。\n\n---\n\n# 十三、验证 Memory\n\n不能只使用：\n\
+      \n```text\nmemory_count: 5\n```\n\n作为唯一依据。\n\n必须确认这个 retrieval 是由：\n\n```text\n\
+      本次 TASK_ID\n```\n\n触发的。\n\n记录：\n\n```text\nTASK_ID\nRETRIEVED_COUNT\nMEMORY_IDS\
+      \ (如果存在)\n```\n\n---\n\n# 十四、验证 Router\n\n必须证明：\n\n```text\n真实 Prompt\n    \
+      \    ↓\nclassification\n        ↓\nrole / routing decision\n```\n\n例如：\n\n```text\n\
+      category: backend\nroles:\n  - backend-architect\n```\n\n具体结果以实际运行结果为准。\n\n\
+      不要手工填写。\n\n---\n\n# 十五、验证 Orchestrator\n\n必须确认：\n\n```text\norchestration\n\
+      ```\n\n来自本次任务。\n\n记录：\n\n```text\nlead_agent\nsupport_agents\n```\n\n以及对应的：\n\
+      \n```text\nTASK_ID\n```\n\n---\n\n# 十六、验证 Context Injection\n\n这是本次第二个核心门槛。\n\
+      \n寻找：\n\n```text\nhost_context_injected\n```\n\n必须确认：\n\n```text\nsession_id\
+      \ = NEW_SESSION_ID\ntask_id = TASK_ID\n```\n\n并且：\n\n```text\nTASK_ID\n```\n\
+      \n与：\n\n```text\nhost_adapter_called\nhost_adapter_completed\n```\n\n完全一致。\n\
+      \n正确形式：\n\n```text\nprompt_received:\n    session_id = ses_xxx\n    task_id\
+      \ = HOST-xxxxxx\n\nadapter_called:\n    session_id = ses_xxx\n    task_id =\
+      \ HOST-xxxxxx\n\nadapter_completed:\n    session_id = ses_xxx\n    task_id =\
+      \ HOST-xxxxxx\n\ncontext_injected:\n    session_id = ses_xxx\n    task_id =\
+      \ HOST-xxxxxx\n```\n\n如果出现不同 task_id：\n\n```text\nTASK_CORRELATION = FAIL\n\
+      ```\n\n不要解释成“逻辑上可以关联”。\n\n---\n\n# 十七、Session Correlation\n\n必须满足：\n\n```text\n\
+      session_id\n```\n\n在整个 Host Pipeline 中保持一致。\n\n至少：\n\n```text\nprompt_received\n\
+      adapter_called\nadapter_completed\ncontext_injected\n```\n\n必须可以关联到同一个真实 Session。\n\
+      \n---\n\n# 十八、Second OpenCode\n\n测试期间：\n\n```bash\npgrep -af opencode\n```\n\
+      \n以及：\n\n```bash\nps -ef --forest | grep -i opencode\n```\n\n必须确认：\n\n```text\n\
+      只有一个由本次测试使用的 OpenCode Host\n```\n\n插件不能执行：\n\n```text\nopencode run\n```\n\n\
+      产生第二实例。\n\n---\n\n# 十九、Recursion\n\n确认：\n\n```text\nAOS_HOST_PLUGIN_ACTIVE\n\
+      AOS_HOST_ADAPTER_ACTIVE\n```\n\n仍然有效。\n\n确认：\n\n```text\nOpenCode\n ↓\nPlugin\n\
+      \ ↓\nAOS\n```\n\n不会再次：\n\n```text\nOpenCode\n ↓\nPlugin\n ↓\nAOS\n ↓\nOpenCode\n\
+      ```\n\n---\n\n# 二十、Fail-open\n\n本阶段不要为了制造失败而破坏系统。\n\n如果已经存在真实故障证据，可以记录。\n\n\
+      如果没有：\n\n```text\nFAIL_OPEN = NOT_VERIFIED\n```\n\n不要只依据代码就写：\n\n```text\nPASS\n\
+      ```\n\n本阶段核心是 Natural Trigger 和 Correlation。\n\n---\n\n# 二十一、Project Safety\n\
+      \n测试前后执行：\n\n```bash\ncd /home/shade/Public/test\ngit status --short\ngit diff\
+      \ --stat\n```\n\n不得：\n\n```text\nreset\nrestore\ncheckout\nclean\nstash\ncommit\n\
+      ```\n\n不得删除已有 PROJ-001 修改。\n\n---\n\n# 二十二、最重要的反作弊规则\n\n以下任何情况出现，都不得判定 L3：\n\
+      \n```text\n\"继续\"\n```\n\n作为测试 Prompt。\n\n```text\npython3 aos_host_adapter.py\n\
+      ```\n\n作为自然触发。\n\n```text\nnode -e\n```\n\n模拟 Hook。\n\n```text\nhost-trace.py\n\
+      ```\n\n生成事件。\n\n人工：\n\n```text\nsession_id\ntask_id\nevent_id\n```\n\n写入 telemetry。\n\
+      \n从旧测试复制：\n\n```text\nREAL-SESSION-TEST\nVERIFY-HOST-CHAIN\nHOST-77D092\nHOST-188670\n\
+      HOST-PADO9FBM\n```\n\n等旧数据作为本次证据。\n\n---\n\n# 二十三、必须只使用本次新测试数据\n\n找到新的：\n\n\
+      ```text\nNEW_SESSION_ID\nTASK_ID\nEVENT_ID\n```\n\n并根据时间范围筛选：\n\n```text\n测试开始时间\n\
+      ≤\n事件时间\n≤\n测试结束时间\n```\n\n旧数据全部排除。\n\n---\n\n# 二十四、最终 L3 门槛\n\n只有以下全部成立：\n\n\
+      ```text\n真实 OpenCode 新 Session\n+\nPlugin 在启动时加载\n+\n真实用户输入自然开发任务\n+\nchat.message\
+      \ 捕获真实 Prompt\n+\n真实 session_id\n+\n唯一 task_id\n+\nAOS Adapter\n+\n真实 classification\
+      \ / Router\n+\n真实 Memory retrieval\n+\n真实 Orchestrator\n+\nContext Injection\n\
+      +\n同一 session_id\n+\n同一 task_id\n+\n没有第二 OpenCode\n```\n\n才允许：\n\n```text\n\
+      EVIDENCE_LEVEL: L3\nNATURAL_TRIGGER: PASS\n```\n\n---\n\n# 二十五、最终报告必须区分“实际证据”和“代码验证”\n\
+      \n报告中分开写：\n\n```text\nCODE_VERIFIED:\n```\n\n和：\n\n```text\nLIVE_SESSION_VERIFIED:\n\
+      ```\n\n绝对不能把：\n\n```text\n代码修好了\n```\n\n写成：\n\n```text\n真实运行通过\n```\n\n---\n\
+      \n# 二十六、最终报告\n\n生成：\n\n```text\n/home/shade/.agents/runtime/reports/phase-6.0.8-live-natural-trigger.md\n\
+      ```\n\n报告至少包含：\n\n```text\n1. OpenCode Version\n2. New Session ID\n3. OpenCode\
+      \ PID\n4. Plugin Load Event\n5. Real Prompt\n6. Prompt Event\n7. Task ID\n8.\
+      \ Adapter Called\n9. Adapter Completed\n10. Router\n11. Memory\n12. Orchestrator\n\
+      13. Context Injection\n14. Session Correlation\n15. Task Correlation\n16. Second\
+      \ OpenCode\n17. Recursion\n18. Fail-open\n19. Project Safety\n20. Code Verification\n\
+      21. Live Session Verification\n22. Counter Evidence\n23. Final Verdict\n```\n\
+      \n---\n\n# 二十七、最终输出\n\n严格输出：\n\n```text\nOPENCODE_VERSION:\nNEW_SESSION_ID:\n\
+      CURRENT_OPENCODE_PID:\n\nPLUGIN_RUNTIME_ENTRY:\nPLUGIN_LOADED:\n\nREAL_PROMPT:\n\
+      REAL_PROMPT_SOURCE:\nREAL_PROMPT_HOOK:\nNATURAL_TRIGGER:\n\nSESSION_ID:\nTASK_ID:\n\
+      \nPROMPT_EVENT_ID:\nADAPTER_CALLED_EVENT_ID:\nADAPTER_COMPLETED_EVENT_ID:\n\
+      CONTEXT_INJECTED_EVENT_ID:\n\nAOS_ENTRY:\nROUTER:\nMEMORY:\nORCHESTRATOR:\n\
+      CONTEXT_INJECTION:\n\nSESSION_CORRELATION:\nTASK_CORRELATION:\n\nCURRENT_SESSION_REUSED:\n\
+      SECOND_OPENCODE:\nRECURSION:\nFAIL_OPEN:\n\nMODEL_NEUTRAL:\nAGENT_NEUTRAL:\n\
+      PROVIDER_NEUTRAL:\n\nPLUGIN_SOURCE_CONSISTENCY:\nPROJECT_SAFETY:\n\nCODE_VERIFIED:\n\
+      LIVE_SESSION_VERIFIED:\nEVIDENCE_LEVEL:\n\nCOUNTER_EVIDENCE:\nSCORE:\nFINAL:\n\
+      NEXT:\n```\n\n---\n\n# 二十八、最终规则\n\n本阶段最重要的一条：\n\n> **如果没有真正由用户在新的 OpenCode Session\
+      \ 中发送自然 Prompt，就没有 L3。**\n\n即使：\n\n```text\n代码 100% 正确\nPlugin 100% 可以加载\n模拟测试\
+      \ 100% 成功\n```\n\n也只能：\n\n```text\nEVIDENCE_LEVEL: L2+\nFINAL: NOT_VERIFIED\n\
+      ```\n\n只有真实人工 Prompt 触发成功，才能进入：\n\n```text\nL3\n```\n\n---\n\n完成之后立即停止。\n\n\
+      不要 Freeze。\n\n不要进入 Phase 6.1。\n\n不要让自己宣布最终 VERIFIED。\n\n等待独立 Trae 审计。 "
+    category: optimization
+    domains:
+    - database
+    - backend
+    - frontend
+    - rag
+    - agent
+    - architecture
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - indexing
+    - java
+    - agent
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-009
+  - P-002
+- timestamp: '2026-08-31T07:47:12.975455+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T07:48:07.194349+00:00'
+  query:
+    task_text: 只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+    category: backend
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+- timestamp: '2026-08-31T08:09:25.278150+00:00'
+  query:
+    task_text: "# Phase 6.0.10 — AOS V1 Freeze Gate & Evidence Consolidation\n\n你现在是：\n\
+      \n> Agent OS Release / Freeze Engineer\n\nPhase 6.0.9 已经通过独立 Trae 审计：\n\n```text\n\
+      EVIDENCE_LEVEL:             L3\nNATIVE_OPENCODE_EVIDENCE:   PASS\nNATURAL_TRIGGER:\
+      \            PASS\nTASK_CORRELATION:           PASS\nSESSION_CORRELATION:  \
+      \      PASS\nCONTEXT_INJECTION:          PASS\nSECOND_OPENCODE:            \
+      \ PASS\nRECURSION:                   PASS\nPLUGIN_SOURCE_CONSISTENCY:  PASS\n\
+      PROJECT_SAFETY:              PASS\n\nSCORE:                       92/100\nFINAL:\
+      \                       VERIFIED\n```\n\n本阶段不是继续开发新能力。\n\n唯一目标：\n\n> **把当前已经验证成功的\
+      \ Agent OS OpenCode Host Integration 固化成可冻结、可复现、可审计的 V1 基线。**\n\n---\n\n# 一、禁止继续扩展架构\n\
+      \n除非发现明确的阻断性错误，否则禁止修改：\n\n```text\nRouter\nMemory\nOrchestrator\nLoop Controller\n\
+      Runtime Adapter\nAOS Host Architecture\nOpenCode Plugin API\n```\n\n禁止为了追求：\n\
+      \n```text\n100/100\n```\n\n继续扩大修改范围。\n\n---\n\n# 二、Freeze Scope\n\n本次 Freeze\
+      \ 只覆盖：\n\n```text\nOpenCode Host Integration\n```\n\n包括：\n\n```text\nOpenCode\n\
+      \ ↓\nPlugin\n ↓\nAOS Host Adapter\n ↓\nRouter / Memory / Orchestrator\n ↓\n\
+      Context Injection\n ↓\nCurrent OpenCode Session\n```\n\n不代表：\n\n```text\n所有\
+      \ Agent OS Runtime 能力\n```\n\n都已经完成最终生产级认证。\n\n---\n\n# 三、建立 Freeze Manifest\n\
+      \n创建：\n\n```text id=\"l2t1ez\"\n/home/shade/.agents/runtime/reports/phase-6.0.10-freeze-manifest.md\n\
+      ```\n\n记录：\n\n```text\nAOS VERSION / PHASE:\nOpenCode Version:\nPlugin Version:\n\
+      Plugin Runtime Entry:\nPlugin Config Path:\nHost Adapter Path:\n\nVerified Session:\n\
+      Verified Prompt:\nVerified task_id:\nVerified session_id:\n\nNatural Trigger:\n\
+      Native OpenCode Evidence:\nTask Correlation:\nSession Correlation:\nContext\
+      \ Injection:\nRecursion:\nSecond OpenCode:\nProject Safety:\n```\n\n---\n\n\
+      # 四、记录最终验证链\n\n记录本次已经独立验证的真实证据：\n\n```text\nOpenCode Native Message\n      \
+      \  ↓\nchat.message\n        ↓\nhost_prompt_received\n        ↓\nhost_adapter_called\n\
+      \        ↓\nhost_adapter_completed\n        ↓\nhost_context_injected\n     \
+      \   ↓\nOpenCode Native Assistant Response\n```\n\n记录真实：\n\n```text\nsession_id\n\
+      task_id\nevent_id\nmessage_id\n```\n\n不要重新生成测试数据。\n\n---\n\n# 五、记录关键真实 Session\n\
+      \n登记：\n\n```text\nSession:\nses_fa935d738ffeb8UjRa7n54H7r0\n```\n\n登记：\n\n```text\n\
+      Native Message:\nmsg_056ca290e001HGqIHS20o1FlhR\n```\n\n登记：\n\n```text\nTask:\n\
+      HOST-FVL9TC7C\n```\n\n登记：\n\n```text\nPlugin Events:\nEVT-TI5HUEMW\nEVT-J9E9D9DX\n\
+      EVT-I1CN99QM\nEVT-5CSQ9L26\n```\n\n这些只是现有验证证据索引。\n\n不要修改它们。\n\n---\n\n# 六、明确\
+      \ Known Limitations\n\nFreeze Manifest 中必须明确记录：\n\n```text\nRouter:\nIMPLIED\n\
+      \nMemory:\nIMPLIED\n\nOrchestrator:\nIMPLIED\n\nFAIL_OPEN:\nNOT_VERIFIED AS\
+      \ NEW LIVE TEST\n```\n\n同时明确：\n\n> 这些限制不否定 OpenCode Host Integration 的 L3 VERIFIED\
+      \ 结论。\n\n不要偷偷把：\n\n```text\nIMPLIED\n```\n\n改成：\n\n```text\nPASS\n```\n\n---\n\
+      \n# 七、明确架构边界\n\nFreeze 文档中记录：\n\n```text\nHOST PIPELINE:\n\nOpenCode\n → Plugin\n\
+      \ → AOS Host Adapter\n → Router\n → Memory\n → Orchestrator\n → Context Injection\n\
+      \ → Current OpenCode Session\n```\n\n以及：\n\n```text\nSTANDALONE PIPELINE:\n\n\
+      aos run\n → Loop Controller\n → Runtime Adapter\n → opencode run\n```\n\n明确说明：\n\
+      \n> Host Pipeline 不调用 Runtime Adapter，不启动第二个 OpenCode。\n\n---\n\n# 八、保留既有项目安全状态\n\
+      \n不要修改：\n\n```text\n/home/shade/Public/test\n```\n\n尤其不要：\n\n```text\ngit reset\n\
+      git restore\ngit checkout\ngit clean\ngit stash\ngit commit\n```\n\nFreeze Manifest\
+      \ 中记录：\n\n```text\nPROJ-001:\nExisting uncommitted changes preserved\n```\n\n\
+      ---\n\n# 九、建立 Freeze Snapshot\n\n只读记录：\n\n```bash\nopencode --version\n```\n\
+      \n记录：\n\n```bash\ngit -C /home/shade/Public/test status --short\ngit -C /home/shade/Public/test\
+      \ diff --stat\n```\n\n记录 Plugin 文件：\n\n```text\n/home/shade/.agents/runtime/hosts/opencode/plugin/package.json\n\
+      /home/shade/.agents/runtime/hosts/opencode/plugin/index.js\n/home/shade/.agents/runtime/hosts/opencode/plugin/index.ts\n\
+      /home/shade/.agents/runtime/hosts/opencode/plugin/index.d.ts\n/home/shade/.agents/runtime/hosts/opencode/aos_host_adapter.py\n\
+      ```\n\n---\n\n# 十、Hash Snapshot\n\n计算：\n\n```bash\nsha256sum \\\n/home/shade/.agents/runtime/hosts/opencode/plugin/package.json\
+      \ \\\n/home/shade/.agents/runtime/hosts/opencode/plugin/index.js \\\n/home/shade/.agents/runtime/hosts/opencode/plugin/index.ts\
+      \ \\\n/home/shade/.agents/runtime/hosts/opencode/plugin/index.d.ts \\\n/home/shade/.agents/runtime/hosts/opencode/aos_host_adapter.py\n\
+      ```\n\n把 Hash 写入 Freeze Manifest。\n\nFreeze 后如这些文件发生变化，可以通过 Hash 判断。\n\n---\n\
+      \n# 十一、Freeze Criteria\n\n只有以下条件全部满足：\n\n```text\nL3 Host Integration:\nPASS\n\
+      \nNative OpenCode Evidence:\nPASS\n\nNatural Trigger:\nPASS\n\nTask Correlation:\n\
+      PASS\n\nSession Correlation:\nPASS\n\nContext Injection:\nPASS\n\nSecond OpenCode:\n\
+      PASS\n\nRecursion:\nPASS\n\nSource Consistency:\nPASS\n\nProject Safety:\nPASS\n\
+      ```\n\n才允许：\n\n```text\nFREEZE_STATUS:\nREADY\n```\n\n---\n\n# 十二、不要自己宣布最终 Release\n\
+      \n不要输出：\n\n```text\nProduction Ready\n```\n\n不要输出：\n\n```text\nAOS Fully Verified\n\
+      ```\n\n只输出：\n\n```text\nFREEZE_STATUS:\nREADY_FOR_INDEPENDENT_AUDIT\n```\n\n\
+      ---\n\n# 十三、最终输出\n\n严格：\n\n```text\nPHASE:\nFREEZE_SCOPE:\n\nOPENCODE_VERSION:\n\
+      PLUGIN_VERSION:\nPLUGIN_RUNTIME_ENTRY:\n\nVERIFIED_SESSION:\nVERIFIED_NATIVE_MESSAGE:\n\
+      VERIFIED_TASK_ID:\n\nNATIVE_OPENCODE_EVIDENCE:\nNATURAL_TRIGGER:\nTASK_CORRELATION:\n\
+      SESSION_CORRELATION:\nCONTEXT_INJECTION:\n\nRECURSION:\nSECOND_OPENCODE:\nPROJECT_SAFETY:\n\
+      PLUGIN_SOURCE_CONSISTENCY:\n\nROUTER:\nMEMORY:\nORCHESTRATOR:\nFAIL_OPEN:\n\n\
+      KNOWN_LIMITATIONS:\n\nHASH_SNAPSHOT:\n\nFREEZE_STATUS:\nNEXT:\n```\n\n其中：\n\n\
+      ```text\nFREEZE_STATUS:\nREADY_FOR_INDEPENDENT_AUDIT\n```\n\n才能进入下一步。\n\n完成后停止。\n\
+      \n不要进入 Phase 6.1。 "
+    category: optimization
+    domains:
+    - database
+    - backend
+    - security
+    - agent
+    - architecture
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    - llm-engineer
+    keywords:
+    - indexing
+    - api
+    - auth
+    - agent
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - E-007
+  - P-001
+  - F-002
+- timestamp: '2026-08-31T08:16:23.581541+00:00'
+  query:
+    task_text: 帮我看看当前的agent os是不是适配opencode？codex呢？要不要移除codex的配置？有没有影响？
+    category: ai
+    domains:
+    - agent
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - E-005
+  - S-001
+  - E-004
+- timestamp: '2026-08-31T08:16:37.699738+00:00'
+  query:
+    task_text: 'Thoroughly explore the /home/shade/.agents directory structure. I
+      need to understand:
+
+
+      1. The overall agent OS architecture - what files/directories exist
+
+      2. Any opencode-related configuration (opencode.json, .opencode/ directory,
+      etc.)
+
+      3. Any Codex-related configuration (codex.json, .codex/, or similar)
+
+      4. The relationship between the agent OS skills, agents, and any external tool
+      configurations
+
+
+      Please list all top-level files and directories, then dig into key configuration
+      files. Return a comprehensive summary of:
+
+      - Directory structure overview
+
+      - All configuration files found (especially opencode and codex related)
+
+      - Content of key config files (read them)
+
+      - Any obvious compatibility issues or redundant configurations'
+    category: architecture
+    domains:
+    - agent
+    - architecture
+    roles:
+    - system-architect
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-001
+  - P-001
+  - S-002
+  - T-001
+  - T-002
+- timestamp: '2026-08-31T08:20:26.604301+00:00'
+  query:
+    task_text: 移除codex配置，记得不要影响其他内容
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T08:20:43.803698+00:00'
+  query:
+    task_text: "# Phase 6.1 — Post-Freeze Agent OS Gap Analysis\n\n你现在是：\n\n> Agent\
+      \ OS V1 Architecture & Evolution Planner\n\n当前状态：\n\n```text\nPhase 6.0.10:\n\
+      OpenCode Host Integration = FREEZE_APPROVED\n\nPhase 6.0.9:\nL3 VERIFIED\n\n\
+      Freeze Scope:\nOpenCode Host Integration\n```\n\n最终独立审计确认：\n\n```text\nNATIVE_OPENCODE_EVIDENCE:\
+      \   PASS\nNATURAL_TRIGGER:             PASS\nTASK_CORRELATION:            PASS\n\
+      SESSION_CORRELATION:         PASS\nCONTEXT_INJECTION:           PASS\nPLUGIN_LOADED:\
+      \               PASS\nSECOND_OPENCODE:             PASS\nRECURSION:        \
+      \           PASS\nPLUGIN_SOURCE_CONSISTENCY:   PASS\nPROJECT_SAFETY:       \
+      \       PASS\n\nFREEZE_APPROVAL:\nAPPROVED\n```\n\n---\n\n# 一、绝对不要修改冻结区域\n\n\
+      禁止修改：\n\n```text\nOpenCode Host Integration\nPlugin\nAOS Host Adapter\nOpenCode\
+      \ Host Telemetry\nSession Correlation\nTask Correlation\nContext Injection\n\
+      ```\n\n除非未来出现明确 blocking bug，并且另行开启新的 Phase。\n\n当前 Freeze 必须视为：\n\n```text\n\
+      FROZEN\n```\n\n---\n\n# 二、本阶段不是实现功能\n\nPhase 6.1 只进行：\n\n```text\nArchitecture\
+      \ Gap Analysis\nCapability Verification Matrix\nPriority Analysis\nEvolution\
+      \ Roadmap\n```\n\n不要写代码。\n\n不要修改 Agent OS。\n\n不要修改：\n\n```text\n/home/shade/Public/test\n\
+      ```\n\n不要执行：\n\n```text\ngit reset\ngit restore\ngit checkout\ngit clean\ngit\
+      \ stash\ngit commit\n```\n\n---\n\n# 三、全面盘点 Agent OS\n\n检查：\n\n```text\n/home/shade/.agents\n\
+      ```\n\n识别当前主要能力：\n\n```text\nRouter\nMemory\nOrchestrator\nLoop Controller\n\
+      Runtime Adapter\nTelemetry\nTrace\nFeedback\nEvolution\nCollaboration\nSkills\n\
+      Host Integration\nAOS CLI\nReal Project Integration\n```\n\n---\n\n# 四、建立 Capability\
+      \ Matrix\n\n为每个能力建立：\n\n```text\nCAPABILITY\nPURPOSE\nIMPLEMENTED\nUNIT TESTED\n\
+      INTEGRATED\nLIVE VERIFIED\nINDEPENDENTLY AUDITED\nFROZEN\nEVIDENCE\nKNOWN LIMITATIONS\n\
+      ```\n\n例如：\n\n```text\nOpenCode Host Integration\n\nIMPLEMENTED: YES\nINTEGRATED:\
+      \ YES\nLIVE VERIFIED: YES\nINDEPENDENTLY AUDITED: YES\nFROZEN: YES\n```\n\n\
+      不要根据“代码存在”推断：\n\n```text\nLIVE VERIFIED\n```\n\n---\n\n# 五、重点检查当前真正的短板\n\n特别分析：\n\
+      \n```text\nRouter\nMemory\nOrchestrator\nLoop Controller\nRuntime\nTelemetry\n\
+      Feedback\nEvolution\nReal Project Usage\n```\n\n找出：\n\n```text\nIMPLEMENTED\n\
+      但\nLIVE VERIFIED = NO\n```\n\n的能力。\n\n以及：\n\n```text\nLIVE VERIFIED\n但\nINDEPENDENTLY\
+      \ AUDITED = NO\n```\n\n的能力。\n\n---\n\n# 六、不要追求 100/100\n\n不要设计：\n\n```text\n\
+      为了评分而测试\n```\n\n不要继续修：\n\n```text\n为了让报告从 92 变成 100\n```\n\n目标是：\n\n> **找到下一阶段真正有工程价值的缺口。**\n\
+      \n---\n\n# 七、特别评估 Memory\n\n分析当前 Memory：\n\n```text\nretrieval\nranking\napplication\n\
+      feedback\npromotion\neffectiveness\n```\n\n分别判断：\n\n```text\n代码完成度\n真实运行证据\n\
+      长期价值\n```\n\n回答：\n\n```text\nMemory 现在是否已经真正影响 Agent 决策？\n还是主要停留在 retrieval\
+      \ count / context injection？\n```\n\n---\n\n# 八、特别评估 Router\n\n分析：\n\n```text\n\
+      classification\ndomain detection\nrole selection\nconfidence\nfallback\nmulti-agent\
+      \ routing\n```\n\n重点回答：\n\n```text\nRouter 是否真正根据任务选择角色？\n是否存在大量 general fallback？\n\
+      是否有可衡量的 routing quality？\n```\n\n---\n\n# 九、特别评估 Orchestrator\n\n分析：\n\n```text\n\
+      team formation\nlead agent\nsupport agents\nanti-pattern protection\ntask decomposition\n\
+      ```\n\n回答：\n\n```text\n当前 Orchestrator 是真正的 orchestration engine，\n还是主要负责选择\
+      \ lead_agent？\n```\n\n---\n\n# 十、特别评估 Loop Controller / Runtime\n\n确认：\n\n```text\n\
+      Standalone CLI Path\n```\n\n仍然是：\n\n```text\naos run\n → Loop Controller\n →\
+      \ Runtime Adapter\n → OpenCode\n```\n\n并分析：\n\n```text\nLoop\nExecution\nFailure\
+      \ Recovery\nRetry\nTermination\nTelemetry\n```\n\n哪些已经真实验证？\n\n哪些只是实现完成？\n\n\
+      ---\n\n# 十一、评估 Feedback / Evolution\n\n分析：\n\n```text\nFeedback Collector\n\
+      Memory Promotion\nEffectiveness\nFailure Templates\nEvolution Engine\nQuality\
+      \ Evaluator\n```\n\n回答：\n\n```text\nAgent OS 是否已经可以根据真实执行结果逐渐改进？\n```\n\n以及：\n\
+      \n```text\n哪些只是“存在”，还没有形成真正闭环？\n```\n\n---\n\n# 十二、Real Project Usage\n\n重点检查：\n\
+      \n```text\n/home/shade/Public/test\n```\n\n已经发生过的：\n\n```text\nPROJ-001\n```\n\
+      \n相关证据。\n\n回答：\n\n```text\nAgent OS 是否已经真正用于真实项目？\n是否真正帮助完成过任务？\n是否记录了 task\
+      \ → execution → outcome → feedback？\n```\n\n不要修改项目。\n\n---\n\n# 十三、确定 Phase\
+      \ 6.1 的唯一核心方向\n\n根据完整证据矩阵，选择：\n\n```text\nONE PRIMARY OBJECTIVE\n```\n\n只能选一个最高优先级方向。\n\
+      \n例如：\n\n```text\nMemory Effectiveness\n```\n\n或者：\n\n```text\nRuntime Reliability\n\
+      ```\n\n或者：\n\n```text\nClosed-loop Evolution\n```\n\n或者：\n\n```text\nReal Project\
+      \ Agent Productivity\n```\n\n不要一次开启四个方向。\n\n---\n\n# 十四、输出 Phase 6.1 Roadmap\n\
+      \n生成：\n\n```text\n/home/shade/.agents/runtime/reports/phase-6.1-post-freeze-gap-analysis.md\n\
+      ```\n\n至少包含：\n\n```text\n1. Frozen Capabilities\n2. Verified Capabilities\n\
+      3. Implemented but Unverified\n4. Evidence Gaps\n5. Architectural Risks\n6.\
+      \ Operational Risks\n7. Memory Assessment\n8. Router Assessment\n9. Orchestrator\
+      \ Assessment\n10. Loop / Runtime Assessment\n11. Feedback / Evolution Assessment\n\
+      12. Real Project Assessment\n13. Priority Ranking\n14. Selected Phase 6.1 Objective\n\
+      15. Non-Goals\n16. Proposed Validation Strategy\n17. Success Criteria\n18. Risks\n\
+      19. Recommendation\n```\n\n---\n\n# 十五、Phase 6.1 必须遵循\n\n```text\nEvidence First\n\
+      ↓\nSmallest Valuable Change\n↓\nReal Execution\n↓\nIndependent Audit\n↓\nFreeze\n\
+      ```\n\n而不是：\n\n```text\nDesign\n↓\nMassive Implementation\n↓\nSelf Report\n\
+      ```\n\n---\n\n# 十六、最终输出\n\n严格：\n\n```text\nAOS_V1_STATUS:\nFROZEN_SCOPE:\n\n\
+      FROZEN_CAPABILITIES:\nVERIFIED_CAPABILITIES:\nIMPLEMENTED_UNVERIFIED:\nEVIDENCE_GAPS:\n\
+      \nMEMORY_STATUS:\nROUTER_STATUS:\nORCHESTRATOR_STATUS:\nLOOP_CONTROLLER_STATUS:\n\
+      RUNTIME_STATUS:\nTELEMETRY_STATUS:\nFEEDBACK_STATUS:\nEVOLUTION_STATUS:\nREAL_PROJECT_STATUS:\n\
+      \nPRIMARY_GAP:\nPRIMARY_PRIORITY:\n\nPHASE_6.1_OBJECTIVE:\nPHASE_6.1_NON_GOALS:\n\
+      \nVALIDATION_STRATEGY:\nSUCCESS_CRITERIA:\n\nRISKS:\nRECOMMENDATION:\n\nNEXT:\n\
+      ```\n\n---\n\n# 十七、结束规则\n\n完成分析后：\n\n```text\nSTOP\n```\n\n不要进入 Phase 6.2。\n\
+      \n不要开始实现。\n\n不要修改冻结区域。\n\n不要修改项目。\n\nPhase 6.1 本阶段只负责：\n\n> **确定 Agent OS 下一步最有价值的发展方向。** "
+    category: backend
+    domains:
+    - backend
+    - rag
+    - agent
+    - architecture
+    roles:
+    - backend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - P-001
+  - S-002
+- timestamp: '2026-08-31T08:21:22.801456+00:00'
+  query:
+    task_text: 'Thoroughly explore the directory /home/shade/.agents and its subdirectories.
+      I need a comprehensive understanding of:
+
+
+      1. The overall structure - all top-level directories and key files
+
+      2. The runtime directory structure in detail
+
+      3. Any existing reports or documentation
+
+      4. The skills directory structure
+
+      5. Key Python files in the runtime directory
+
+      6. Any test files or test directories
+
+      7. Configuration files
+
+
+      For each major directory, list the files and provide brief descriptions of what
+      they contain. Be very thorough - read key files to understand their purpose.
+
+
+      Return a comprehensive directory map with file descriptions.'
+    category: ai
+    domains:
+    - agent
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - E-005
+  - S-001
+  - E-004
+- timestamp: '2026-08-31T08:21:27.585530+00:00'
+  query:
+    task_text: 'Search /home/shade/.agents/runtime for all Python files. For each
+      file, read it and provide:
+
+      1. File path
+
+      2. Module purpose
+
+      3. Key classes and functions
+
+      4. Whether it appears to be tested (look for test imports, assertions, etc.)
+
+      5. Whether it appears to be integrated with other modules
+
+
+      Focus especially on:
+
+      - Router (task routing, role selection)
+
+      - Memory (retrieval, ranking, promotion)
+
+      - Orchestrator (team formation, task decomposition)
+
+      - Loop Controller (execution loop, retry, termination)
+
+      - Runtime Adapter
+
+      - Telemetry
+
+      - Feedback
+
+      - Evolution
+
+
+      Be very thorough - read each file completely.'
+    category: ai
+    domains:
+    - rag
+    - agent
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - E-004
+  - P-001
+  - S-001
+  - E-005
+- timestamp: '2026-08-31T08:22:22.574464+00:00'
+  query:
+    task_text: 开始执行
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005
+- timestamp: '2026-08-31T08:25:46.274969+00:00'
+  query:
+    task_text: 当前的agent os是不是完工了？如果是请你给我git  commit提交的命令
+    category: ai
+    domains:
+    - agent
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - E-005
+  - S-001
+  - E-004
+- timestamp: '2026-08-31T08:26:00.788336+00:00'
+  query:
+    task_text: 'Read the following files in /home/shade/.agents and provide their
+      complete contents:
+
+
+      1. /home/shade/.agents/runtime/dashboard.md
+
+      2. /home/shade/.agents/runtime/metrics/quality-summary.md
+
+      3. /home/shade/.agents/runtime/metrics/router-accuracy.md
+
+      4. /home/shade/.agents/runtime/metrics/router-baseline.md
+
+      5. /home/shade/.agents/runtime/metrics/router-metrics.md
+
+      6. /home/shade/.agents/runtime/metrics/evolution-effectiveness.md
+
+      7. /home/shade/.agents/runtime/metrics/learning-progress.md
+
+      8. /home/shade/.agents/runtime/logs/real-project-execution-history.md
+
+      9. /home/shade/.agents/runtime/logs/memory-decision-history.md
+
+      10. /home/shade/.agents/runtime/logs/routing-history.md
+
+
+      For each file, provide the FULL content. Do not summarize or truncate.'
+    category: ai
+    domains:
+    - agent
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - E-005
+  - S-001
+  - E-004
+- timestamp: '2026-08-31T08:26:03.999995+00:00'
+  query:
+    task_text: 'Read the following files in /home/shade/.agents and provide their
+      complete contents:
+
+
+      1. /home/shade/.agents/runtime/feedback/failures.md
+
+      2. /home/shade/.agents/runtime/feedback/routing-errors.md
+
+      3. /home/shade/.agents/runtime/feedback/improvement-candidates.md
+
+      4. /home/shade/.agents/runtime/feedback/review/approved.md
+
+      5. /home/shade/.agents/runtime/feedback/review/rejected.md
+
+      6. /home/shade/.agents/runtime/feedback/review/discussion.md
+
+      7. /home/shade/.agents/runtime/analytics/router-trend.md
+
+      8. /home/shade/.agents/runtime/analytics/stability-report.md
+
+      9. /home/shade/.agents/runtime/telemetry/README.md
+
+      10. /home/shade/.agents/runtime/versioning/release-log.md
+
+
+      For each file, provide the FULL content. Do not summarize or truncate.'
+    category: ai
+    domains:
+    - agent
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - E-005
+  - S-001
+  - E-004
+- timestamp: '2026-08-31T08:26:07.474510+00:00'
+  query:
+    task_text: 'Read the following files and provide their complete contents:
+
+
+      1. /home/shade/.agents/memory/README.md
+
+      2. /home/shade/.agents/memory/retrieval-index.yaml
+
+      3. /home/shade/.agents/memory/decision-support-protocol.md
+
+      4. /home/shade/.agents/memory/effectiveness/system-architect.md
+
+      5. /home/shade/.agents/memory/effectiveness/backend-architect.md
+
+      6. /home/shade/.agents/runtime/traces/EXEC-1788090990.yaml
+
+      7. /home/shade/.agents/runtime/traces/host/HOST-TRACE-0276F69F.yaml
+
+      8. /home/shade/.agents/runtime/memory-feedback/memory-candidates.yaml
+
+      9. /home/shade/.agents/runtime/memory-feedback/memory_lifecycle_audit.md
+
+      10. /home/shade/.agents/runtime/feedback/failures/F-001.yaml
+
+
+      Also list all files in /home/shade/.agents/runtime/traces/ and /home/shade/.agents/runtime/feedback/failures/analyzed/
+
+
+      For each file, provide the FULL content. Do not summarize or truncate.'
+    category: optimization
+    domains:
+    - database
+    - backend
+    - rag
+    - agent
+    - architecture
+    roles:
+    - database-engineer
+    - backend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - indexing
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-004
+  - P-002
+- timestamp: '2026-08-31T08:26:11.541628+00:00'
+  query:
+    task_text: 'Read the following files in /home/shade/.agents and provide their
+      complete contents:
+
+
+      1. /home/shade/.agents/skills/version.json
+
+      2. /home/shade/.agents/skills/meta/agent-router/SKILL.md
+
+      3. /home/shade/.agents/skills/meta/agent-orchestrator/SKILL.md
+
+      4. /home/shade/.agents/skills/meta/collaboration-runtime/SKILL.md
+
+      5. /home/shade/.agents/skills/meta/evolution-engine/SKILL.md
+
+      6. /home/shade/.agents/skills/meta/quality-evaluator/SKILL.md
+
+      7. /home/shade/.agents/tests/README.md
+
+      8. /home/shade/.agents/tests/router-tests.md
+
+      9. /home/shade/.agents/tests/router-benchmark.md
+
+      10. /home/shade/.agents/bin/aos
+
+
+      For each file, provide the FULL content. Do not summarize or truncate.'
+    category: ai
+    domains:
+    - agent
+    - optimization
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - E-005
+  - P-001
+  - S-001
+  - E-004
+- timestamp: '2026-08-31T08:27:01.952590+00:00'
+  query:
+    task_text: 全部变更
+    category: backend
+    domains: []
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  - T-005

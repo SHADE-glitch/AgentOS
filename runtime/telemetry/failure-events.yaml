@@ -12,7 +12,7 @@ last_updated: "2026-08-30T12:21:09Z"
 
 failure_categories:
   provider_failure:
-    description: "Backend provider (OpenCode/Codex) returned error or was unreachable"
+    description: "Backend provider (OpenCode) returned error or was unreachable"
     severity: "critical"
     fallback: "Switch to alternative backend"
 

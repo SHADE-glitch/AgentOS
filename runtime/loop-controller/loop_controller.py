@@ -22,6 +22,7 @@ import os
 import yaml
 import time
 import uuid
+import json
 from datetime import datetime, timezone
 
 # ---------------------------------------------------------------------------
@@ -47,7 +48,8 @@ from memory_state_reconciler import check_consistency, repair_index
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-DEFAULT_MODEL = "opencode/ling-3.0-flash-fin-free"
+DEFAULT_PROVIDER = os.environ.get("AOS_RUNTIME_PROVIDER", "opencode")
+DEFAULT_MODEL = os.environ.get("AOS_RUNTIME_MODEL", "")
 EXECUTION_CONTRACT = os.path.join(LOOP_CONTROLLER_DIR, "execution-contract.yaml")
 
 
@@ -77,7 +79,7 @@ def load_loop_state(loop_id):
     return None
 
 
-def init_loop_state(loop_id, task_id, task_text, memory_mode, model):
+def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider):
     """Initialize a fresh loop state from the execution contract."""
     contract = load_contract()
     loop_exec = contract.get("loop_execution", {}) if contract else {}
@@ -88,6 +90,7 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model):
         "task_text": task_text,
         "memory_mode": memory_mode,
         "model": model,
+        "provider": provider,
         "started_at": datetime.now(timezone.utc).isoformat(),
         "completed_at": "",
         "current_stage": "running",
@@ -116,7 +119,7 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model):
             "execution_id": "",
             "trace_id": "",
             "session_id": "",
-            "provider": "opencode",
+            "provider": provider,
             "model": model,
             "latency_ms": 0,
             "token_usage": {},
@@ -182,7 +185,7 @@ def mark_failed(state, stage, error):
     state["final_status"] = "failed"
 
 
-def run_loop(task_id, task_text, memory_mode="enabled", model=DEFAULT_MODEL):
+def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="opencode"):
     """
     Execute a single closed-loop pipeline.
 
@@ -190,13 +193,29 @@ def run_loop(task_id, task_text, memory_mode="enabled", model=DEFAULT_MODEL):
         task_id: str like "RT-003"
         task_text: str, the task description
         memory_mode: "enabled" | "fallback" | "disabled"
-        model: str, OpenCode model name
+        model: str, provider-specific model identifier
+        provider: str, runtime provider name (opencode, ...)
 
     Returns:
         dict with loop_id, final_status, and all stage results
     """
     loop_id = generate_loop_id()
-    state = init_loop_state(loop_id, task_id, task_text, memory_mode, model)
+    state = init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider)
+
+    # Read entry evidence metadata from AOS bootstrap
+    entry_metadata_raw = os.environ.get("AOS_ENTRY_METADATA", "")
+    if entry_metadata_raw:
+        try:
+            state["entry"] = json.loads(entry_metadata_raw)
+        except json.JSONDecodeError:
+            state["entry"] = {"entry_type": "unknown", "error": "invalid json"}
+    else:
+        state["entry"] = {"entry_type": "direct", "note": "no aos metadata"}
+
+    # Pipeline timestamps for real trace
+    pipeline_timestamps = {
+        "task_received": datetime.now(timezone.utc).isoformat(),
+    }
 
     print("=" * 70)
     print(f"Phase 5.8.2.2 — Closed-Loop Runtime Controller")
@@ -249,6 +268,9 @@ def run_loop(task_id, task_text, memory_mode="enabled", model=DEFAULT_MODEL):
 
     state["retrieval"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
+    # Record memory retrieval timestamp
+    pipeline_timestamps["memory_retrieved"] = datetime.now(timezone.utc).isoformat()
+
     # Attach classification to decision_context for runtime_adapter
     decision_context["classification"] = {
         "category": "backend",
@@ -270,6 +292,10 @@ def run_loop(task_id, task_text, memory_mode="enabled", model=DEFAULT_MODEL):
     state["decision"]["started_at"] = datetime.now(timezone.utc).isoformat()
     state["decision"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
+    # Record routing and orchestration timestamps (after classification + decision)
+    pipeline_timestamps["routing_completed"] = datetime.now(timezone.utc).isoformat()
+    pipeline_timestamps["orchestration_completed"] = datetime.now(timezone.utc).isoformat()
+
     # =====================================================================
     # Stage 2: Runtime (includes Router/Orchestrator via prompt)
     # =====================================================================
@@ -280,8 +306,11 @@ def run_loop(task_id, task_text, memory_mode="enabled", model=DEFAULT_MODEL):
     state["runtime"]["started_at"] = datetime.now(timezone.utc).isoformat()
     state["current_stage"] = "runtime"
 
+    # Attach entry metadata to decision_context for trace
+    decision_context["entry_metadata"] = state.get("entry", {})
+
     try:
-        exec_result = runtime_execute(task_id, task_text, decision_context, model)
+        exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps)
         state["runtime"]["status"] = "completed"
         state["runtime"]["execution_id"] = exec_result["execution_id"]
         state["runtime"]["trace_id"] = exec_result["trace_id"]
@@ -488,8 +517,9 @@ if __name__ == "__main__":
     task_text = sys.argv[2]
     memory_mode = sys.argv[3] if len(sys.argv) > 3 else "enabled"
     model = sys.argv[4] if len(sys.argv) > 4 else DEFAULT_MODEL
+    provider = sys.argv[5] if len(sys.argv) > 5 else DEFAULT_PROVIDER
 
-    result = run_loop(task_id, task_text, memory_mode, model)
+    result = run_loop(task_id, task_text, memory_mode, model, provider)
 
     # Print final status for machine parsing
     print(f"\nLOOP_EXECUTION: {'PASS' if result['final_status'] == 'completed' else 'FAIL'}")

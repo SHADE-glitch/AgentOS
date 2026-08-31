@@ -1,0 +1,174 @@
+# Agent OS Unified Host Protocol — Phase 6.0.4
+#
+# Defines how external hosts (OpenCode, etc.) connect to Agent OS.
+# Host != Agent OS. Runtime != Agent OS. Model != Agent OS.
+# Agent OS is a service layer. Hosts are consumers.
+
+version: "2.1"
+phase: "6.0.4"
+
+# ── Host Interface ──────────────────────────────────────────────
+# Each host provides: context + task → AOS processes → result
+host:
+  type: ""                     # opencode | standalone | (future)
+  session:
+    id: ""                     # host session identifier
+    working_directory: ""      # project root from host
+  task:
+    text: ""                   # task description from user
+    id: ""                     # generated task ID
+  runtime:
+    provider: ""               # resolved provider (host-provided or default)
+    model: ""                  # resolved model (host-provided or default)
+
+# ── Agent OS Interface ──────────────────────────────────────────
+# AOS receives from host, processes, returns result
+agent_os:
+  entry:
+    type: ""                   # host_adapter | aos_cli | direct
+    adapter: ""                # adapter name (e.g., opencode)
+    timestamp: ""              # ISO-8601
+  routing:
+    engine: "agent-router"     # always agent-router
+    lead_agent: ""             # resolved by router
+    support_agents: []         # resolved by router
+    confidence: ""             # high | medium | low
+  memory:
+    mode: "enabled"            # enabled | disabled | fallback
+    retrieved: 0               # count of retrieved memories
+    influence: "none"          # none | confirmation | adjustment
+  orchestration:
+    mode: "single"             # single | multi
+    team_size: 1
+    lead_role: ""
+  runtime:
+    provider: ""               # provider used for execution
+    model: ""                  # model used for execution
+    session_id: ""             # runtime session ID
+    latency_ms: 0
+    tokens: {}
+    cost: 0
+
+# ── Context Injection Schema ────────────────────────────────────
+# This is what AOS returns to the host for context injection
+context_injection:
+  status: ""                   # completed | fallback | error
+  task_id: ""
+  decision:
+    classification:
+      category: ""             # backend | frontend | devops | security | database | etc.
+      domains: []              # specific domains
+      roles: []                # recommended agent roles
+      keywords: []             # extracted keywords
+      difficulty: ""           # low | medium | high
+  memory:
+    retrieved: 0
+    memories: []               # list of relevant memories
+    hypotheses: []             # memory hypotheses
+  orchestration:
+    lead_agent: ""             # recommended lead agent
+    support_agents: []         # recommended support agents
+  warnings: []                 # safety warnings
+  instructions: []             # contextual instructions for the model
+
+# ── Boundary Rules ──────────────────────────────────────────────
+# These boundaries MUST be enforced at all times.
+boundaries:
+  # Host boundary: host provides context, AOS provides intelligence
+  host_vs_aos:
+    rule: "Host provides task + working_directory. AOS provides routing + memory + orchestration."
+    enforcement: "Host Adapter translates between host format and AOS format."
+
+  # Runtime boundary: runtime is a tool, not the brain
+  runtime_vs_aos:
+    rule: "Runtime (OpenCode CLI) is an execution tool. AOS decides WHAT to run, runtime decides HOW."
+    enforcement: "AOS constructs prompt with role context. Runtime executes and returns result."
+
+  # Model boundary: model is a resource, not the identity
+  model_vs_aos:
+    rule: "Model is selected by policy (CLI > env > host > default). AOS core never references a specific model."
+    enforcement: "model_selection policy in runtime-contract.yaml. No model name in AOS core logic."
+
+  # Agent boundary: agents are roles, not implementations
+  agent_vs_aos:
+    rule: "Agent roles are defined by routing rules. AOS core never imports or instantiates specific agent code."
+    enforcement: "ROLE_RULES in retrieval_adapter.py maps task patterns to role names. Role names are strings."
+
+  # Recursion boundary: host must not re-invoke itself
+  recursion_boundary:
+    rule: "When running as Host Plugin, AOS MUST NOT invoke runtime_adapter."
+    enforcement: "AOS_HOST_ADAPTER_ACTIVE env var guard. plugin_active guard."
+
+# ── Runtime Mode ────────────────────────────────────────────────
+runtime_mode:
+  # When running inside a host (OpenCode Plugin), this is set
+  host_attached: true
+  
+  # Nested runtime calls are FORBIDDEN
+  nested_runtime_call:
+    allowed: false
+
+# ── Failure Fallback ────────────────────────────────────────────
+failure:
+  # If AOS is unavailable, OpenCode continues normally
+  fail_open: true
+  
+  # But the failure is traced
+  trace_failure: true
+
+# ── Provider Selection Policy ───────────────────────────────────
+# Priority: CLI flag > env var > host default > provider default
+provider_selection:
+  priority:
+    - "CLI --provider flag"
+    - "AOS_RUNTIME_PROVIDER env var"
+    - "Host-provided provider"
+    - "default: opencode"
+  env_var: "AOS_RUNTIME_PROVIDER"
+
+# ── Model Selection Policy ──────────────────────────────────────
+# Priority: CLI flag > env var > host default > provider default
+model_selection:
+  priority:
+    - "CLI --model flag"
+    - "AOS_RUNTIME_MODEL env var"
+    - "Host-provided model"
+    - "Provider default model"
+  env_var: "AOS_RUNTIME_MODEL"
+
+# ── Host Adapter Registry ──────────────────────────────────────
+# Each host type has a minimal adapter
+adapters:
+  opencode:
+    description: "OpenCode host adapter — plugin-based integration"
+    entry_points:
+      - "OpenCode Plugin (TypeScript)"
+      - "AOS Host Adapter (Python)"
+    integration_method: "plugin + adapter subprocess"
+    status: "active"
+    recursion_protection:
+      env_guard: "AOS_HOST_ADAPTER_ACTIVE"
+      plugin_guard: "AOS_HOST_PLUGIN_ACTIVE"
+
+  standalone:
+    description: "Standalone mode — AOS CLI directly"
+    entry_points:
+      - "CLI: aos run"
+    integration_method: "direct CLI"
+    status: "active"
+
+# ── Result Contract ─────────────────────────────────────────────
+# Every AOS invocation returns this structure to the host
+result_schema:
+  status: ""                   # success | error | timeout
+  task_id: ""
+  execution_id: ""
+  trace_id: ""
+  response_text: ""            # agent output
+  provider: ""                 # provider used
+  model: ""                    # model used
+  tokens: {}
+  cost: 0
+  latency_ms: 0
+  trace_file: ""               # path to trace YAML
+  error: ""                    # error message if status != success

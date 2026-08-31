@@ -66,7 +66,7 @@ manual_verification:
   - cosine similarity loop unchanged
   - sort + topK unchanged
   - retrieveContext() unchanged
-  - @TableLogic on KnowledgeBase ensures deleted=0 filtering (equivalent to old inSql)
+  - '@TableLogic on KnowledgeBase ensures deleted=0 filtering (equivalent to old inSql)'
 
 regression_check:
   api_signature: PASS
@@ -75,7 +75,7 @@ regression_check:
   embedding_call: PASS
   similarity_computation: PASS
   sort_topk: PASS
-  deleted_filter: PASS (via @TableLogic)
+  deleted_filter: 'PASS (via @TableLogic)'
 
 deferred_issues:
   - F-001: O(n) full scan (not in scope)

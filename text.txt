@@ -1,871 +1,814 @@
-# Phase 5.9.3 — PROJ-001 No-AI Rebuild Architecture Audit
+# Phase 6.0.10 — Final Independent Freeze Audit
 
-## 一、项目背景
+你现在是：
 
-当前真实项目：
+> **Agent OS Independent Release Auditor**
+
+本阶段是 **AOS V1 Freeze 前最后一次独立审计**。
+
+Phase 6.0.9 已由独立审计确认：
 
 ```text
-project_id: PROJ-001
-project_name: aiview
-path: /home/shade/Public/test
+EVIDENCE_LEVEL:             L3
+NATIVE_OPENCODE_EVIDENCE:   PASS
+NATURAL_TRIGGER:             PASS
+TASK_CORRELATION:            PASS
+SESSION_CORRELATION:         PASS
+CONTEXT_INJECTION:           PASS
+SECOND_OPENCODE:             PASS
+RECURSION:                   PASS
+PLUGIN_SOURCE_CONSISTENCY:   PASS
+PROJECT_SAFETY:              PASS
+FINAL:                       VERIFIED
+SCORE:                       92/100
 ```
 
-当前项目是：
+Phase 6.0.10 已生成 Freeze Manifest：
 
-> AI 面试陪练与智能反馈平台
-
-但现在项目目标发生变化：
-
-> **准备进行一次大规模重构，并且新的项目版本不再使用 AI 功能。**
-
-因此本阶段不是立即重构。
-
-本阶段目标是：
-
-> **完整理解现有系统，并明确“哪些属于 AI、哪些属于核心业务、哪些必须保留、哪些应该删除、哪些需要重新设计”。**
-
----
-
-# 二、最重要的原则
+```text
+/home/shade/.agents/runtime/reports/phase-6.0.10-freeze-manifest.md
+```
 
 本阶段：
 
+> **只审计，不修改。**
+
+---
+
+# 一、严格只读
+
+禁止：
+
 ```text
-READ ONLY
+修改任何文件
+修复任何代码
+git commit
+git reset
+git restore
+git checkout
+git clean
+git stash
 ```
 
 禁止：
 
 ```text
-❌ 修改项目源码
-❌ 删除 AI 模块
-❌ 删除依赖
-❌ 修改数据库
-❌ 修改 API
-❌ 修改前端
-❌ git commit
+重新测试自然 Prompt
+重新启动 OpenCode
+启动第二个 OpenCode
+opencode run
+aos run
+python3 aos_host_adapter.py
+node -e
 ```
 
-只分析。
+禁止修改 Telemetry / Trace / Session 数据。
 
 ---
 
-# 三、必须使用免费模型
+# 二、不要相信 Freeze Manifest
 
-使用：
+Freeze Manifest 是 OpenCode 生成的。
+
+因此：
+
+> **不能仅因为 Manifest 写了 PASS，就判定 PASS。**
+
+必须自己独立检查：
 
 ```text
-opencode/mimo-v2.5-free
+Freeze Manifest
++
+实际 Telemetry
++
+实际 OpenCode Native Session
++
+实际 Plugin Source
++
+实际 Git State
 ```
 
-如果需要 OpenCode。
-
-禁止收费模型。
-
-建议：
-
-```bash
-opencode run \
-  --pure \
-  --format json \
-  --model opencode/mimo-v2.5-free
-```
+最后自己得出结论。
 
 ---
 
-# 四、Step 1：项目整体结构审计
-
-扫描：
-
-```text
-/home/shade/Public/test
-```
-
-建立：
-
-```text
-project_structure
-```
-
-至少包含：
-
-```text
-backend/
-frontend/
-docker-compose.yml
-ollama/
-```
-
-然后进一步分析：
-
-```text
-backend/src/main/java/com/aiview/
-frontend/src/
-backend/src/main/resources/
-```
-
----
-
-# 五、Step 2：建立 Backend 模块地图
-
-识别当前模块：
-
-```text
-auth
-agent
-rag
-kb
-interview
-dashboard
-common
-config
-```
-
-每个模块记录：
-
-```yaml
-module:
-responsibility:
-key_classes:
-dependencies:
-depends_on:
-used_by:
-ai_related:
-business_criticality:
-```
-
-分类：
-
-```text
-CORE_BUSINESS
-INFRASTRUCTURE
-AI
-SUPPORTING
-```
-
----
-
-# 六、Step 3：建立 AI Dependency Map
-
-必须找出所有：
-
-```text
-AI
-LLM
-Embedding
-RAG
-Ollama
-OpenAI
-DeepSeek
-Agent
-Prompt
-Model
-Streaming AI
-```
-
-包括：
-
-```text
-Java classes
-configuration
-dependencies
-database fields
-API
-frontend pages
-environment variables
-docker services
-```
-
-建立：
-
-```text
-AI Dependency Graph
-```
-
-例如：
-
-```text
-Interview
-   ↓
-Agent
-   ↓
-LLM
-   ↓
-Streaming
-```
-
-或者：
-
-```text
-Knowledge Base
-   ↓
-Embedding
-   ↓
-RAG
-```
-
-不要假设关系。
-
-必须基于代码证据。
-
----
-
-# 七、Step 4：建立核心业务链路
-
-重点分析“没有 AI 后仍然成立”的业务。
-
-例如：
-
-```text
-User
- ↓
-Login
- ↓
-Interview
- ↓
-Question
- ↓
-Answer
- ↓
-Score
- ↓
-Result
- ↓
-Dashboard
-```
-
-必须从真实代码确认。
-
-对于每条链路标记：
-
-```yaml
-ai_dependency:
-none
-optional
-required
-```
-
----
-
-# 八、Step 5：AI 功能删除候选
-
-把当前系统中的 AI 能力分类：
-
-```text
-REMOVE
-REPLACE
-KEEP
-REFACTOR
-```
-
-例如：
-
-```yaml
-feature:
-RAG knowledge retrieval
-
-decision:
-REMOVE
-
-reason:
-new project explicitly disables AI
-```
-
-或者：
-
-```yaml
-feature:
-Interview scoring
-
-decision:
-REPLACE
-
-reason:
-currently depends on LLM but is core business capability
-```
-
----
-
-# 九、Step 6：重新定义 No-AI 产品
-
-不要继续沿用：
-
-> AI 面试陪练与智能反馈平台
-
-重新分析：
-
-> **如果完全不依赖 AI，这个产品到底是什么？**
-
-必须回答：
-
-```text
-Target User
-Core Problem
-Core Workflow
-Core Features
-Non-AI Value
-Removed Features
-```
-
-例如可能变成：
-
-```text
-面试训练平台
-```
-
-但必须根据现有项目进行分析，不要直接假定。
-
----
-
-# 十、Step 7：核心领域模型审计
-
-识别：
-
-```text
-User
-Interview
-Question
-Answer
-Score
-Knowledge
-Dashboard
-```
-
-以及其他真实实体。
-
-建立：
-
-```text
-Entity
-Relationship
-Lifecycle
-Ownership
-```
-
-例如：
-
-```text
-User
- ├── Interviews
- │      ├── Messages
- │      └── Result
- │
- └── Knowledge
-```
-
-必须基于真实 Entity / Mapper / Service。
-
----
-
-# 十一、Step 8：API 审计
-
-分析：
-
-```text
-/auth/*
-/interviews/*
-/topics
-/knowledge/*
-/dashboard/*
-```
-
-对每个 API 标记：
-
-```yaml
-api:
-purpose:
-controller:
-service:
-entity:
-ai_dependency:
-rebuild_action:
-KEEP
-REWRITE
-REMOVE
-```
-
----
-
-# 十二、Step 9：数据库审计
+# 三、首先读取 Freeze Manifest
 
 读取：
 
 ```text
-backend/src/main/resources/db/schema.sql
-backend/src/main/resources/db/data.sql
+/home/shade/.agents/runtime/reports/phase-6.0.10-freeze-manifest.md
 ```
 
-建立：
+提取：
 
 ```text
-Table
-Purpose
-Relationships
-AI-specific columns
-Core columns
-Indexes
-Potential redundancy
+PHASE
+FREEZE_SCOPE
+OPENCODE_VERSION
+PLUGIN_VERSION
+VERIFIED_SESSION
+VERIFIED_NATIVE_MESSAGE
+VERIFIED_TASK_ID
+NATIVE_OPENCODE_EVIDENCE
+NATURAL_TRIGGER
+TASK_CORRELATION
+SESSION_CORRELATION
+CONTEXT_INJECTION
+RECURSION
+SECOND_OPENCODE
+PROJECT_SAFETY
+PLUGIN_SOURCE_CONSISTENCY
+ROUTER
+MEMORY
+ORCHESTRATOR
+FAIL_OPEN
+HASH_SNAPSHOT
+FREEZE_STATUS
 ```
 
-重点找：
-
-```text
-embedding
-vector
-prompt
-model
-AI response
-RAG
-knowledge chunk
-```
-
-哪些应该删除。
-
-哪些是普通业务知识数据，仍然需要保留。
+不要直接接受这些值。
 
 ---
 
-# 十三、Step 10：Frontend 审计
+# 四、核对真实 Native OpenCode Evidence
 
-分析：
+这是最重要的 Freeze Gate。
+
+根据 Phase 6.0.9，已知候选：
 
 ```text
-pages/
-api/
-stores/
-router/
-components/
+Session:
+ses_fa935d738ffeb8UjRa7n54H7r0
 ```
 
-识别：
+真正 Native Message：
 
 ```text
-AI-specific UI
-Core business UI
-AI-dependent API
-Independent API
+msg_056ca290e001HGqIHS20o1FlhR
 ```
 
-例如：
+真正用户 Prompt：
 
 ```text
-Interview.vue
-Dashboard.vue
-KnowledgeMap.vue
+只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
 ```
 
-分别判断：
+使用 OpenCode 原生数据源重新确认：
 
 ```text
-KEEP
-REWRITE
-REMOVE
+opencode export ses_fa935d738ffeb8UjRa7n54H7r0
+```
+
+只读。
+
+确认：
+
+```text
+session.id
+message.id
+message.role
+message.sessionID
+message.parts[].text
+message timestamp
+```
+
+必须确认：
+
+```text
+role = user
+```
+
+并且 Prompt 完全匹配。
+
+---
+
+# 五、特别检查 Freeze Manifest 中的 Native Message 字段
+
+重点检查：
+
+```text
+VERIFIED_NATIVE_MESSAGE
+```
+
+如果 Manifest 写：
+
+```text
+EVT-TI5HUEMW
+```
+
+请指出：
+
+> 这是 Plugin 的 `host_prompt_received` Event ID，而不是 Native OpenCode Message ID。
+
+真正 Native Message ID 应为：
+
+```text
+msg_056ca290e001HGqIHS20o1FlhR
+```
+
+这是证据文档中的一个**索引命名错误**，不要静默忽略。
+
+判断：
+
+```text
+DOCUMENTATION_ACCURACY:
+PASS / PARTIAL
+```
+
+但不要因此自动否定整个 Freeze。
+
+---
+
+# 六、重新验证完整证据链
+
+重新从真实数据建立：
+
+```text
+Native OpenCode Session
+        ↓
+Native User Message
+        ↓
+Plugin host_prompt_received
+        ↓
+host_adapter_called
+        ↓
+host_adapter_completed
+        ↓
+host_context_injected
+        ↓
+Native Assistant Response
+```
+
+必须核对真实：
+
+```text
+session_id
+task_id
+message_id
+event_id
+timestamp
 ```
 
 ---
 
-# 十四、Step 11：Infrastructure 审计
+# 七、Task Correlation
 
-分析：
-
-```text
-docker-compose.yml
-```
-
-识别：
+重新确认：
 
 ```text
-mysql
-redis
-rabbitmq
-ollama
-backend
-frontend
+TASK_ID
 ```
 
-逐一判断：
+本次真实任务应该保持一致。
 
-```yaml
-service:
-purpose:
-ai_related:
-required_after_rebuild:
-```
-
-尤其：
+至少：
 
 ```text
-ollama
+host_adapter_called
+host_adapter_completed
+host_context_injected
 ```
 
-必须明确判断：
+三者：
 
 ```text
-REMOVE
+task_id = SAME
 ```
 
-还是：
-
-```text
-KEEP
-```
-
-不要直接假设。
+如果 Prompt Event 没有 task_id，不要强行要求。
 
 ---
 
-# 十五、Step 12：技术债务审计
+# 八、Session Correlation
 
-当前不要修。
-
-只记录：
+确认：
 
 ```text
-Architecture Debt
-Code Debt
-Security Debt
-Test Debt
-Deployment Debt
-Data Model Debt
-Frontend Debt
+host_prompt_received
+host_adapter_called
+host_adapter_completed
+host_context_injected
 ```
 
-每个：
+是否都能够关联到：
 
-```yaml
-issue:
-evidence:
-severity:
-rebuild_impact:
+```text
+ses_fa935d738ffeb8UjRa7n54H7r0
 ```
+
+如果通过实际字段直接关联：
+
+```text
+PASS
+```
+
+如果只能靠 PID + 时间推断：
+
+```text
+PARTIAL
+```
+
+不得把推断当直接证据。
 
 ---
 
-# 十六、Step 13：No-AI Target Architecture
+# 九、Context Injection
 
-基于前面的事实重新设计目标架构。
-
-目标：
+检查：
 
 ```text
-Frontend
-   ↓
-REST API
-   ↓
-Spring Boot
-   ↓
-Domain / Application
-   ↓
-MySQL
-   ↓
-Redis / RabbitMQ
+host_context_injected
+```
+
+必须确认：
+
+```text
+task_id = HOST-FVL9TC7C
+session_id = ses_fa935d738ffeb8UjRa7n54H7r0
+injection_status = success
 ```
 
 注意：
 
-> 上面的结构只是分析起点，不允许机械照搬。
-
-必须根据当前项目实际情况判断：
+> 不要继续使用旧的：
 
 ```text
-Redis 是否继续需要
-RabbitMQ 是否继续需要
+HOST-188670
+HOST-6B00F7
+HOST-45F5A8
 ```
 
-尤其不要为了“看起来像大厂项目”而保留不必要组件。
+这些都不是本次最终验证任务。
 
 ---
 
-# 十七、Step 14：删除 AI 后的业务架构
+# 十、Plugin Source Consistency
 
-明确：
-
-```text
-Removed:
-AI Provider
-LLM
-Embedding
-RAG
-Ollama
-Agent
-Prompt
-```
-
-然后重新建立：
+读取：
 
 ```text
-Interview
-Question Bank
-Answer
-Evaluation
-Score
-Knowledge
-Dashboard
+/home/shade/.agents/runtime/hosts/opencode/plugin/package.json
+/home/shade/.agents/runtime/hosts/opencode/plugin/index.js
+/home/shade/.agents/runtime/hosts/opencode/plugin/index.ts
+/home/shade/.agents/runtime/hosts/opencode/plugin/index.d.ts
+/home/shade/.agents/runtime/hosts/opencode/aos_host_adapter.py
 ```
 
-但：
-
-> 不能凭空创造当前项目不存在的业务。
-
-如果某功能需要新增：
-
-标记：
+确认：
 
 ```text
-NEW_FEATURE
+package.json version = 0.2.0
+index.js plugin_version = 0.2.0
+index.ts plugin_version = 0.2.0
 ```
 
-而不是假装它当前已经存在。
+并确认：
+
+```text
+package.json main = ./index.js
+```
+
+确认 `index.js` 是实际 Runtime Entry。
 
 ---
 
-# 十八、Step 15：重构策略
+# 十一、Hash Snapshot
 
-不要马上执行。
-
-设计三种：
+读取 Freeze Manifest 中记录的 SHA256：
 
 ```text
-Option A
-Incremental Refactor
-
-Option B
-Module Rewrite
-
-Option C
-Clean Rebuild
+package.json
+index.js
+index.ts
+index.d.ts
+aos_host_adapter.py
 ```
 
-分别分析：
+重新执行只读：
+
+```bash
+sha256sum \
+/home/shade/.agents/runtime/hosts/opencode/plugin/package.json \
+/home/shade/.agents/runtime/hosts/opencode/plugin/index.js \
+/home/shade/.agents/runtime/hosts/opencode/plugin/index.ts \
+/home/shade/.agents/runtime/hosts/opencode/plugin/index.d.ts \
+/home/shade/.agents/runtime/hosts/opencode/aos_host_adapter.py
+```
+
+与 Manifest 比较。
+
+要求：
 
 ```text
-Cost
-Risk
-Migration Difficulty
-Code Reuse
-Data Migration
-Testing
+HASH_MATCH = YES
 ```
 
-最后推荐一个。
-
----
-
-# 十九、Step 16：定义重构边界
-
-明确：
+如果 Hash 不一致：
 
 ```text
-KEEP
-REWRITE
-REMOVE
-NEW
-```
-
-建立文件/模块级清单。
-
-例如：
-
-```yaml
-backend/agent:
-  action: REMOVE
-
-backend/rag:
-  action: REMOVE
-
-backend/interview:
-  action: REFACTOR
-
-backend/auth:
-  action: KEEP/REFACTOR
-
-frontend/pages/Interview.vue:
-  action: REFACTOR
-```
-
-必须基于真实代码。
-
----
-
-# 二十、Step 17：重构阶段路线
-
-最终提出：
-
-```text
-Rebuild Phase 0
-Architecture Freeze
-
-Rebuild Phase 1
-AI Removal
-
-Rebuild Phase 2
-Domain Simplification
-
-Rebuild Phase 3
-Backend Refactor
-
-Rebuild Phase 4
-Frontend Refactor
-
-Rebuild Phase 5
-Database Cleanup
-
-Rebuild Phase 6
-Testing
-
-Rebuild Phase 7
-Docker / Deployment
-```
-
-但：
-
-> 这是规划，不执行。
-
----
-
-# 二十一、Acceptance Criteria
-
-必须完成：
-
-```text
-Project structure mapped        ✅
-Backend modules mapped          ✅
-Frontend modules mapped         ✅
-AI dependency map              ✅
-Core business flows             ✅
-Entity model                     ✅
-API map                          ✅
-Database map                     ✅
-Infrastructure map              ✅
-Technical debt                   ✅
-No-AI target architecture       ✅
-KEEP/REMOVE/REWRITE/NEW map    ✅
-Rebuild strategy                ✅
+FREEZE = NOT_APPROVED
 ```
 
 ---
 
-# 二十二、最终产出
+# 十二、OpenCode Version
 
-创建：
+确认：
 
-```text
-runtime/datasets/real-project/projects/PROJ-001-no-ai-architecture.yaml
+```bash
+opencode --version
 ```
 
-创建：
+要求：
 
 ```text
-runtime/reports/
-phase-5.9.3-PROJ-001-no-ai-architecture-audit.md
+1.18.25
 ```
+
+如果变化：
+
+记录：
+
+```text
+VERSION_DRIFT
+```
+
+不要自动判 FAIL，但必须评估 Freeze 是否仍然适用。
 
 ---
 
-# 二十三、重要要求
+# 十三、Second OpenCode
 
-所有结论必须区分：
+只读检查：
 
-```text
-FACT
-INFERENCE
-RECOMMENDATION
+```bash
+pgrep -af opencode
 ```
 
-每个重要判断必须有：
+以及：
 
-```text
-file
-class
-method
-or configuration evidence
+```bash
+ps -ef --forest | grep -i opencode
 ```
 
-禁止：
+确认 Freeze 时没有：
 
 ```text
-泛化建议
-无证据架构设计
-为了“高级”而引入微服务
-为了“高级”而保留 Redis/RabbitMQ
-为了“高级”而拆成多个服务
+Plugin → AOS → opencode run
 ```
 
-你的目标是：
-
-> **更简单、更清晰、更容易维护的 No-AI 面试训练系统。**
-
-不是：
-
-> 更复杂的系统。
+创建第二实例。
 
 ---
 
-# 二十四、当前阶段禁止事项
+# 十四、Project Safety
 
-```text
-❌ 不修改源码
-❌ 不删除文件
-❌ 不修改数据库
-❌ 不运行重构
-❌ 不提交 Git
-❌ 不安装新依赖
-❌ 不创建新的生产代码
+只读检查：
+
+```bash
+git -C /home/shade/Public/test status --short
+git -C /home/shade/Public/test diff --stat
 ```
 
----
-
-# 二十五、完成后停止
-
-完成 Audit + Target Architecture 后停止。
-
-不要进入：
+确认：
 
 ```text
-Rebuild Phase 1
-```
-
-除非得到下一阶段明确指令。
-
----
-
-# 二十六、最终输出
-
-```text
-PROJECT:
 PROJ-001
-
-CURRENT_ARCHITECTURE:
-<summary>
-
-AI_DEPENDENCY:
-<summary>
-
-CORE_BUSINESS:
-<summary>
-
-REMOVE:
-<modules>
-
-KEEP:
-<modules>
-
-REFACTOR:
-<modules>
-
-NEW:
-<features>
-
-TARGET_ARCHITECTURE:
-<summary>
-
-REBUILD_STRATEGY:
-<recommended option>
-
-RISK:
-<highest risks>
-
-NEXT_PHASE:
-<single concrete next action>
 ```
+
+已有未提交修改没有被破坏。
+
+不要执行任何 Git 写操作。
+
+---
+
+# 十五、检查 Freeze Scope 是否正确
+
+Freeze 只代表：
+
+```text
+OpenCode Host Integration
+```
+
+即：
+
+```text
+OpenCode
+ → Plugin
+ → Host Adapter
+ → Router / Memory / Orchestrator
+ → Context Injection
+ → Current OpenCode Session
+```
+
+不要把它扩展解释为：
+
+```text
+所有 Agent OS 功能全部生产就绪
+```
+
+也不要把：
+
+```text
+Loop Controller
+Runtime Adapter
+```
+
+强行加入 Host Pipeline。
+
+---
+
+# 十六、Known Limitations
+
+必须确认 Freeze Manifest 是否正确保留：
+
+```text
+Router:
+IMPLIED
+
+Memory:
+IMPLIED
+
+Orchestrator:
+IMPLIED
+
+FAIL_OPEN:
+NOT_VERIFIED AS NEW LIVE TEST
+```
+
+这些只能作为：
+
+```text
+KNOWN_LIMITATION
+```
+
+不能偷偷改成：
+
+```text
+PASS
+```
+
+---
+
+# 十七、Freeze 是否应该因为这些限制失败？
+
+不要简单地因为：
+
+```text
+FAIL_OPEN = NOT_VERIFIED
+```
+
+就否定 Host Integration。
+
+本次 Freeze Scope 是：
+
+```text
+OpenCode Host Integration
+```
+
+而 Phase 6.0.9 的 L3 核心已经确认：
+
+```text
+Natural Prompt
+Native OpenCode
+Plugin
+Adapter
+Task Correlation
+Session Correlation
+Context Injection
+```
+
+所以请区分：
+
+```text
+HOST_INTEGRATION_FREEZE
+```
+
+和：
+
+```text
+ENTIRE_AOS_PRODUCTION_CERTIFICATION
+```
+
+前者可以通过，而后者不能由本次审计声称。
+
+---
+
+# 十八、最终 Freeze 判定
+
+只有以下核心条件全部 PASS：
+
+```text
+Native OpenCode Evidence
+Natural Trigger
+Plugin Loaded
+Prompt Hook
+AOS Entry
+Task Correlation
+Session Correlation
+Context Injection
+Second OpenCode
+Recursion
+Source Consistency
+Project Safety
+Hash Integrity
+```
+
+才允许：
+
+```text
+FREEZE_APPROVAL:
+APPROVED
+```
+
+否则：
+
+```text
+FREEZE_APPROVAL:
+NOT_APPROVED
+```
+
+---
+
+# 十九、特别注意文档准确性
+
+如果发现：
+
+```text
+VERIFIED_NATIVE_MESSAGE:
+EVT-TI5HUEMW
+```
+
+这种错误：
+
+必须在报告里明确指出：
+
+```text
+MANIFEST_DOCUMENTATION_ISSUE:
+Native Message ID field incorrectly references Plugin Event ID.
+Correct Native Message ID:
+msg_056ca290e001HGqIHS20o1FlhR
+```
+
+这是文档问题，不要为了让 Manifest 看起来完美而修改历史文件。
+
+---
+
+# 二十、不要修改 Freeze Manifest
+
+即使发现：
+
+```text
+Native Message ID 文档写错
+```
+
+本次不要修改：
+
+```text
+phase-6.0.10-freeze-manifest.md
+```
+
+只在最终审计报告中记录。
+
+这样才能保持独立审计性。
+
+---
+
+# 二十一、最终输出
+
+严格：
+
+```text
+PHASE:
+AUDIT_SCOPE:
+
+OPENCODE_VERSION:
+PLUGIN_VERSION:
+PLUGIN_RUNTIME_ENTRY:
+
+VERIFIED_SESSION:
+VERIFIED_NATIVE_MESSAGE:
+ACTUAL_NATIVE_MESSAGE_ID:
+
+NATIVE_OPENCODE_EVIDENCE:
+NATURAL_TRIGGER:
+PLUGIN_LOADED:
+
+PROMPT_EVENT_ID:
+ADAPTER_CALLED_EVENT_ID:
+ADAPTER_COMPLETED_EVENT_ID:
+CONTEXT_INJECTED_EVENT_ID:
+
+VERIFIED_TASK_ID:
+
+AOS_ENTRY:
+ROUTER:
+MEMORY:
+ORCHESTRATOR:
+CONTEXT_INJECTION:
+
+SESSION_CORRELATION:
+TASK_CORRELATION:
+
+CURRENT_SESSION_REUSED:
+SECOND_OPENCODE:
+RECURSION:
+
+PLUGIN_SOURCE_CONSISTENCY:
+HASH_INTEGRITY:
+PROJECT_SAFETY:
+
+FAIL_OPEN:
+
+KNOWN_LIMITATIONS:
+MANIFEST_DOCUMENTATION_ISSUES:
+
+CODE_VERIFIED:
+LIVE_SESSION_VERIFIED:
+NATIVE_OPENCODE_EVIDENCE:
+
+FREEZE_APPROVAL:
+SCORE:
+FINAL:
+NEXT:
+```
+
+---
+
+# 二十二、Final Verdict
+
+如果：
+
+```text
+FREEZE_APPROVAL = APPROVED
+```
+
+则输出：
+
+```text
+FINAL:
+FREEZE_APPROVED
+
+NEXT:
+AOS V1 OpenCode Host Integration is frozen.
+Do not modify the frozen Host Integration until a new phase explicitly authorizes changes.
+Phase 6.1 may begin only as a separate scope.
+```
+
+如果：
+
+```text
+FREEZE_APPROVAL = NOT_APPROVED
+```
+
+则：
+
+```text
+FINAL:
+FREEZE_NOT_APPROVED
+```
+
+并明确列出阻断项。
+
+---
+
+# 二十三、最终原则
+
+本次不是追求：
+
+```text
+100/100
+```
+
+而是确认：
+
+```text
+Phase 6.0.x
+=
+OpenCode Host Integration
+```
+
+是否已经达到：
+
+```text
+可验证
+可复现
+可审计
+可冻结
+```
+
+同时必须保持：
+
+```text
+PROJ-001
+```
+
+现有未提交修改不被破坏。
+
+审计结束后停止。
+
+不要修改任何文件。
+
+不要进入 Phase 6.1。
 

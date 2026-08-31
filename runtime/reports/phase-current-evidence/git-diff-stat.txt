@@ -1,0 +1,33 @@
+ .env.example                                       |  20 --
+ .../main/java/com/aiview/agent/ai/ChatClient.java  |  29 ---
+ .../main/java/com/aiview/agent/ai/ChatMessage.java |  16 --
+ .../main/java/com/aiview/agent/ai/ChatRequest.java |  51 ----
+ .../java/com/aiview/agent/ai/ChatResponse.java     |  14 --
+ .../main/java/com/aiview/agent/ai/ChatTool.java    |   6 -
+ .../java/com/aiview/agent/ai/EmbeddingClient.java  |  12 -
+ .../agent/ai/OpenAiCompatibleChatClient.java       | 212 ----------------
+ .../agent/ai/OpenAiCompatibleEmbeddingClient.java  | 108 --------
+ .../main/java/com/aiview/agent/ai/ToolCall.java    |   4 -
+ .../main/java/com/aiview/config/AiProperties.java  |  36 ---
+ .../interview/controller/InterviewController.java  |  14 +-
+ .../interview/service/InterviewScoringService.java | 246 ++++++++++++------
+ .../aiview/interview/service/InterviewService.java | 280 ++++-----------------
+ .../com/aiview/rag/controller/RagController.java   |  62 -----
+ .../src/main/java/com/aiview/rag/dto/RagDtos.java  |  58 -----
+ .../java/com/aiview/rag/entity/KnowledgeBase.java  |  34 ---
+ .../java/com/aiview/rag/entity/KnowledgeChunk.java |  29 ---
+ .../com/aiview/rag/mapper/KnowledgeBaseMapper.java |   9 -
+ .../aiview/rag/mapper/KnowledgeChunkMapper.java    |   9 -
+ .../java/com/aiview/rag/service/RagService.java    | 239 ------------------
+ backend/src/main/resources/application.yml         |  21 +-
+ backend/src/main/resources/db/data.sql             | 161 +++++++++++-
+ backend/src/main/resources/db/schema.sql           |  23 +-
+ docker-compose.yml                                 |  17 --
+ frontend/package.json                              |   2 +-
+ frontend/src/App.vue                               |   2 +-
+ frontend/src/api/interview.ts                      |  56 -----
+ frontend/src/pages/Home.vue                        |  16 +-
+ frontend/src/pages/Interview.vue                   |  39 +--
+ ollama/Dockerfile                                  |   6 -
+ ollama/ollama                                      | Bin 43378056 -> 0 bytes
+ 32 files changed, 397 insertions(+), 1434 deletions(-)

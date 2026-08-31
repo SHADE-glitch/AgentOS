@@ -1,0 +1,1111 @@
+# Host Integration Telemetry Log
+# Phase 6.0.4 — All host integration events
+# Auto-generated from host plugin. Do not manually edit.
+
+version: "1.0"
+phase: "6.0.4"
+last_updated: "2026-08-31T06:50:18.623160+00:00"
+
+# ============================================================
+# Host Integration Events
+# ============================================================
+
+events:
+  - event_id: "EVT-B896C1F0"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T06:50:18.622799+00:00"
+    trace_id: "HOST-TRACE-0276F69F"
+    session_id: "TEST-SES-001"
+    evidence_type: "host_integration"
+    working_directory: "/home/shade/Public/test"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2029521
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-Y3HD5PHL"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:15:33.032Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2094984
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-6MDAU0XJ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:15:46.709Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2095873
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-JNCXGUGV"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:16:24.229Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2097619
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-DXYOKURT"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:16:36.092Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2098422
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-N5GRUCPX"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:18:24.806Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2100833
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-D5NPLI86"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:20:09.004Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2107606
+    cwd: "/home/shade/Public/test"
+    session_id: "REAL-SESSION-TEST"
+  - event_id: "EVT-GBL3XJXC"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:20:09.009Z"
+    evidence_type: "host_integration"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    prompt_length: 38
+    session_id: "REAL-SESSION-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-AHBQ4YCX"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:20:09.010Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SWI6PPJY"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    session_id: "REAL-SESSION-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3ATUT4JX"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:20:09.500Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SWI6PPJY"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 490
+    session_id: "REAL-SESSION-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-K9K480WQ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:20:29.739Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2108454
+    cwd: "/home/shade/Public/test"
+    session_id: "VERIFY-HOST-CHAIN"
+  - event_id: "EVT-8EO2687L"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:20:29.742Z"
+    evidence_type: "host_integration"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    prompt_length: 38
+    session_id: "VERIFY-HOST-CHAIN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-AZE4CQ5Z"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:20:29.742Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JBMTGDIP"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    session_id: "VERIFY-HOST-CHAIN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-V4Y6QSNS"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:20:30.257Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JBMTGDIP"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 515
+    session_id: "VERIFY-HOST-CHAIN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-0VS96DW6"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T07:20:30.258Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-77D092"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-CWY76F0X"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:22:44.101Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2113731
+    cwd: "/home/shade/Public/test"
+    session_id: "RECURSION-TEST"
+  - event_id: "EVT-PQGQTMW0"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:22:51.912Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2114043
+    cwd: "/home/shade/Public/test"
+    session_id: "FAILOPEN-TEST"
+  - event_id: "EVT-5KUSTM0O"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:22:51.915Z"
+    evidence_type: "host_integration"
+    prompt_summary: "test fail-open"
+    prompt_length: 14
+    session_id: "FAILOPEN-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-4ARV822M"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:22:51.916Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UAY0PYXL"
+    prompt_summary: "test fail-open"
+    session_id: "FAILOPEN-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TRIWHYWH"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:22:52.548Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UAY0PYXL"
+    aos_status: "completed"
+    lead_agent: "testing-engineer"
+    memory_count: 5
+    latency_ms: 632
+    session_id: "FAILOPEN-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-S2TF7T4K"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:23:02.237Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2114427
+    cwd: "/home/shade/Public/test"
+    session_id: "NEUTRALITY-TEST"
+  - event_id: "EVT-5RJAHYUQ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:23:02.239Z"
+    evidence_type: "host_integration"
+    prompt_summary: "test neutrality"
+    prompt_length: 15
+    session_id: "NEUTRALITY-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7S2D1U5W"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:23:02.240Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9NV2M5Y1"
+    prompt_summary: "test neutrality"
+    session_id: "NEUTRALITY-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-1UAZF3D8"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:23:02.745Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9NV2M5Y1"
+    aos_status: "completed"
+    lead_agent: "testing-engineer"
+    memory_count: 5
+    latency_ms: 505
+    session_id: "NEUTRALITY-TEST"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DM2EZ7E0"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:27:47.761Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.1.0"
+    pid: 2125545
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-V1MUAVK1"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:27:55.224Z"
+    evidence_type: "host_integration"
+    prompt_summary: "继续"
+    prompt_length: 2
+    session_id: "ses_fa949d708ffeeYvARBtRtFBSaf"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7EYYNF79"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:27:55.224Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-PADO9FBM"
+    prompt_summary: "继续"
+    session_id: "ses_fa949d708ffeeYvARBtRtFBSaf"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9MR1BUXJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:27:55.775Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-PADO9FBM"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 550
+    session_id: "ses_fa949d708ffeeYvARBtRtFBSaf"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-UEZBW4XV"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T07:27:59.112Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-188670"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-GGGPK6CY"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:37:29.953Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Phase 6.0.7 — Real Natural Developer Prompt & Evidence Correlation Repair
+
+你现在是：
+
+> Agent OS Host Integration Engineer
+
+本阶段不是重新设计 Agent OS。
+
+刚刚完成的独立 Trae 审计结论：
+
+```text
+PLUGIN_LOADED:          PARTI"
+    prompt_length: 9495
+    session_id: "ses_fa93f894fffeMDwCmWck1gPcQV"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LL5AN27R"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:37:29.953Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8R67CWSM"
+    prompt_summary: "# Phase 6.0.7 — Real Natural Developer Prompt & Evidence Correlation Repair
+
+你现在是：
+
+> Agent OS Host Integration Engineer
+
+本阶段不是重新设计 Agent OS。
+
+刚刚完成的独立 Trae 审计结论：
+
+```text
+PLUGIN_LOADED:          PARTI"
+    session_id: "ses_fa93f894fffeMDwCmWck1gPcQV"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WQQL6B13"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:37:30.497Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8R67CWSM"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 544
+    session_id: "ses_fa93f894fffeMDwCmWck1gPcQV"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TBQHP1QN"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T07:37:30.558Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-45F5A8"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-2KWQ6AHS"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:44:38.837Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Phase 6.0.8 — Final Real Natural Prompt Verification
+
+Phase 6.0.7 已完成代码修复，但没有完成真实 L3 验证。
+
+当前状态：
+
+```text
+PLUGIN_SOURCE_CONSISTENCY: PASS
+TASK_CORRELATION:          FIXED
+SESSION_CORRELATION:       F"
+    prompt_length: 8147
+    session_id: "ses_fa938fe73ffeX4xJ7FsZTBy9sx"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-4LIPM1RC"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:44:38.837Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-47WZXCZD"
+    prompt_summary: "# Phase 6.0.8 — Final Real Natural Prompt Verification
+
+Phase 6.0.7 已完成代码修复，但没有完成真实 L3 验证。
+
+当前状态：
+
+```text
+PLUGIN_SOURCE_CONSISTENCY: PASS
+TASK_CORRELATION:          FIXED
+SESSION_CORRELATION:       F"
+    session_id: "ses_fa938fe73ffeX4xJ7FsZTBy9sx"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-FVYTW2MZ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:44:39.469Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-47WZXCZD"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 632
+    session_id: "ses_fa938fe73ffeX4xJ7FsZTBy9sx"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-K89ABWS4"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T07:44:39.536Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-326577"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-ACQVUP9I"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:47:12.513Z"
+    evidence_type: "host_integration"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    prompt_length: 38
+    session_id: "ses_fa936a933ffezcjsBhxe1iaPgs"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KGSM0G6R"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:47:12.513Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-V9XZI2U4"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    session_id: "ses_fa936a933ffezcjsBhxe1iaPgs"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-NN8G2J7U"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:47:13.030Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-V9XZI2U4"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 517
+    session_id: "ses_fa936a933ffezcjsBhxe1iaPgs"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3P9S0P94"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T07:47:13.086Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-6B00F7"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-BKOMB1VJ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T07:47:53.638Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 2166622
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-TI5HUEMW"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T07:48:06.680Z"
+    evidence_type: "host_integration"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    prompt_length: 38
+    session_id: "ses_fa935d738ffeb8UjRa7n54H7r0"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-J9E9D9DX"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T07:48:06.681Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-FVL9TC7C"
+    prompt_summary: "只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。"
+    session_id: "ses_fa935d738ffeb8UjRa7n54H7r0"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-I1CN99QM"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T07:48:07.249Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-FVL9TC7C"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 568
+    session_id: "ses_fa935d738ffeb8UjRa7n54H7r0"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5CSQ9L26"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T07:48:07.341Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-FVL9TC7C"
+    session_id: "ses_fa935d738ffeb8UjRa7n54H7r0"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-BP643KRQ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T08:00:55.396Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 2192403
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-5G3TKRTW"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T08:06:02.515Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 2203215
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-FRF0JBYD"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:09:24.805Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Phase 6.0.10 — AOS V1 Freeze Gate & Evidence Consolidation
+
+你现在是：
+
+> Agent OS Release / Freeze Engineer
+
+Phase 6.0.9 已经通过独立 Trae 审计：
+
+```text
+EVIDENCE_LEVEL:             L3
+NATIVE_OPENCODE_EVIDENCE:"
+    prompt_length: 5088
+    session_id: "ses_fa92251b6ffeuKJUBvMxs7rt7R"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-SXNK9G5K"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:09:24.806Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ML62WXK8"
+    prompt_summary: "# Phase 6.0.10 — AOS V1 Freeze Gate & Evidence Consolidation
+
+你现在是：
+
+> Agent OS Release / Freeze Engineer
+
+Phase 6.0.9 已经通过独立 Trae 审计：
+
+```text
+EVIDENCE_LEVEL:             L3
+NATIVE_OPENCODE_EVIDENCE:"
+    session_id: "ses_fa92251b6ffeuKJUBvMxs7rt7R"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-NX6ZDQ6D"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:09:25.342Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ML62WXK8"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 537
+    session_id: "ses_fa92251b6ffeuKJUBvMxs7rt7R"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6WN6ED1X"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:09:25.407Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ML62WXK8"
+    session_id: "ses_fa92251b6ffeuKJUBvMxs7rt7R"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-TZ4T6XKQ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T08:15:25.373Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 2239682
+    cwd: "/home/shade/.agents"
+    session_id: ""
+  - event_id: "EVT-BGTNRUHO"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T08:15:35.661Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 2240248
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-K0181K2C"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:16:23.075Z"
+    evidence_type: "host_integration"
+    prompt_summary: "帮我看看当前的agent os是不是适配opencode？codex呢？要不要移除codex的配置？有没有影响？"
+    prompt_length: 56
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-UNOTFBPE"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:16:23.076Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OCWYJASB"
+    prompt_summary: "帮我看看当前的agent os是不是适配opencode？codex呢？要不要移除codex的配置？有没有影响？"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-K2IFVYDM"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:16:23.640Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OCWYJASB"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+    memory_count: 5
+    latency_ms: 564
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-LSYIMI34"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:16:23.737Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OCWYJASB"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+  - event_id: "EVT-JSYSR2ZW"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:16:37.182Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Thoroughly explore the /home/shade/.agents directory structure. I need to understand:
+
+1. The overall agent OS architecture - what files/directories exist
+2. Any opencode-related configuration (openco"
+    prompt_length: 731
+    session_id: "ses_fa91bbc4effeixAu8T8YfPh3mg"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-O389ZJ49"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:16:37.183Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9VV26JUF"
+    prompt_summary: "Thoroughly explore the /home/shade/.agents directory structure. I need to understand:
+
+1. The overall agent OS architecture - what files/directories exist
+2. Any opencode-related configuration (openco"
+    session_id: "ses_fa91bbc4effeixAu8T8YfPh3mg"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-HSGMX4X7"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:16:37.782Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9VV26JUF"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+    memory_count: 5
+    latency_ms: 599
+    session_id: "ses_fa91bbc4effeixAu8T8YfPh3mg"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-1HGXXM2Z"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:16:38.131Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9VV26JUF"
+    session_id: "ses_fa91bbc4effeixAu8T8YfPh3mg"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+  - event_id: "EVT-A5IDWCXT"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-08-31T08:17:26.472Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 2247210
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-GY1UFQWU"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:20:26.102Z"
+    evidence_type: "host_integration"
+    prompt_summary: "移除codex配置，记得不要影响其他内容"
+    prompt_length: 20
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-LT7NCNEZ"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:20:26.102Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MJJ7OVH3"
+    prompt_summary: "移除codex配置，记得不要影响其他内容"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-8F99G8IJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:20:26.663Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MJJ7OVH3"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 561
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-4G3FJCYS"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:20:27.048Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MJJ7OVH3"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-X5G2M8WV"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:20:43.311Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Phase 6.1 — Post-Freeze Agent OS Gap Analysis
+
+你现在是：
+
+> Agent OS V1 Architecture & Evolution Planner
+
+当前状态：
+
+```text
+Phase 6.0.10:
+OpenCode Host Integration = FREEZE_APPROVED
+
+Phase 6.0.9:
+L3 VERIFI"
+    prompt_length: 5225
+    session_id: "ses_fa917f754ffeLVaAA4QR4M7SSp"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3G309XZ2"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:20:43.312Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DVFD4K1I"
+    prompt_summary: "# Phase 6.1 — Post-Freeze Agent OS Gap Analysis
+
+你现在是：
+
+> Agent OS V1 Architecture & Evolution Planner
+
+当前状态：
+
+```text
+Phase 6.0.10:
+OpenCode Host Integration = FREEZE_APPROVED
+
+Phase 6.0.9:
+L3 VERIFI"
+    session_id: "ses_fa917f754ffeLVaAA4QR4M7SSp"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7B1GVDVJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:20:43.875Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DVFD4K1I"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 563
+    session_id: "ses_fa917f754ffeLVaAA4QR4M7SSp"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-BDHT2TWU"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:20:43.970Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DVFD4K1I"
+    session_id: "ses_fa917f754ffeLVaAA4QR4M7SSp"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-ZGFVO7EZ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:21:22.277Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Thoroughly explore the directory /home/shade/.agents and its subdirectories. I need a comprehensive understanding of:
+
+1. The overall structure - all top-level directories and key files
+2. The runtime"
+    prompt_length: 631
+    session_id: "ses_fa917631effepSlPkEOEQQ6wqD"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-79DDEAGP"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:21:22.277Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-I03AWFNO"
+    prompt_summary: "Thoroughly explore the directory /home/shade/.agents and its subdirectories. I need a comprehensive understanding of:
+
+1. The overall structure - all top-level directories and key files
+2. The runtime"
+    session_id: "ses_fa917631effepSlPkEOEQQ6wqD"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3JJXLVX3"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:21:22.929Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-I03AWFNO"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+    memory_count: 5
+    latency_ms: 652
+    session_id: "ses_fa917631effepSlPkEOEQQ6wqD"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-318MYDVO"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:21:23.346Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-I03AWFNO"
+    session_id: "ses_fa917631effepSlPkEOEQQ6wqD"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+  - event_id: "EVT-3ROPMR4G"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:21:27.043Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Search /home/shade/.agents/runtime for all Python files. For each file, read it and provide:
+1. File path
+2. Module purpose
+3. Key classes and functions
+4. Whether it appears to be tested (look for te"
+    prompt_length: 597
+    session_id: "ses_fa9175279ffesYUBzEh7aYLzh7"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6EP9WJK6"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:21:27.043Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-REAZCG0B"
+    prompt_summary: "Search /home/shade/.agents/runtime for all Python files. For each file, read it and provide:
+1. File path
+2. Module purpose
+3. Key classes and functions
+4. Whether it appears to be tested (look for te"
+    session_id: "ses_fa9175279ffesYUBzEh7aYLzh7"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-IZ7WE4YZ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:21:27.695Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-REAZCG0B"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+    memory_count: 5
+    latency_ms: 652
+    session_id: "ses_fa9175279ffesYUBzEh7aYLzh7"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-F7UDS05F"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:21:27.739Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-REAZCG0B"
+    session_id: "ses_fa9175279ffesYUBzEh7aYLzh7"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+  - event_id: "EVT-7E7X396Y"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:22:22.094Z"
+    evidence_type: "host_integration"
+    prompt_summary: "开始执行"
+    prompt_length: 4
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-M1BQWYM2"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:22:22.094Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-K79RU8O5"
+    prompt_summary: "开始执行"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-E8GFE02J"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:22:22.639Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-K79RU8O5"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 545
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-ADF5UB52"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:22:23.069Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-K79RU8O5"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-TIYQUO32"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:25:45.711Z"
+    evidence_type: "host_integration"
+    prompt_summary: "当前的agent os是不是完工了？如果是请你给我git  commit提交的命令"
+    prompt_length: 41
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-CJLU5MIY"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:25:45.712Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UJXCDG42"
+    prompt_summary: "当前的agent os是不是完工了？如果是请你给我git  commit提交的命令"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-AC5T8Y4R"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:25:46.341Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UJXCDG42"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+    memory_count: 5
+    latency_ms: 629
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-IKTGVEKP"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:25:46.740Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UJXCDG42"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+  - event_id: "EVT-7BPCMN3G"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:26:00.284Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Read the following files in /home/shade/.agents and provide their complete contents:
+
+1. /home/shade/.agents/runtime/dashboard.md
+2. /home/shade/.agents/runtime/metrics/quality-summary.md
+3. /home/sha"
+    prompt_length: 747
+    session_id: "ses_fa9132049ffeFQj0XEaiaA95HC"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9F3W4ZS5"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:26:00.284Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-N7E61V64"
+    prompt_summary: "Read the following files in /home/shade/.agents and provide their complete contents:
+
+1. /home/shade/.agents/runtime/dashboard.md
+2. /home/shade/.agents/runtime/metrics/quality-summary.md
+3. /home/sha"
+    session_id: "ses_fa9132049ffeFQj0XEaiaA95HC"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VYOYC4CP"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:26:00.859Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-N7E61V64"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+    memory_count: 5
+    latency_ms: 575
+    session_id: "ses_fa9132049ffeFQj0XEaiaA95HC"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MU81MJZB"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:26:01.078Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-N7E61V64"
+    session_id: "ses_fa9132049ffeFQj0XEaiaA95HC"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+  - event_id: "EVT-NT0KVT3Y"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:26:03.466Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Read the following files in /home/shade/.agents and provide their complete contents:
+
+1. /home/shade/.agents/runtime/feedback/failures.md
+2. /home/shade/.agents/runtime/feedback/routing-errors.md
+3. /"
+    prompt_length: 739
+    session_id: "ses_fa91314caffe7EEgbatqrHfjyA"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-79FR1QFN"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:26:03.466Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-2SLSHYGH"
+    prompt_summary: "Read the following files in /home/shade/.agents and provide their complete contents:
+
+1. /home/shade/.agents/runtime/feedback/failures.md
+2. /home/shade/.agents/runtime/feedback/routing-errors.md
+3. /"
+    session_id: "ses_fa91314caffe7EEgbatqrHfjyA"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-N28P2I5O"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:26:04.080Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-2SLSHYGH"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+    memory_count: 5
+    latency_ms: 614
+    session_id: "ses_fa91314caffe7EEgbatqrHfjyA"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-PWKUJSEH"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:26:04.412Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-2SLSHYGH"
+    session_id: "ses_fa91314caffe7EEgbatqrHfjyA"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+  - event_id: "EVT-KHN1JP0R"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:26:06.814Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Read the following files and provide their complete contents:
+
+1. /home/shade/.agents/memory/README.md
+2. /home/shade/.agents/memory/retrieval-index.yaml
+3. /home/shade/.agents/memory/decision-support"
+    prompt_length: 864
+    session_id: "ses_fa91305a6ffeuYuXogv7OpcmB2"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LO4B4XZ5"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:26:06.815Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-93PDJ05E"
+    prompt_summary: "Read the following files and provide their complete contents:
+
+1. /home/shade/.agents/memory/README.md
+2. /home/shade/.agents/memory/retrieval-index.yaml
+3. /home/shade/.agents/memory/decision-support"
+    session_id: "ses_fa91305a6ffeuYuXogv7OpcmB2"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-XHYD2A12"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:26:07.598Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-93PDJ05E"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 783
+    session_id: "ses_fa91305a6ffeuYuXogv7OpcmB2"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-55LM6K1B"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:26:07.803Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-93PDJ05E"
+    session_id: "ses_fa91305a6ffeuYuXogv7OpcmB2"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-8FO63UO5"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:26:10.956Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Read the following files in /home/shade/.agents and provide their complete contents:
+
+1. /home/shade/.agents/skills/version.json
+2. /home/shade/.agents/skills/meta/agent-router/SKILL.md
+3. /home/shade"
+    prompt_length: 674
+    session_id: "ses_fa912fa6affeyYQJsJIlFY3C7H"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-UMNN5HC0"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:26:10.956Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QC64S0PE"
+    prompt_summary: "Read the following files in /home/shade/.agents and provide their complete contents:
+
+1. /home/shade/.agents/skills/version.json
+2. /home/shade/.agents/skills/meta/agent-router/SKILL.md
+3. /home/shade"
+    session_id: "ses_fa912fa6affeyYQJsJIlFY3C7H"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QJMUU4Z6"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:26:11.623Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QC64S0PE"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+    memory_count: 5
+    latency_ms: 667
+    session_id: "ses_fa912fa6affeyYQJsJIlFY3C7H"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6UBB5CRE"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:26:11.788Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QC64S0PE"
+    session_id: "ses_fa912fa6affeyYQJsJIlFY3C7H"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "llm-engineer"
+  - event_id: "EVT-LIT0OVFZ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-08-31T08:27:01.418Z"
+    evidence_type: "host_integration"
+    prompt_summary: "全部变更"
+    prompt_length: 4
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-MHJ31KB3"
+    event_type: "host_adapter_called"
+    timestamp: "2026-08-31T08:27:01.419Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JUZFUOS6"
+    prompt_summary: "全部变更"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-MS9K8K8T"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-08-31T08:27:02.022Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JUZFUOS6"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 603
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    cwd: "/home/shade/.agents"
+  - event_id: "EVT-OR7RX8X1"
+    event_type: "host_context_injected"
+    timestamp: "2026-08-31T08:27:02.389Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JUZFUOS6"
+    session_id: "ses_fa91bf4c3ffe6NmrhODN7I04vG"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"

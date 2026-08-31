@@ -1,0 +1,71 @@
+loop_id: LOOP-20260831043818
+task_id: AOS-78FAE4
+task_text: 审查当前 /home/shade/Public/test 的 No-AI 重构结果。检查 AI/RAG 是否彻底移除、核心业务是否完整、Question
+  Bank/评分/面试流程是否自洽、前后端 API 是否一致、Redis/RabbitMQ 是否仍然有必要。只读分析，不修改任何文件。
+memory_mode: enabled
+model: opencode/mimo-v2.5-free
+started_at: '2026-08-31T04:38:18.419205+00:00'
+completed_at: ''
+current_stage: running
+final_status: pending
+retrieval:
+  status: pending
+  retrieved_count: 0
+  memory_ids: []
+  hypotheses: []
+  error: ''
+  started_at: ''
+  completed_at: ''
+decision:
+  status: pending
+  influence: none
+  error: ''
+  started_at: ''
+  completed_at: ''
+runtime:
+  status: pending
+  execution_id: ''
+  trace_id: ''
+  session_id: ''
+  provider: opencode
+  model: opencode/mimo-v2.5-free
+  latency_ms: 0
+  token_usage: {}
+  output_hash: ''
+  status_code: ''
+  error: ''
+  started_at: ''
+  completed_at: ''
+trace:
+  status: pending
+  trace_file: ''
+  error: ''
+  started_at: ''
+  completed_at: ''
+feedback:
+  status: pending
+  candidate_ids: []
+  error: ''
+  started_at: ''
+  completed_at: ''
+validation:
+  status: pending
+  validated_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: ''
+  completed_at: ''
+promotion:
+  status: pending
+  promoted_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: ''
+  completed_at: ''
+reconciliation:
+  status: pending
+  result: ''
+  error: ''
+  started_at: ''
+  completed_at: ''
+errors: []
