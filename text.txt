@@ -1,814 +1,1057 @@
-# Phase 6.0.10 — Final Independent Freeze Audit
+# Phase 6.1 — Real Project Execution Reliability & Productivity Validation
 
-你现在是：
+你现在进入 **Phase 6.1 实施阶段**。
 
-> **Agent OS Independent Release Auditor**
-
-本阶段是 **AOS V1 Freeze 前最后一次独立审计**。
-
-Phase 6.0.9 已由独立审计确认：
-
-```text
-EVIDENCE_LEVEL:             L3
-NATIVE_OPENCODE_EVIDENCE:   PASS
-NATURAL_TRIGGER:             PASS
-TASK_CORRELATION:            PASS
-SESSION_CORRELATION:         PASS
-CONTEXT_INJECTION:           PASS
-SECOND_OPENCODE:             PASS
-RECURSION:                   PASS
-PLUGIN_SOURCE_CONSISTENCY:   PASS
-PROJECT_SAFETY:              PASS
-FINAL:                       VERIFIED
-SCORE:                       92/100
-```
-
-Phase 6.0.10 已生成 Freeze Manifest：
-
-```text
-/home/shade/.agents/runtime/reports/phase-6.0.10-freeze-manifest.md
-```
-
-本阶段：
-
-> **只审计，不修改。**
+你已经完成两轮独立 Gap Analysis / Priority Review，现在必须基于已经确认的唯一目标开始实施。
 
 ---
 
-# 一、严格只读
+## 一、当前确定状态
 
-禁止：
-
-```text
-修改任何文件
-修复任何代码
-git commit
-git reset
-git restore
-git checkout
-git clean
-git stash
-```
-
-禁止：
+当前 Agent OS 状态：
 
 ```text
-重新测试自然 Prompt
-重新启动 OpenCode
-启动第二个 OpenCode
-opencode run
-aos run
-python3 aos_host_adapter.py
-node -e
+AOS_V1_STATUS: CAPABLE_BUT_REAL_PROJECT_NEVER_SUCCEEDED
+
+PHASE_5_STATUS: PARTIAL
+
+MEMORY_STATUS: OPERATIONAL_INFRASTRUCTURE
+ROUTER_STATUS: IMPLEMENTED_NOT_VALIDATED
+ORCHESTRATOR_STATUS: DOCUMENTATION_ONLY
+RUNTIME_STATUS: LIVE_VERIFIED
+FEEDBACK_STATUS: IMPLEMENTED_PARTIALLY_VERIFIED
+EVOLUTION_STATUS: DOCUMENTATION_ONLY
+REAL_PROJECT_STATUS: IMPLEMENTED_UNVERIFIED
 ```
 
-禁止修改 Telemetry / Trace / Session 数据。
+当前优先级：
 
----
+```text
+RANK_1: Real Project Agent Productivity
+RANK_2: Memory Effectiveness
+RANK_3: Runtime Reliability
+RANK_4: Closed-loop Evolution
+```
 
-# 二、不要相信 Freeze Manifest
+唯一 Phase 6.1 Objective：
 
-Freeze Manifest 是 OpenCode 生成的。
+```text
+Real Project Agent Productivity Validation
+```
+
+核心事实：
+
+```text
+PROJ-001：
+- 已执行 3 次
+- 3 次均 timeout
+- 0 次成功完成
+- 0 次代码变更
+
+另有 read-only exploration 任务成功运行，
+但它不能证明 Agent OS 能够成功完成真实项目修改任务。
+```
 
 因此：
 
-> **不能仅因为 Manifest 写了 PASS，就判定 PASS。**
+> 现在不要继续证明“Agent OS 有没有能力”。
 
-必须自己独立检查：
+要解决的是：
 
-```text
-Freeze Manifest
-+
-实际 Telemetry
-+
-实际 OpenCode Native Session
-+
-实际 Plugin Source
-+
-实际 Git State
-```
-
-最后自己得出结论。
+> **为什么 Agent OS 无法在真实项目 PROJ-001 上完成一个可验证的真实开发任务？**
 
 ---
 
-# 三、首先读取 Freeze Manifest
+# 二、本阶段唯一目标
 
-读取：
-
-```text
-/home/shade/.agents/runtime/reports/phase-6.0.10-freeze-manifest.md
-```
-
-提取：
+通过最小、可控、可回滚的工程修改，让 Agent OS 能够成功完成至少一个真实项目开发任务，并产生完整证据链：
 
 ```text
-PHASE
-FREEZE_SCOPE
-OPENCODE_VERSION
-PLUGIN_VERSION
-VERIFIED_SESSION
-VERIFIED_NATIVE_MESSAGE
-VERIFIED_TASK_ID
-NATIVE_OPENCODE_EVIDENCE
-NATURAL_TRIGGER
-TASK_CORRELATION
-SESSION_CORRELATION
-CONTEXT_INJECTION
-RECURSION
-SECOND_OPENCODE
-PROJECT_SAFETY
-PLUGIN_SOURCE_CONSISTENCY
-ROUTER
-MEMORY
-ORCHESTRATOR
-FAIL_OPEN
-HASH_SNAPSHOT
-FREEZE_STATUS
+Task
+ ↓
+Routing
+ ↓
+Memory Retrieval
+ ↓
+Agent Execution
+ ↓
+Real Project Modification
+ ↓
+Validation / Tests
+ ↓
+Outcome
+ ↓
+Trace
+ ↓
+Telemetry
+ ↓
+Feedback
 ```
 
-不要直接接受这些值。
+最终得到：
+
+```text
+SUCCESSFUL_REAL_PROJECT_EXECUTION
+```
+
+并且能够证明：
+
+```text
+代码确实发生变化
++
+任务确实完成
++
+验证确实通过
++
+Execution Trace 完整
++
+Outcome 可复现
+```
 
 ---
 
-# 四、核对真实 Native OpenCode Evidence
+# 三、极其重要的边界
 
-这是最重要的 Freeze Gate。
+## 冻结区域
 
-根据 Phase 6.0.9，已知候选：
-
-```text
-Session:
-ses_fa935d738ffeb8UjRa7n54H7r0
-```
-
-真正 Native Message：
+以下内容禁止修改：
 
 ```text
-msg_056ca290e001HGqIHS20o1FlhR
+Phase 6.0.10 OpenCode Host Integration
 ```
 
-真正用户 Prompt：
+尤其不要：
+
+* 重构 Host Integration
+* 改 Host adapter 协议
+* 修改已经 FREEZE_APPROVED 的接入链路
+* 为了绕过问题重新设计 Host
+
+如果问题来自冻结区域：
 
 ```text
-只读取当前项目的 pom.xml，告诉我 Java 版本。禁止修改任何文件。
+DO NOT MODIFY
 ```
 
-使用 OpenCode 原生数据源重新确认：
+必须记录为：
 
 ```text
-opencode export ses_fa935d738ffeb8UjRa7n54H7r0
+FREEZE_BLOCKER
 ```
 
-只读。
-
-确认：
-
-```text
-session.id
-message.id
-message.role
-message.sessionID
-message.parts[].text
-message timestamp
-```
-
-必须确认：
-
-```text
-role = user
-```
-
-并且 Prompt 完全匹配。
+然后寻找冻结区域之外的解决方案。
 
 ---
 
-# 五、特别检查 Freeze Manifest 中的 Native Message 字段
+# 四、本阶段禁止扩张范围
+
+不要同时处理：
+
+```text
+Memory Effectiveness
+Router Accuracy
+Multi-Agent Orchestrator
+Evolution Engine
+Knowledge Intelligence
+新 Skill
+大型架构重构
+```
+
+这些全部属于：
+
+```text
+DEFERRED
+```
+
+可以发现问题，但不得顺手修复。
+
+尤其禁止出现：
+
+```text
+因为 Real Project 执行失败
+→ 顺便重构 Runtime
+→ 顺便升级 Router
+→ 顺便重做 Memory
+→ 顺便实现 Orchestrator
+```
+
+这是严格禁止的。
+
+---
+
+# 五、第一步：先对 PROJ-001 做失败根因分析
+
+在修改代码之前，读取并分析过去 3 次 PROJ-001 timeout 的完整证据。
+
+至少检查：
+
+```text
+runtime/traces/
+runtime/logs/real-project-execution-history.md
+datasets/real-project/projects/PROJ-001.yaml
+datasets/real-project/tasks/PROJ-001-tasks.yaml
+runtime/loop-controller/
+runtime/loop-controller/state/
+runtime/feedback/
+runtime/telemetry/
+```
+
+必须找到每一次执行：
+
+```text
+Task ID
+Execution ID
+Start Time
+End Time
+Selected Skill
+Selected Runtime
+Prompt / Task Type
+Timeout Location
+Last Successful Step
+Last Emitted Event
+Agent Output
+Exit State
+Partial Changes
+Validation Result
+```
+
+将 3 次执行分别编号：
+
+```text
+ATTEMPT_1
+ATTEMPT_2
+ATTEMPT_3
+```
+
+建立失败对比表。
+
+---
+
+# 六、不要凭感觉判断 timeout 原因
+
+禁止直接写：
+
+```text
+可能是模型慢
+可能是 OpenCode 慢
+可能是 Prompt 太长
+可能是项目复杂
+```
+
+除非日志和 Trace 能证明。
+
+必须定位：
+
+```text
+TIMEOUT_ROOT_CAUSE
+```
+
+并将原因归入尽可能精确的类别，例如：
+
+```text
+TASK_DESIGN
+PROMPT_DESIGN
+MODEL_SELECTION
+ROUTING
+MEMORY_RETRIEVAL
+EXECUTION_LOOP
+PROCESS_MANAGEMENT
+TIMEOUT_CONFIGURATION
+VALIDATION
+PROJECT_SETUP
+DEPENDENCY
+ENVIRONMENT
+HOST
+UNKNOWN
+```
+
+如果根因来自多个因素，必须区分：
+
+```text
+PRIMARY_CAUSE
+SECONDARY_CAUSE
+```
+
+---
+
+# 七、判断一个问题是否真的值得修改
+
+对每一个候选问题建立：
+
+```text
+ROOT_CAUSE:
+EVIDENCE:
+CONFIDENCE:
+IMPACT:
+MINIMAL_FIX:
+RISK:
+```
+
+只有满足：
+
+```text
+Evidence sufficient
++
+Directly blocks successful real-project execution
++
+Fix outside frozen scope
++
+Minimal change possible
+```
+
+才允许实施。
+
+---
+
+# 八、优先检查的几个方向
+
+不要默认某一方向一定是原因，必须通过证据确认。
 
 重点检查：
 
+## 1. Task 是否过大
+
+检查 PROJ-001 是否试图一次完成：
+
 ```text
-VERIFIED_NATIVE_MESSAGE
+大量代码分析
++
+架构理解
++
+大量修改
++
+测试
++
+最终验证
 ```
 
-如果 Manifest 写：
+如果是，判断是否需要拆成一个更小但仍然真实的工程任务。
+
+例如：
 
 ```text
-EVT-TI5HUEMW
-```
-
-请指出：
-
-> 这是 Plugin 的 `host_prompt_received` Event ID，而不是 Native OpenCode Message ID。
-
-真正 Native Message ID 应为：
-
-```text
-msg_056ca290e001HGqIHS20o1FlhR
-```
-
-这是证据文档中的一个**索引命名错误**，不要静默忽略。
-
-判断：
-
-```text
-DOCUMENTATION_ACCURACY:
-PASS / PARTIAL
-```
-
-但不要因此自动否定整个 Freeze。
-
----
-
-# 六、重新验证完整证据链
-
-重新从真实数据建立：
-
-```text
-Native OpenCode Session
-        ↓
-Native User Message
-        ↓
-Plugin host_prompt_received
-        ↓
-host_adapter_called
-        ↓
-host_adapter_completed
-        ↓
-host_context_injected
-        ↓
-Native Assistant Response
-```
-
-必须核对真实：
-
-```text
-session_id
-task_id
-message_id
-event_id
-timestamp
-```
-
----
-
-# 七、Task Correlation
-
-重新确认：
-
-```text
-TASK_ID
-```
-
-本次真实任务应该保持一致。
-
-至少：
-
-```text
-host_adapter_called
-host_adapter_completed
-host_context_injected
-```
-
-三者：
-
-```text
-task_id = SAME
-```
-
-如果 Prompt Event 没有 task_id，不要强行要求。
-
----
-
-# 八、Session Correlation
-
-确认：
-
-```text
-host_prompt_received
-host_adapter_called
-host_adapter_completed
-host_context_injected
-```
-
-是否都能够关联到：
-
-```text
-ses_fa935d738ffeb8UjRa7n54H7r0
-```
-
-如果通过实际字段直接关联：
-
-```text
-PASS
-```
-
-如果只能靠 PID + 时间推断：
-
-```text
-PARTIAL
-```
-
-不得把推断当直接证据。
-
----
-
-# 九、Context Injection
-
-检查：
-
-```text
-host_context_injected
-```
-
-必须确认：
-
-```text
-task_id = HOST-FVL9TC7C
-session_id = ses_fa935d738ffeb8UjRa7n54H7r0
-injection_status = success
+单文件修改
++
+单一行为变化
++
+针对性测试
 ```
 
 注意：
 
-> 不要继续使用旧的：
-
-```text
-HOST-188670
-HOST-6B00F7
-HOST-45F5A8
-```
-
-这些都不是本次最终验证任务。
+> 不能把任务缩小到没有实际工程价值的 toy task。
 
 ---
 
-# 十、Plugin Source Consistency
+## 2. Timeout 配置
 
-读取：
+检查：
 
 ```text
-/home/shade/.agents/runtime/hosts/opencode/plugin/package.json
-/home/shade/.agents/runtime/hosts/opencode/plugin/index.js
-/home/shade/.agents/runtime/hosts/opencode/plugin/index.ts
-/home/shade/.agents/runtime/hosts/opencode/plugin/index.d.ts
-/home/shade/.agents/runtime/hosts/opencode/aos_host_adapter.py
+timeout
+deadline
+retry
+polling
+process lifetime
+subprocess handling
+idle timeout
+hard timeout
+```
+
+判断 timeout 是：
+
+```text
+REAL_FAILURE
+```
+
+还是：
+
+```text
+ORCHESTRATION_TIMEOUT
+```
+
+即 Agent 实际还在正常执行，只是 Agent OS 提前杀掉。
+
+不得为了让实验“成功”而无条件把 timeout 调得极大。
+
+必须说明：
+
+```text
+CURRENT_TIMEOUT:
+WHY_INSUFFICIENT:
+NEW_TIMEOUT:
+WHY_JUSTIFIED:
+```
+
+---
+
+## 3. Agent 是否陷入无效循环
+
+检查：
+
+```text
+重复读取文件
+重复搜索
+重复修改
+重复测试
+等待命令
+等待用户
+```
+
+寻找：
+
+```text
+LOOP
+STALL
+IDLE
+RETRY_STORM
+```
+
+如果发现，优先采用最小的执行控制修复。
+
+---
+
+## 4. Project Environment
+
+检查：
+
+```text
+JDK
+Maven / Gradle
+dependencies
+working directory
+git state
+build configuration
+test configuration
+environment variables
+```
+
+确认 Agent 是否实际上被环境问题阻塞。
+
+---
+
+## 5. Task → Runtime 参数传递
+
+检查：
+
+```text
+task
+→ loop controller
+→ runtime adapter
+→ host
 ```
 
 确认：
 
 ```text
-package.json version = 0.2.0
-index.js plugin_version = 0.2.0
-index.ts plugin_version = 0.2.0
+working directory
+task prompt
+timeout
+environment
+runtime selection
 ```
 
-并确认：
-
-```text
-package.json main = ./index.js
-```
-
-确认 `index.js` 是实际 Runtime Entry。
+没有在链路中丢失或错误覆盖。
 
 ---
 
-# 十一、Hash Snapshot
+# 九、建立最小可验证任务
 
-读取 Freeze Manifest 中记录的 SHA256：
+在修复根因后，不要直接重新运行一个巨大任务。
+
+从 PROJ-001 中选择：
 
 ```text
-package.json
-index.js
-index.ts
-index.d.ts
-aos_host_adapter.py
+ONE SMALL BUT REAL ENGINEERING TASK
 ```
 
-重新执行只读：
+必须具备：
+
+```text
+真实项目
+真实代码
+真实修改
+真实验证
+```
+
+例如：
+
+```text
+Fix one deterministic bug
+OR
+Implement one small requirement
+OR
+Add one focused test
+OR
+Refactor one isolated component
+```
+
+任务必须能够明确写出：
+
+```text
+EXPECTED_CHANGE
+EXPECTED_TEST
+SUCCESS_CONDITION
+```
+
+---
+
+# 十、建立 Baseline
+
+在首次修复后运行新的 PROJ-001 实验之前，记录：
+
+```text
+BASELINE_TASK
+BASELINE_DURATION
+BASELINE_SUCCESS
+BASELINE_FAILURE
+BASELINE_MANUAL_INTERVENTION
+BASELINE_CODE_CHANGE
+BASELINE_TEST_RESULT
+```
+
+特别注意：
+
+> 当前历史结果只能作为失败基线，不能把新的成功直接称为“productivity improvement”。
+
+第一阶段首先证明：
+
+```text
+EXECUTION_SUCCESS
+```
+
+之后才能逐步证明：
+
+```text
+PRODUCTIVITY_IMPROVEMENT
+```
+
+---
+
+# 十一、修复必须最小化
+
+实施遵循：
+
+```text
+Minimum Fix
+```
+
+优先级：
+
+```text
+Configuration Fix
+>
+Task / Prompt Fix
+>
+Execution Control Fix
+>
+Runtime-side non-frozen Fix
+>
+Architecture Change
+```
+
+禁止：
+
+```text
+Large Refactor
+```
+
+每一个修改必须说明：
+
+```text
+WHY
+WHAT
+WHY_THIS_SCOPE
+```
+
+---
+
+# 十二、修复之后必须运行真实实验
+
+修改完成后：
+
+```text
+不要停在代码测试。
+不要停在单元测试。
+不要只运行 mock。
+```
+
+必须执行：
+
+```text
+真实 Agent OS
++
+真实 PROJ-001
++
+真实 Agent Runtime
+```
+
+任务必须真的进入：
+
+```text
+Agent Execution
+```
+
+并产生：
+
+```text
+Actual Code Change
+```
+
+---
+
+# 十三、实验必须有明确成功标准
+
+本轮实验至少满足：
+
+```text
+1. Agent OS successfully starts task
+2. Correct project is opened
+3. Agent analyzes target
+4. Agent modifies real source
+5. Validation/test executes
+6. Expected condition passes
+7. Git diff confirms real change
+8. Execution trace exists
+9. Outcome is recorded
+10. No manual intervention is required to complete the task
+```
+
+如果其中任何一个失败，不得宣布成功。
+
+---
+
+# 十四、验证真实代码变化
+
+实验结束必须执行：
 
 ```bash
-sha256sum \
-/home/shade/.agents/runtime/hosts/opencode/plugin/package.json \
-/home/shade/.agents/runtime/hosts/opencode/plugin/index.js \
-/home/shade/.agents/runtime/hosts/opencode/plugin/index.ts \
-/home/shade/.agents/runtime/hosts/opencode/plugin/index.d.ts \
-/home/shade/.agents/runtime/hosts/opencode/aos_host_adapter.py
+git status
+git diff --stat
+git diff
 ```
-
-与 Manifest 比较。
-
-要求：
-
-```text
-HASH_MATCH = YES
-```
-
-如果 Hash 不一致：
-
-```text
-FREEZE = NOT_APPROVED
-```
-
----
-
-# 十二、OpenCode Version
 
 确认：
 
-```bash
-opencode --version
+```text
+EXPECTED_FILES_CHANGED
+EXPECTED_LINES_CHANGED
+UNEXPECTED_FILES_CHANGED
 ```
 
-要求：
+如果没有代码变化：
 
 ```text
-1.18.25
+REAL_PROJECT_SUCCESS = FALSE
 ```
 
-如果变化：
+即使 Agent 输出：
+
+```text
+Task completed
+```
+
+也不能算成功。
+
+---
+
+# 十五、验证测试
+
+必须执行项目真实验证，例如：
+
+```text
+mvn test
+```
+
+或项目实际对应的测试命令。
 
 记录：
 
 ```text
-VERSION_DRIFT
+TEST_COMMAND
+TEST_EXIT_CODE
+TEST_RESULT
+FAILED_TESTS
 ```
-
-不要自动判 FAIL，但必须评估 Freeze 是否仍然适用。
 
 ---
 
-# 十三、Second OpenCode
+# 十六、完整记录实验数据
 
-只读检查：
+为本次实验生成唯一：
 
-```bash
-pgrep -af opencode
+```text
+Experiment ID
+Task ID
+Execution ID
+```
+
+并记录：
+
+```text
+TASK
+PROJECT
+MODEL
+RUNTIME
+SKILL
+DURATION
+TIMEOUT
+CODE_CHANGE
+TEST_RESULT
+MANUAL_INTERVENTION
+OUTCOME
+FAILURE_REASON
+```
+
+---
+
+# 十七、必须产生 Before / After
+
+最少形成：
+
+```text
+BEFORE:
+- 3 attempts
+- 3 timeout
+- 0 successful completion
+- 0 code changes
+
+AFTER:
+- attempt N
+- success/failure
+- duration
+- code changes
+- test result
+- manual intervention
+```
+
+如果成功：
+
+```text
+SUCCESS_DELTA:
+before success rate = 0%
+after success rate = ...
+```
+
+但不要夸大结论。
+
+一次成功只能证明：
+
+```text
+RUNTIME_VERIFIED
 ```
 
 以及：
 
-```bash
-ps -ef --forest | grep -i opencode
+```text
+REAL_PROJECT_EXECUTION_VERIFIED
 ```
 
-确认 Freeze 时没有：
+不能立即宣布：
 
 ```text
-Plugin → AOS → opencode run
-```
-
-创建第二实例。
-
----
-
-# 十四、Project Safety
-
-只读检查：
-
-```bash
-git -C /home/shade/Public/test status --short
-git -C /home/shade/Public/test diff --stat
-```
-
-确认：
-
-```text
-PROJ-001
-```
-
-已有未提交修改没有被破坏。
-
-不要执行任何 Git 写操作。
-
----
-
-# 十五、检查 Freeze Scope 是否正确
-
-Freeze 只代表：
-
-```text
-OpenCode Host Integration
-```
-
-即：
-
-```text
-OpenCode
- → Plugin
- → Host Adapter
- → Router / Memory / Orchestrator
- → Context Injection
- → Current OpenCode Session
-```
-
-不要把它扩展解释为：
-
-```text
-所有 Agent OS 功能全部生产就绪
-```
-
-也不要把：
-
-```text
-Loop Controller
-Runtime Adapter
-```
-
-强行加入 Host Pipeline。
-
----
-
-# 十六、Known Limitations
-
-必须确认 Freeze Manifest 是否正确保留：
-
-```text
-Router:
-IMPLIED
-
-Memory:
-IMPLIED
-
-Orchestrator:
-IMPLIED
-
-FAIL_OPEN:
-NOT_VERIFIED AS NEW LIVE TEST
-```
-
-这些只能作为：
-
-```text
-KNOWN_LIMITATION
-```
-
-不能偷偷改成：
-
-```text
-PASS
+PRODUCTIVITY_IMPROVEMENT_VERIFIED
 ```
 
 ---
 
-# 十七、Freeze 是否应该因为这些限制失败？
+# 十八、如果第一次修复后仍失败
 
-不要简单地因为：
+不要马上增加大量功能。
+
+进入：
 
 ```text
-FAIL_OPEN = NOT_VERIFIED
+Failure Iteration 2
 ```
 
-就否定 Host Integration。
-
-本次 Freeze Scope 是：
+重新分析：
 
 ```text
-OpenCode Host Integration
+NEW_TRACE
+NEW_FAILURE
+NEW_ROOT_CAUSE
 ```
 
-而 Phase 6.0.9 的 L3 核心已经确认：
+然后只允许：
 
 ```text
-Natural Prompt
-Native OpenCode
-Plugin
-Adapter
-Task Correlation
-Session Correlation
-Context Injection
+ONE_ADDITIONAL_FIX
 ```
 
-所以请区分：
+最多连续进行有限次数的受控实验。
+
+不要进入：
 
 ```text
-HOST_INTEGRATION_FREEZE
-```
-
-和：
-
-```text
-ENTIRE_AOS_PRODUCTION_CERTIFICATION
-```
-
-前者可以通过，而后者不能由本次审计声称。
-
----
-
-# 十八、最终 Freeze 判定
-
-只有以下核心条件全部 PASS：
-
-```text
-Native OpenCode Evidence
-Natural Trigger
-Plugin Loaded
-Prompt Hook
-AOS Entry
-Task Correlation
-Session Correlation
-Context Injection
-Second OpenCode
-Recursion
-Source Consistency
-Project Safety
-Hash Integrity
-```
-
-才允许：
-
-```text
-FREEZE_APPROVAL:
-APPROVED
-```
-
-否则：
-
-```text
-FREEZE_APPROVAL:
-NOT_APPROVED
+unbounded debugging
 ```
 
 ---
 
-# 十九、特别注意文档准确性
+# 十九、Phase 6.1 Stop Conditions
 
-如果发现：
+以下任意一个满足后立即停止本阶段：
 
-```text
-VERIFIED_NATIVE_MESSAGE:
-EVT-TI5HUEMW
-```
-
-这种错误：
-
-必须在报告里明确指出：
+### SUCCESS
 
 ```text
-MANIFEST_DOCUMENTATION_ISSUE:
-Native Message ID field incorrectly references Plugin Event ID.
-Correct Native Message ID:
-msg_056ca290e001HGqIHS20o1FlhR
+至少一个真实 PROJ-001 工程任务成功完成
+
+AND
+
+真实代码发生预期变化
+
+AND
+
+项目验证通过
+
+AND
+
+Trace / Outcome 完整
+
+AND
+
+没有人工介入完成剩余步骤
 ```
 
-这是文档问题，不要为了让 Manifest 看起来完美而修改历史文件。
+### BLOCKED
+
+如果经过有限次最小修复仍无法成功，必须停止，并报告：
+
+```text
+BLOCKED
+```
+
+并明确：
+
+```text
+PRIMARY_BLOCKER
+SECONDARY_BLOCKERS
+EVIDENCE
+WHAT_WAS_TRIED
+WHY_IT_FAILED
+WHAT_MUST_CHANGE_NEXT
+```
+
+不要继续无限修改。
 
 ---
 
-# 二十、不要修改 Freeze Manifest
+# 二十、特别禁止“作弊式成功”
 
-即使发现：
-
-```text
-Native Message ID 文档写错
-```
-
-本次不要修改：
+以下都不算成功：
 
 ```text
-phase-6.0.10-freeze-manifest.md
+只读任务
+mock task
+fake project
+toy repository
+手工提前修改代码
+Agent 只输出 patch 但没有实际写入
+Agent 修改后人工帮它完成测试
+人为跳过验证
+把 timeout 调到无限
+把任务改成没有实际工程价值的操作
 ```
-
-只在最终审计报告中记录。
-
-这样才能保持独立审计性。
 
 ---
 
-# 二十一、最终输出
+# 二十一、本阶段暂时不要做的事情
 
-严格：
+全部记为：
 
 ```text
-PHASE:
-AUDIT_SCOPE:
+DEFERRED
+```
 
-OPENCODE_VERSION:
-PLUGIN_VERSION:
-PLUGIN_RUNTIME_ENTRY:
+包括：
 
-VERIFIED_SESSION:
-VERIFIED_NATIVE_MESSAGE:
-ACTUAL_NATIVE_MESSAGE_ID:
+```text
+Memory Effectiveness
+Router Accuracy
+Orchestrator Implementation
+Evolution Loop
+Knowledge Graph
+新的 Host Integration
+大规模 Skill 重构
+```
 
-NATIVE_OPENCODE_EVIDENCE:
-NATURAL_TRIGGER:
-PLUGIN_LOADED:
+即使发现这些地方存在问题，也只记录，不实施。
 
-PROMPT_EVENT_ID:
-ADAPTER_CALLED_EVENT_ID:
-ADAPTER_COMPLETED_EVENT_ID:
-CONTEXT_INJECTED_EVENT_ID:
+---
 
-VERIFIED_TASK_ID:
+# 二十二、最终报告
 
-AOS_ENTRY:
-ROUTER:
-MEMORY:
-ORCHESTRATOR:
-CONTEXT_INJECTION:
+生成：
 
-SESSION_CORRELATION:
-TASK_CORRELATION:
+```text
+/home/shade/.agents/runtime/reports/phase-6.1-real-project-validation.md
+```
 
-CURRENT_SESSION_REUSED:
-SECOND_OPENCODE:
-RECURSION:
+必须包含：
 
-PLUGIN_SOURCE_CONSISTENCY:
-HASH_INTEGRITY:
-PROJECT_SAFETY:
+```text
+Executive Summary
 
-FAIL_OPEN:
+Historical Failure Analysis
 
-KNOWN_LIMITATIONS:
-MANIFEST_DOCUMENTATION_ISSUES:
+ATTEMPT_1
+ATTEMPT_2
+ATTEMPT_3
 
-CODE_VERIFIED:
-LIVE_SESSION_VERIFIED:
-NATIVE_OPENCODE_EVIDENCE:
+Root Cause Analysis
 
-FREEZE_APPROVAL:
-SCORE:
-FINAL:
+Selected Root Cause
+
+Minimal Fix
+
+Files Changed
+
+Why These Files
+
+Why Scope Is Safe
+
+Experiment Design
+
+Baseline
+
+Experiment Result
+
+Code Change Verification
+
+Test Verification
+
+Trace Verification
+
+Telemetry Verification
+
+Before vs After
+
+Evidence Classification
+
+Limitations
+
+Deferred Issues
+
+Final Status
+
+Recommendation
+```
+
+---
+
+# 二十三、最终 Evidence Classification
+
+严格区分：
+
+```text
+CODE_VERIFIED
+RUNTIME_VERIFIED
+INDEPENDENTLY_AUDITED
+EFFECTIVENESS_VERIFIED
+```
+
+例如：
+
+### 第一次真实成功
+
+可以写：
+
+```text
+REAL_PROJECT_EXECUTION:
+RUNTIME_VERIFIED
+
+CODE_CHANGE:
+RUNTIME_VERIFIED
+
+TEST:
+RUNTIME_VERIFIED
+```
+
+但是：
+
+```text
+PRODUCTIVITY_IMPROVEMENT:
+NOT_VERIFIED
+```
+
+除非有可比较 baseline。
+
+---
+
+# 二十四、最终必须输出这些字段
+
+```text
+AOS_V1_STATUS:
+
+PHASE_6.1_STATUS:
+
+PRIMARY_ROOT_CAUSE:
+
+FIX_APPLIED:
+
+FILES_CHANGED:
+
+FREEZE_SCOPE_PRESERVED:
+
+REAL_PROJECT_EXECUTION:
+
+TASK_SUCCESS:
+
+CODE_CHANGE_VERIFIED:
+
+TEST_VERIFIED:
+
+TRACE_VERIFIED:
+
+TELEMETRY_VERIFIED:
+
+MANUAL_INTERVENTION:
+
+BEFORE:
+
+AFTER:
+
+DELTA:
+
+PRODUCTIVITY_IMPROVEMENT:
+
+EVIDENCE_QUALITY:
+
+REMAINING_GAPS:
+
+DEFERRED:
+
+FINAL_RECOMMENDATION:
+
 NEXT:
 ```
 
 ---
 
-# 二十二、Final Verdict
+# 二十五、执行原则
 
-如果：
-
-```text
-FREEZE_APPROVAL = APPROVED
-```
-
-则输出：
+整个过程中坚持：
 
 ```text
-FINAL:
-FREEZE_APPROVED
-
-NEXT:
-AOS V1 OpenCode Host Integration is frozen.
-Do not modify the frozen Host Integration until a new phase explicitly authorizes changes.
-Phase 6.1 may begin only as a separate scope.
+Evidence First
+Minimal Fix
+Real Project
+Real Code
+Real Test
+No Scope Creep
+Freeze Preservation
+One Objective
 ```
 
-如果：
+最重要的是：
 
-```text
-FREEZE_APPROVAL = NOT_APPROVED
-```
+> **本阶段不是为了让报告变漂亮，而是第一次真正让 Agent OS 在真实项目中完成一个可验证的开发任务。**
 
-则：
+开始执行。
 
-```text
-FINAL:
-FREEZE_NOT_APPROVED
-```
+先分析 3 次历史失败，再决定最小修复。
 
-并明确列出阻断项。
-
----
-
-# 二十三、最终原则
-
-本次不是追求：
-
-```text
-100/100
-```
-
-而是确认：
-
-```text
-Phase 6.0.x
-=
-OpenCode Host Integration
-```
-
-是否已经达到：
-
-```text
-可验证
-可复现
-可审计
-可冻结
-```
-
-同时必须保持：
-
-```text
-PROJ-001
-```
-
-现有未提交修改不被破坏。
-
-审计结束后停止。
-
-不要修改任何文件。
-
-不要进入 Phase 6.1。
+完成后立即停止，不进入 Memory、Router、Orchestrator 或 Evolution 的下一轮开发。
 
