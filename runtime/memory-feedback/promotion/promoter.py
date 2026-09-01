@@ -85,8 +85,8 @@ def check_trust_gate(validated_result):
     if gate_results.get("M1_provenance") == "fail":
         return False, f"Trust Gate FAILED: M1_provenance check failed for {memory_id}"
     
-    # Check 2: Validation status
-    if validated_result.get("status") != "validated":
+    # Check 2: Validation status (Phase 8.2.1.1: hypothesis status also passes Trust Gate)
+    if validated_result.get("status") not in ("validated", "hypothesis"):
         return False, f"Trust Gate FAILED: {memory_id} not validated"
     
     # Check 3: Conflict check
@@ -203,7 +203,10 @@ def promote_validated(validated_result):
     new_obs = old_obs + validation_runs
 
     # Evidence level progression
-    if old_el == "benchmark_evaluated" and validation_runs >= 1:
+    # Phase 8.2.1.1: Hypothesis lifecycle — "hypothesis" → "runtime_validated"
+    if old_el == "hypothesis" and validation_runs >= 1:
+        new_el = "runtime_validated"  # First observation graduates hypothesis
+    elif old_el == "benchmark_evaluated" and validation_runs >= 1:
         new_el = "runtime_validated"
     elif old_el == "runtime_validated" and validation_runs >= 2:
         new_el = "independent_validated"
@@ -223,8 +226,11 @@ def promote_validated(validated_result):
     new_conf_value = conf_map.get(new_conf, 0.33)
 
     # Phase 7.2: Lifecycle status enforcement
+    # Phase 8.2.1.1: Hypothesis → Validated on first promotion
     old_status = fm.get("status", "observed")
-    if new_el in ("runtime_validated", "independent_validated", "real_project_validated", "production_validated"):
+    if old_el == "hypothesis" and new_el == "runtime_validated":
+        new_status = "validated"
+    elif new_el in ("runtime_validated", "independent_validated", "real_project_validated", "production_validated"):
         new_status = "validated"
     else:
         new_status = old_status

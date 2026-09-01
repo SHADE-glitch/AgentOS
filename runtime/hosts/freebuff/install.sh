@@ -3,10 +3,10 @@
 # AOS Host Adapter — Freebuff Installation
 #
 # Installs the AOS hook into Freebuff's settings.json.
-# This enables automatic AOS context injection on every prompt.
+# Freebuff (based on Codebuff/Claude Code) reads from ~/.claude/settings.json
 #
 # Usage:
-#   bash install.sh          # Install globally (~/.freebuff/settings.json)
+#   bash install.sh          # Install globally (~/.claude/settings.json)
 #   bash install.sh --local  # Install for current project only (.freebuff/settings.json)
 # ──────────────────────────────────────────────────────────────────
 
@@ -17,20 +17,20 @@ AOS_ROOT="${AGENT_OS_ROOT:-$HOME/.agents}"
 HOOK_SRC="$SCRIPT_DIR/hooks/prompt_submit.sh"
 BOOTSTRAP_SRC="$SCRIPT_DIR/aos_bootstrap.py"
 
-# Fixed install location for hooks (so Freebuff can always find them)
+# Fixed install location for hooks
 HOOKS_DIR="$AOS_ROOT/runtime/hosts/freebuff/hooks"
 HOOK_INSTALLED="$HOOKS_DIR/prompt_submit.sh"
 BOOTSTRAP_INSTALLED="$AOS_ROOT/runtime/hosts/freebuff/aos_bootstrap.py"
 
 # ── Determine settings location ───────────────────────────────────
+# Freebuff (Codebuff/Claude Code) reads from ~/.claude/settings.json
 if [ "${1:-}" = "--local" ]; then
-    SETTINGS_DIR=".freebuff"
-    SETTINGS_FILE="$SETTINGS_DIR/settings.json"
+    SETTINGS_FILE=".freebuff/settings.json"
+    mkdir -p .freebuff
     echo "Installing AOS hook to project-local settings..."
 else
-    SETTINGS_DIR="$HOME/.freebuff"
-    SETTINGS_FILE="$SETTINGS_DIR/settings.json"
-    echo "Installing AOS hook to global settings..."
+    SETTINGS_FILE="$HOME/.claude/settings.json"
+    echo "Installing AOS hook to global settings (~/.claude/settings.json)..."
 fi
 
 # ── Copy scripts to fixed location ────────────────────────────────
@@ -40,10 +40,6 @@ cp "$BOOTSTRAP_SRC" "$BOOTSTRAP_INSTALLED"
 chmod +x "$HOOK_INSTALLED"
 chmod +x "$BOOTSTRAP_INSTALLED"
 echo "✓ Installed scripts to $AOS_ROOT/runtime/hosts/freebuff/"
-
-# ── Create settings directory ─────────────────────────────────────
-mkdir -p "$SETTINGS_DIR"
-echo "✓ Settings directory ready: $SETTINGS_DIR"
 
 # ── Merge hook into settings.json ─────────────────────────────────
 HOOK_CMD="bash $HOOK_INSTALLED"
@@ -70,18 +66,20 @@ if 'UserPromptSubmit' not in settings['hooks']:
 
 # Check if AOS hook already exists
 aos_hook_exists = False
-for hook in settings['hooks']['UserPromptSubmit']:
-    if hook.get('type') == 'command' and 'aos' in hook.get('command', '').lower():
-        aos_hook_exists = True
-        # Update existing hook command
-        hook['command'] = hook_command
-        break
+for hook_group in settings['hooks']['UserPromptSubmit']:
+    for hook in hook_group.get('hooks', []):
+        if 'aos' in hook.get('command', '').lower():
+            aos_hook_exists = True
+            hook['command'] = hook_command
+            break
 
 if not aos_hook_exists:
     settings['hooks']['UserPromptSubmit'].append({
-        'type': 'command',
-        'command': hook_command,
-        'timeout': 20
+        'hooks': [{
+            'type': 'command',
+            'command': hook_command,
+            'timeout': 20
+        }]
     })
     print('✓ Added AOS hook to existing settings')
 else:
@@ -106,9 +104,13 @@ else
   "hooks": {
     "UserPromptSubmit": [
       {
-        "type": "command",
-        "command": "$HOOK_CMD",
-        "timeout": 20
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOOK_CMD",
+            "timeout": 20
+          }
+        ]
       }
     ]
   },
@@ -139,6 +141,5 @@ echo "  4. aos_bootstrap.py calls aos_host_adapter.py"
 echo "  5. Decision context is prepended to the prompt"
 echo "  6. Freebuff agent executes with AOS context"
 echo ""
-echo "This is the same pattern as the OpenCode plugin (Option C)."
-echo ""
+echo "To verify: check /tmp/aos_hook_log.txt after sending a prompt"
 echo "To uninstall: remove the hook from $SETTINGS_FILE"

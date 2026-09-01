@@ -9993,3 +9993,83 @@ retrievals:
   - P-001
   - P-002
   - T-010
+- timestamp: '2026-09-02T07:30:01.848909+00:00'
+  query:
+    task_text: 测试任务
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-02T07:35:41.485256+00:00'
+  query:
+    task_text: 测试AOS hook是否生效
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T23:50:18.353350+00:00'
+  query:
+    task_text: 测试任务
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T23:51:37.129464+00:00'
+  query:
+    task_text: 测试OpenCode插件
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T23:51:38.126102+00:00'
+  query:
+    task_text: 测试Freebuff hook
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002

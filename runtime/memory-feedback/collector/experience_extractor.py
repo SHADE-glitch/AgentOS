@@ -18,6 +18,7 @@ Rules:
 """
 
 import re
+import os
 import hashlib
 from typing import Optional
 
@@ -127,6 +128,128 @@ def _extract_solutions(output_text: str) -> list[str]:
     return solutions[:5]
 
 
+# Phase 8.2.1.1: Domain-specific pattern extraction
+# Extracts file-level, class-level, and method-level patterns from agent output
+# instead of only generic engineering patterns.
+
+def _extract_domain_patterns(output_text: str) -> list[dict]:
+    """
+    Extract domain-specific patterns with file/line provenance.
+
+    Looks for:
+      - File paths with optional line numbers: InterviewService.java:372
+      - Class.method references: RagService.retrieveChunks()
+      - Specific code patterns in context
+
+    Returns:
+        list of dicts with: pattern_name, file, line, context, severity
+    """
+    patterns = []
+
+    # Pattern 1: File:line references with a problem description
+    # e.g., "InterviewService.java:372 TOCTOU race condition"
+    file_line_context = re.findall(
+        r'([\w/.-]+\.(?:java|py|ts|js|go|rs|rb|php|cs|kt|swift))\s*[:：]\s*(\d+)\s*(?:[：:\-–—]|\s+)(.+?)(?:\n|$)',
+        output_text
+    )
+    for file_path, line_num, context in file_line_context[:10]:
+        file_name = os.path.basename(file_path)
+        # Classify the context
+        severity = "medium"
+        if re.search(r'(?:CRITICAL|critical|严重|critical)', context, re.IGNORECASE):
+            severity = "critical"
+        elif re.search(r'(?:HIGH|high|高)', context, re.IGNORECASE):
+            severity = "high"
+
+        pattern_name = f"{file_name}:{line_num} {context.strip()[:60]}"
+        patterns.append({
+            "pattern_name": pattern_name,
+            "file": file_path,
+            "line": int(line_num),
+            "context": context.strip()[:200],
+            "severity": severity,
+            "pattern_type": "file_line_context",
+        })
+
+    # Pattern 2: Class.method or function references with issues
+    # e.g., "RagService.retrieveChunks() performs full table scan"
+    class_method = re.findall(
+        r'([\w]+)\.([\w]+)\s*\(\)\s*(?:[：:\-–—]\s*)?(.+?)(?:\n|$)',
+        output_text
+    )
+    for class_name, method_name, context in class_method[:10]:
+        pattern_name = f"{class_name}.{method_name}() {context.strip()[:60]}"
+        patterns.append({
+            "pattern_name": pattern_name,
+            "file": f"{class_name}.java",
+            "line": 0,
+            "context": context.strip()[:200],
+            "severity": "medium",
+            "pattern_type": "class_method",
+        })
+
+    # Pattern 3: Markdown code blocks with language annotation
+    # Look for problems described near code blocks
+    code_blocks = list(re.finditer(r'```(\w+)?\n(.*?)\n```', output_text, re.DOTALL))
+    for i, match in enumerate(code_blocks):
+        lang = match.group(1) or "code"
+        code = match.group(2)
+        # Look for the text before this code block for context
+        pre_start = max(0, match.start() - 200)
+        pre_text = output_text[pre_start:match.start()]
+        # Extract a summary from the preceding text
+        summary = pre_text.strip().split('\n')[-1] if pre_text.strip() else "Code pattern"
+        if len(summary) > 80:
+            summary = summary[:77] + "..."
+
+        pattern_name = f"{lang}: {summary}"
+        # Extract key identifiers from the code
+        identifiers = re.findall(r'(?:class|def|function|method|public|private)\s+(\w+)', code)
+        if identifiers:
+            pattern_name = f"{lang}: {identifiers[0]} {summary[:50]}"
+
+        patterns.append({
+            "pattern_name": pattern_name,
+            "file": "",
+            "line": 0,
+            "context": code[:200],
+            "severity": "medium",
+            "pattern_type": "code_block",
+        })
+
+    # Deduplicate by pattern_name
+    seen = set()
+    unique = []
+    for p in patterns:
+        if p["pattern_name"] not in seen:
+            seen.add(p["pattern_name"])
+            unique.append(p)
+
+    return unique[:10]
+
+
+def _extract_technical_patterns_enriched(output_text: str) -> list[str]:
+    """
+    Extract technical patterns combining generic patterns with domain-specific ones.
+    Phase 8.2.1.1: Enriched with file/class/method level patterns.
+    """
+    # Get generic patterns
+    generic = _extract_technical_patterns(output_text)
+
+    # Get domain-specific patterns
+    domain = _extract_domain_patterns(output_text)
+
+    # Combine: domain patterns first (more specific), then generic (fallback)
+    combined = [d["pattern_name"] for d in domain[:5]]
+    for g in generic:
+        if len(combined) >= 8:
+            break
+        if g not in combined:
+            combined.append(g)
+
+    return combined[:8]
+
+
 def _assess_confidence(output_text: str, role: str, is_lead: bool,
                        token_count: int, latency_ms: int) -> float:
     """Heuristic confidence assessment based on output quality."""
@@ -187,7 +310,8 @@ def extract_experiences(team_result_data: dict) -> list[dict]:
             "title": _extract_title_from_output(output_text, lead_role),
             "context": _extract_context_from_task(task_cards, lead_role),
             "lesson": output_text[:500],  # First 500 chars as lesson summary
-            "technical_patterns": _extract_technical_patterns(output_text),
+            "technical_patterns": _extract_technical_patterns_enriched(output_text),
+            "domain_patterns": _extract_domain_patterns(output_text),
             "problem_patterns": _extract_problem_patterns(output_text),
             "solutions": _extract_solutions(output_text),
             "confidence": _assess_confidence(output_text, lead_role, True,
@@ -233,7 +357,8 @@ def extract_experiences(team_result_data: dict) -> list[dict]:
             "title": _extract_title_from_output(output_text, role),
             "context": _extract_context_from_task(task_cards, role),
             "lesson": output_text[:500],
-            "technical_patterns": _extract_technical_patterns(output_text),
+            "technical_patterns": _extract_technical_patterns_enriched(output_text),
+            "domain_patterns": _extract_domain_patterns(output_text),
             "problem_patterns": _extract_problem_patterns(output_text),
             "solutions": _extract_solutions(output_text),
             "confidence": _assess_confidence(output_text, role, False,

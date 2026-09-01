@@ -23,6 +23,7 @@ MEMORY_INDEX_FILE = "/home/shade/.agents/memory/retrieval-index.yaml"
 # Thresholds from promotion-policy.yaml
 QUALITY_THRESHOLD = 3.0
 MIN_OBSERVATIONS = 2  # M4: medium confidence requires >= 2
+HYPOTHESIS_MIN_OBSERVATIONS = 1  # Phase 8.2.1.1: H-xxx hypotheses only need 1 observation
 MAX_OBSERVATIONS_FOR_FULL_CONFIDENCE = 5
 
 
@@ -85,16 +86,27 @@ def validate_memory_group(memory_id, group):
     """
     Validate a memory across all its candidates.
     Returns (status, result_dict).
+
+    Phase 8.2.1.1 — Hypothesis Lifecycle:
+      H-xxx memories (hypotheses) are allowed with >=1 observation.
+      They enter as "hypothesis" status, not "validated".
+      On second observation, they graduate to "validated".
+
+    Lifecycle:
+      Candidate → Hypothesis (1 obs) → Validated (2 obs) → Promoted
     """
     validation_runs = len(group["executions"])
     best_qs = group["best_quality"]
     ctype = group["candidates"][0].get("candidate_type", "") if group["candidates"] else ""
     is_hypothesis = memory_id.upper().startswith("H-")
 
+    # Phase 8.2.1.1: H-xxx hypotheses only need 1 observation
+    required_obs = HYPOTHESIS_MIN_OBSERVATIONS if is_hypothesis else MIN_OBSERVATIONS
+
     checks = {
         "is_real_execution": len(group["all_session_ids"]) > 0,
         "has_execution_evidence": len(group["all_output_hashes"]) > 0,
-        "has_independent_verification": validation_runs >= MIN_OBSERVATIONS,
+        "has_independent_verification": validation_runs >= required_obs,
         "quality_above_threshold": best_qs >= QUALITY_THRESHOLD,
         "not_hypothesis": ctype != "create_hypothesis" and not is_hypothesis,
     }
@@ -111,18 +123,22 @@ def validate_memory_group(memory_id, group):
     elif not checks["quality_above_threshold"]:
         status = "rejected"
         rejection_reason = f"Best quality score {best_qs} below threshold {QUALITY_THRESHOLD} (scores: {group['all_quality_scores']})"
-    elif ctype == "create_hypothesis":
+    elif ctype == "create_hypothesis" and not is_hypothesis:
         status = "rejected"
         rejection_reason = "Hypothesis candidates are held, never auto-promoted (Rule 5)"
     elif ctype == "weaken":
         status = "rejected"
         rejection_reason = "Weaken candidates require human review, not auto-processed"
-    elif is_hypothesis:
-        status = "rejected"
-        rejection_reason = f"Memory {memory_id} is a hypothesis — never auto-promoted"
     elif not checks["has_independent_verification"]:
         status = "rejected"
-        rejection_reason = f"Only {validation_runs} observation(s). Need >= {MIN_OBSERVATIONS} independent executions (M4)."
+        rejection_reason = f"Only {validation_runs} observation(s). Need >= {required_obs} independent executions (M4)."
+
+    # Phase 8.2.1.1: H-xxx with enough observations → hypothesis status
+    elif is_hypothesis:
+        if validation_runs >= MIN_OBSERVATIONS:
+            status = "validated"  # Graduate: second observation confirms hypothesis
+        else:
+            status = "hypothesis"  # First observation: enter as hypothesis
 
     # VALIDATED
     else:
@@ -152,8 +168,16 @@ def validate_memory_group(memory_id, group):
         gate_results["M5_relevance"] = "pass" if meta.get("category") else "fail"
         gate_results["M6_staleness"] = "pass"
     else:
-        gate_results = {f"M{i}_provenance" if i == 1 else f"M{i}": "skip" for i in range(1, 7)}
-        if not meta:
+        # Phase 8.2.1.1: H-xxx hypotheses auto-bootstrapped by resolver
+        if is_hypothesis:
+            gate_results = {
+                "M1_provenance": "skip", "M2_evidence_level": "skip",
+                "M3_duplicate": "skip",
+                "M4_confidence": "pass" if validation_runs >= 1 else "fail",
+                "M5_relevance": "skip", "M6_staleness": "skip",
+            }
+        else:
+            gate_results = {f"M{i}_provenance" if i == 1 else f"M{i}": "skip" for i in range(1, 7)}
             status = "rejected"
             rejection_reason = f"Memory {memory_id} not found in retrieval-index.yaml"
 

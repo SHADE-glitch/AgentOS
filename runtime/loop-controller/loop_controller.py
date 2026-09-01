@@ -43,6 +43,8 @@ from runtime_adapter import execute as runtime_execute, generate_loop_id, execut
 from collector import collect_from_trace_ids, write_candidates_output, save_collector_state, load_collector_state
 # Phase 8.2.1: TeamResult collector for multi-agent memory feedback loop
 from team_result_collector import collect_from_team_results
+# Phase 8.2.1.1: Memory resolver for bootstrapping new H-xxx hypotheses
+from memory_resolver import resolve_candidates_targets
 from file_utils import atomic_yaml_write, cleanup_old_files
 from validator import validate_candidates
 from promoter import promote_validated
@@ -222,6 +224,7 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, r
         "validation": {
             "status": "pending",
             "validated_ids": [],
+            "hypothesis_ids": [],  # Phase 8.2.1.1: H-xxx hypotheses tracked separately
             "rejected_ids": [],
             "error": "",
             "started_at": "",
@@ -971,6 +974,21 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["feedback"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
+    # Stage 6.5: Memory Resolution (Phase 8.2.1.1)
+    # =====================================================================
+    # Resolve P8-xxx → H-xxx for candidates targeting non-existent memory IDs.
+    # Auto-bootstraps hypothesis entries in retrieval-index.yaml.
+    if candidates:
+        original_count = len(candidates)
+        candidates = resolve_candidates_targets(candidates)
+        resolved_count = sum(1 for c in candidates if c.get("resolved_from"))
+        if resolved_count > 0:
+            print(f"  Memory Resolver: {resolved_count}/{original_count} candidates bootstrapped → H-xxx hypotheses")
+            for c in candidates:
+                if c.get("resolved_from"):
+                    print(f"    {c['resolved_from']} → {c['target_memory']}")
+
+    # =====================================================================
     # Stage 7: Validator
     # =====================================================================
     print(f"\n{'─' * 70}")
@@ -986,14 +1004,18 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         state["validation"]["validated_ids"] = [
             r["memory_id"] for r in validation_results if r["status"] == "validated"
         ]
+        state["validation"]["hypothesis_ids"] = [
+            r["memory_id"] for r in validation_results if r["status"] == "hypothesis"
+        ]
         state["validation"]["rejected_ids"] = [
             r["memory_id"] for r in validation_results if r["status"] == "rejected"
         ]
 
-        print(f"  Validated: {len(state['validation']['validated_ids'])}")
-        print(f"  Rejected:  {len(state['validation']['rejected_ids'])}")
+        print(f"  Validated:  {len(state['validation']['validated_ids'])}")
+        print(f"  Hypothesis: {len(state['validation']['hypothesis_ids'])}")
+        print(f"  Rejected:   {len(state['validation']['rejected_ids'])}")
         for r in validation_results:
-            label = "validated" if r["status"] == "validated" else "rejected"
+            label = r["status"]
             reason = r.get("rejection_reason", "")
             print(f"    {r['memory_id']}: {label}" + (f" — {reason}" if reason else ""))
 
