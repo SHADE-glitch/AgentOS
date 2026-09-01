@@ -17,6 +17,10 @@ TRACES_DIR = "/home/shade/.agents/runtime/traces"
 CANDIDATES_FILE = "/home/shade/.agents/runtime/memory-feedback/memory-candidates.yaml"
 COLLECTOR_STATE_FILE = "/home/shade/.agents/runtime/loop-controller/state/collector_state.yaml"
 
+# Phase 5.9: Atomic write utility
+sys.path.insert(0, os.path.join("/home/shade/.agents", "runtime", "loop-controller"))
+from file_utils import atomic_yaml_write
+
 def load_trace(execution_id):
     path = os.path.join(TRACES_DIR, f"{execution_id}.yaml")
     if not os.path.exists(path):
@@ -244,14 +248,12 @@ def load_collector_state():
 
 
 def save_collector_state(state):
-    """Save collector_state.yaml."""
-    os.makedirs(os.path.dirname(COLLECTOR_STATE_FILE), exist_ok=True)
+    """Save collector_state.yaml. Phase 5.9: atomic write."""
     state["last_scan"] = datetime.now(timezone.utc).isoformat()
-    with open(COLLECTOR_STATE_FILE, "w") as f:
-        yaml.dump(state, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+    atomic_yaml_write(COLLECTOR_STATE_FILE, state)
 
 
-def collect_from_trace_ids(trace_ids, quiet=False):
+def collect_from_trace_ids(trace_ids, quiet=False, update_state=True):
     """
     Collect candidates from specific trace IDs.
     Idempotent: skips traces already in collector_state.yaml.
@@ -259,6 +261,9 @@ def collect_from_trace_ids(trace_ids, quiet=False):
     Args:
         trace_ids: list of execution_id strings (e.g. ["EXEC-1234567890"])
         quiet: suppress console output
+        update_state: if True, update collector_state.yaml (default True for standalone)
+                      Set to False when called from loop_controller to avoid marking
+                      traces as processed without writing candidates file.
 
     Returns:
         list of candidate dicts
@@ -301,8 +306,9 @@ def collect_from_trace_ids(trace_ids, quiet=False):
             "candidates_generated": len(candidates),
         })
 
-    # Update state
-    if new_traces:
+    # Update state only if update_state=True (standalone mode)
+    # When called from loop_controller, state is updated after candidates file is written
+    if new_traces and update_state:
         state["processed_traces"].extend(new_traces)
         save_collector_state(state)
 
@@ -357,8 +363,8 @@ def write_candidates_output(candidates, source_executions):
         }
     }
 
-    with open(CANDIDATES_FILE, "w") as f:
-        yaml.dump(output, f, default_flow_style=False, allow_unicode=True, sort_keys=False, width=120)
+    # Phase 5.9: Atomic write to prevent corruption
+    atomic_yaml_write(CANDIDATES_FILE, output)
 
     return output
 

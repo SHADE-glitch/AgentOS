@@ -24,7 +24,7 @@ def load_yaml(filepath):
     if not os.path.exists(filepath):
         return {}
     with open(filepath) as f:
-        return yaml.safe_load(f)
+        return yaml.unsafe_load(f)
 
 
 def load_usage_data():

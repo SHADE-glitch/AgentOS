@@ -40,16 +40,34 @@ sys.path.insert(0, os.path.join(BASE, "runtime", "memory-feedback", "promotion")
 
 from retrieval_adapter import adapt as retrieval_adapt
 from runtime_adapter import execute as runtime_execute, generate_loop_id
-from collector import collect_from_trace_ids
+from collector import collect_from_trace_ids, write_candidates_output, save_collector_state, load_collector_state
+from file_utils import atomic_yaml_write, cleanup_old_files
 from validator import validate_candidates
 from promoter import promote_validated
 from memory_state_reconciler import check_consistency, repair_index
+from project_preflight import run_preflight
+from code_validator import validate_code_changes
+
+# Phase 5.7: Real Router, Skill, Telemetry
+from agent_router import route as router_route
+from skill_loader import build_skill_context as skill_load
+from telemetry_writer import (
+    emit_task_event,
+    emit_route_event,
+    emit_memory_event,
+    emit_skill_event,
+    emit_execution_event,
+    emit_validation_event,
+    emit_outcome_event,
+    emit_failure_event,
+)
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 DEFAULT_PROVIDER = os.environ.get("AOS_RUNTIME_PROVIDER", "opencode")
 DEFAULT_MODEL = os.environ.get("AOS_RUNTIME_MODEL", "")
+DEFAULT_RUNTIME_MODE = os.environ.get("AOS_RUNTIME_MODE", "REAL_HOST")  # Phase 5.7
 EXECUTION_CONTRACT = os.path.join(LOOP_CONTROLLER_DIR, "execution-contract.yaml")
 
 
@@ -57,17 +75,26 @@ def load_contract():
     """Load the execution contract template."""
     if os.path.exists(EXECUTION_CONTRACT):
         with open(EXECUTION_CONTRACT) as f:
-            return yaml.safe_load(f)
+            return _safe_yaml_load(f)
     return {}
 
 
+def _safe_yaml_load(file_or_path):
+    """Safely load YAML. Phase 5.9: uses safe_load only (no unsafe_load)."""
+    try:
+        if isinstance(file_or_path, str):
+            with open(file_or_path) as f:
+                return yaml.safe_load(f)
+        else:
+            return yaml.safe_load(file_or_path)
+    except Exception:
+        return None
+
+
 def save_loop_state(loop_id, state):
-    """Save loop state to state/<loop_id>.yaml."""
-    os.makedirs(STATE_DIR, exist_ok=True)
+    """Save loop state to state/<loop_id>.yaml. Phase 5.9: atomic write."""
     path = os.path.join(STATE_DIR, f"{loop_id}.yaml")
-    with open(path, "w") as f:
-        yaml.dump(state, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-    return path
+    return atomic_yaml_write(path, state)
 
 
 def load_loop_state(loop_id):
@@ -75,11 +102,10 @@ def load_loop_state(loop_id):
     path = os.path.join(STATE_DIR, f"{loop_id}.yaml")
     if os.path.exists(path):
         with open(path) as f:
-            return yaml.safe_load(f)
-    return None
+            return _safe_yaml_load(f)
 
 
-def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider):
+def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, runtime_mode="REAL_HOST"):
     """Initialize a fresh loop state from the execution contract."""
     contract = load_contract()
     loop_exec = contract.get("loop_execution", {}) if contract else {}
@@ -91,6 +117,7 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider):
         "memory_mode": memory_mode,
         "model": model,
         "provider": provider,
+        "runtime_mode": runtime_mode,
         "started_at": datetime.now(timezone.utc).isoformat(),
         "completed_at": "",
         "current_stage": "running",
@@ -101,6 +128,27 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider):
             "retrieved_count": 0,
             "memory_ids": [],
             "hypotheses": [],
+            "error": "",
+            "started_at": "",
+            "completed_at": "",
+        },
+
+        "router": {
+            "status": "pending",
+            "intent": "",
+            "lead_skill": "",
+            "support_skills": [],
+            "confidence": "",
+            "error": "",
+            "started_at": "",
+            "completed_at": "",
+        },
+
+        "skill": {
+            "status": "pending",
+            "lead_skill": "",
+            "support_skills": [],
+            "skills_loaded": [],
             "error": "",
             "started_at": "",
             "completed_at": "",
@@ -133,6 +181,14 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider):
         "trace": {
             "status": "pending",
             "trace_file": "",
+            "error": "",
+            "started_at": "",
+            "completed_at": "",
+        },
+
+        "telemetry": {
+            "status": "pending",
+            "events": [],
             "error": "",
             "started_at": "",
             "completed_at": "",
@@ -177,15 +233,23 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider):
     return state
 
 
-def mark_failed(state, stage, error):
-    """Mark a stage as failed and record the error."""
+def mark_failed(state, stage, error, critical=True):
+    """Mark a stage as failed and record the error.
+    
+    Args:
+        state: pipeline state dict
+        stage: stage name (e.g. "retrieval", "router", "runtime")
+        error: exception or error message
+        critical: if True, sets final_status to "failed"; if False, records as warning
+    """
     state[stage]["status"] = "failed"
     state[stage]["error"] = str(error)
-    state["errors"].append({"stage": stage, "error": str(error)})
-    state["final_status"] = "failed"
+    state["errors"].append({"stage": stage, "error": str(error), "critical": critical})
+    if critical:
+        state["final_status"] = "failed"
 
 
-def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="opencode"):
+def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="opencode", project_root="", runtime_mode="REAL_HOST"):
     """
     Execute a single closed-loop pipeline.
 
@@ -194,13 +258,19 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         task_text: str, the task description
         memory_mode: "enabled" | "fallback" | "disabled"
         model: str, provider-specific model identifier
-        provider: str, runtime provider name (opencode, ...)
+        provider: str, runtime provider name (opencode, test_provider, ...)
+        project_root: str, path to project root for code validation
+        runtime_mode: "REAL_HOST" | "TEST_PROVIDER" (Phase 5.7)
 
     Returns:
         dict with loop_id, final_status, and all stage results
     """
     loop_id = generate_loop_id()
-    state = init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider)
+    state = init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, runtime_mode)
+
+    # Phase 5.9: Cleanup old state/trace files (idempotent, once per execution)
+    cleanup_old_files(STATE_DIR, max_age_days=30)
+    cleanup_old_files(os.path.join(BASE, "runtime", "traces"), max_age_days=30)
 
     # Read entry evidence metadata from AOS bootstrap
     entry_metadata_raw = os.environ.get("AOS_ENTRY_METADATA", "")
@@ -212,29 +282,41 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     else:
         state["entry"] = {"entry_type": "direct", "note": "no aos metadata"}
 
-    # Pipeline timestamps for real trace
+    # Pipeline timestamps for real trace (Phase 5.7: REAL timestamps)
     pipeline_timestamps = {
         "task_received": datetime.now(timezone.utc).isoformat(),
     }
 
     print("=" * 70)
-    print(f"Phase 5.8.2.2 — Closed-Loop Runtime Controller")
+    print(f"Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)")
     print(f"Loop ID:    {loop_id}")
     print(f"Task ID:    {task_id}")
     print(f"Task:       {task_text[:80]}")
     print(f"Memory:     {memory_mode}")
     print(f"Model:      {model}")
+    print(f"Mode:       {runtime_mode}")
     print("=" * 70)
 
     # Save initial state
     state_path = save_loop_state(loop_id, state)
     print(f"\nLoop state: {state_path}")
 
+    # Generate execution_id for telemetry correlation
+    execution_id = f"EXEC-{int(time.time())}"
+
+    # Phase 5.7: Emit task event
+    state["telemetry"]["started_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        task_event = emit_task_event(execution_id, task_id, task_text, provider, model, runtime_mode)
+        state["telemetry"]["events"].append("task")
+    except Exception:
+        pass
+
     # =====================================================================
-    # Stage 1: Retrieval
+    # Stage 1: Retrieval (Memory)
     # =====================================================================
     print(f"\n{'─' * 70}")
-    print(f"Stage 1/8: Retrieval")
+    print(f"Stage 1/10: Memory Retrieval")
     print(f"{'─' * 70}")
 
     state["retrieval"]["started_at"] = datetime.now(timezone.utc).isoformat()
@@ -249,9 +331,8 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         print(f"  Retrieved: {state['retrieval']['retrieved_count']} memories, {len(state['retrieval']['hypotheses'])} hypotheses")
         print(f"  Memory IDs: {state['retrieval']['memory_ids']}")
     except Exception as e:
-        mark_failed(state, "retrieval", e)
+        mark_failed(state, "retrieval", e, critical=False)
         print(f"  FAILED: {e}")
-        # Fallback: continue with empty memory context
         decision_context = {
             "task_id": task_id,
             "task_text": task_text,
@@ -267,50 +348,141 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         print(f"  Fallback: continuing with baseline (no memory)")
 
     state["retrieval"]["completed_at"] = datetime.now(timezone.utc).isoformat()
-
-    # Record memory retrieval timestamp
     pipeline_timestamps["memory_retrieved"] = datetime.now(timezone.utc).isoformat()
+
+    # Phase 5.7: Emit memory event
+    try:
+        emit_memory_event(execution_id, task_id, decision_context)
+        state["telemetry"]["events"].append("memory")
+    except Exception:
+        pass
+
+    # =====================================================================
+    # Stage 2: Router (Phase 5.7 — REAL Router)
+    # =====================================================================
+    print(f"\n{'─' * 70}")
+    print(f"Stage 2/10: Router")
+    print(f"{'─' * 70}")
+
+    state["router"]["started_at"] = datetime.now(timezone.utc).isoformat()
+    state["current_stage"] = "router"
+
+    try:
+        route_decision = router_route(task_text, memory_context=decision_context)
+        state["router"]["status"] = "completed"
+        state["router"]["intent"] = route_decision.get("intent", "")
+        state["router"]["lead_skill"] = route_decision.get("lead_skill", "")
+        state["router"]["support_skills"] = route_decision.get("support_skills", [])
+        state["router"]["confidence"] = route_decision.get("confidence", "")
+
+        print(f"  Intent:       {state['router']['intent']}")
+        print(f"  Lead Skill:   {state['router']['lead_skill']}")
+        print(f"  Support:      {state['router']['support_skills']}")
+        print(f"  Confidence:   {state['router']['confidence']}")
+        print(f"  Mem Influence: {route_decision.get('memory_influence', 'none')}")
+    except Exception as e:
+        mark_failed(state, "router", e)
+        print(f"  FAILED: {e}")
+        route_decision = {
+            "intent": "coding",
+            "domains": ["backend"],
+            "lead_skill": "backend-architect",
+            "support_skills": [],
+            "confidence": "low",
+            "memory_influence": "none",
+            "rules_applied": ["fallback routing"],
+            "started_at": state["router"]["started_at"],
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    state["router"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+    pipeline_timestamps["routing_completed"] = datetime.now(timezone.utc).isoformat()
+
+    # Phase 5.7: Emit route event
+    try:
+        emit_route_event(execution_id, task_id, route_decision)
+        state["telemetry"]["events"].append("route")
+    except Exception:
+        pass
+
+    # =====================================================================
+    # Stage 3: Skill Loader (Phase 5.7 — REAL Skill loading)
+    # =====================================================================
+    print(f"\n{'─' * 70}")
+    print(f"Stage 3/10: Skill Loader")
+    print(f"{'─' * 70}")
+
+    state["skill"]["started_at"] = datetime.now(timezone.utc).isoformat()
+    state["current_stage"] = "skill"
+
+    try:
+        skill_context = skill_load(route_decision)
+        state["skill"]["status"] = "completed"
+        state["skill"]["lead_skill"] = skill_context.get("lead_skill", {}).get("name", "")
+        state["skill"]["support_skills"] = [s.get("name", "") for s in skill_context.get("support_skills", [])]
+        state["skill"]["skills_loaded"] = skill_context.get("skills_loaded", [])
+
+        print(f"  Lead:    {state['skill']['lead_skill']}")
+        print(f"  Support: {state['skill']['support_skills']}")
+        print(f"  Loaded:  {state['skill']['skills_loaded']}")
+    except Exception as e:
+        mark_failed(state, "skill", e)
+        print(f"  FAILED: {e}")
+        skill_context = {
+            "lead_skill": {"name": "backend-architect", "loaded": False},
+            "support_skills": [],
+            "skills_loaded": ["backend-architect"],
+            "prompt_prefix": "You are acting as a Backend Architect.",
+            "started_at": state["skill"]["started_at"],
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    state["skill"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+    pipeline_timestamps["skill_loaded"] = datetime.now(timezone.utc).isoformat()
+
+    # Phase 5.7: Emit skill event
+    try:
+        emit_skill_event(execution_id, task_id, skill_context)
+        state["telemetry"]["events"].append("skill")
+    except Exception:
+        pass
 
     # Attach classification to decision_context for runtime_adapter
     decision_context["classification"] = {
-        "category": "backend",
-        "domains": [],
+        "category": route_decision.get("intent", "backend"),
+        "domains": route_decision.get("domains", []),
         "roles": [],
         "keywords": [],
         "difficulty": "medium",
     }
-    # Try to get classification from retrieval adapter's classify_task
-    try:
-        from retrieval_adapter import classify_task
-        cls = classify_task(task_text)
-        decision_context["classification"] = cls
-        state["decision"]["influence"] = "confirmation" if decision_context.get("memories") else "none"
-    except Exception:
-        pass
+
+    # Phase 5.7: Attach real Router and Skill decisions to decision_context
+    decision_context["route_decision"] = route_decision
+    decision_context["skill_context"] = skill_context
 
     state["decision"]["status"] = "completed"
-    state["decision"]["started_at"] = datetime.now(timezone.utc).isoformat()
-    state["decision"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+    state["decision"]["started_at"] = state["router"]["started_at"]
+    state["decision"]["completed_at"] = state["skill"]["completed_at"]
+    state["decision"]["influence"] = route_decision.get("memory_influence", "none")
 
-    # Record routing and orchestration timestamps (after classification + decision)
-    pipeline_timestamps["routing_completed"] = datetime.now(timezone.utc).isoformat()
     pipeline_timestamps["orchestration_completed"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
-    # Stage 2: Runtime (includes Router/Orchestrator via prompt)
+    # Stage 4: Runtime (includes Provider execution)
     # =====================================================================
     print(f"\n{'─' * 70}")
-    print(f"Stage 2/8: Runtime (OpenCode CLI)")
+    print(f"Stage 4/10: Runtime ({provider})")
     print(f"{'─' * 70}")
 
     state["runtime"]["started_at"] = datetime.now(timezone.utc).isoformat()
     state["current_stage"] = "runtime"
+    pipeline_timestamps["agent_started"] = datetime.now(timezone.utc).isoformat()
 
     # Attach entry metadata to decision_context for trace
     decision_context["entry_metadata"] = state.get("entry", {})
 
     try:
-        exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps)
+        exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps, project_root=project_root)
         state["runtime"]["status"] = "completed"
         state["runtime"]["execution_id"] = exec_result["execution_id"]
         state["runtime"]["trace_id"] = exec_result["trace_id"]
@@ -338,18 +510,152 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     except Exception as e:
         mark_failed(state, "runtime", e)
         print(f"  FAILED: {e}")
+        # Phase 5.7: Emit failure event
+        try:
+            emit_failure_event(execution_id, task_id, "runtime", str(e))
+            state["telemetry"]["events"].append("failure")
+        except Exception:
+            pass
         save_loop_state(loop_id, state)
         return state
 
     state["runtime"]["completed_at"] = datetime.now(timezone.utc).isoformat()
     state["trace"]["started_at"] = state["runtime"]["started_at"]
     state["trace"]["completed_at"] = state["runtime"]["completed_at"]
+    pipeline_timestamps["agent_completed"] = datetime.now(timezone.utc).isoformat()
+
+    # Phase 5.7: Emit execution event
+    try:
+        emit_execution_event(execution_id, task_id, exec_result)
+        state["telemetry"]["events"].append("execution")
+    except Exception:
+        pass
 
     # =====================================================================
-    # Stage 3: Collector
+    # Stage 5: Code Validation (Phase 6.2)
     # =====================================================================
     print(f"\n{'─' * 70}")
-    print(f"Stage 3/8: Collector")
+    print(f"Stage 5/10: Code Validation (Phase 6.2)")
+    print(f"{'─' * 70}")
+
+    state["code_validation"] = {
+        "status": "pending",
+        "validation_status": "",
+        "build_after": "",
+        "test_after": "",
+        "files_changed": 0,
+        "unexpected_files": 0,
+        "error": "",
+        "started_at": "",
+        "completed_at": "",
+    }
+    state["code_validation"]["started_at"] = datetime.now(timezone.utc).isoformat()
+    state["current_stage"] = "code_validation"
+
+    # Get project root from entry metadata, decision context, or parameter
+    if not project_root:
+        entry = state.get("entry", {})
+        if entry:
+            project_root = entry.get("working_directory", "")
+    if not project_root:
+        project_root = decision_context.get("working_directory", "")
+    if not project_root:
+        project_root = os.environ.get("AOS_PROJECT_ROOT", "")
+
+    if project_root:
+        try:
+            # Run project preflight
+            print(f"  Project root: {project_root}")
+            preflight = run_preflight(project_root)
+            print(f"  Preflight status: {preflight.status}")
+            print(f"  Build system: {preflight.build_system}")
+
+            # Get expected files from task context
+            expected_files = decision_context.get("expected_files", [])
+
+            # Run code validation
+            code_result = validate_code_changes(
+                execution_id=exec_result["execution_id"],
+                project_root=project_root,
+                expected_files=expected_files,
+                compile_command=preflight.compile_command,
+                test_command=preflight.test_command,
+            )
+
+            state["code_validation"]["status"] = "completed"
+            state["code_validation"]["validation_status"] = code_result.validation_status
+            state["code_validation"]["build_after"] = code_result.build_after.status
+            state["code_validation"]["test_after"] = code_result.test_after.status
+            state["code_validation"]["files_changed"] = len(code_result.files_changed)
+            state["code_validation"]["unexpected_files"] = code_result.unexpected_files_changed
+
+            print(f"  Validation status: {code_result.validation_status}")
+            print(f"  Build: {code_result.build_after.status}")
+            print(f"  Test: {code_result.test_after.status}")
+            print(f"  Files changed: {len(code_result.files_changed)}")
+            print(f"  Unexpected files: {code_result.unexpected_files_changed}")
+
+            # Store code validation result for trace
+            state["code_validation"]["result"] = code_result
+
+            # Update trace file with validation results
+            trace_file = exec_result.get("trace_file", "")
+            if trace_file and os.path.exists(trace_file):
+                try:
+                    trace_data = _safe_yaml_load(trace_file)
+                    if trace_data:
+                        from dataclasses import asdict
+                        trace_data["code_validation"] = {
+                            "status": code_result.validation_status,
+                            "validated_at": code_result.validated_at,
+                            "git_clean_before": code_result.git_clean_before,
+                            "git_clean_after": code_result.git_clean_after,
+                            "files_changed": len(code_result.files_changed),
+                            "expected_files_changed": code_result.expected_files_changed,
+                            "unexpected_files_changed": code_result.unexpected_files_changed,
+                            "only_expected_change": code_result.only_expected_change,
+                            "build_before": code_result.build_before.status,
+                            "build_after": code_result.build_after.status,
+                            "build_degradation": code_result.build_degradation,
+                            "test_before": code_result.test_before.status,
+                            "test_after": code_result.test_after.status,
+                            "test_degradation": code_result.test_degradation,
+                            "validation_checks": code_result.validation_checks,
+                        }
+                        if "evidence" in trace_data and "verification" in trace_data["evidence"]:
+                            trace_data["evidence"]["verification"].append(
+                                f"Code Validation: {code_result.validation_status} "
+                                f"(build={code_result.build_after.status}, "
+                                f"test={code_result.test_after.status}, "
+                                f"files={len(code_result.files_changed)})"
+                            )
+                        # Phase 5.9: Atomic write for trace update
+                        header_lines = [
+                            f"# Execution Trace — {task_id} (Memory {'ON' if decision_context.get('retrieved') else 'OFF'})",
+                            f"# Phase 6.2 — Runtime Reliability Validation",
+                            f"# Generated: {datetime.now(timezone.utc).isoformat()}",
+                            f"# Provider: {provider}",
+                        ]
+                        atomic_yaml_write(trace_file, trace_data, header_lines=header_lines)
+                        print(f"  Trace updated with validation results")
+                except Exception as e:
+                    print(f"  WARNING: Failed to update trace: {e}")
+
+        except Exception as e:
+            mark_failed(state, "code_validation", e)
+            print(f"  FAILED: {e}")
+    else:
+        print(f"  SKIPPED: No project root available")
+        state["code_validation"]["status"] = "skipped"
+        state["code_validation"]["error"] = "No project root available"
+
+    state["code_validation"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+
+    # =====================================================================
+    # Stage 6: Collector
+    # =====================================================================
+    print(f"\n{'─' * 70}")
+    print(f"Stage 6/10: Collector")
     print(f"{'─' * 70}")
 
     state["feedback"]["started_at"] = datetime.now(timezone.utc).isoformat()
@@ -357,7 +663,42 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
 
     try:
         execution_id = state["runtime"]["execution_id"]
-        candidates = collect_from_trace_ids([execution_id], quiet=True)
+        # Phase 5.10: Collect candidates without updating state yet
+        candidates = collect_from_trace_ids([execution_id], quiet=True, update_state=False)
+        
+        # Write candidates to memory-candidates.yaml (append to existing)
+        if candidates:
+            # Load existing candidates and merge
+            existing_file = "/home/shade/.agents/runtime/memory-feedback/memory-candidates.yaml"
+            existing_candidates = []
+            source_executions = []
+            if os.path.exists(existing_file):
+                with open(existing_file) as f:
+                    existing_data = yaml.safe_load(f) or {}
+                    existing_candidates = existing_data.get("candidates", [])
+                    source_executions = existing_data.get("source_executions", [])
+            
+            # Merge new candidates (avoid duplicates by candidate_id)
+            existing_ids = {c["candidate_id"] for c in existing_candidates}
+            new_candidates = [c for c in candidates if c["candidate_id"] not in existing_ids]
+            all_candidates = existing_candidates + new_candidates
+            
+            # Update source executions
+            new_eids = list(set(c.get("source_execution", "") for c in new_candidates))
+            source_executions = list(set(source_executions + new_eids))
+            
+            # Write merged candidates
+            write_candidates_output(all_candidates, source_executions)
+            
+            # Now update collector state (mark traces as processed)
+            state_data = load_collector_state()
+            state_data["processed_traces"].append({
+                "trace_id": execution_id,
+                "processed_at": datetime.now(timezone.utc).isoformat(),
+                "candidates_generated": len(candidates),
+            })
+            save_collector_state(state_data)
+        
         state["feedback"]["status"] = "completed"
         state["feedback"]["candidate_ids"] = [c["candidate_id"] for c in candidates]
         print(f"  Candidates: {len(candidates)}")
@@ -371,10 +712,10 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["feedback"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
-    # Stage 4: Validator
+    # Stage 7: Validator
     # =====================================================================
     print(f"\n{'─' * 70}")
-    print(f"Stage 4/8: Validator")
+    print(f"Stage 7/10: Validator")
     print(f"{'─' * 70}")
 
     state["validation"]["started_at"] = datetime.now(timezone.utc).isoformat()
@@ -405,10 +746,10 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["validation"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
-    # Stage 5: Promoter
+    # Stage 8: Promoter
     # =====================================================================
     print(f"\n{'─' * 70}")
-    print(f"Stage 5/8: Promoter")
+    print(f"Stage 8/10: Promoter")
     print(f"{'─' * 70}")
 
     state["promotion"]["started_at"] = datetime.now(timezone.utc).isoformat()
@@ -443,10 +784,10 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["promotion"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
-    # Stage 6: Reconciler
+    # Stage 9: Reconciler
     # =====================================================================
     print(f"\n{'─' * 70}")
-    print(f"Stage 6/8: Reconciler")
+    print(f"Stage 9/10: Reconciler")
     print(f"{'─' * 70}")
 
     state["reconciliation"]["started_at"] = datetime.now(timezone.utc).isoformat()
@@ -473,13 +814,34 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["reconciliation"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
-    # Finalize
+    # Stage 10: Finalize & Telemetry
     # =====================================================================
     state["completed_at"] = datetime.now(timezone.utc).isoformat()
     state["current_stage"] = "completed"
 
     if state["final_status"] != "failed":
         state["final_status"] = "completed"
+
+    # Phase 5.7: Emit validation and outcome events
+    state["telemetry"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        emit_validation_event(execution_id, task_id, {"validation_status": state["final_status"]})
+        state["telemetry"]["events"].append("validation")
+    except Exception:
+        pass
+
+    try:
+        outcome_summary = {
+            "router": state["router"]["status"],
+            "skill": state["skill"]["status"],
+            "runtime": state["runtime"]["status_code"],
+            "telemetry_events": len(state["telemetry"]["events"]),
+        }
+        emit_outcome_event(execution_id, task_id, state["final_status"], outcome_summary)
+        state["telemetry"]["events"].append("outcome")
+        state["telemetry"]["status"] = "completed"
+    except Exception:
+        pass
 
     save_loop_state(loop_id, state)
 
@@ -489,6 +851,9 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     print(f"Execution:     {state['runtime']['execution_id']}")
     print(f"Trace:         {state['runtime']['trace_id']}")
     print(f"Session:       {state['runtime']['session_id']}")
+    print(f"Router:        {state['router']['lead_skill']} ({state['router']['confidence']})")
+    print(f"Skill:         {state['skill']['skills_loaded']}")
+    print(f"Telemetry:     {len(state['telemetry']['events'])} events")
     print(f"Candidates:    {len(candidates)}")
     print(f"Validated:     {len(state['validation']['validated_ids'])}")
     print(f"Promoted:      {len(state['promotion']['promoted_ids'])}")
@@ -505,7 +870,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python3 loop_controller.py <task_id> <task_text> [memory_mode] [model]")
+        print("Usage: python3 loop_controller.py <task_id> <task_text> [memory_mode] [model] [provider] [runtime_mode]")
         print()
         print("Examples:")
         print('  python3 loop_controller.py RT-003 "分析 MySQL 慢查询问题" enabled')
@@ -518,8 +883,9 @@ if __name__ == "__main__":
     memory_mode = sys.argv[3] if len(sys.argv) > 3 else "enabled"
     model = sys.argv[4] if len(sys.argv) > 4 else DEFAULT_MODEL
     provider = sys.argv[5] if len(sys.argv) > 5 else DEFAULT_PROVIDER
+    runtime_mode = sys.argv[6] if len(sys.argv) > 6 else DEFAULT_RUNTIME_MODE
 
-    result = run_loop(task_id, task_text, memory_mode, model, provider)
+    result = run_loop(task_id, task_text, memory_mode, model, provider, runtime_mode=runtime_mode)
 
     # Print final status for machine parsing
     print(f"\nLOOP_EXECUTION: {'PASS' if result['final_status'] == 'completed' else 'FAIL'}")

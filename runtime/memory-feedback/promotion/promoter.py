@@ -20,6 +20,7 @@ BASE = "/home/shade/.agents/runtime/memory-feedback"
 VALIDATION_FILE = os.path.join(BASE, "promotion", "validation-results.yaml")
 OUTPUT_FILE = os.path.join(BASE, "promotion", "promotion-results.yaml")
 MEMORY_INDEX_FILE = "/home/shade/.agents/memory/retrieval-index.yaml"
+CONFLICT_FILE = os.path.join(BASE, "conflict_candidates.yaml")
 PROJECT_ROOT = "/home/shade/.agents"
 MAX_PROMOTIONS = 5  # From promotion-policy.yaml
 
@@ -47,6 +48,53 @@ def find_memory_file(memory_id):
         if m["memory_id"] == memory_id:
             return m.get("file")
     return None
+
+
+def load_conflict_candidates():
+    """Load conflict candidates for Trust Gate check."""
+    if not os.path.exists(CONFLICT_FILE):
+        return {"conflicts": []}
+    with open(CONFLICT_FILE) as f:
+        return yaml.safe_load(f) or {"conflicts": []}
+
+
+def get_conflicting_memory_ids():
+    """Get set of memory_ids that have conflicts."""
+    conflict_data = load_conflict_candidates()
+    conflicting_ids = set()
+    for conflict in conflict_data.get("conflicts", []):
+        conflicting_ids.add(conflict["memory_a"])
+        conflicting_ids.add(conflict["memory_b"])
+    return conflicting_ids
+
+
+def check_trust_gate(validated_result):
+    """
+    Phase 5.11.1: Trust Gate check before promotion.
+    Returns (passed: bool, reason: str).
+    
+    Checks:
+    1. Provenance: M1_provenance must pass
+    2. Validation: must be validated
+    3. Conflict: must not be in conflict_candidates.yaml
+    """
+    memory_id = validated_result["memory_id"]
+    
+    # Check 1: Provenance
+    gate_results = validated_result.get("gate_results", {})
+    if gate_results.get("M1_provenance") == "fail":
+        return False, f"Trust Gate FAILED: M1_provenance check failed for {memory_id}"
+    
+    # Check 2: Validation status
+    if validated_result.get("status") != "validated":
+        return False, f"Trust Gate FAILED: {memory_id} not validated"
+    
+    # Check 3: Conflict check
+    conflicting_ids = get_conflicting_memory_ids()
+    if memory_id in conflicting_ids:
+        return False, f"Trust Gate FAILED: {memory_id} has conflicts (see conflict_candidates.yaml)"
+    
+    return True, "Trust Gate PASSED"
 
 
 def read_memory_yaml_frontmatter(filepath):
@@ -97,6 +145,18 @@ def promote_validated(validated_result):
     memory_id = validated_result["memory_id"]
     validation_runs = validated_result["validation_runs"]
     confidence = validated_result["confidence"]
+    candidate_id = validated_result.get("best_candidate_id", validated_result.get("candidate_id", ""))
+
+    # --- Phase 5.11.1: Trust Gate check ---
+    gate_passed, gate_reason = check_trust_gate(validated_result)
+    if not gate_passed:
+        return {
+            "memory_id": memory_id,
+            "candidate_id": candidate_id,
+            "status": "rejected",
+            "rejection_reason": gate_reason,
+            "promoted_at": datetime.now(timezone.utc).isoformat(),
+        }
 
     # --- Idempotency check: skip if already promoted ---
     candidate_id = validated_result.get("best_candidate_id", validated_result.get("candidate_id", ""))
@@ -257,9 +317,9 @@ def main():
 
     output = {
         "version": "1.0",
-        "phase": "5.7.2",
+        "phase": "5.11.1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "generated_by": "promoter.py (Phase 5.7.2 Memory Promoter)",
+        "generated_by": "promoter.py (Phase 5.11.1 Trust Hardening)",
         "source_file": VALIDATION_FILE,
         "summary": {
             "total_validated_available": len(validated),
@@ -275,6 +335,7 @@ def main():
             "no_memory_deleted": "PASS",
             "no_new_memory_created": "PASS",
             "metadata_only_updates": "PASS",
+            "trust_gate_enforced": "PASS",  # Phase 5.11.1
         },
     }
 

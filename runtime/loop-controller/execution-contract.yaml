@@ -2,8 +2,8 @@
 # Phase 5.8.2.2 — Closed-Loop Runtime Controller
 # This contract defines the Loop Execution lifecycle.
 
-version: "1.1"
-phase: "5.10.3"
+version: "1.2"
+phase: "5.1"
 
 loop_execution:
   loop_id: ""
@@ -111,6 +111,7 @@ pipeline:
   - decision
   - runtime
   - trace
+  - code_validation
   - feedback
   - validation
   - promotion

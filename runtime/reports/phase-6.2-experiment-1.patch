@@ -1,0 +1,13 @@
+diff --git a/backend/src/main/java/com/aiview/interview/service/InterviewService.java b/backend/src/main/java/com/aiview/interview/service/InterviewService.java
+index 0f57034..fb301ec 100644
+--- a/backend/src/main/java/com/aiview/interview/service/InterviewService.java
++++ b/backend/src/main/java/com/aiview/interview/service/InterviewService.java
+@@ -233,7 +233,7 @@ public class InterviewService {
+                 new LambdaQueryWrapper<InterviewResult>()
+                         .eq(InterviewResult::getSessionId, sessionId));
+         if (row == null) {
+-            return null;
++            throw new BizException(ResultCode.INTERVIEW_NOT_FOUND, "评分结果尚未生成");
+         }
+         try {
+             Map<String, InterviewResultVO.DimensionVO> dims = new LinkedHashMap<>();

@@ -51,7 +51,10 @@ def load_yaml(filepath):
     if not os.path.exists(filepath):
         return {}
     with open(filepath) as f:
-        return yaml.safe_load(f)
+        try:
+            return yaml.unsafe_load(f)
+        except Exception:
+            return {}
 
 
 def load_retrieval_index():

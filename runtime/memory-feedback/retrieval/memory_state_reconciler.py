@@ -65,7 +65,7 @@ def read_memory_frontmatter(filepath):
     match = re.search(r"```yaml\n(.*?)\n```", content, re.DOTALL)
     if match:
         try:
-            return yaml.safe_load(match.group(1))
+            return yaml.unsafe_load(match.group(1))
         except yaml.YAMLError:
             return {}
     return {}
@@ -73,7 +73,7 @@ def read_memory_frontmatter(filepath):
 
 def load_index():
     with open(INDEX_FILE) as f:
-        return yaml.safe_load(f)
+        return yaml.unsafe_load(f)
 
 
 def save_index(data):

@@ -1,0 +1,100 @@
+loop_id: LOOP-20260831094621
+task_id: PROJ-001-T002
+task_text: GlobalExceptionHandler 的 handleBiz 方法缺少 @ResponseStatus 注解，导致所有 BizException
+  返回 HTTP 200。请修改 handleBiz 方法，根据 BizException 的 code 字段返回正确的 HTTP 状态码：code=401 返回
+  UNAUTHORIZED，code=403 返回 FORBIDDEN，code=404 返回 NOT_FOUND，code=500 返回 INTERNAL_SERVER_ERROR，其他返回
+  BAD_REQUEST。只修改 GlobalExceptionHandler.java 文件。
+memory_mode: enabled
+model: ''
+provider: opencode
+started_at: '2026-08-31T09:46:21.334846+00:00'
+completed_at: '2026-08-31T09:47:11.398127+00:00'
+current_stage: completed
+final_status: completed
+retrieval:
+  status: completed
+  retrieved_count: 5
+  memory_ids:
+  - S-002
+  - T-004
+  - F-002
+  - E-007
+  - E-006
+  hypotheses: []
+  error: ''
+  started_at: '2026-08-31T09:46:21.338267+00:00'
+  completed_at: '2026-08-31T09:46:21.847229+00:00'
+decision:
+  status: completed
+  influence: confirmation
+  error: ''
+  started_at: '2026-08-31T09:46:21.847864+00:00'
+  completed_at: '2026-08-31T09:46:21.847867+00:00'
+runtime:
+  status: completed
+  execution_id: EXEC-1788169581
+  trace_id: TRACE-EXEC-1788169581-937a207b3254
+  session_id: ses_fa8c9832effe8an6FGT6QZ5RKG
+  provider: opencode
+  model: ''
+  latency_ms: 49280
+  token_usage:
+    total: 24961
+    input: 812
+    output: 1045
+    reasoning: 0
+    cache_read: 23104
+    cache_write: 0
+  output_hash: 6f6276bcf5e66565
+  status_code: success
+  error: ''
+  started_at: '2026-08-31T09:46:21.847890+00:00'
+  completed_at: '2026-08-31T09:47:11.135519+00:00'
+trace:
+  status: completed
+  trace_file: /home/shade/.agents/runtime/traces/EXEC-1788169581.yaml
+  error: ''
+  started_at: '2026-08-31T09:46:21.847890+00:00'
+  completed_at: '2026-08-31T09:47:11.135519+00:00'
+feedback:
+  status: completed
+  candidate_ids:
+  - CAND-EXEC-1788169581-S-002
+  - CAND-EXEC-1788169581-T-004
+  - CAND-EXEC-1788169581-F-002
+  - CAND-EXEC-1788169581-E-007
+  - CAND-EXEC-1788169581-E-006
+  - CAND-EXEC-1788169581-AP-001
+  error: ''
+  started_at: '2026-08-31T09:47:11.135543+00:00'
+  completed_at: '2026-08-31T09:47:11.155396+00:00'
+validation:
+  status: completed
+  validated_ids: []
+  rejected_ids:
+  - AP-001
+  - E-006
+  - E-007
+  - F-002
+  - S-002
+  - T-004
+  error: ''
+  started_at: '2026-08-31T09:47:11.155419+00:00'
+  completed_at: '2026-08-31T09:47:11.315818+00:00'
+promotion:
+  status: completed
+  promoted_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: '2026-08-31T09:47:11.315841+00:00'
+  completed_at: '2026-08-31T09:47:11.315864+00:00'
+reconciliation:
+  status: completed
+  result: CONSISTENT
+  error: ''
+  started_at: '2026-08-31T09:47:11.315885+00:00'
+  completed_at: '2026-08-31T09:47:11.398101+00:00'
+errors: []
+entry:
+  entry_type: direct
+  note: no aos metadata

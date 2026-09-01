@@ -1,0 +1,137 @@
+loop_id: LOOP-20260901014049
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+memory_mode: enabled
+model: ''
+provider: test_provider
+runtime_mode: TEST_PROVIDER
+started_at: '2026-09-01T01:40:49.817741+00:00'
+completed_at: '2026-09-01T01:41:15.600337+00:00'
+current_stage: completed
+final_status: failed
+retrieval:
+  status: completed
+  retrieved_count: 5
+  memory_ids:
+  - T-004
+  - F-002
+  - E-007
+  - T-005
+  - S-002
+  hypotheses: []
+  error: ''
+  started_at: '2026-09-01T01:40:49.820506+00:00'
+  completed_at: '2026-09-01T01:40:50.464214+00:00'
+router:
+  status: completed
+  intent: architecture
+  lead_skill: system-architect
+  support_skills:
+  - technical-reviewer
+  - backend-architect
+  confidence: high
+  error: ''
+  started_at: '2026-09-01T01:40:50.464673+00:00'
+  completed_at: '2026-09-01T01:40:50.464762+00:00'
+skill:
+  status: completed
+  lead_skill: system-architect
+  support_skills:
+  - technical-reviewer
+  - backend-architect
+  skills_loaded:
+  - system-architect
+  - technical-reviewer
+  - backend-architect
+  error: ''
+  started_at: '2026-09-01T01:40:50.465202+00:00'
+  completed_at: '2026-09-01T01:40:50.465839+00:00'
+decision:
+  status: completed
+  influence: confirmation
+  error: ''
+  started_at: '2026-09-01T01:40:50.464673+00:00'
+  completed_at: '2026-09-01T01:40:50.465839+00:00'
+runtime:
+  status: completed
+  execution_id: EXEC-1788226875
+  trace_id: TRACE-EXEC-1788226875-b232b9e3d55f
+  session_id: ''
+  provider: test_provider
+  model: ''
+  latency_ms: 0
+  token_usage:
+    total: 0
+    input: 0
+    output: 0
+  output_hash: e3b0c44298fc1c14
+  status_code: timeout
+  error: Test provider simulated timeout after 600s
+  started_at: '2026-09-01T01:40:50.466117+00:00'
+  completed_at: '2026-09-01T01:41:15.477384+00:00'
+trace:
+  status: completed
+  trace_file: /home/shade/.agents/runtime/traces/EXEC-1788226875.yaml
+  error: ''
+  started_at: '2026-09-01T01:40:50.466117+00:00'
+  completed_at: '2026-09-01T01:41:15.477384+00:00'
+telemetry:
+  status: completed
+  events:
+  - task
+  - memory
+  - route
+  - skill
+  - execution
+  - validation
+  - outcome
+  error: ''
+  started_at: '2026-09-01T01:40:49.820179+00:00'
+  completed_at: '2026-09-01T01:41:15.600341+00:00'
+feedback:
+  status: failed
+  candidate_ids: []
+  error: "could not determine a constructor for the tag 'tag:yaml.org,2002:python/object:execution_reliability.FailureRecord'\n\
+    \  in \"/home/shade/.agents/runtime/traces/EXEC-1788226875.yaml\", line 133, column\
+    \ 7"
+  started_at: '2026-09-01T01:41:15.525607+00:00'
+  completed_at: '2026-09-01T01:41:15.544473+00:00'
+validation:
+  status: completed
+  validated_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: '2026-09-01T01:41:15.544509+00:00'
+  completed_at: '2026-09-01T01:41:15.544521+00:00'
+promotion:
+  status: completed
+  promoted_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: '2026-09-01T01:41:15.544524+00:00'
+  completed_at: '2026-09-01T01:41:15.544528+00:00'
+reconciliation:
+  status: completed
+  result: CONSISTENT
+  error: ''
+  started_at: '2026-09-01T01:41:15.544532+00:00'
+  completed_at: '2026-09-01T01:41:15.600311+00:00'
+errors:
+- stage: feedback
+  error: "could not determine a constructor for the tag 'tag:yaml.org,2002:python/object:execution_reliability.FailureRecord'\n\
+    \  in \"/home/shade/.agents/runtime/traces/EXEC-1788226875.yaml\", line 133, column\
+    \ 7"
+  critical: true
+entry:
+  entry_type: direct
+  note: no aos metadata
+code_validation:
+  status: skipped
+  validation_status: ''
+  build_after: ''
+  test_after: ''
+  files_changed: 0
+  unexpected_files: 0
+  error: No project root available
+  started_at: '2026-09-01T01:41:15.525533+00:00'
+  completed_at: '2026-09-01T01:41:15.525601+00:00'

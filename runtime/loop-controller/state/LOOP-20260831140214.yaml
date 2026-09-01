@@ -1,0 +1,137 @@
+loop_id: LOOP-20260831140214
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+memory_mode: fallback
+model: ''
+provider: test_provider
+runtime_mode: TEST_PROVIDER
+started_at: '2026-08-31T14:02:14.304270+00:00'
+completed_at: '2026-08-31T14:02:39.762356+00:00'
+current_stage: completed
+final_status: failed
+retrieval:
+  status: failed
+  retrieved_count: 0
+  memory_ids: []
+  hypotheses: []
+  error: "could not determine a constructor for the tag 'tag:yaml.org,2002:python/object:execution_reliability.FailureRecord'\n\
+    \  in \"/home/shade/.agents/runtime/traces/EXEC-1788183178.yaml\", line 65, column\
+    \ 7"
+  started_at: '2026-08-31T14:02:14.307486+00:00'
+  completed_at: '2026-08-31T14:02:14.672186+00:00'
+router:
+  status: completed
+  intent: architecture
+  lead_skill: system-architect
+  support_skills:
+  - technical-reviewer
+  - backend-architect
+  confidence: high
+  error: ''
+  started_at: '2026-08-31T14:02:14.672778+00:00'
+  completed_at: '2026-08-31T14:02:14.672910+00:00'
+skill:
+  status: completed
+  lead_skill: system-architect
+  support_skills:
+  - technical-reviewer
+  - backend-architect
+  skills_loaded:
+  - system-architect
+  - technical-reviewer
+  - backend-architect
+  error: ''
+  started_at: '2026-08-31T14:02:14.673638+00:00'
+  completed_at: '2026-08-31T14:02:14.674984+00:00'
+decision:
+  status: completed
+  influence: none
+  error: ''
+  started_at: '2026-08-31T14:02:14.672778+00:00'
+  completed_at: '2026-08-31T14:02:14.674984+00:00'
+runtime:
+  status: completed
+  execution_id: EXEC-1788184959
+  trace_id: TRACE-EXEC-1788184959-c69870b2b42b
+  session_id: ''
+  provider: test_provider
+  model: ''
+  latency_ms: 0
+  token_usage:
+    total: 0
+    input: 0
+    output: 0
+  output_hash: e3b0c44298fc1c14
+  status_code: timeout
+  error: Test provider simulated timeout after 600s
+  started_at: '2026-08-31T14:02:14.675530+00:00'
+  completed_at: '2026-08-31T14:02:39.684606+00:00'
+trace:
+  status: completed
+  trace_file: /home/shade/.agents/runtime/traces/EXEC-1788184959.yaml
+  error: ''
+  started_at: '2026-08-31T14:02:14.675530+00:00'
+  completed_at: '2026-08-31T14:02:39.684606+00:00'
+telemetry:
+  status: completed
+  events:
+  - task
+  - memory
+  - route
+  - skill
+  - execution
+  - validation
+  - outcome
+  error: ''
+  started_at: '2026-08-31T14:02:14.307060+00:00'
+  completed_at: '2026-08-31T14:02:39.762360+00:00'
+feedback:
+  status: failed
+  candidate_ids: []
+  error: "could not determine a constructor for the tag 'tag:yaml.org,2002:python/object:execution_reliability.FailureRecord'\n\
+    \  in \"/home/shade/.agents/runtime/traces/EXEC-1788184959.yaml\", line 81, column\
+    \ 7"
+  started_at: '2026-08-31T14:02:39.688559+00:00'
+  completed_at: '2026-08-31T14:02:39.704911+00:00'
+validation:
+  status: completed
+  validated_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: '2026-08-31T14:02:39.704964+00:00'
+  completed_at: '2026-08-31T14:02:39.704985+00:00'
+promotion:
+  status: completed
+  promoted_ids: []
+  rejected_ids: []
+  error: ''
+  started_at: '2026-08-31T14:02:39.704999+00:00'
+  completed_at: '2026-08-31T14:02:39.705009+00:00'
+reconciliation:
+  status: completed
+  result: CONSISTENT
+  error: ''
+  started_at: '2026-08-31T14:02:39.705020+00:00'
+  completed_at: '2026-08-31T14:02:39.762331+00:00'
+errors:
+- stage: retrieval
+  error: "could not determine a constructor for the tag 'tag:yaml.org,2002:python/object:execution_reliability.FailureRecord'\n\
+    \  in \"/home/shade/.agents/runtime/traces/EXEC-1788183178.yaml\", line 65, column\
+    \ 7"
+- stage: feedback
+  error: "could not determine a constructor for the tag 'tag:yaml.org,2002:python/object:execution_reliability.FailureRecord'\n\
+    \  in \"/home/shade/.agents/runtime/traces/EXEC-1788184959.yaml\", line 81, column\
+    \ 7"
+entry:
+  entry_type: direct
+  note: no aos metadata
+code_validation:
+  status: skipped
+  validation_status: ''
+  build_after: ''
+  test_after: ''
+  files_changed: 0
+  unexpected_files: 0
+  error: No project root available
+  started_at: '2026-08-31T14:02:39.688513+00:00'
+  completed_at: '2026-08-31T14:02:39.688545+00:00'

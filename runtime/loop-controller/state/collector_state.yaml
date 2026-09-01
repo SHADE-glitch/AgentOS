@@ -1,6 +1,6 @@
 version: '1.0'
 phase: 5.8.2.2
-last_scan: '2026-08-31T09:38:31.040317+00:00'
+last_scan: '2026-09-01T02:19:21.133076+00:00'
 processed_traces:
 - trace_id: EXEC-1788137160
   processed_at: '2026-08-31T00:47:23.574413+00:00'
@@ -61,4 +61,100 @@ processed_traces:
   candidates_generated: 6
 - trace_id: EXEC-1788169039
   processed_at: '2026-08-31T09:38:31.040234+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788169581
+  processed_at: '2026-08-31T09:47:11.151500+00:00'
+  candidates_generated: 6
+- trace_id: EXEC-1788169514
+  processed_at: '2026-08-31T09:47:14.803699+00:00'
+  candidates_generated: 6
+- trace_id: EXEC-1788169683
+  processed_at: '2026-08-31T09:50:37.961023+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788172515
+  processed_at: '2026-08-31T10:37:56.357362+00:00'
+  candidates_generated: 6
+- trace_id: EXEC-1788172732
+  processed_at: '2026-08-31T10:39:40.041863+00:00'
+  candidates_generated: 6
+- trace_id: EXEC-1788185293
+  processed_at: '2026-08-31T14:08:13.577787+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788185320
+  processed_at: '2026-08-31T14:08:40.361228+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788185321
+  processed_at: '2026-08-31T14:08:41.325907+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788185403
+  processed_at: '2026-08-31T14:10:03.202816+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788185430
+  processed_at: '2026-08-31T14:10:30.091923+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788185431
+  processed_at: '2026-08-31T14:10:31.070096+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788225849
+  processed_at: '2026-09-01T01:24:09.151337+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226567
+  processed_at: '2026-09-01T01:36:07.698472+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226594
+  processed_at: '2026-09-01T01:36:34.340665+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226595
+  processed_at: '2026-09-01T01:36:35.338149+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226813
+  processed_at: '2026-09-01T01:40:13.929622+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226840
+  processed_at: '2026-09-01T01:40:40.464488+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226841
+  processed_at: '2026-09-01T01:40:41.409846+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226849
+  processed_at: '2026-09-01T01:40:49.634183+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226876
+  processed_at: '2026-09-01T01:41:16.669981+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788226877
+  processed_at: '2026-09-01T01:41:17.469135+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788227099
+  processed_at: '2026-09-01T01:44:59.905921+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788227126
+  processed_at: '2026-09-01T01:45:26.551937+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788227127
+  processed_at: '2026-09-01T01:45:27.448093+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788227389
+  processed_at: '2026-09-01T01:49:49.127341+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788227845
+  processed_at: '2026-09-01T01:57:25.452435+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788227921
+  processed_at: '2026-09-01T01:58:41.904915+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788228162
+  processed_at: '2026-09-01T02:02:42.411043+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788229083
+  processed_at: '2026-09-01T02:18:03.902709+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788229111
+  processed_at: '2026-09-01T02:18:31.650564+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788229112
+  processed_at: '2026-09-01T02:18:33.045423+00:00'
+  candidates_generated: 5
+- trace_id: EXEC-1788229160
+  processed_at: '2026-09-01T02:19:21.133033+00:00'
   candidates_generated: 5

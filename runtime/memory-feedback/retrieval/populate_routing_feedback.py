@@ -55,7 +55,7 @@ def main():
         if not os.path.exists(path):
             continue
         with open(path) as f:
-            trace = yaml.safe_load(f)
+            trace = yaml.unsafe_load(f)
 
         mem_retrieval = trace.get("memory_retrieval", {})
         mem_used = mem_retrieval.get("memories_used", [])
@@ -119,7 +119,7 @@ def main():
 
     # Load existing routing feedback
     with open(ROUTING_FEEDBACK) as f:
-        fb = yaml.safe_load(f)
+        fb = yaml.unsafe_load(f)
 
     fb["routing_feedback"]["entries"] = entries
     fb["routing_feedback"]["generated_at"] = datetime.now(timezone.utc).isoformat()

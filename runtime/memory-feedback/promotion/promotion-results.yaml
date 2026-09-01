@@ -1,41 +1,21 @@
 version: '1.0'
 phase: 5.7.2
-generated_at: '2026-08-31T01:08:29.936978+00:00'
+generated_at: '2026-09-01T02:02:59.654635+00:00'
 generated_by: promoter.py (Phase 5.7.2 Memory Promoter)
 source_file: /home/shade/.agents/runtime/memory-feedback/promotion/validation-results.yaml
 summary:
   total_validated_available: 1
-  promoted_this_cycle: 1
+  promoted_this_cycle: 0
   rejected: 0
   deferred_to_next_cycle: 0
   max_per_cycle: 5
 promotion_results:
 - memory_id: T-005
   candidate_id: CAND-EXEC-1788137999-T-005
-  status: applied
-  evidence_updates:
-    old_observation_count: 0
-    new_observation_count: 2
-    old_evidence_level: benchmark_evaluated
-    new_evidence_level: runtime_validated
-    added_executions:
-    - EXEC-1788091469
-    - EXEC-1788137999
-  confidence_updates:
-    old_confidence: low
-    new_confidence: medium
-    old_confidence_value: 0.33
-    new_confidence_value: 0.66
-  applied_changes:
-  - observation_count
-  - evidence_level
-  - confidence
-  - last_validated_at
-  memory_file: memory/tasks/ai/rag.md
-  promotion_reason: 'Memory T-005 confirmed by 2 independent runtime execution(s).
-    Quality score: 4.4. Evidence upgraded from benchmark_evaluated to runtime_validated.
-    Confidence: low → medium.'
-  promoted_at: '2026-08-31T01:08:29.936978+00:00'
+  status: skipped
+  rejection_reason: 'Memory T-005 already promoted at 2026-08-31T01:08:29.936978+00:00.
+    Idempotency: no duplicate promotion.'
+  promoted_at: '2026-09-01T02:02:59.654575+00:00'
 safety_checks:
   no_memory_content_modified: PASS
   no_hypothesis_promoted: PASS

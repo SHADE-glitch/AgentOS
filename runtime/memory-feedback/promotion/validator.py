@@ -135,7 +135,13 @@ def validate_memory_group(memory_id, group):
     meta = find_memory_metadata(memory_id)
     gate_results = {}
     if meta:
-        gate_results["M1_provenance"] = "pass" if meta.get("source_task") else "fail"
+        # Phase 5.11.1: Handle both source_task and source_tasks formats
+        has_provenance = bool(
+            meta.get("source_task") or 
+            meta.get("source_tasks") or 
+            meta.get("source", {}).get("task_id") if isinstance(meta.get("source"), dict) else False
+        )
+        gate_results["M1_provenance"] = "pass" if has_provenance else "fail"
         el = meta.get("evidence_level", "hypothesis")
         gate_results["M2_evidence_level"] = "pass" if el in [
             "benchmark_evaluated", "runtime_validated", "independent_validated",

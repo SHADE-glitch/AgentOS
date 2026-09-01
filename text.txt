@@ -1,1057 +1,1106 @@
-# Phase 6.1 — Real Project Execution Reliability & Productivity Validation
+# Phase 5.7 — Repair the Real Agent OS Runtime Entry and Closed Loop
 
-你现在进入 **Phase 6.1 实施阶段**。
+你现在是：
 
-你已经完成两轮独立 Gap Analysis / Priority Review，现在必须基于已经确认的唯一目标开始实施。
+```text
+Trae
+= Agent OS Architect
+= Agent OS Builder
+= Agent OS Maintainer
+```
+
+OpenCode：
+
+```text
+OpenCode
+= Agent OS Runtime / Executor
+```
+
+AIView：
+
+```text
+/home/shade/Public/test
+= Real Project Benchmark
+```
+
+本阶段目标：
+
+> 根据 Phase 5.6 独立审计，修复 Agent OS 的真实 Runtime Integration，使后续 OpenCode 可以通过真实入口执行 Agent OS，而不是绕过 Loop Controller 直接调用 runtime_adapter。
 
 ---
 
-## 一、当前确定状态
+# 一、Phase 5.6 审计结论
 
-当前 Agent OS 状态：
+当前：
 
-```text
-AOS_V1_STATUS: CAPABLE_BUT_REAL_PROJECT_NEVER_SUCCEEDED
+```yaml
+P0_GATE: BLOCKED
 
-PHASE_5_STATUS: PARTIAL
+ACTUAL_VALIDATION_LEVEL: LEVEL_2_COMPONENT_TEST
 
-MEMORY_STATUS: OPERATIONAL_INFRASTRUCTURE
-ROUTER_STATUS: IMPLEMENTED_NOT_VALIDATED
-ORCHESTRATOR_STATUS: DOCUMENTATION_ONLY
-RUNTIME_STATUS: LIVE_VERIFIED
-FEEDBACK_STATUS: IMPLEMENTED_PARTIALLY_VERIFIED
-EVOLUTION_STATUS: DOCUMENTATION_ONLY
-REAL_PROJECT_STATUS: IMPLEMENTED_UNVERIFIED
+P0_1:
+  component: VERIFIED
+  runtime: NOT_VERIFIED
+
+P0_2:
+  component: VERIFIED
+  runtime: NOT_VERIFIED
+
+P0_3:
+  component: VERIFIED
+  runtime: VERIFIED
+
+ROUTER: NOT_VERIFIED
+SKILL: NOT_VERIFIED
+MEMORY: NOT_VERIFIED
+LOOP_CONTROLLER: NOT_VERIFIED
+TRACE: COMPONENT_VERIFIED
+TELEMETRY: NOT_VERIFIED
+
+OPEN_CODE_RUNTIME_PATH: DIRECT
 ```
 
-当前优先级：
+Primary blocker：
 
 ```text
-RANK_1: Real Project Agent Productivity
-RANK_2: Memory Effectiveness
-RANK_3: Runtime Reliability
-RANK_4: Closed-loop Evolution
+LOOP_CONTROLLER_BYPASSED
 ```
 
-唯一 Phase 6.1 Objective：
+Secondary：
 
 ```text
-Real Project Agent Productivity Validation
+ROUTER_NOT_CALLED
+SKILL_NOT_LOADED
+MEMORY_OFF
+TELEMETRY_EMPTY
+TRACE_SIMULATED
+TEST_PROVIDER_ONLY
 ```
-
-核心事实：
-
-```text
-PROJ-001：
-- 已执行 3 次
-- 3 次均 timeout
-- 0 次成功完成
-- 0 次代码变更
-
-另有 read-only exploration 任务成功运行，
-但它不能证明 Agent OS 能够成功完成真实项目修改任务。
-```
-
-因此：
-
-> 现在不要继续证明“Agent OS 有没有能力”。
-
-要解决的是：
-
-> **为什么 Agent OS 无法在真实项目 PROJ-001 上完成一个可验证的真实开发任务？**
 
 ---
 
 # 二、本阶段唯一目标
 
-通过最小、可控、可回滚的工程修改，让 Agent OS 能够成功完成至少一个真实项目开发任务，并产生完整证据链：
+把真实执行入口建立成：
 
 ```text
-Task
+OpenCode
  ↓
-Routing
+Agent OS Entry
  ↓
-Memory Retrieval
+Loop Controller
  ↓
-Agent Execution
+Router
  ↓
-Real Project Modification
+Memory
  ↓
-Validation / Tests
+Skill
  ↓
-Outcome
+Runtime Adapter
+ ↓
+Provider
+ ↓
+Validation
  ↓
 Trace
  ↓
 Telemetry
  ↓
-Feedback
+Outcome
 ```
 
-最终得到：
+必须注意：
 
-```text
-SUCCESSFUL_REAL_PROJECT_EXECUTION
-```
-
-并且能够证明：
-
-```text
-代码确实发生变化
-+
-任务确实完成
-+
-验证确实通过
-+
-Execution Trace 完整
-+
-Outcome 可复现
-```
+> 这是 Agent OS 的运行时闭环，不是一个“测试脚本调用几个 Python 函数”的组件测试。
 
 ---
 
-# 三、极其重要的边界
+# 三、严格范围
 
-## 冻结区域
+允许修改：
 
-以下内容禁止修改：
+```text
+/home/shade/.agents/
+```
+
+禁止修改：
+
+```text
+/home/shade/Public/test
+```
+
+禁止修改：
 
 ```text
 Phase 6.0.10 OpenCode Host Integration
 ```
 
-尤其不要：
-
-* 重构 Host Integration
-* 改 Host adapter 协议
-* 修改已经 FREEZE_APPROVED 的接入链路
-* 为了绕过问题重新设计 Host
-
-如果问题来自冻结区域：
-
-```text
-DO NOT MODIFY
-```
-
-必须记录为：
+除非源码证据证明必须修改，而且如果涉及冻结区域：
 
 ```text
 FREEZE_BLOCKER
 ```
 
-然后寻找冻结区域之外的解决方案。
+先报告，不直接改。
 
 ---
 
-# 四、本阶段禁止扩张范围
+# 四、先做 Runtime Entry 审计
 
-不要同时处理：
+不要立即写代码。
 
-```text
-Memory Effectiveness
-Router Accuracy
-Multi-Agent Orchestrator
-Evolution Engine
-Knowledge Intelligence
-新 Skill
-大型架构重构
-```
-
-这些全部属于：
+先检查：
 
 ```text
-DEFERRED
+runtime/loop-controller/loop_controller.py
+
+runtime/loop-controller/runtime_adapter.py
+
+runtime/hosts/opencode/
+
+runtime/executor/
+
+runtime/host-protocol.yaml
+
+runtime/host-integration-contract.yaml
+
+runtime/runtime-contract.yaml
 ```
 
-可以发现问题，但不得顺手修复。
-
-尤其禁止出现：
+寻找当前真正存在的：
 
 ```text
-因为 Real Project 执行失败
-→ 顺便重构 Runtime
-→ 顺便升级 Router
-→ 顺便重做 Memory
-→ 顺便实现 Orchestrator
+Agent OS Entry Point
 ```
 
-这是严格禁止的。
-
----
-
-# 五、第一步：先对 PROJ-001 做失败根因分析
-
-在修改代码之前，读取并分析过去 3 次 PROJ-001 timeout 的完整证据。
-
-至少检查：
-
-```text
-runtime/traces/
-runtime/logs/real-project-execution-history.md
-datasets/real-project/projects/PROJ-001.yaml
-datasets/real-project/tasks/PROJ-001-tasks.yaml
-runtime/loop-controller/
-runtime/loop-controller/state/
-runtime/feedback/
-runtime/telemetry/
-```
-
-必须找到每一次执行：
-
-```text
-Task ID
-Execution ID
-Start Time
-End Time
-Selected Skill
-Selected Runtime
-Prompt / Task Type
-Timeout Location
-Last Successful Step
-Last Emitted Event
-Agent Output
-Exit State
-Partial Changes
-Validation Result
-```
-
-将 3 次执行分别编号：
-
-```text
-ATTEMPT_1
-ATTEMPT_2
-ATTEMPT_3
-```
-
-建立失败对比表。
-
----
-
-# 六、不要凭感觉判断 timeout 原因
-
-禁止直接写：
-
-```text
-可能是模型慢
-可能是 OpenCode 慢
-可能是 Prompt 太长
-可能是项目复杂
-```
-
-除非日志和 Trace 能证明。
-
-必须定位：
-
-```text
-TIMEOUT_ROOT_CAUSE
-```
-
-并将原因归入尽可能精确的类别，例如：
-
-```text
-TASK_DESIGN
-PROMPT_DESIGN
-MODEL_SELECTION
-ROUTING
-MEMORY_RETRIEVAL
-EXECUTION_LOOP
-PROCESS_MANAGEMENT
-TIMEOUT_CONFIGURATION
-VALIDATION
-PROJECT_SETUP
-DEPENDENCY
-ENVIRONMENT
-HOST
-UNKNOWN
-```
-
-如果根因来自多个因素，必须区分：
-
-```text
-PRIMARY_CAUSE
-SECONDARY_CAUSE
-```
-
----
-
-# 七、判断一个问题是否真的值得修改
-
-对每一个候选问题建立：
-
-```text
-ROOT_CAUSE:
-EVIDENCE:
-CONFIDENCE:
-IMPACT:
-MINIMAL_FIX:
-RISK:
-```
-
-只有满足：
-
-```text
-Evidence sufficient
-+
-Directly blocks successful real-project execution
-+
-Fix outside frozen scope
-+
-Minimal change possible
-```
-
-才允许实施。
-
----
-
-# 八、优先检查的几个方向
-
-不要默认某一方向一定是原因，必须通过证据确认。
-
-重点检查：
-
-## 1. Task 是否过大
-
-检查 PROJ-001 是否试图一次完成：
-
-```text
-大量代码分析
-+
-架构理解
-+
-大量修改
-+
-测试
-+
-最终验证
-```
-
-如果是，判断是否需要拆成一个更小但仍然真实的工程任务。
-
-例如：
-
-```text
-单文件修改
-+
-单一行为变化
-+
-针对性测试
-```
-
-注意：
-
-> 不能把任务缩小到没有实际工程价值的 toy task。
-
----
-
-## 2. Timeout 配置
-
-检查：
-
-```text
-timeout
-deadline
-retry
-polling
-process lifetime
-subprocess handling
-idle timeout
-hard timeout
-```
-
-判断 timeout 是：
-
-```text
-REAL_FAILURE
-```
-
-还是：
-
-```text
-ORCHESTRATION_TIMEOUT
-```
-
-即 Agent 实际还在正常执行，只是 Agent OS 提前杀掉。
-
-不得为了让实验“成功”而无条件把 timeout 调得极大。
-
-必须说明：
-
-```text
-CURRENT_TIMEOUT:
-WHY_INSUFFICIENT:
-NEW_TIMEOUT:
-WHY_JUSTIFIED:
-```
-
----
-
-## 3. Agent 是否陷入无效循环
-
-检查：
-
-```text
-重复读取文件
-重复搜索
-重复修改
-重复测试
-等待命令
-等待用户
-```
-
-寻找：
-
-```text
-LOOP
-STALL
-IDLE
-RETRY_STORM
-```
-
-如果发现，优先采用最小的执行控制修复。
-
----
-
-## 4. Project Environment
-
-检查：
-
-```text
-JDK
-Maven / Gradle
-dependencies
-working directory
-git state
-build configuration
-test configuration
-environment variables
-```
-
-确认 Agent 是否实际上被环境问题阻塞。
-
----
-
-## 5. Task → Runtime 参数传递
-
-检查：
-
-```text
-task
-→ loop controller
-→ runtime adapter
-→ host
-```
-
-确认：
-
-```text
-working directory
-task prompt
-timeout
-environment
-runtime selection
-```
-
-没有在链路中丢失或错误覆盖。
-
----
-
-# 九、建立最小可验证任务
-
-在修复根因后，不要直接重新运行一个巨大任务。
-
-从 PROJ-001 中选择：
-
-```text
-ONE SMALL BUT REAL ENGINEERING TASK
-```
-
-必须具备：
-
-```text
-真实项目
-真实代码
-真实修改
-真实验证
-```
-
-例如：
-
-```text
-Fix one deterministic bug
-OR
-Implement one small requirement
-OR
-Add one focused test
-OR
-Refactor one isolated component
-```
-
-任务必须能够明确写出：
-
-```text
-EXPECTED_CHANGE
-EXPECTED_TEST
-SUCCESS_CONDITION
-```
-
----
-
-# 十、建立 Baseline
-
-在首次修复后运行新的 PROJ-001 实验之前，记录：
-
-```text
-BASELINE_TASK
-BASELINE_DURATION
-BASELINE_SUCCESS
-BASELINE_FAILURE
-BASELINE_MANUAL_INTERVENTION
-BASELINE_CODE_CHANGE
-BASELINE_TEST_RESULT
-```
-
-特别注意：
-
-> 当前历史结果只能作为失败基线，不能把新的成功直接称为“productivity improvement”。
-
-第一阶段首先证明：
-
-```text
-EXECUTION_SUCCESS
-```
-
-之后才能逐步证明：
-
-```text
-PRODUCTIVITY_IMPROVEMENT
-```
-
----
-
-# 十一、修复必须最小化
-
-实施遵循：
-
-```text
-Minimum Fix
-```
-
-优先级：
-
-```text
-Configuration Fix
->
-Task / Prompt Fix
->
-Execution Control Fix
->
-Runtime-side non-frozen Fix
->
-Architecture Change
-```
-
-禁止：
-
-```text
-Large Refactor
-```
-
-每一个修改必须说明：
-
-```text
-WHY
-WHAT
-WHY_THIS_SCOPE
-```
-
----
-
-# 十二、修复之后必须运行真实实验
-
-修改完成后：
-
-```text
-不要停在代码测试。
-不要停在单元测试。
-不要只运行 mock。
-```
-
-必须执行：
-
-```text
-真实 Agent OS
-+
-真实 PROJ-001
-+
-真实 Agent Runtime
-```
-
-任务必须真的进入：
-
-```text
-Agent Execution
-```
-
-并产生：
-
-```text
-Actual Code Change
-```
-
----
-
-# 十三、实验必须有明确成功标准
-
-本轮实验至少满足：
-
-```text
-1. Agent OS successfully starts task
-2. Correct project is opened
-3. Agent analyzes target
-4. Agent modifies real source
-5. Validation/test executes
-6. Expected condition passes
-7. Git diff confirms real change
-8. Execution trace exists
-9. Outcome is recorded
-10. No manual intervention is required to complete the task
-```
-
-如果其中任何一个失败，不得宣布成功。
-
----
-
-# 十四、验证真实代码变化
-
-实验结束必须执行：
-
-```bash
-git status
-git diff --stat
-git diff
-```
-
-确认：
-
-```text
-EXPECTED_FILES_CHANGED
-EXPECTED_LINES_CHANGED
-UNEXPECTED_FILES_CHANGED
-```
-
-如果没有代码变化：
-
-```text
-REAL_PROJECT_SUCCESS = FALSE
-```
-
-即使 Agent 输出：
-
-```text
-Task completed
-```
-
-也不能算成功。
-
----
-
-# 十五、验证测试
-
-必须执行项目真实验证，例如：
-
-```text
-mvn test
-```
-
-或项目实际对应的测试命令。
-
-记录：
-
-```text
-TEST_COMMAND
-TEST_EXIT_CODE
-TEST_RESULT
-FAILED_TESTS
-```
-
----
-
-# 十六、完整记录实验数据
-
-为本次实验生成唯一：
-
-```text
-Experiment ID
-Task ID
-Execution ID
-```
-
-并记录：
-
-```text
-TASK
-PROJECT
-MODEL
-RUNTIME
-SKILL
-DURATION
-TIMEOUT
-CODE_CHANGE
-TEST_RESULT
-MANUAL_INTERVENTION
-OUTCOME
-FAILURE_REASON
-```
-
----
-
-# 十七、必须产生 Before / After
-
-最少形成：
-
-```text
-BEFORE:
-- 3 attempts
-- 3 timeout
-- 0 successful completion
-- 0 code changes
-
-AFTER:
-- attempt N
-- success/failure
-- duration
-- code changes
-- test result
-- manual intervention
-```
-
-如果成功：
-
-```text
-SUCCESS_DELTA:
-before success rate = 0%
-after success rate = ...
-```
-
-但不要夸大结论。
-
-一次成功只能证明：
-
-```text
-RUNTIME_VERIFIED
+明确回答：
+
+```yaml
+CURRENT_ENTRY:
+HOST_ENTRY:
+LOOP_ENTRY:
+RUNTIME_ENTRY:
 ```
 
 以及：
 
 ```text
-REAL_PROJECT_EXECUTION_VERIFIED
+OpenCode 当前怎样才能把一个任务交给 Agent OS？
 ```
 
-不能立即宣布：
+不要根据 README 猜。
+
+必须根据实际代码。
+
+---
+
+# 五、建立唯一 Runtime Entry
+
+如果当前存在多个绕过路径：
 
 ```text
-PRODUCTIVITY_IMPROVEMENT_VERIFIED
+runtime_adapter.execute()
+execute_with_reliability()
+direct invocation
+```
+
+必须明确：
+
+```text
+AGENT_OS_RUNTIME_ENTRY
+```
+
+用于：
+
+```text
+real task execution
+```
+
+目标：
+
+```text
+外部 Runtime
+    ↓
+唯一 Agent OS Entry
+    ↓
+Loop Controller
+```
+
+不要允许真实任务随意直接跳到：
+
+```text
+runtime_adapter
 ```
 
 ---
 
-# 十八、如果第一次修复后仍失败
+# 六、Loop Controller 必须成为真实入口
 
-不要马上增加大量功能。
-
-进入：
+确认：
 
 ```text
-Failure Iteration 2
+loop_controller.py
 ```
 
-重新分析：
+能够接受一个完整 Task：
 
-```text
-NEW_TRACE
-NEW_FAILURE
-NEW_ROOT_CAUSE
+```yaml
+task_id:
+project_root:
+task_text:
+context:
+validation:
 ```
 
-然后只允许：
+然后顺序执行：
 
 ```text
-ONE_ADDITIONAL_FIX
+Task Intake
+↓
+Project Preflight
+↓
+Router
+↓
+Memory
+↓
+Skill
+↓
+Runtime
+↓
+Validation
+↓
+Outcome
 ```
 
-最多连续进行有限次数的受控实验。
+每一阶段必须是真实函数调用。
 
-不要进入：
+---
+
+# 七、修复 Router Integration
+
+当前审计：
 
 ```text
-unbounded debugging
+ROUTER_NOT_VERIFIED
+```
+
+不要继续让：
+
+```text
+runtime_adapter.build_trace()
+```
+
+生成假的：
+
+```text
+lead_agent
+intent
+rules_applied
+```
+
+必须改成：
+
+```text
+Loop Controller
+ ↓
+真实 Router
+ ↓
+真实 Route Decision
+```
+
+然后：
+
+```yaml
+routing:
+  intent:
+  domain:
+  lead_skill:
+  support_skills:
+  confidence:
+  memory_influence:
+```
+
+必须来自真实 Router 输出。
+
+---
+
+# 八、修复 Skill Integration
+
+当前：
+
+```text
+SKILL_NOT_VERIFIED
+```
+
+Loop Controller 必须能够：
+
+```text
+Route Decision
+ ↓
+Skill Registry / Loader
+ ↓
+读取 ~/.agents/skills/<skill>/SKILL.md
+ ↓
+生成执行上下文
+ ↓
+传递给 Runtime
+```
+
+不要把 Skill 名字写死：
+
+```text
+backend-architect
+```
+
+作为结果。
+
+必须：
+
+```text
+Router
+→ decide
+→ Skill Loader
+→ load
 ```
 
 ---
 
-# 十九、Phase 6.1 Stop Conditions
+# 九、Skill 与 Runtime 的边界
 
-以下任意一个满足后立即停止本阶段：
-
-### SUCCESS
+目标不是：
 
 ```text
-至少一个真实 PROJ-001 工程任务成功完成
-
-AND
-
-真实代码发生预期变化
-
-AND
-
-项目验证通过
-
-AND
-
-Trace / Outcome 完整
-
-AND
-
-没有人工介入完成剩余步骤
+Skill 自己执行所有事情
 ```
 
-### BLOCKED
-
-如果经过有限次最小修复仍无法成功，必须停止，并报告：
+而是：
 
 ```text
-BLOCKED
+Skill
+= 专业执行上下文
+
+Runtime
+= 实际执行载体
 ```
 
-并明确：
+因此：
 
 ```text
-PRIMARY_BLOCKER
-SECONDARY_BLOCKERS
-EVIDENCE
-WHAT_WAS_TRIED
-WHY_IT_FAILED
-WHAT_MUST_CHANGE_NEXT
+Skill
+ ↓
+prompt / execution context
+ ↓
+Runtime Adapter
+ ↓
+OpenCode / Provider
 ```
 
-不要继续无限修改。
+边界必须清楚。
 
 ---
 
-# 二十、特别禁止“作弊式成功”
+# 十、修复 Memory Integration
 
-以下都不算成功：
+当前：
 
 ```text
-只读任务
-mock task
-fake project
-toy repository
-手工提前修改代码
-Agent 只输出 patch 但没有实际写入
-Agent 修改后人工帮它完成测试
-人为跳过验证
-把 timeout 调到无限
-把任务改成没有实际工程价值的操作
+MEMORY_NOT_VERIFIED
+memory_mode: off
+```
+
+Loop Controller 在 Router 后：
+
+```text
+Task Classification
+ ↓
+Memory Retrieval
+ ↓
+Route Decision
+```
+
+必须允许：
+
+```yaml
+memory_mode: on
+```
+
+同时保持：
+
+```text
+Router Rules
+>
+High-confidence Memory
+>
+Low-confidence Memory
+```
+
+不要让 Memory 替代 Router。
+
+---
+
+# 十一、Memory 必须有真实 Provenance
+
+每次执行至少记录：
+
+```yaml
+memory:
+  mode:
+  retrieved:
+  used:
+  influence:
+  conflict:
+```
+
+特别重要：
+
+```text
+retrieved
+≠
+used
+```
+
+以及：
+
+```text
+used
+≠
+influenced
+```
+
+必须分别记录。
+
+---
+
+# 十二、修复 Trace
+
+当前问题：
+
+```text
+TRACE_SIMULATED
+```
+
+尤其是：
+
+```text
+所有 pipeline timestamps 一样
+```
+
+不要用：
+
+```text
+build_trace()
+```
+
+虚构执行阶段。
+
+必须让 Trace 记录：
+
+```text
+真实阶段开始
+真实阶段结束
+真实 latency
+真实 status
+真实 execution_id
+```
+
+例如：
+
+```yaml
+execution_id:
+task_id:
+
+stages:
+  - name: routing
+    started_at:
+    completed_at:
+    duration_ms:
+    status:
+
+  - name: memory
+    started_at:
+    completed_at:
+    duration_ms:
+    status:
+
+  - name: skill
+    started_at:
+    completed_at:
+    duration_ms:
+    status:
+
+  - name: execution
+    started_at:
+    completed_at:
+    duration_ms:
+    status:
+
+  - name: validation
+    started_at:
+    completed_at:
+    duration_ms:
+    status:
 ```
 
 ---
 
-# 二十一、本阶段暂时不要做的事情
+# 十三、修复 Telemetry
 
-全部记为：
+Telemetry 必须由真实运行阶段自动产生。
 
-```text
-DEFERRED
-```
-
-包括：
+至少：
 
 ```text
-Memory Effectiveness
-Router Accuracy
-Orchestrator Implementation
-Evolution Loop
-Knowledge Graph
-新的 Host Integration
-大规模 Skill 重构
+task event
+route event
+memory event
+skill event
+execution event
+validation event
+outcome event
+failure event
 ```
 
-即使发现这些地方存在问题，也只记录，不实施。
+每个事件必须有：
+
+```text
+execution_id
+task_id
+timestamp
+```
+
+且：
+
+```text
+Trace.execution_id
+=
+Telemetry.execution_id
+```
 
 ---
 
-# 二十二、最终报告
+# 十四、避免递归
+
+绝对禁止：
+
+```text
+OpenCode
+ ↓
+Agent OS
+ ↓
+Loop Controller
+ ↓
+OpenCode
+ ↓
+Agent OS
+```
+
+因此设计：
+
+```text
+Runtime Mode
+```
+
+至少支持：
+
+```text
+REAL_HOST
+TEST_PROVIDER
+```
+
+例如：
+
+```yaml
+runtime_mode:
+  real:
+    provider: opencode
+
+  test:
+    provider: test_provider
+    recursive: false
+```
+
+测试模式用于：
+
+```text
+Agent OS
+→ Loop Controller
+→ Router
+→ Skill
+→ TestProvider
+```
+
+真正验证完整 Agent OS pipeline。
+
+不要：
+
+```text
+TestProvider
+绕过 Loop Controller
+```
+
+---
+
+# 十五、最重要的 Integration Test
+
+增加一个真正的：
+
+```text
+FULL_PIPELINE_TEST
+```
+
+它必须：
+
+```text
+调用 Agent OS Runtime Entry
+```
+
+而不是：
+
+```text
+直接 import runtime_adapter
+```
+
+完整调用：
+
+```text
+Agent OS Entry
+ ↓
+Loop Controller
+ ↓
+Router
+ ↓
+Memory
+ ↓
+Skill Loader
+ ↓
+Runtime Adapter
+ ↓
+TestProvider
+ ↓
+Validation
+ ↓
+Trace
+ ↓
+Telemetry
+```
+
+---
+
+# 十六、建立 Full Pipeline Scenario
+
+至少建立：
+
+### Scenario A
+
+```text
+Java task
++
+memory on
++
+success provider
+```
+
+预期：
+
+```text
+Router called
+Skill loaded
+Memory retrieved
+Execution success
+Validation
+Trace
+Telemetry
+```
+
+### Scenario B
+
+```text
+Java task
++
+timeout provider
+```
+
+预期：
+
+```text
+Reliability Guard triggered
+retry
+termination
+failure telemetry
+trace
+outcome
+```
+
+### Scenario C
+
+```text
+Java project
++
+Python contaminated output
+```
+
+预期：
+
+```text
+Cross-stack Guard triggered
+```
+
+### Scenario D
+
+```text
+AIView
++
+known competing consumer pattern
+```
+
+预期：
+
+```text
+Critical Bug Detector
+```
+
+---
+
+# 十七、重要：Full Pipeline Test 不能直接指定 Router 结果
+
+不要：
+
+```python
+lead_skill="backend-architect"
+```
+
+作为测试输入。
+
+应该：
+
+```text
+Task
+ ↓
+Router
+```
+
+然后测试：
+
+```text
+actual decision
+```
+
+这样才能验证 Router。
+
+---
+
+# 十八、Full Pipeline Test 不能直接指定 Memory
+
+不要：
+
+```text
+memory_used=True
+```
+
+应该：
+
+```text
+memory retrieval
+```
+
+真实执行。
+
+最终再判断：
+
+```text
+retrieved
+used
+influenced
+```
+
+---
+
+# 十九、建立 Runtime Evidence Contract
+
+每次完整执行必须产出：
+
+```yaml
+execution_evidence:
+  task_id:
+  execution_id:
+
+  routing:
+    verified:
+    decision:
+
+  memory:
+    verified:
+    retrieved:
+    influence:
+
+  skill:
+    verified:
+    skill:
+
+  execution:
+    verified:
+
+  validation:
+    verified:
+
+  trace:
+    verified:
+
+  telemetry:
+    verified:
+
+  outcome:
+    verified:
+```
+
+---
+
+# 二十、回归测试
+
+完成后运行：
+
+```bash
+cd /home/shade/.agents
+
+python3 --version
+
+python3 -m unittest discover -v
+```
+
+然后单独运行：
+
+```text
+FULL_PIPELINE_TEST
+```
+
+要求：
+
+```text
+Agent OS Entry
+→ Loop Controller
+→ Router
+→ Memory
+→ Skill
+→ Runtime
+→ Validation
+→ Trace
+→ Telemetry
+```
+
+全部 PASS。
+
+---
+
+# 二十一、禁止手工伪造
+
+本阶段绝对禁止：
+
+```text
+手工写 Router log
+手工写 Skill log
+手工写 Memory event
+手工写 Telemetry
+手工生成 Trace
+```
+
+所有 evidence 必须由：
+
+```text
+真实函数调用
+```
+
+产生。
+
+---
+
+# 二十二、AIView 不修改
+
+完成后：
+
+```bash
+cd /home/shade/Public/test
+git status --short
+git diff --stat
+```
+
+必须确认：
+
+```text
+AIView_CHANGED_BY_AGENT_OS:
+false
+```
+
+如果存在实验前已有修改：
+
+记录为：
+
+```text
+PRE_EXISTING
+```
+
+不要清理。
+
+---
+
+# 二十三、最终报告
 
 生成：
 
 ```text
-/home/shade/.agents/runtime/reports/phase-6.1-real-project-validation.md
+/home/shade/.agents/runtime/reports/phase-5.7-runtime-integration-fix.md
 ```
 
 必须包含：
 
 ```text
-Executive Summary
+Current Runtime Entry
 
-Historical Failure Analysis
+Previous Bypass
 
-ATTEMPT_1
-ATTEMPT_2
-ATTEMPT_3
+Architecture Change
 
-Root Cause Analysis
+Loop Controller Integration
 
-Selected Root Cause
+Router Integration
 
-Minimal Fix
+Memory Integration
 
-Files Changed
+Skill Integration
 
-Why These Files
+Runtime Integration
 
-Why Scope Is Safe
+Non-Recursive Mode
 
-Experiment Design
+Trace Integration
 
-Baseline
+Telemetry Integration
 
-Experiment Result
+Full Pipeline Tests
 
-Code Change Verification
+Scenario A
 
-Test Verification
+Scenario B
 
-Trace Verification
+Scenario C
 
-Telemetry Verification
+Scenario D
 
-Before vs After
+Evidence Contract
 
-Evidence Classification
+AIView Integrity
 
-Limitations
+Regression Tests
 
-Deferred Issues
-
-Final Status
-
-Recommendation
+Remaining Risks
 ```
 
 ---
 
-# 二十三、最终 Evidence Classification
+# 二十四、最终输出
 
-严格区分：
+```yaml
+PHASE: 5.7
 
-```text
-CODE_VERIFIED
-RUNTIME_VERIFIED
-INDEPENDENTLY_AUDITED
-EFFECTIVENESS_VERIFIED
-```
+OBJECTIVE:
+Repair Agent OS Runtime Integration
 
-例如：
+CURRENT_ENTRY:
 
-### 第一次真实成功
+NEW_ENTRY:
 
-可以写：
+LOOP_CONTROLLER:
+PASS / FAIL
 
-```text
-REAL_PROJECT_EXECUTION:
-RUNTIME_VERIFIED
+ROUTER:
+PASS / FAIL
 
-CODE_CHANGE:
-RUNTIME_VERIFIED
+MEMORY:
+PASS / FAIL
 
-TEST:
-RUNTIME_VERIFIED
-```
+SKILL:
+PASS / FAIL
 
-但是：
+RUNTIME:
+PASS / FAIL
 
-```text
-PRODUCTIVITY_IMPROVEMENT:
-NOT_VERIFIED
-```
+VALIDATION:
+PASS / FAIL
 
-除非有可比较 baseline。
+TRACE:
+PASS / FAIL
 
----
+TELEMETRY:
+PASS / FAIL
 
-# 二十四、最终必须输出这些字段
+NON_RECURSIVE_MODE:
+PASS / FAIL
 
-```text
-AOS_V1_STATUS:
+FULL_PIPELINE_TEST:
+PASS / FAIL
 
-PHASE_6.1_STATUS:
+SCENARIO_A:
+PASS / FAIL
 
-PRIMARY_ROOT_CAUSE:
+SCENARIO_B:
+PASS / FAIL
 
-FIX_APPLIED:
+SCENARIO_C:
+PASS / FAIL
 
-FILES_CHANGED:
+SCENARIO_D:
+PASS / FAIL
 
-FREEZE_SCOPE_PRESERVED:
+MANUAL_EVIDENCE:
+MUST_BE_FALSE
 
-REAL_PROJECT_EXECUTION:
+AI_VIEW_CHANGED:
+MUST_BE_FALSE
 
-TASK_SUCCESS:
+REGRESSION_TESTS:
 
-CODE_CHANGE_VERIFIED:
-
-TEST_VERIFIED:
-
-TRACE_VERIFIED:
-
-TELEMETRY_VERIFIED:
-
-MANUAL_INTERVENTION:
-
-BEFORE:
-
-AFTER:
-
-DELTA:
-
-PRODUCTIVITY_IMPROVEMENT:
-
-EVIDENCE_QUALITY:
-
-REMAINING_GAPS:
-
-DEFERRED:
-
-FINAL_RECOMMENDATION:
+P0_GATE:
+READY / BLOCKED
 
 NEXT:
 ```
 
 ---
 
-# 二十五、执行原则
+# 二十五、停止条件
 
-整个过程中坚持：
+只完成：
 
 ```text
-Evidence First
-Minimal Fix
-Real Project
-Real Code
-Real Test
-No Scope Creep
-Freeze Preservation
-One Objective
+Runtime Integration
 ```
 
-最重要的是：
+不要：
 
-> **本阶段不是为了让报告变漂亮，而是第一次真正让 Agent OS 在真实项目中完成一个可验证的开发任务。**
+```text
+进入 P1
+Memory overhaul
+Router redesign
+Skill redesign
+AIView refactor
+```
 
-开始执行。
+只有当：
 
-先分析 3 次历史失败，再决定最小修复。
+```text
+Agent OS Entry
+→ Loop Controller
+→ Router
+→ Memory
+→ Skill
+→ Runtime
+→ Validation
+→ Trace
+→ Telemetry
+```
 
-完成后立即停止，不进入 Memory、Router、Orchestrator 或 Evolution 的下一轮开发。
+全部有真实测试证据后，才停止并等待下一轮 OpenCode 验证。
+
+本阶段核心目标：
+
+> **把“Agent OS 组件可以工作”升级为“Agent OS 有一个真正可执行的完整 Runtime 闭环”。**
 
