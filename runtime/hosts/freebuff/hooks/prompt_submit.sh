@@ -28,8 +28,15 @@ fi
 
 TIMEOUT_SECONDS=15
 
+# ── Logging ──────────────────────────────────────────────────────
+AOS_LOG="/tmp/aos_hook_log.txt"
+log_hook() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$AOS_LOG"
+}
+
 # ── Read input from Freebuff ──────────────────────────────────────
 INPUT=$(cat)
+log_hook "HOOK_TRIGGERED: ${INPUT:0:80}"
 
 # ── Skip recursion guard ──────────────────────────────────────────
 if [ "${AOS_HOST_PLUGIN_ACTIVE:-}" = "1" ]; then
@@ -74,6 +81,7 @@ AOS_CONTEXT=$(echo "$BOOTSTRAP_INPUT" | timeout "$TIMEOUT_SECONDS" python3 "$BOO
 if [ -n "$AOS_CONTEXT" ]; then
     # Prepend AOS context to prompt, then rebuild JSON
     MODIFIED_PROMPT="${AOS_CONTEXT}${PROMPT}"
+    log_hook "AOS_CONTEXT_INJECTED: len=${#AOS_CONTEXT}"
     
     if command -v jq &>/dev/null; then
         # Use python for safe JSON construction (jq --arg breaks with multi-line)
@@ -93,6 +101,7 @@ print(json.dumps(data, ensure_ascii=False))
         echo "$MODIFIED_PROMPT"
     fi
 else
+    log_hook "AOS_UNAVAILABLE: passing through"
     echo "$INPUT"
 fi
 
