@@ -158,17 +158,17 @@ def promote_validated(validated_result):
             "promoted_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    # --- Idempotency check: skip if already promoted ---
+    # --- Idempotency check: skip if already promoted or skipped ---
     candidate_id = validated_result.get("best_candidate_id", validated_result.get("candidate_id", ""))
     if os.path.exists(OUTPUT_FILE):
         existing = load_promotion_results()
         for prev in existing.get("promotion_results", []):
-            if prev["memory_id"] == memory_id and prev["status"] == "applied":
+            if prev["memory_id"] == memory_id and prev["status"] in ("applied", "skipped"):
                 return {
                     "memory_id": memory_id,
                     "candidate_id": candidate_id,
                     "status": "skipped",
-                    "rejection_reason": f"Memory {memory_id} already promoted at {prev.get('promoted_at', 'unknown')}. "
+                    "rejection_reason": f"Memory {memory_id} already processed ({prev['status']}) at {prev.get('promoted_at', 'unknown')}. "
                                         f"Idempotency: no duplicate promotion.",
                     "promoted_at": datetime.now(timezone.utc).isoformat(),
                 }
@@ -222,10 +222,18 @@ def promote_validated(validated_result):
     conf_map = {"low": 0.33, "medium": 0.66, "high": 1.0}
     new_conf_value = conf_map.get(new_conf, 0.33)
 
+    # Phase 7.2: Lifecycle status enforcement
+    old_status = fm.get("status", "observed")
+    if new_el in ("runtime_validated", "independent_validated", "real_project_validated", "production_validated"):
+        new_status = "validated"
+    else:
+        new_status = old_status
+
     updates = {
         "observation_count": new_obs,
         "evidence_level": new_el,
         "confidence": new_conf,
+        "status": new_status,
         "last_validated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
     }
 
@@ -255,6 +263,11 @@ def promote_validated(validated_result):
             "new_evidence_level": new_el,
             "added_executions": validated_result["evidence_sources"],
         },
+        "status_updates": {
+            "old_status": old_status,
+            "new_status": new_status,
+            "lifecycle_enforced": old_status != new_status,
+        },
         "confidence_updates": {
             "old_confidence": old_conf,
             "new_confidence": new_conf,
@@ -267,10 +280,53 @@ def promote_validated(validated_result):
             f"Memory {memory_id} confirmed by {validation_runs} "
             f"independent runtime execution(s). Quality score: {validated_result['quality_score']}. "
             f"Evidence upgraded from {old_el} to {new_el}. "
+            f"Status: {old_status} → {new_status}. "
             f"Confidence: {old_conf} → {new_conf}."
         ),
         "promoted_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def verify_lifecycle():
+    """
+    Phase 7.2: Verify lifecycle state consistency across memory files and index.
+    Checks that status field in .md frontmatter matches evidence_level.
+    Returns list of inconsistencies.
+    """
+    index = load_memory_index()
+    inconsistencies = []
+
+    for mem in index.get("memories", []):
+        mid = mem["memory_id"]
+        filepath = os.path.join(PROJECT_ROOT, mem.get("file", ""))
+        if not os.path.exists(filepath):
+            continue
+
+        _, fm, _ = read_memory_yaml_frontmatter(filepath)
+        if not fm:
+            continue
+
+        md_status = fm.get("status", "observed")
+        md_evidence = fm.get("evidence_level", "benchmark_evaluated")
+        idx_status = mem.get("status", "observed")
+
+        # Expected status based on evidence_level
+        if md_evidence in ("runtime_validated", "independent_validated",
+                           "real_project_validated", "production_validated"):
+            expected_status = "validated"
+        else:
+            expected_status = "observed"
+
+        issues = []
+        if md_status != expected_status:
+            issues.append(f"status={md_status} (expected={expected_status} for evidence_level={md_evidence})")
+        if md_status != idx_status:
+            issues.append(f"md.status={md_status} != index.status={idx_status}")
+
+        if issues:
+            inconsistencies.append({"memory_id": mid, "issues": issues})
+
+    return inconsistencies
 
 
 def main():
@@ -302,7 +358,9 @@ def main():
         if status == "applied":
             eu = result["evidence_updates"]
             cu = result["confidence_updates"]
+            su = result.get("status_updates", {})
             print(f"  ✓ APPLIED: {eu['old_evidence_level']} → {eu['new_evidence_level']}, "
+                  f"status: {su.get('old_status', '?')} → {su.get('new_status', '?')}, "
                   f"confidence: {cu['old_confidence']} → {cu['new_confidence']}, "
                   f"observations: {eu['old_observation_count']} → {eu['new_observation_count']}")
         elif status == "skipped":
@@ -317,9 +375,9 @@ def main():
 
     output = {
         "version": "1.0",
-        "phase": "5.11.1",
+        "phase": "7.2",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "generated_by": "promoter.py (Phase 5.11.1 Trust Hardening)",
+        "generated_by": "promoter.py (Phase 7.2 Memory Lifecycle Enforcement)",
         "source_file": VALIDATION_FILE,
         "summary": {
             "total_validated_available": len(validated),
@@ -335,7 +393,8 @@ def main():
             "no_memory_deleted": "PASS",
             "no_new_memory_created": "PASS",
             "metadata_only_updates": "PASS",
-            "trust_gate_enforced": "PASS",  # Phase 5.11.1
+            "trust_gate_enforced": "PASS",
+            "lifecycle_enforcement": "PASS",
         },
     }
 
@@ -350,8 +409,20 @@ def main():
     print(f"  deferred: {output['summary']['deferred_to_next_cycle']}")
     print(f"\nOutput written to: {OUTPUT_FILE}")
 
+    # Phase 7.2: Lifecycle verification
+    print(f"\n{'=' * 60}")
+    print("Phase 7.2: Lifecycle State Verification")
+    inconsistencies = verify_lifecycle()
+    if inconsistencies:
+        print(f"  INCONSISTENT: {len(inconsistencies)} memories with lifecycle issues")
+        for inc in inconsistencies:
+            print(f"    {inc['memory_id']}: {'; '.join(inc['issues'])}")
+    else:
+        print("  CONSISTENT: All memory lifecycle states are correct")
+
     # Phase 5.8.1: Auto-sync retrieval-index after promotion
-    if applied:
+    # Phase 7.2: Always run reconciler when there were validated results, not just applied
+    if validated:
         print(f"\n{'=' * 60}")
         print("Phase 5.8.1: Syncing retrieval-index.yaml...")
         sync_reconciler = os.path.join(

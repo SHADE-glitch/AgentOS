@@ -1,10 +1,10 @@
 version: '1.0'
 phase: '5.8'
-generated_at: '2026-08-30T13:51:38.109527+00:00'
+generated_at: '2026-09-01T03:10:59.834622+00:00'
 summary:
   total_memories: 31
-  active: 2
-  degraded: 29
+  active: 3
+  degraded: 28
   archived_candidate: 0
 memories:
 - memory_id: T-001
@@ -42,13 +42,12 @@ memories:
   success_rate: 1.0
   observation_count: 0
 - memory_id: T-005
-  decay_factor: 0.85
-  state: degraded
-  reasons:
-  - 'low_confidence: 0 observations'
+  decay_factor: 1.0
+  state: active
+  reasons: []
   usage_count: 1
   success_rate: 1.0
-  observation_count: 0
+  observation_count: 2
 - memory_id: T-006
   decay_factor: 0.85
   state: degraded

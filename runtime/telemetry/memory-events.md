@@ -808,3 +808,1179 @@ memory_ids:
 hypothesis_count: 0
 timestamp: '2026-09-01T02:18:41.459646+00:00'
 ```
+
+## Memory Event — 2026-09-01T04:58:32.763191+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788238711
+task_id: FULL-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-002
+- P-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T04:58:32.763191+00:00'
+```
+
+## Memory Event — 2026-09-01T04:58:34.039024+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788238713
+task_id: FULL-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-001
+- E-001
+- T-005
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T04:58:34.039024+00:00'
+```
+
+## Memory Event — 2026-09-01T04:59:50.352360+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788238789
+task_id: FULL-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-002
+- P-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T04:59:50.352360+00:00'
+```
+
+## Memory Event — 2026-09-01T04:59:51.657564+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788238790
+task_id: FULL-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- T-009
+- S-002
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T04:59:51.657564+00:00'
+```
+
+## Memory Event — 2026-09-01T04:59:51.901354+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-TEST-003
+task_id: TASK-003
+mode: enabled
+retrieved: 3
+memory_ids:
+- MEM-001
+- MEM-002
+- MEM-003
+hypothesis_count: 0
+timestamp: '2026-09-01T04:59:51.901354+00:00'
+```
+
+## Memory Event — 2026-09-01T05:02:04.137832+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788238923
+task_id: FULL-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-002
+- P-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:02:04.137832+00:00'
+```
+
+## Memory Event — 2026-09-01T05:02:05.767836+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788238924
+task_id: FULL-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-001
+- E-001
+- T-005
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T05:02:05.767836+00:00'
+```
+
+## Memory Event — 2026-09-01T05:03:22.120818+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239001
+task_id: FULL-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:03:22.120818+00:00'
+```
+
+## Memory Event — 2026-09-01T05:03:23.459894+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239002
+task_id: FULL-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- T-009
+- S-002
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T05:03:23.459894+00:00'
+```
+
+## Memory Event — 2026-09-01T05:03:24.014324+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-TEST-003
+task_id: TASK-003
+mode: enabled
+retrieved: 3
+memory_ids:
+- MEM-001
+- MEM-002
+- MEM-003
+hypothesis_count: 0
+timestamp: '2026-09-01T05:03:24.014324+00:00'
+```
+
+## Memory Event — 2026-09-01T05:03:33.594237+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239012
+task_id: INT-7.4-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-009
+- T-010
+- S-002
+- T-005
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T05:03:33.594237+00:00'
+```
+
+## Memory Event — 2026-09-01T05:03:34.949773+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239013
+task_id: INT-7.4-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:03:34.949773+00:00'
+```
+
+## Memory Event — 2026-09-01T05:03:36.626749+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239015
+task_id: INT-7.4-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-002
+- T-009
+hypothesis_count: 0
+timestamp: '2026-09-01T05:03:36.626749+00:00'
+```
+
+## Memory Event — 2026-09-01T05:03:38.004271+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239016
+task_id: INT-7.4-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- S-002
+- P-001
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-01T05:03:38.004271+00:00'
+```
+
+## Memory Event — 2026-09-01T05:04:17.491255+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239056
+task_id: INT-7.4-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-009
+- S-002
+- T-005
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T05:04:17.491255+00:00'
+```
+
+## Memory Event — 2026-09-01T05:04:18.882351+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239057
+task_id: INT-7.4-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:04:18.882351+00:00'
+```
+
+## Memory Event — 2026-09-01T05:04:20.582167+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239059
+task_id: INT-7.4-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-002
+- T-009
+hypothesis_count: 0
+timestamp: '2026-09-01T05:04:20.582167+00:00'
+```
+
+## Memory Event — 2026-09-01T05:04:21.978430+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239060
+task_id: INT-7.4-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- P-001
+- S-002
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-01T05:04:21.978430+00:00'
+```
+
+## Memory Event — 2026-09-01T05:04:56.779837+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239095
+task_id: FULL-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:04:56.779837+00:00'
+```
+
+## Memory Event — 2026-09-01T05:04:58.611329+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239097
+task_id: FULL-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-001
+- T-005
+- E-001
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T05:04:58.611329+00:00'
+```
+
+## Memory Event — 2026-09-01T05:06:15.113639+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239173
+task_id: FULL-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:06:15.113639+00:00'
+```
+
+## Memory Event — 2026-09-01T05:06:16.596965+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239175
+task_id: FULL-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- T-009
+- S-002
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T05:06:16.596965+00:00'
+```
+
+## Memory Event — 2026-09-01T05:06:17.238324+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-TEST-003
+task_id: TASK-003
+mode: enabled
+retrieved: 3
+memory_ids:
+- MEM-001
+- MEM-002
+- MEM-003
+hypothesis_count: 0
+timestamp: '2026-09-01T05:06:17.238324+00:00'
+```
+
+## Memory Event — 2026-09-01T05:06:24.936908+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239183
+task_id: FULL-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T05:06:24.936908+00:00'
+```
+
+## Memory Event — 2026-09-01T05:06:26.739597+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239185
+task_id: FULL-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- T-001
+- E-001
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T05:06:26.739597+00:00'
+```
+
+## Memory Event — 2026-09-01T05:07:43.217832+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239262
+task_id: FULL-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T05:07:43.217832+00:00'
+```
+
+## Memory Event — 2026-09-01T05:07:44.681971+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239263
+task_id: FULL-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- T-009
+- S-002
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T05:07:44.681971+00:00'
+```
+
+## Memory Event — 2026-09-01T05:07:45.363827+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-TEST-003
+task_id: TASK-003
+mode: enabled
+retrieved: 3
+memory_ids:
+- MEM-001
+- MEM-002
+- MEM-003
+hypothesis_count: 0
+timestamp: '2026-09-01T05:07:45.363827+00:00'
+```
+
+## Memory Event — 2026-09-01T05:13:56.861349+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788239635
+task_id: RV-2026-09-01-002
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:13:56.861349+00:00'
+```
+
+## Memory Event — 2026-09-01T05:25:54.753606+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788240353
+task_id: RV-2026-09-01-003
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T05:25:54.753606+00:00'
+```
+
+## Memory Event — 2026-09-01T05:48:14.315744+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788241693
+task_id: RV-7.5-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T05:48:14.315744+00:00'
+```
+
+## Memory Event — 2026-09-01T05:49:02.860762+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788241741
+task_id: RV-7.5-002
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T05:49:02.860762+00:00'
+```
+
+## Memory Event — 2026-09-01T06:14:11.048872+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788243249
+task_id: RV-7.5-003
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- E-007
+- S-002
+- P-002
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T06:14:11.048872+00:00'
+```
+
+## Memory Event — 2026-09-01T07:10:49.037653+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246647
+task_id: INT-7.4-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-009
+- S-002
+- T-005
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T07:10:49.037653+00:00'
+```
+
+## Memory Event — 2026-09-01T07:10:50.836122+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246649
+task_id: INT-7.4-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:10:50.836122+00:00'
+```
+
+## Memory Event — 2026-09-01T07:10:52.859158+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246651
+task_id: INT-7.4-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-002
+- T-009
+hypothesis_count: 0
+timestamp: '2026-09-01T07:10:52.859158+00:00'
+```
+
+## Memory Event — 2026-09-01T07:10:54.578176+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246653
+task_id: INT-7.4-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-001
+- S-002
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-01T07:10:54.578176+00:00'
+```
+
+## Memory Event — 2026-09-01T07:11:04.381931+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246663
+task_id: FULL-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:11:04.381931+00:00'
+```
+
+## Memory Event — 2026-09-01T07:11:06.406411+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246665
+task_id: FULL-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- T-001
+- E-001
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:11:06.406411+00:00'
+```
+
+## Memory Event — 2026-09-01T07:12:22.976524+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246741
+task_id: FULL-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:12:22.976524+00:00'
+```
+
+## Memory Event — 2026-09-01T07:12:24.735195+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246743
+task_id: FULL-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- T-009
+- S-002
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T07:12:24.735195+00:00'
+```
+
+## Memory Event — 2026-09-01T07:12:25.546686+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-TEST-003
+task_id: TASK-003
+mode: enabled
+retrieved: 3
+memory_ids:
+- MEM-001
+- MEM-002
+- MEM-003
+hypothesis_count: 0
+timestamp: '2026-09-01T07:12:25.546686+00:00'
+```
+
+## Memory Event — 2026-09-01T07:14:11.837199+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246850
+task_id: INT-7.4-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-009
+- S-002
+- P-001
+- T-005
+hypothesis_count: 0
+timestamp: '2026-09-01T07:14:11.837199+00:00'
+```
+
+## Memory Event — 2026-09-01T07:14:13.696101+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246852
+task_id: INT-7.4-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:14:13.696101+00:00'
+```
+
+## Memory Event — 2026-09-01T07:14:15.774421+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246854
+task_id: INT-7.4-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-009
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:14:15.774421+00:00'
+```
+
+## Memory Event — 2026-09-01T07:14:17.673832+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246856
+task_id: INT-7.4-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-01T07:14:17.673832+00:00'
+```
+
+## Memory Event — 2026-09-01T07:14:43.840191+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246882
+task_id: FULL-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:14:43.840191+00:00'
+```
+
+## Memory Event — 2026-09-01T07:14:45.981097+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246884
+task_id: FULL-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- T-001
+- E-001
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:14:45.981097+00:00'
+```
+
+## Memory Event — 2026-09-01T07:16:02.614988+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246961
+task_id: FULL-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:16:02.614988+00:00'
+```
+
+## Memory Event — 2026-09-01T07:16:04.491386+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788246963
+task_id: FULL-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- T-009
+- S-002
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-01T07:16:04.491386+00:00'
+```
+
+## Memory Event — 2026-09-01T07:16:05.400146+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-TEST-003
+task_id: TASK-003
+mode: enabled
+retrieved: 3
+memory_ids:
+- MEM-001
+- MEM-002
+- MEM-003
+hypothesis_count: 0
+timestamp: '2026-09-01T07:16:05.400146+00:00'
+```
+
+## Memory Event — 2026-09-01T07:17:51.705908+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788247070
+task_id: INT-7.4-A-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-009
+- S-002
+- P-001
+- T-005
+hypothesis_count: 0
+timestamp: '2026-09-01T07:17:51.705908+00:00'
+```
+
+## Memory Event — 2026-09-01T07:17:53.712460+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788247072
+task_id: INT-7.4-B-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:17:53.712460+00:00'
+```
+
+## Memory Event — 2026-09-01T07:17:55.911589+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788247074
+task_id: INT-7.4-C-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-009
+- T-002
+hypothesis_count: 0
+timestamp: '2026-09-01T07:17:55.911589+00:00'
+```
+
+## Memory Event — 2026-09-01T07:17:57.907736+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788247076
+task_id: INT-7.4-D-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-01T07:17:57.907736+00:00'
+```
+
+## Memory Event — 2026-09-01T07:28:07.454352+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788247686
+task_id: BENCH-R1
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T07:28:07.454352+00:00'
+```
+
+## Memory Event — 2026-09-01T07:39:31.261085+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788248369
+task_id: BENCH-R1
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T07:39:31.261085+00:00'
+```
+
+## Memory Event — 2026-09-01T07:48:38.469059+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788248917
+task_id: BENCH-R1
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T07:48:38.469059+00:00'
+```
+
+## Memory Event — 2026-09-01T08:06:41.927284+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788250000
+task_id: BENCH-R1-SHORT
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- P-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-01T08:06:41.927284+00:00'
+```
+
+## Memory Event — 2026-09-01T08:20:56.174743+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788250854
+task_id: --project
+mode: --task
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T08:20:56.174743+00:00'
+```
+
+## Memory Event — 2026-09-01T08:22:33.229108+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788250951
+task_id: BENCH-R2
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- S-002
+- P-001
+- T-009
+hypothesis_count: 0
+timestamp: '2026-09-01T08:22:33.229108+00:00'
+```
+
+## Memory Event — 2026-09-01T09:13:20.816930+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788253999
+task_id: BENCH-R1
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T09:13:20.816930+00:00'
+```
+
+## Memory Event — 2026-09-01T09:15:23.201292+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788254121
+task_id: BENCH-R1
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T09:15:23.201292+00:00'
+```
+
+## Memory Event — 2026-09-01T09:17:26.453801+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788254245
+task_id: BENCH-R1
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T09:17:26.453801+00:00'
+```
+
+## Memory Event — 2026-09-01T09:22:16.750411+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788254535
+task_id: BENCH-R1
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- P-001
+- T-005
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T09:22:16.750411+00:00'
+```
+
+## Memory Event — 2026-09-01T09:26:07.243926+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788254765
+task_id: BENCH-R1-FRESH
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-01T09:26:07.243926+00:00'
+```

@@ -1,0 +1,88 @@
+# Team Plan — RV-2026-09-01-001
+# Runtime Diagnosis of Interview Session Drift and Auth-State Corruption
+
+team_id: TP-2026-09-01-001
+task_id: RV-2026-09-01-001
+created_at: "2026-09-01T00:02:00Z"
+status: pending_human_approval
+
+## Objective
+
+Diagnose and fix runtime bugs in the AI Interview Platform causing:
+1. Session resume restoring stale/duplicated state
+2. Retries/timeout exposing wrong question set or inconsistent progress
+3. Interview results recorded twice or with mismatched score metadata
+4. User role/identity checks occasionally inconsistent
+
+## Team Composition
+
+| Role | Agent Type | Domain | Responsibility |
+|------|-----------|--------|----------------|
+| backend-architect | Lead | backend | Fix session state rehydration, answer idempotency, orchestrate cross-domain fixes |
+| database-engineer | Support | database | Add unique constraint on interview_result, fix data model consistency |
+| distributed-system | Support | distributed | Fix RabbitMQ double-consumer, add scoring idempotency check |
+| security-engineer | Support | security | Add token revocation mechanism, fix auth-state consistency |
+| code-reviewer | Review | engineering | Final review of all fixes for correctness and completeness |
+
+## Layered Execution Plan
+
+### Layer 1 — Independent domain fixes (parallel)
+
+| Task Card | Role | Bug ID | Description |
+|-----------|------|--------|-------------|
+| TC-001 | backend-architect | BUG-001 | Fix session state rehydration — validate currentQuestionId against message history |
+| TC-002 | database-engineer | BUG-002 | Add unique constraint on interview_result(session_id) to prevent duplicate rows |
+| TC-003 | distributed-system | BUG-003+BUG-005 | Fix double-consumer registration, add idempotency check before scoring insert |
+| TC-004 | security-engineer | BUG-004 | Add refresh token revocation via Redis, implement token family tracking |
+
+### Layer 2 — Cross-cutting fixes (depends on Layer 1)
+
+| Task Card | Role | Bug ID | Description |
+|-----------|------|--------|-------------|
+| TC-005 | backend-architect | BUG-002 | Add idempotency key support for answer submission (UUID per request) |
+
+### Layer 3 — Code review (depends on Layer 1 + 2)
+
+| Task Card | Role | Description |
+|-----------|------|-------------|
+| TC-006 | code-reviewer | Review all fixes across auth, interview, and scoring modules |
+
+## Dependency Graph
+
+```
+TC-001 (backend-architect)  ─┐
+TC-002 (database-engineer) ─┤
+TC-003 (distributed-system) ─┼─> TC-005 (backend-architect) ─> TC-006 (code-reviewer)
+TC-004 (security-engineer)  ─┘
+```
+
+## Risk Assessment
+
+| Risk | Mitigation |
+|------|-----------|
+| Redis state rehydration may require DB schema change | Validate currentQuestionId against message history without schema change |
+| Unique constraint on interview_result may conflict with async scoring race | Use INSERT ... ON DUPLICATE KEY UPDATE or check-before-insert pattern |
+| Token revocation adds Redis dependency to auth path | Keep revocation list TTL-aligned with refresh token expiry (7 days) |
+| InterviewScoringService removal may break AI mode | Gate it with @ConditionalOnProperty instead of removing |
+
+## Activation Rules Check
+
+- domains >= 2: YES (backend, database, distributed, security)
+- required_roles >= 3: YES (4 support roles)
+- task_dependency >= 2: YES (5 task cards with 3-layer dependency)
+- multi-agent activation: JUSTIFIED
+
+## Memory Context
+
+- memories_considered: 1
+- memories_used: 0
+- anti_pattern_alert: false
+- failure_memory_adjustment: none
+- memory_influence: none
+- memory_conflict: false
+
+## Human Review Gate
+
+- [ ] Team plan reviewed
+- [ ] Task cards reviewed
+- [ ] Delegation approved

@@ -1,0 +1,157 @@
+# Execution Trace — RV-2026-09-01-001
+# Runtime Diagnosis of Interview Session Drift and Auth-State Corruption
+
+task_id: RV-2026-09-01-001
+start_time: "2026-09-01T00:00:00Z"
+status: routing_complete
+
+phases:
+  - phase: intent_classification
+    timestamp: "2026-09-01T00:00:01Z"
+    input: |
+      User reports: (1) session resume restores stale/duplicated state,
+      (2) retries/timeout expose wrong question set or inconsistent interview progress,
+      (3) interview results recorded twice or with mismatched score metadata,
+      (4) user role/identity checks occasionally inconsistent across login session
+    intent: debug
+    domain: backend
+    task_type: cross-domain-runtime-diagnosis
+
+  - phase: domain_classification
+    timestamp: "2026-09-01T00:00:02Z"
+    domains:
+      - backend       # Spring Boot session orchestration
+      - database      # MySQL data model, idempotency
+      - distributed   # Redis state store, RabbitMQ messaging
+      - security      # JWT lifecycle, auth-state
+    confidence: 0.94
+
+  - phase: memory_retrieval
+    timestamp: "2026-09-01T00:00:03Z"
+    query: "AI Interview Platform session drift auth-state corruption"
+    scope: project
+    results_found: 0
+    high_confidence: 0
+    low_confidence: 0
+    memory_influence: none
+    note: "No prior memories for this project. Baseline routing used."
+
+  - phase: skill_routing
+    timestamp: "2026-09-01T00:00:04Z"
+    lead_skill: backend-architect
+    support_skills:
+      - database-engineer
+      - distributed-system
+      - security-engineer
+      - code-reviewer
+    fallback: system-architect
+    routing_matrix_match: "Spring Boot 项目设计 → backend-architect (priority: High, confidence: 0.92)"
+    route_quality: correct
+
+  - phase: codebase_exploration
+    timestamp: "2026-09-01T00:00:05Z"
+    subagents_dispatched:
+      - agent_id: ses_fa4bfae63ffe2bW1L60uPBzamz
+        target: auth module
+        files_explored: 13
+        key_classes: [JwtUtil, JwtAuthenticationFilter, AuthUser, AuthService, AuthController, UserContext, SecurityConfig]
+      - agent_id: ses_fa4bfae79ffeiU8k5B6qsCUSgR
+        target: interview module
+        files_explored: 31
+        key_classes: [InterviewService, InterviewStateStore, InterviewStatus, QuestionBank, EvaluationService, RuleBasedScoringService, ReportService]
+      - agent_id: ses_fa4bfae9ffeIBO4K0I7KO4rL6l
+        target: agent module
+        files_explored: 12
+        key_classes: [ChatClient, OpenAiCompatibleChatClient, EmbeddingClient, AiProperties]
+      - agent_id: ses_fa4bfaee7ffeJJ3zqMDuQLZh
+        target: common + config modules
+        files_explored: 12
+        key_classes: [BizException, ResultCode, UserContext, SecurityConfig, RedissonConfig, RabbitConfig, MybatisPlusConfig]
+    total_files_explored: 68
+
+  - phase: root_cause_analysis
+    timestamp: "2026-09-01T00:01:00Z"
+    bugs_identified:
+      - id: BUG-001
+        title: "Session state rehydration from DB after Redis expiry produces stale currentQuestionId"
+        severity: high
+        root_cause: |
+          InterviewStateStore uses Redis with 24h TTL as the single source of truth.
+          If Redis key expires but the session persists in DB, rehydration reads stale
+          DB state. The DB stores questionCount and currentQuestionId but these may not
+          reflect the actual last-asked question if state diverged. No validation of
+          currentQuestionId against message history occurs during rehydration.
+        affected_files:
+          - InterviewStateStore.java
+          - InterviewService.java (requireAsking method)
+
+      - id: BUG-002
+        title: "Answer submission is not idempotent — retries create duplicate InterviewMessage rows"
+        severity: high
+        root_cause: |
+          No request-level idempotency key exists for answer submissions. If a user retries
+          a request (e.g., network timeout), the same answer is saved as two separate
+          InterviewMessage rows. This inflates questionCount and changes askedQuestionIds,
+          potentially altering the next question selection.
+        affected_files:
+          - InterviewService.java (answer/answerStream methods)
+
+      - id: BUG-003
+        title: "RabbitMQ scoring message processed twice — duplicate InterviewResult rows"
+        severity: high
+        root_cause: |
+          RuleBasedScoringService.score() calls resultMapper.insert(result) unconditionally
+          without checking for an existing result. If the message is redelivered or if both
+          InterviewScoringService (no @ConditionalOnProperty) and RuleBasedScoringService
+          are active, duplicate InterviewResult rows are inserted. The
+          InterviewScoringService has NO @ConditionalOnProperty, so it could be active
+          alongside RuleBasedScoringService in rule mode.
+        affected_files:
+          - RuleBasedScoringService.java
+          - InterviewScoringService.java
+
+      - id: BUG-004
+        title: "No token revocation — old refresh tokens remain valid for 7 days"
+        severity: medium
+        root_cause: |
+          When a refresh token is used, a new pair is issued but the old one is not revoked.
+          No token family or rotation tracking exists. No Redis-based revocation list.
+          A compromised refresh token can be used repeatedly indefinitely within the 7-day
+          window, each use generating another valid refresh token.
+        affected_files:
+          - AuthService.java (refresh method)
+          - JwtAuthenticationFilter.java
+
+      - id: BUG-005
+        title: "InterviewScoringService lacks @ConditionalOnProperty — double consumer registration"
+        severity: high
+        root_cause: |
+          InterviewScoringService listens on aiview.interview.scoring queue but has no
+          @ConditionalOnProperty annotation. In rule mode (default), both
+          InterviewScoringService and RuleBasedScoringService are active Spring beans
+          consuming from the same queue. This causes every scoring message to be processed
+          twice, inserting duplicate InterviewResult rows.
+        affected_files:
+          - InterviewScoringService.java
+
+    root_cause_summary: |
+      The reported bugs stem from 5 root causes: (1) Redis state expiry with stale DB
+      rehydration, (2) non-idempotent answer submission, (3) non-idempotent scoring
+      consumer with duplicate row insertion, (4) no token revocation mechanism, and
+      (5) missing conditional property on InterviewScoringService causing double
+      consumer registration. All 5 causes are independently fixable.
+
+  - phase: team_plan_created
+    timestamp: "2026-09-01T00:02:00Z"
+    team_size: 4
+    lead: backend-architect
+    support: [database-engineer, distributed-system, security-engineer]
+    reviewer: code-reviewer
+
+  - phase: human_review_gate
+    timestamp: "2026-09-01T00:02:01Z"
+    status: pending_approval
+    checklist:
+      - team_plan_reviewed: false
+      - task_cards_reviewed: false
+      - delegation_approved: false

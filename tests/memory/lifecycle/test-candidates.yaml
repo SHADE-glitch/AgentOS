@@ -1,0 +1,722 @@
+version: '1.0'
+phase: 5.8.2.2
+generated_at: '2026-09-01T02:19:21Z'
+generated_by: collector.py (Phase 5.8.2.2 Loop Controller)
+source_executions:
+- EXEC-1788228162
+- EXEC-1788229083
+- EXEC-1788229111
+- EXEC-1788091469
+- EXEC-1788137999
+- EXEC-1788229112
+- EXEC-1788229160
+candidates:
+- candidate_id: CAND-EXEC-1788137999-E-004
+  source_execution: EXEC-1788137999
+  target_memory: E-004
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory E-004 was used in EXEC-1788137999 (RT-011). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: &id001
+      total: 27689
+      input: 58
+      output: 2318
+      reasoning: 132
+      cache_read: 25181
+      cache_write: 0
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788091469-T-005
+  source_execution: EXEC-1788091469
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 2.95
+  quality_breakdown:
+    completeness: 4
+    accuracy: 2
+    structure: 3
+    actionability: 3
+    novelty: 3
+  reasoning: 'Memory T-005 was used in EXEC-1788091469 (RT-002). Memory influence:
+    confirmation. This confirms the memory is valid and useful for RAG-related tasks.'
+  evidence:
+    session_id: ses_fad713c63ffeNKdUnTt19ljGId
+    model: opencode/ling-3.0-flash-fin-free
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 54000
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-T-005
+  source_execution: EXEC-1788137999
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory T-005 was used in EXEC-1788137999 (RT-011). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-S-001
+  source_execution: EXEC-1788137999
+  target_memory: S-001
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory S-001 was used in EXEC-1788137999 (RT-011). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-P-001
+  source_execution: EXEC-1788137999
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory P-001 was used in EXEC-1788137999 (RT-011). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-E-005
+  source_execution: EXEC-1788137999
+  target_memory: E-005
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: 'Memory E-005 was used in EXEC-1788137999 (RT-011). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788137999-AP-001
+  source_execution: EXEC-1788137999
+  target_memory: AP-001
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown:
+    completeness: 5
+    accuracy: 4
+    structure: 5
+    actionability: 4
+    novelty: 4
+  reasoning: Anti-pattern alert triggered in EXEC-1788137999. Execution succeeded.
+    AP-001 (Team Inflation Guard) correctly prevented unnecessary team formation.
+  evidence:
+    session_id: ses_faaab4c5cffec1NRKSpJ8p12SI
+    model: opencode/ling-3.0-flash-fin-free
+    tokens: *id001
+    output_hash: 6c1af487b380eaf2
+    latency_ms: 63607
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788228162-T-004
+  source_execution: EXEC-1788228162
+  target_memory: T-004
+  candidate_type: reinforce
+  quality_score: 1.85
+  quality_breakdown:
+    completeness: 2
+    accuracy: 1
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory T-004 was used in EXEC-1788228162 (AOS-377817). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa54c1923ffebse6fvwBV0mJ0Q
+    model: ''
+    tokens: &id002
+      total: 23773
+      input: 290
+      output: 123
+      reasoning: 0
+      cache_read: 23360
+      cache_write: 0
+    output_hash: 4ed77901eabf8539
+    latency_ms: 29143
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788228162-T-005
+  source_execution: EXEC-1788228162
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.85
+  quality_breakdown:
+    completeness: 2
+    accuracy: 1
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory T-005 was used in EXEC-1788228162 (AOS-377817). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa54c1923ffebse6fvwBV0mJ0Q
+    model: ''
+    tokens: *id002
+    output_hash: 4ed77901eabf8539
+    latency_ms: 29143
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788228162-F-002
+  source_execution: EXEC-1788228162
+  target_memory: F-002
+  candidate_type: reinforce
+  quality_score: 1.85
+  quality_breakdown:
+    completeness: 2
+    accuracy: 1
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory F-002 was used in EXEC-1788228162 (AOS-377817). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa54c1923ffebse6fvwBV0mJ0Q
+    model: ''
+    tokens: *id002
+    output_hash: 4ed77901eabf8539
+    latency_ms: 29143
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788228162-E-007
+  source_execution: EXEC-1788228162
+  target_memory: E-007
+  candidate_type: reinforce
+  quality_score: 1.85
+  quality_breakdown:
+    completeness: 2
+    accuracy: 1
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory E-007 was used in EXEC-1788228162 (AOS-377817). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa54c1923ffebse6fvwBV0mJ0Q
+    model: ''
+    tokens: *id002
+    output_hash: 4ed77901eabf8539
+    latency_ms: 29143
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788228162-S-002
+  source_execution: EXEC-1788228162
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.85
+  quality_breakdown:
+    completeness: 2
+    accuracy: 1
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory S-002 was used in EXEC-1788228162 (AOS-377817). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa54c1923ffebse6fvwBV0mJ0Q
+    model: ''
+    tokens: *id002
+    output_hash: 4ed77901eabf8539
+    latency_ms: 29143
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229083-S-002
+  source_execution: EXEC-1788229083
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788229083 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7793b21d6aa3
+    model: ''
+    tokens: &id003
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229083-T-004
+  source_execution: EXEC-1788229083
+  target_memory: T-004
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-004 was used in EXEC-1788229083 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7793b21d6aa3
+    model: ''
+    tokens: *id003
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229083-T-005
+  source_execution: EXEC-1788229083
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788229083 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7793b21d6aa3
+    model: ''
+    tokens: *id003
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229083-F-002
+  source_execution: EXEC-1788229083
+  target_memory: F-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory F-002 was used in EXEC-1788229083 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7793b21d6aa3
+    model: ''
+    tokens: *id003
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229083-E-007
+  source_execution: EXEC-1788229083
+  target_memory: E-007
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory E-007 was used in EXEC-1788229083 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7793b21d6aa3
+    model: ''
+    tokens: *id003
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229111-S-002
+  source_execution: EXEC-1788229111
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788229111 (FULL-C-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_a62040650f65
+    model: ''
+    tokens: &id004
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229111-T-004
+  source_execution: EXEC-1788229111
+  target_memory: T-004
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-004 was used in EXEC-1788229111 (FULL-C-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_a62040650f65
+    model: ''
+    tokens: *id004
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229111-T-005
+  source_execution: EXEC-1788229111
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788229111 (FULL-C-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_a62040650f65
+    model: ''
+    tokens: *id004
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229111-F-002
+  source_execution: EXEC-1788229111
+  target_memory: F-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory F-002 was used in EXEC-1788229111 (FULL-C-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_a62040650f65
+    model: ''
+    tokens: *id004
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229111-E-007
+  source_execution: EXEC-1788229111
+  target_memory: E-007
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory E-007 was used in EXEC-1788229111 (FULL-C-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_a62040650f65
+    model: ''
+    tokens: *id004
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229112-T-010
+  source_execution: EXEC-1788229112
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788229112 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_81deac3ecc81
+    model: ''
+    tokens: &id005
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229112-T-005
+  source_execution: EXEC-1788229112
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788229112 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_81deac3ecc81
+    model: ''
+    tokens: *id005
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229112-T-009
+  source_execution: EXEC-1788229112
+  target_memory: T-009
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-009 was used in EXEC-1788229112 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_81deac3ecc81
+    model: ''
+    tokens: *id005
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229112-S-002
+  source_execution: EXEC-1788229112
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788229112 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_81deac3ecc81
+    model: ''
+    tokens: *id005
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229112-P-002
+  source_execution: EXEC-1788229112
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788229112 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_81deac3ecc81
+    model: ''
+    tokens: *id005
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229160-T-004
+  source_execution: EXEC-1788229160
+  target_memory: T-004
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 1
+    accuracy: 1
+    structure: 1
+    actionability: 1
+    novelty: 0
+  reasoning: 'Memory T-004 was used in EXEC-1788229160 (AOS-829678). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa53d042fffe7V174H3U4ebeVB
+    model: ''
+    tokens: &id006
+      total: 23959
+      input: 104
+      output: 111
+      reasoning: 0
+      cache_read: 23744
+      cache_write: 0
+    output_hash: f0b8a71c96a44413
+    latency_ms: 39500
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229160-T-005
+  source_execution: EXEC-1788229160
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 1
+    accuracy: 1
+    structure: 1
+    actionability: 1
+    novelty: 0
+  reasoning: 'Memory T-005 was used in EXEC-1788229160 (AOS-829678). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa53d042fffe7V174H3U4ebeVB
+    model: ''
+    tokens: *id006
+    output_hash: f0b8a71c96a44413
+    latency_ms: 39500
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229160-F-002
+  source_execution: EXEC-1788229160
+  target_memory: F-002
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 1
+    accuracy: 1
+    structure: 1
+    actionability: 1
+    novelty: 0
+  reasoning: 'Memory F-002 was used in EXEC-1788229160 (AOS-829678). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa53d042fffe7V174H3U4ebeVB
+    model: ''
+    tokens: *id006
+    output_hash: f0b8a71c96a44413
+    latency_ms: 39500
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229160-E-007
+  source_execution: EXEC-1788229160
+  target_memory: E-007
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 1
+    accuracy: 1
+    structure: 1
+    actionability: 1
+    novelty: 0
+  reasoning: 'Memory E-007 was used in EXEC-1788229160 (AOS-829678). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa53d042fffe7V174H3U4ebeVB
+    model: ''
+    tokens: *id006
+    output_hash: f0b8a71c96a44413
+    latency_ms: 39500
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788229160-S-002
+  source_execution: EXEC-1788229160
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 1
+    accuracy: 1
+    structure: 1
+    actionability: 1
+    novelty: 0
+  reasoning: 'Memory S-002 was used in EXEC-1788229160 (AOS-829678). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa53d042fffe7V174H3U4ebeVB
+    model: ''
+    tokens: *id006
+    output_hash: f0b8a71c96a44413
+    latency_ms: 39500
+    is_real_execution: true
+  outcome: promoted
+cycle_summary:
+  total_candidates: 32
+  reinforce: 32
+  weaken: 0
+  create_hypothesis: 0
+  safety_checks:
+    no_memory_off_processed: PASS
+    all_candidates_from_real_traces: PASS
+    no_direct_memory_modification: PASS
+    hypotheses_held_not_promoted: PASS
+    idempotency: PASS — collector_state.yaml prevents duplicates

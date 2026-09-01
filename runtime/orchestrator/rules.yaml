@@ -1,0 +1,98 @@
+# Orchestrator Rules — Phase 7.3
+# Team formation rules derived from agent-orchestrator/SKILL.md R1-R10, C1-C7.
+#
+# This file configures team formation behavior.
+# The orchestrator reads these rules; code implements the pipeline.
+
+# ── Activation Rules ─────────────────────────────────────────────
+# When to form a multi-agent team vs single-agent mode.
+activation_rules:
+  # Domain threshold: >= N domains triggers team formation
+  domain_threshold: 2
+  # Difficulty: "hard" triggers team formation
+  trigger_on_hard: true
+  # Intent: specific intents always trigger team formation
+  trigger_intents: ["architecture"]
+  # Intents that never trigger team formation
+  never_trigger_intents: ["learning"]
+
+# ── Team Rules ───────────────────────────────────────────────────
+# R1-R10 team selection rules configuration.
+team_rules:
+  # R1: Cross-domain augmentation
+  # When task spans multiple domains, add roles from additional domains
+  cross_domain_augment: true
+
+  # R2: Architecture intent always includes system-architect
+  architecture_include_system_architect: true
+
+  # R3: Database domain includes database-engineer
+  database_include_engineer: true
+
+  # R4: AI + retrieval signals → rag-engineer
+  retrieval_keywords: ["rag", "retrieval", "vector", "检索", "向量", "embedding", "knowledge"]
+
+  # R5: AI + LLM signals → llm-engineer
+  llm_keywords: ["llm", "大模型", "model", "模型", "fine-tune", "inference"]
+
+  # R6: Distributed domain → distributed-system
+  distributed_include: true
+
+  # R7: Frontend domain → frontend-architect
+  frontend_include_architect: true
+
+  # R8: Review roles (code-reviewer, technical-reviewer, quality-evaluator)
+  # Not auto-included — require explicit review intent
+  review_include: false
+
+  # R9: Security domain/intent → security-engineer
+  security_include: true
+
+  # R10: Testing intent → testing-engineer
+  testing_include: true
+
+# ── Conflict Rules ───────────────────────────────────────────────
+# C1-C7 conflict resolution rules.
+conflict_rules:
+  # C1: Exactly one lead (enforced by code)
+  single_lead: true
+
+  # C2: Prune roles not in registry
+  prune_unknown_roles: true
+
+  # C3: Registry dependencies must be present (TODO: future)
+  validate_dependencies: false
+
+  # C4: No duplicate deliverables (TODO: future)
+  no_duplicate_deliverables: false
+
+  # C5: Team size cap
+  max_team_size: 7
+
+  # C6: Record pruned roles (enforced by code)
+  record_pruned: true
+
+  # C7: Memory vs rules conflict (TODO: Phase 8)
+  memory_override_rules: false
+
+# ── Domain → Role Mapping ────────────────────────────────────────
+# Primary role for each domain (used when no other signal)
+domain_lead_map:
+  backend: backend-architect
+  frontend: frontend-architect
+  database: database-engineer
+  security: security-engineer
+  distributed: distributed-system
+  ai: llm-engineer
+  devops: devops-engineer
+  architecture: system-architect
+  testing: testing-engineer
+  data: database-engineer
+
+# ── Intent → Role Mapping ────────────────────────────────────────
+# Additional roles triggered by specific intents
+intent_role_map:
+  security: [security-engineer]
+  testing: [testing-engineer]
+  architecture: [system-architect, technical-reviewer]
+  review: [code-reviewer, technical-reviewer]

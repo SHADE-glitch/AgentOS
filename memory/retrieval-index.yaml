@@ -111,9 +111,9 @@ memories:
   quality_delta: 1.25
   winner: multi
   cost_delta: 1
-  status: observed
+  status: validated
   last_validated_at: '2026-08-31'
-  state_version: 3
+  state_version: 4
 - memory_id: T-006
   file: memory/tasks/ai/tool-calling.md
   type: task
@@ -300,8 +300,9 @@ memories:
   - database-engineer
   - distributed-system
   observation_count: 2
-  status: observed
+  status: validated
   last_validated_at: '2026-08-30'
+  state_version: 1
 - memory_id: P-001
   file: memory/patterns/p-001-cross-domain-collaboration.md
   type: pattern
@@ -332,8 +333,9 @@ memories:
   - prompt-engineer
   - agent-engineer
   observation_count: 2
-  status: observed
+  status: validated
   last_validated_at: '2026-08-30'
+  state_version: 1
 - memory_id: P-002
   file: memory/patterns/p-002-security-first.md
   type: pattern
@@ -613,6 +615,6 @@ type_boosts:
   task: 0.0
   effectiveness: 0.0
 top_k: 5
-index_version: 4
-last_reconciled_at: '2026-08-31T01:12:57.788213+00:00'
-last_reconciled_changes: 1
+index_version: 5
+last_reconciled_at: '2026-09-01T03:10:25.553909+00:00'
+last_reconciled_changes: 3

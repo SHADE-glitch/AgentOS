@@ -39,8 +39,10 @@ sys.path.insert(0, os.path.join(BASE, "runtime", "memory-feedback", "collector")
 sys.path.insert(0, os.path.join(BASE, "runtime", "memory-feedback", "promotion"))
 
 from retrieval_adapter import adapt as retrieval_adapt
-from runtime_adapter import execute as runtime_execute, generate_loop_id
+from runtime_adapter import execute as runtime_execute, generate_loop_id, execute_with_reliability
 from collector import collect_from_trace_ids, write_candidates_output, save_collector_state, load_collector_state
+# Phase 8.2.1: TeamResult collector for multi-agent memory feedback loop
+from team_result_collector import collect_from_team_results
 from file_utils import atomic_yaml_write, cleanup_old_files
 from validator import validate_candidates
 from promoter import promote_validated
@@ -61,6 +63,16 @@ from telemetry_writer import (
     emit_outcome_event,
     emit_failure_event,
 )
+
+# Phase 7.4: Runtime Integration Hardening — Orchestrator + Collaboration
+sys.path.insert(0, os.path.join(BASE, "runtime", "router"))
+sys.path.insert(0, os.path.join(BASE, "runtime", "orchestrator"))
+sys.path.insert(0, os.path.join(BASE, "runtime", "collaboration"))
+from orchestrator import Orchestrator
+from decision import DecisionContext
+from task_decomposer import TaskDecomposer, decompose
+from scheduler import Scheduler, create_real_executor
+from aggregator import Aggregator, aggregate
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -176,6 +188,11 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, r
             "error": "",
             "started_at": "",
             "completed_at": "",
+            # Phase 8.2.1: executor metadata for multi-agent delegation
+            "executor": {
+                "type": "single-agent",
+                "team_id": "",
+            },
         },
 
         "trace": {
@@ -223,6 +240,33 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, r
         "reconciliation": {
             "status": "pending",
             "result": "",
+            "error": "",
+            "started_at": "",
+            "completed_at": "",
+        },
+
+        # Phase 7.4: Orchestrator + Collaboration state
+        "orchestrator": {
+            "status": "pending",
+            "team_id": "",
+            "is_multi_agent": False,
+            "lead_agent": "",
+            "support_agents": [],
+            "rules_applied": [],
+            "pruned_roles": [],
+            "error": "",
+            "started_at": "",
+            "completed_at": "",
+        },
+
+        "collaboration": {
+            "status": "pending",
+            "team_id": "",
+            "cards_total": 0,
+            "cards_completed": 0,
+            "cards_failed": 0,
+            "team_status": "",
+            "execution_order": [],
             "error": "",
             "started_at": "",
             "completed_at": "",
@@ -468,68 +512,274 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     pipeline_timestamps["orchestration_completed"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
-    # Stage 4: Runtime (includes Provider execution)
+    # Stage 3.5: Orchestrator (Phase 7.4 — Team Formation)
     # =====================================================================
     print(f"\n{'─' * 70}")
-    print(f"Stage 4/10: Runtime ({provider})")
+    print(f"Stage 3.5/10: Orchestrator — Team Formation (Phase 7.4)")
     print(f"{'─' * 70}")
 
-    state["runtime"]["started_at"] = datetime.now(timezone.utc).isoformat()
-    state["current_stage"] = "runtime"
-    pipeline_timestamps["agent_started"] = datetime.now(timezone.utc).isoformat()
+    state["orchestrator"]["started_at"] = datetime.now(timezone.utc).isoformat()
+    state["current_stage"] = "orchestrator"
 
-    # Attach entry metadata to decision_context for trace
-    decision_context["entry_metadata"] = state.get("entry", {})
+    # Build DecisionContext from Router output
+    decision_ctx = DecisionContext(
+        task_text=task_text,
+        intent=route_decision.get("intent", "coding"),
+        domains=route_decision.get("domains", ["backend"]),
+        primary_domain=route_decision.get("primary_domain", route_decision.get("domains", ["backend"])[0]),
+        lead_skill=route_decision.get("lead_skill", "backend-architect"),
+        support_skills=route_decision.get("support_skills", []),
+        confidence=route_decision.get("confidence", "medium"),
+        difficulty=route_decision.get("difficulty", "medium"),
+    )
 
     try:
-        exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps, project_root=project_root)
-        state["runtime"]["status"] = "completed"
+        orch = Orchestrator()
+        orch.load_rules()
+
+        # Phase 7.4: Use should_form_team() to gate multi-agent path
+        # This prevents false-positive team formation from Router's support_skills
+        should_team = orch.should_form_team(decision_ctx)
+        print(f"  Should form team: {should_team}")
+
+        if should_team:
+            team_plan = orch.form_team(task_text, decision_ctx)
+            state["orchestrator"]["status"] = "completed"
+            state["orchestrator"]["team_id"] = team_plan.team_id
+            state["orchestrator"]["is_multi_agent"] = len(team_plan.support_agents) > 0
+            state["orchestrator"]["lead_agent"] = team_plan.lead_agent
+            state["orchestrator"]["support_agents"] = team_plan.support_agents
+            state["orchestrator"]["rules_applied"] = team_plan.rules_applied
+            state["orchestrator"]["pruned_roles"] = team_plan.pruned_roles
+
+            print(f"  Team ID:      {team_plan.team_id}")
+            print(f"  Lead:         {team_plan.lead_agent}")
+            print(f"  Support:      {team_plan.support_agents}")
+            print(f"  Multi-agent:  {state['orchestrator']['is_multi_agent']}")
+            print(f"  Rules:        {team_plan.rules_applied}")
+        else:
+            # Single-agent: skip team formation
+            team_plan = None
+            state["orchestrator"]["status"] = "completed"
+            state["orchestrator"]["is_multi_agent"] = False
+            state["orchestrator"]["lead_agent"] = decision_ctx.lead_skill
+            state["orchestrator"]["support_agents"] = []
+            state["orchestrator"]["rules_applied"] = ["single-agent: no team needed"]
+            print(f"  Single-agent: {decision_ctx.lead_skill} (no team needed)")
+    except Exception as e:
+        mark_failed(state, "orchestrator", e, critical=False)
+        print(f"  FAILED: {e} — falling back to single-agent")
+        team_plan = None
+        state["orchestrator"]["status"] = "failed"
+        state["orchestrator"]["error"] = str(e)
+        state["orchestrator"]["is_multi_agent"] = False
+
+    state["orchestrator"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+
+    # =====================================================================
+    # Stage 3.6: Collaboration Runtime (Phase 7.4 — Multi-Agent Execution)
+    # =====================================================================
+    is_multi_agent = state["orchestrator"]["is_multi_agent"] and team_plan is not None
+
+    if is_multi_agent:
+        print(f"\n{'─' * 70}")
+        print(f"Stage 3.6/10: Collaboration Runtime (Phase 7.4)")
+        print(f"{'─' * 70}")
+
+        state["collaboration"]["started_at"] = datetime.now(timezone.utc).isoformat()
+        state["current_stage"] = "collaboration"
+
+        try:
+            # Step 1: Decompose TeamPlan into TaskCards
+            task_cards = decompose(task_text, team_plan)
+            state["collaboration"]["cards_total"] = len(task_cards)
+            state["collaboration"]["team_id"] = team_plan.team_id
+            print(f"  TaskCards:    {len(task_cards)}")
+            for tc in task_cards:
+                print(f"    {tc.task_id}: {tc.role} (deps: {tc.dependencies})")
+
+            # Step 2: Create real agent executor using runtime_adapter
+            # Phase 7.5: Pass timeout_seconds=900 for complex multi-agent tasks
+            agent_executor = create_real_executor(
+                runtime_execute_fn=execute_with_reliability,
+                decision_context=decision_context,
+                model=model,
+                provider=provider,
+                project_root=project_root,
+                timeout_seconds=900,
+            )
+
+            # Step 3: Schedule and execute all TaskCards
+            scheduler = Scheduler(agent_executor=agent_executor)
+            schedule_result = scheduler.execute(task_cards, context={
+                "task": task_text,
+                "team_plan": team_plan,
+                "decision_context": decision_ctx,
+                "project_root": project_root,
+            })
+
+            # Step 4: Aggregate results
+            completed_cards = schedule_result["completed"]
+            failed_cards = schedule_result["failed"]
+            aggregated = aggregate(schedule_result["cards"])
+
+            state["collaboration"]["status"] = "completed"
+            state["collaboration"]["cards_completed"] = len(completed_cards)
+            state["collaboration"]["cards_failed"] = len(failed_cards)
+            state["collaboration"]["team_status"] = aggregated.status
+            state["collaboration"]["execution_order"] = schedule_result["execution_order"]
+
+            print(f"  Completed:    {len(completed_cards)}")
+            print(f"  Failed:       {len(failed_cards)}")
+            print(f"  Team Status:  {aggregated.status}")
+            print(f"  Exec Order:   {schedule_result['execution_order']}")
+
+            # Phase 7.5: Persist TeamResult to file
+            team_result_path = os.path.join(
+                os.path.dirname(STATE_DIR),
+                "validation",
+                f"team-result-{loop_id}.yaml"
+            )
+            team_result_data = {
+                "loop_id": loop_id,
+                "team_id": team_plan.team_id,
+                "team_result": aggregated.to_dict() if hasattr(aggregated, 'to_dict') else {},
+                "task_cards": [
+                    {
+                        "task_id": tc.task_id,
+                        "role": tc.role,
+                        "status": tc.status,
+                        "output_summary": tc.output_data.get("summary", "") if tc.output_data else "",
+                        "output_len": len(tc.output_data.get("output", "")) if tc.output_data else 0,
+                        "latency_ms": tc.output_data.get("latency_ms", 0) if tc.output_data else 0,
+                    }
+                    for tc in schedule_result["cards"]
+                ],
+                "execution_order": schedule_result["execution_order"],
+                "completed_count": len(completed_cards),
+                "failed_count": len(failed_cards),
+            }
+            os.makedirs(os.path.dirname(team_result_path), exist_ok=True)
+            atomic_yaml_write(team_result_path, team_result_data)
+            print(f"  TeamResult saved to: {team_result_path}")
+
+            # Store collaboration result for subsequent stages
+            exec_result = {
+                "execution_id": f"TEAM-{team_plan.team_id}",
+                "trace_id": f"TRACE-TEAM-{team_plan.team_id}",
+                "session_id": "",
+                "latency_ms": 0,
+                "token_usage": {"total": 0, "input": 0, "output": 0},
+                "output_hash": "",
+                "status": aggregated.status if aggregated.status == "success" else "partial",
+                "error": "",
+                "trace_file": "",
+                "is_multi_agent": True,
+                "team_result": aggregated.to_dict() if hasattr(aggregated, 'to_dict') else {},
+            }
+            print(f"  Multi-agent collaboration complete. Skipping single-agent Stage 4.")
+
+        except Exception as e:
+            mark_failed(state, "collaboration", e, critical=True)
+            print(f"  FAILED: {e}")
+            state["collaboration"]["status"] = "failed"
+            state["collaboration"]["error"] = str(e)
+            save_loop_state(loop_id, state)
+            return state
+
+        state["collaboration"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+        pipeline_timestamps["collaboration_completed"] = datetime.now(timezone.utc).isoformat()
+
+        # Skip Stage 4 (single-agent Runtime) — collaboration already executed
+        print(f"\n  Stage 4/10: Runtime — DELEGATED (multi-agent collaboration)")
+        state["runtime"]["status"] = "delegated"
         state["runtime"]["execution_id"] = exec_result["execution_id"]
         state["runtime"]["trace_id"] = exec_result["trace_id"]
-        state["runtime"]["session_id"] = exec_result.get("session_id", "")
-        state["runtime"]["latency_ms"] = exec_result.get("latency_ms", 0)
-        state["runtime"]["token_usage"] = exec_result.get("token_usage", {})
-        state["runtime"]["output_hash"] = exec_result.get("output_hash", "")
-        state["runtime"]["status_code"] = exec_result.get("status", "error")
-        state["runtime"]["error"] = exec_result.get("error", "")
-
+        state["runtime"]["status_code"] = exec_result["status"]
+        state["runtime"]["started_at"] = state["collaboration"]["started_at"]
+        state["runtime"]["completed_at"] = state["collaboration"]["completed_at"]
+        # Phase 8.2.1: executor metadata for multi-agent delegation
+        state["runtime"]["executor"] = {
+            "type": "multi-agent",
+            "team_id": team_plan.team_id,
+        }
         state["trace"]["status"] = "completed"
-        state["trace"]["trace_file"] = exec_result.get("trace_file", "")
-        print(f"  Execution ID: {exec_result['execution_id']}")
-        print(f"  Trace ID:     {exec_result['trace_id']}")
-        print(f"  Session ID:   {exec_result.get('session_id', '?')}")
-        print(f"  Status:       {exec_result.get('status', '?')}")
-        print(f"  Latency:      {exec_result.get('latency_ms', 0)}ms")
-        print(f"  Tokens:       {exec_result.get('token_usage', {}).get('total', 0)}")
-        print(f"  Trace:        {exec_result.get('trace_file', '?')}")
+        state["trace"]["trace_file"] = ""
+        pipeline_timestamps["agent_started"] = state["collaboration"]["started_at"]
+        pipeline_timestamps["agent_completed"] = state["collaboration"]["completed_at"]
 
-        if exec_result.get("status") != "success":
-            print(f"  WARNING: Runtime returned non-success status: {exec_result.get('status')}")
-            print(f"  Error: {exec_result.get('error', '')}")
+        # Jump to Stage 5 (Code Validation)
+        # ─ continue below Stage 4 block ─
 
-    except Exception as e:
-        mark_failed(state, "runtime", e)
-        print(f"  FAILED: {e}")
-        # Phase 5.7: Emit failure event
+    else:
+        # Single-agent: proceed to Stage 4 (Runtime) as before
+        state["collaboration"]["status"] = "skipped"
+        state["collaboration"]["error"] = "single_agent"
+
+    if not is_multi_agent:
+        # =====================================================================
+        # Stage 4: Runtime (includes Provider execution)
+        # =====================================================================
+        print(f"\n{'─' * 70}")
+        print(f"Stage 4/10: Runtime ({provider})")
+        print(f"{'─' * 70}")
+
+        state["runtime"]["started_at"] = datetime.now(timezone.utc).isoformat()
+        state["current_stage"] = "runtime"
+        pipeline_timestamps["agent_started"] = datetime.now(timezone.utc).isoformat()
+
+        # Attach entry metadata to decision_context for trace
+        decision_context["entry_metadata"] = state.get("entry", {})
+
         try:
-            emit_failure_event(execution_id, task_id, "runtime", str(e))
-            state["telemetry"]["events"].append("failure")
+            exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps, project_root=project_root)
+            state["runtime"]["status"] = "completed"
+            state["runtime"]["execution_id"] = exec_result["execution_id"]
+            state["runtime"]["trace_id"] = exec_result["trace_id"]
+            state["runtime"]["session_id"] = exec_result.get("session_id", "")
+            state["runtime"]["latency_ms"] = exec_result.get("latency_ms", 0)
+            state["runtime"]["token_usage"] = exec_result.get("token_usage", {})
+            state["runtime"]["output_hash"] = exec_result.get("output_hash", "")
+            state["runtime"]["status_code"] = exec_result.get("status", "error")
+            state["runtime"]["error"] = exec_result.get("error", "")
+
+            state["trace"]["status"] = "completed"
+            state["trace"]["trace_file"] = exec_result.get("trace_file", "")
+            print(f"  Execution ID: {exec_result['execution_id']}")
+            print(f"  Trace ID:     {exec_result['trace_id']}")
+            print(f"  Session ID:   {exec_result.get('session_id', '?')}")
+            print(f"  Status:       {exec_result.get('status', '?')}")
+            print(f"  Latency:      {exec_result.get('latency_ms', 0)}ms")
+            print(f"  Tokens:       {exec_result.get('token_usage', {}).get('total', 0)}")
+            print(f"  Trace:        {exec_result.get('trace_file', '?')}")
+
+            if exec_result.get("status") != "success":
+                print(f"  WARNING: Runtime returned non-success status: {exec_result.get('status')}")
+                print(f"  Error: {exec_result.get('error', '')}")
+
+        except Exception as e:
+            mark_failed(state, "runtime", e)
+            print(f"  FAILED: {e}")
+            # Phase 5.7: Emit failure event
+            try:
+                emit_failure_event(execution_id, task_id, "runtime", str(e))
+                state["telemetry"]["events"].append("failure")
+            except Exception:
+                pass
+            save_loop_state(loop_id, state)
+            return state
+
+        state["runtime"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+        state["trace"]["started_at"] = state["runtime"]["started_at"]
+        state["trace"]["completed_at"] = state["runtime"]["completed_at"]
+        pipeline_timestamps["agent_completed"] = datetime.now(timezone.utc).isoformat()
+
+        # Phase 5.7: Emit execution event
+        try:
+            emit_execution_event(execution_id, task_id, exec_result)
+            state["telemetry"]["events"].append("execution")
         except Exception:
             pass
-        save_loop_state(loop_id, state)
-        return state
-
-    state["runtime"]["completed_at"] = datetime.now(timezone.utc).isoformat()
-    state["trace"]["started_at"] = state["runtime"]["started_at"]
-    state["trace"]["completed_at"] = state["runtime"]["completed_at"]
-    pipeline_timestamps["agent_completed"] = datetime.now(timezone.utc).isoformat()
-
-    # Phase 5.7: Emit execution event
-    try:
-        emit_execution_event(execution_id, task_id, exec_result)
-        state["telemetry"]["events"].append("execution")
-    except Exception:
-        pass
 
     # =====================================================================
     # Stage 5: Code Validation (Phase 6.2)
@@ -663,8 +913,17 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
 
     try:
         execution_id = state["runtime"]["execution_id"]
-        # Phase 5.10: Collect candidates without updating state yet
-        candidates = collect_from_trace_ids([execution_id], quiet=True, update_state=False)
+        # Phase 8.2.1: Multi-agent → TeamResultCollector (closes memory feedback loop)
+        if state["runtime"].get("executor", {}).get("type") == "multi-agent":
+            # Use TeamResultCollector to extract candidates from team-result YAML
+            loop_id_for_collector = loop_id
+            candidates = collect_from_team_results([loop_id_for_collector], quiet=True)
+            print(f"  Multi-agent TeamResult collector: {len(candidates)} candidates")
+            if not candidates:
+                print(f"  (No candidates extracted — this is expected if no patterns matched)")
+        else:
+            # Phase 5.10: Collect candidates without updating state yet
+            candidates = collect_from_trace_ids([execution_id], quiet=True, update_state=False)
         
         # Write candidates to memory-candidates.yaml (append to existing)
         if candidates:
@@ -889,5 +1148,8 @@ if __name__ == "__main__":
 
     # Print final status for machine parsing
     print(f"\nLOOP_EXECUTION: {'PASS' if result['final_status'] == 'completed' else 'FAIL'}")
-    print(f"TRACE: {'真实' if result['runtime']['session_id'] else '模拟'}")
-    print(f"PROVENANCE: {'完整' if result['runtime']['trace_id'] and result['runtime']['execution_id'] else '不完整'}")
+    # Phase 7.5: Multi-agent collaboration has real execution but no single session_id
+    is_multi = result.get("collaboration", {}).get("status") == "completed"
+    has_session = bool(result['runtime'].get('session_id'))
+    print(f"TRACE: {'真实 (multi-agent)' if is_multi else '真实' if has_session else '模拟'}")
+    print(f"PROVENANCE: {'完整' if (result['runtime']['trace_id'] and result['runtime']['execution_id']) or is_multi else '不完整'}")

@@ -20,7 +20,7 @@ tags:
 - backend
 - distributed
 - specialist
-status: observed
+status: validated
 observation_count: 2
 last_validated_at: '2026-08-30'
 ```

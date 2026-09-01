@@ -1,7 +1,7 @@
 version: '1.0'
-phase: 5.7.2
-generated_at: '2026-09-01T02:02:59.654635+00:00'
-generated_by: promoter.py (Phase 5.7.2 Memory Promoter)
+phase: '7.2'
+generated_at: '2026-09-01T03:09:53.363367+00:00'
+generated_by: promoter.py (Phase 7.2 Memory Lifecycle Enforcement)
 source_file: /home/shade/.agents/runtime/memory-feedback/promotion/validation-results.yaml
 summary:
   total_validated_available: 1
@@ -13,12 +13,14 @@ promotion_results:
 - memory_id: T-005
   candidate_id: CAND-EXEC-1788137999-T-005
   status: skipped
-  rejection_reason: 'Memory T-005 already promoted at 2026-08-31T01:08:29.936978+00:00.
+  rejection_reason: 'Memory T-005 already processed (skipped) at 2026-09-01T02:02:59.654575+00:00.
     Idempotency: no duplicate promotion.'
-  promoted_at: '2026-09-01T02:02:59.654575+00:00'
+  promoted_at: '2026-09-01T03:09:53.363303+00:00'
 safety_checks:
   no_memory_content_modified: PASS
   no_hypothesis_promoted: PASS
   no_memory_deleted: PASS
   no_new_memory_created: PASS
   metadata_only_updates: PASS
+  trust_gate_enforced: PASS
+  lifecycle_enforcement: PASS

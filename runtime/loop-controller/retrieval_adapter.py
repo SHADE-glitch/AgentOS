@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Retrieval Adapter — Phase 5.8.2.2
+Retrieval Adapter — Phase 7.1
+
 Bridges between task input and retrieval_optimizer.
 
-Task → classify → retrieval_optimizer.retrieve() → DecisionContext
+Task → Router.classify() → retrieval_optimizer.retrieve() → DecisionContext
+
+Classification is delegated to the canonical Router Runtime
+(runtime/router/router.py). This adapter is responsible for
+retrieval only — not routing logic.
 
 This is NOT an Agent. It does NOT decide team formation.
 It only classifies the task and queries existing Memory.
@@ -20,123 +25,37 @@ from retrieval_optimizer import retrieve as retrieval_retrieve, save_retrieval_h
 
 BASE = "/home/shade/.agents"
 
+# Import the canonical Router Runtime for classification
+sys.path.insert(0, os.path.join(BASE, "runtime", "router"))
+from router import get_router
+
+# Lazy singleton
+_router = None
+
+
+def _ensure_router():
+    global _router
+    if _router is None:
+        _router = get_router()
+    return _router
+
 
 # ---------------------------------------------------------------------------
-# Task Classification
+# Task Classification (delegated to Router Runtime)
 # ---------------------------------------------------------------------------
-
-CATEGORY_RULES = [
-    ("optimization", re.compile(r"优化|慢查询|slow.query|性能|performance|调优|索引|index", re.I)),
-    ("backend",     re.compile(r"API|后端|backend|Spring|Java|认证|鉴权|REST|接口", re.I)),
-    ("frontend",    re.compile(r"前端|frontend|Vite|React|Vue|TypeScript|CSS|UI|页面", re.I)),
-    ("architecture", re.compile(r"架构|architect|分布式|distributed|微服务|microservice|系统设计|高并发|seckill|秒杀|多租户|multi.tenant", re.I)),
-    ("ai",          re.compile(r"RAG|LLM|向量|vector|embedding|检索|rerank|Agent|tool.calling|prompt", re.I)),
-    ("database",    re.compile(r"MySQL|数据库|database|SQL|schema|DDL|DML|存储|连接池", re.I)),
-    ("devops",      re.compile(r"Docker|部署|deploy|CI/CD|容器|container|k8s|Kubernetes", re.I)),
-]
-
-DOMAIN_RULES = [
-    ("database",    re.compile(r"MySQL|SQL|数据库|database|慢查询|索引|index|schema|DDL|连接池", re.I)),
-    ("backend",     re.compile(r"API|后端|backend|Spring|Java|REST|接口|认证|鉴权|OAuth|JWT", re.I)),
-    ("frontend",    re.compile(r"前端|frontend|Vite|React|Vue|TypeScript|CSS|UI|页面|组件", re.I)),
-    ("security",    re.compile(r"安全|security|PCI|DSS|TLS|AES|加密|encrypt|RBAC|认证|鉴权|OAuth", re.I)),
-    ("distributed", re.compile(r"分布式|distributed|高并发|concurrency|seckill|秒杀|微服务|microservice|Saga|多租户|multi.tenant", re.I)),
-    ("rag",         re.compile(r"RAG|向量|vector|embedding|检索|retrieval|rerank|chunk", re.I)),
-    ("agent",       re.compile(r"Agent|tool.calling|LLM|prompt|agent|多智能体", re.I)),
-    ("devops",      re.compile(r"Docker|部署|deploy|CI/CD|容器|container|k8s|Kubernetes|镜像", re.I)),
-    ("architecture", re.compile(r"架构|architect|系统设计|设计模式|pattern|领域驱动|DDD", re.I)),
-    ("optimization", re.compile(r"优化|性能|performance|调优|benchmark|profiling", re.I)),
-]
-
-ROLE_RULES = [
-    ("database-engineer",   re.compile(r"MySQL|SQL|数据库|database|慢查询|索引|index", re.I)),
-    ("backend-architect",   re.compile(r"API|后端|backend|Spring|Java|REST|接口", re.I)),
-    ("frontend-architect",  re.compile(r"前端|frontend|Vite|React|Vue|TypeScript|UI|页面", re.I)),
-    ("security-engineer",   re.compile(r"安全|security|PCI|DSS|TLS|加密|encrypt|RBAC|OAuth", re.I)),
-    ("system-architect",    re.compile(r"架构|architect|分布式|distributed|系统设计|高并发|seckill|秒杀|微服务", re.I)),
-    ("rag-engineer",        re.compile(r"RAG|向量|vector|embedding|检索|retrieval|rerank", re.I)),
-    ("llm-engineer",        re.compile(r"LLM|Agent|tool.calling|prompt|agent", re.I)),
-    ("devops-engineer",     re.compile(r"Docker|部署|deploy|CI/CD|容器|container|k8s|Kubernetes", re.I)),
-]
-
-KEYWORD_RULES = [
-    # database
-    ("mysql",       re.compile(r"MySQL|mysql", re.I)),
-    ("slow-query",  re.compile(r"慢查询|slow.query", re.I)),
-    ("indexing",    re.compile(r"索引|index", re.I)),
-    ("optimization", re.compile(r"优化|性能|调优|performance", re.I)),
-    # backend
-    ("api",         re.compile(r"API|接口", re.I)),
-    ("spring",      re.compile(r"Spring|spring", re.I)),
-    ("java",        re.compile(r"Java|java", re.I)),
-    ("auth",        re.compile(r"认证|鉴权|OAuth|JWT|RBAC", re.I)),
-    # frontend
-    ("vite",        re.compile(r"Vite|vite", re.I)),
-    ("react",       re.compile(r"React|react", re.I)),
-    ("typescript",  re.compile(r"TypeScript|typescript", re.I)),
-    # architecture
-    ("distributed", re.compile(r"分布式|distributed", re.I)),
-    ("high-concurrency", re.compile(r"高并发|concurrency|seckill|秒杀", re.I)),
-    ("multi-tenant", re.compile(r"多租户|multi.tenant", re.I)),
-    # ai
-    ("rag",         re.compile(r"RAG|rag", re.I)),
-    ("vector",      re.compile(r"向量|vector|embedding", re.I)),
-    ("llm",         re.compile(r"LLM|llm", re.I)),
-    ("agent",       re.compile(r"Agent|agent|tool.calling", re.I)),
-    # security
-    ("pci-dss",     re.compile(r"PCI.DSS|PCI|DSS", re.I)),
-    ("encryption",  re.compile(r"加密|encrypt|TLS|AES", re.I)),
-    # devops
-    ("docker",      re.compile(r"Docker|docker|容器|container", re.I)),
-    ("deploy",      re.compile(r"部署|deploy|CI/CD", re.I)),
-]
-
-DIFFICULTY_RULES = [
-    ("easy",    re.compile(r"简单|simple|easy|基础|basic|单个|single|简单查询|慢查询", re.I)),
-    ("hard",    re.compile(r"复杂|complex|高并发|分布式|distributed|跨领域|cross.domain|多租户|multi.tenant|秒杀|seckill|系统设计|架构", re.I)),
-]
-
 
 def classify_task(task_text):
     """
     Classify a task into category, domains, roles, keywords, difficulty.
+
+    Delegates to the canonical Router Runtime (runtime/router/router.py).
     Uses simple keyword matching — no ML, no external deps.
+
+    Returns dict — backward compatible with existing callers.
     """
-    category = "backend"  # default
-    for cat, pattern in CATEGORY_RULES:
-        if pattern.search(task_text):
-            category = cat
-            break
-
-    domains = []
-    for dom, pattern in DOMAIN_RULES:
-        if pattern.search(task_text):
-            domains.append(dom)
-
-    roles = []
-    for role, pattern in ROLE_RULES:
-        if pattern.search(task_text):
-            roles.append(role)
-
-    keywords = []
-    for kw, pattern in KEYWORD_RULES:
-        if pattern.search(task_text):
-            keywords.append(kw)
-
-    difficulty = "medium"  # default
-    for diff, pattern in DIFFICULTY_RULES:
-        if pattern.search(task_text):
-            difficulty = diff
-            break
-
-    return {
-        "task_text": task_text,
-        "category": category,
-        "domains": domains,
-        "roles": roles,
-        "keywords": keywords,
-        "difficulty": difficulty,
-    }
+    router = _ensure_router()
+    result = router.classify(task_text)
+    return result.to_dict()
 
 
 # ---------------------------------------------------------------------------

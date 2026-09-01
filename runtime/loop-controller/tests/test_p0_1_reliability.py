@@ -267,7 +267,7 @@ class TestReliabilityConfig(unittest.TestCase):
 
     def test_default_config(self):
         config = create_default_config()
-        self.assertEqual(config.base_timeout_seconds, 300)
+        self.assertEqual(config.base_timeout_seconds, 600)  # Phase 7.5: increased from 300
         self.assertEqual(config.max_retries, 3)
         self.assertEqual(config.backoff_multiplier, 1.5)
         self.assertEqual(config.max_consecutive_failures, 3)

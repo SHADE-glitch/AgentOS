@@ -80,11 +80,11 @@ class ReliabilityConfig:
     All values are evidence-based from AIView project failures.
     """
     # Timeout configuration
-    base_timeout_seconds: int = 300
-    """Base timeout per attempt. Evidence: AIView executions averaged 180s, 300s was too short for complex tasks."""
+    base_timeout_seconds: int = 600
+    """Base timeout per attempt. Evidence: Phase 7.4 multi-agent tasks timed out at 300s, 600s is minimum for complex code analysis."""
 
-    max_timeout_seconds: int = 600
-    """Maximum timeout after backoff. Evidence: longest successful AIView execution was ~180s."""
+    max_timeout_seconds: int = 900
+    """Maximum timeout after backoff. Evidence: Phase 7.4 opencode execution timed out on multi-file Java analysis at 300s."""
 
     # Retry configuration
     max_retries: int = 3

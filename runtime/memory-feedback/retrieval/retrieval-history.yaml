@@ -6156,3 +6156,3483 @@ retrievals:
   - F-002
   - E-007
   - S-002
+- timestamp: '2026-09-01T03:02:28.581510+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T03:15:40.394984+00:00'
+  query:
+    task_text: '你现在作为 Agent OS Foundation Engineer。
+
+
+      当前阶段：
+
+
+      Phase 7 Foundation Hardening。
+
+
+
+      已经完成：
+
+
+      Phase 7.1 Router Runtime
+
+
+      状态：
+
+      ✅ COMPLETE
+
+
+
+      Phase 7.2 Memory Lifecycle Enforcement
+
+
+      状态：
+
+      ✅ COMPLETE
+
+
+
+      当前剩余核心 Gap：
+
+
+      Phase 6.1 Gap Analysis:
+
+
+      Gap 3:
+
+      Orchestrator form_team() 未实现。
+
+
+
+      进入：
+
+
+      Phase 7.3 Orchestrator Runtime Implementation。
+
+
+
+      目标：
+
+
+      关闭 Phase 4 Multi-Agent Collaboration 的 runtime gap。
+
+
+
+      注意：
+
+
+      这里只实现最小可运行 Orchestrator。
+
+
+      不要扩展 Phase 8/9 能力。
+
+
+
+      ====================
+
+
+      当前已有设计：
+
+
+      skills/meta/agent-orchestrator/SKILL.md
+
+
+      包含：
+
+
+      R1-R10 team selection rules
+
+
+      C1-C7 conflict rules
+
+
+
+      collaboration-runtime/SKILL.md
+
+
+      包含：
+
+
+      handoff
+
+
+      scheduling
+
+
+      aggregation
+
+
+
+      但是这些暂时不要实现。
+
+
+
+      ====================
+
+
+      实现范围：
+
+
+      创建：
+
+
+      runtime/orchestrator/
+
+
+
+      结构：
+
+
+      runtime/orchestrator/
+
+
+      ├── orchestrator.py
+
+      ├── team.py
+
+      ├── rules.yaml
+
+      ├── tests/
+
+      │   └── test_orchestrator.py
+
+
+
+      ====================
+
+
+      实现：
+
+
+      1.
+
+      form_team(task, decision_context)
+
+
+
+      输入：
+
+
+      - task
+
+      - Router DecisionContext
+
+
+
+      输出：
+
+
+      TeamPlan
+
+
+
+      包含：
+
+
+      - team_id
+
+      - lead_agent
+
+      - support_agents
+
+      - reasoning
+
+      - dependencies
+
+
+
+      ====================
+
+
+
+      2.
+
+      实现 R1-R10 基础规则：
+
+
+      例如：
+
+
+      Backend复杂任务：
+
+
+      lead:
+
+      backend-architect
+
+
+      support:
+
+      database-engineer
+
+      distributed-system-engineer
+
+      quality-reviewer
+
+
+
+      AI任务：
+
+
+      lead:
+
+      ai-engineer
+
+
+      support:
+
+      backend-architect
+
+      rag-engineer
+
+
+
+      安全任务：
+
+
+      lead:
+
+      security-engineer
+
+
+
+      ====================
+
+
+
+      3.
+
+      实现 C1-C7 基础冲突检测：
+
+
+      只做：
+
+
+      - duplicate role removal
+
+      - incompatible role filtering
+
+
+
+      不要实现：
+
+
+      agent communication。
+
+
+
+      ====================
+
+
+
+      4.
+
+      集成 Router。
+
+
+
+      流程：
+
+
+      Task
+
+
+      ↓
+
+
+      runtime/router/router.py
+
+
+      ↓
+
+
+      DecisionContext
+
+
+      ↓
+
+
+      runtime/orchestrator/orchestrator.py
+
+
+      ↓
+
+
+      TeamPlan
+
+
+
+      ====================
+
+
+
+      5.
+
+      不要修改：
+
+
+      Phase 5 Memory
+
+
+      Phase 6 Host Integration
+
+
+      runtime/router
+
+
+
+      只能增加调用接口。
+
+
+
+      ====================
+
+
+
+      6.
+
+      增加测试：
+
+
+      必须包含：
+
+
+      - backend team formation
+
+      - ai team formation
+
+      - security team formation
+
+      - simple task single agent
+
+      - duplicate role removal
+
+      - router integration
+
+      - backward compatibility
+
+
+
+      目标：
+
+
+      全部 PASS。
+
+
+
+      ====================
+
+
+
+      7.
+
+      生成报告：
+
+
+      路径：
+
+
+      /home/shade/.agents/evolution/
+
+
+
+      文件：
+
+
+      Phase-7.3-Orchestrator-Runtime-Implementation-Report.md
+
+
+
+      报告包含：
+
+
+      - Gap说明
+
+      - 架构
+
+      - 实现范围
+
+      - 测试结果
+
+      - Router integration验证
+
+      - 是否关闭 Gap 3
+
+
+
+      ====================
+
+
+
+      禁止：
+
+
+      不要实现 Evolution Engine
+
+
+      不要实现 Knowledge Graph
+
+
+      不要修改 Memory Architecture
+
+
+      不要新增 Skill
+
+
+
+      开始执行 Phase 7.3。 '
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - api
+    - distributed
+    - rag
+    - agent
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - S-001
+- timestamp: '2026-09-01T03:16:00.693395+00:00'
+  query:
+    task_text: '▣ DCP | -81K removed, +3.6K summary
+
+
+      │⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███│
+
+      ▣ Compression #1 -81K removed, +3.6K summary
+
+      → Topic: Phase 7.2 Memory Lifecycle
+
+      → Items: 42 messages and 75 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T03:25:50.813668+00:00'
+  query:
+    task_text: "# Phase 8.1 Multi-Agent Runtime Foundation Implementation\n\nYou are\
+      \ the Agent OS Runtime Engineer.\n\nWorking directory:\n\n/home/shade/.agents\n\
+      \n\nCurrent completed baseline:\n\nPhase 7 Foundation Hardening COMPLETE\n\n\
+      Verified:\n\n- Phase 7.1 Router Runtime\n  - runtime/router/router.py\n  - 28/28\
+      \ tests\n  - 50/50 benchmark\n\n- Phase 7.2 Memory Lifecycle Enforcement\n \
+      \ - promoter lifecycle fixed\n  - 11/11 tests\n\n- Phase 7.3 Orchestrator Runtime\n\
+      \  - runtime/orchestrator/orchestrator.py\n  - form_team()\n  - TeamPlan generation\n\
+      \  - 18/18 tests\n\n\nObjective:\n\nImplement Phase 8.1 Multi-Agent Runtime\
+      \ Foundation.\n\nDo NOT redesign existing architecture.\nDo NOT modify:\n- Phase\
+      \ 5 Memory architecture\n- runtime/router\n- runtime/orchestrator core rules\n\
+      - Host Integration\n\n\nCurrent missing capability:\n\nOrchestrator can create\
+      \ TeamPlan,\nbut agents cannot execute collaboratively.\n\nImplement the runtime\
+      \ layer after TeamPlan.\n\n\nRequired modules:\n\n\n1. Collaboration Package\n\
+      \nCreate:\n\nruntime/collaboration/\n\n\nwith:\n\n\ntask_decomposer.py\n\nResponsibilities:\n\
+      \n- Convert Task + TeamPlan into executable TaskCards\n- Assign each TaskCard\
+      \ to an agent role\n- Support dependency ordering\n\n\nscheduler.py\n\nResponsibilities:\n\
+      \n- Execute TaskCards according to dependency order\n- First version can be\
+      \ sequential\n- Provide execution trace\n\n\nprotocol.py\n\nResponsibilities:\n\
+      \nDefine agent communication protocol:\n\n- REQUEST\n- RESULT\n- REVIEW\n- CONFLICT\n\
+      - APPROVAL\n\n\naggregator.py\n\nResponsibilities:\n\n- Collect agent outputs\n\
+      - Merge results\n- Produce final team result\n\n\ntrace.py\n\nResponsibilities:\n\
+      \nRecord:\n\n- team_created\n- task_assigned\n- agent_started\n- agent_completed\n\
+      - result_aggregated\n\n\n\nArchitecture:\n\n\nTask\n\n↓\n\nRouter\n\n↓\n\nDecisionContext\n\
+      \n↓\n\nOrchestrator\n\n↓\n\nTeamPlan\n\n↓\n\nTask Decomposer\n\n↓\n\nScheduler\n\
+      \n↓\n\nAgent Execution\n\n↓\n\nAggregator\n\n↓\n\nFinal Result\n\n\n\nImplementation\
+      \ constraints:\n\n1. Keep first implementation deterministic.\n2. No LLM calls\
+      \ required.\n3. No external dependencies.\n4. Use dataclasses where appropriate.\n\
+      5. Maintain testability.\n6. Follow existing runtime coding style.\n\n\nTests\
+      \ required:\n\nCreate:\n\nruntime/collaboration/tests/\n\n\nTest:\n\n- TeamPlan\
+      \ -> TaskCards conversion\n- Dependency ordering\n- Scheduler execution\n- Protocol\
+      \ validation\n- Aggregation correctness\n- Trace generation\n\n\nRegression:\n\
+      \nRun:\n\nPhase 7.1 Router tests\n\nPhase 7.2 Lifecycle tests\n\nPhase 7.3 Orchestrator\
+      \ tests\n\n\nAcceptance criteria:\n\nPhase 8.1 COMPLETE when:\n\n1.\nTeamPlan\
+      \ can generate executable TaskCards\n\n2.\nScheduler can execute multi-agent\
+      \ workflow\n\n3.\nResults can be aggregated\n\n4.\nExecution trace exists\n\n\
+      5.\nAll previous tests pass\n\n\nGenerate:\n\n/home/shade/.agents/evolution/Phase-8.1-Multi-Agent-Runtime-Foundation-Report.md\n\
+      \n\nAt the end provide:\n\n- files created\n- architecture changes\n- tests\n\
+      - known limitations\n- next recommended phase "
+    category: debug
+    domains:
+    - frontend
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - frontend-architect
+    - system-architect
+    - llm-engineer
+    keywords:
+    - llm
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - S-001
+  - P-002
+- timestamp: '2026-09-01T03:26:12.785010+00:00'
+  query:
+    task_text: '▣ DCP | -123.9K removed, +5.2K summary
+
+
+      │░░░░░░░░░░░░░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+
+      ▣ Compression #2 -42.6K removed, +5.2K summary
+
+      → Topic: Phase 7.3 Orchestrator Runtime
+
+      → Items: 44 messages and 55 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T03:26:29.184528+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T03:37:06.363846+00:00'
+  query:
+    task_text: "# Phase 8.2 Real Agent Execution Bridge\n\nYou are the Agent OS Runtime\
+      \ Integration Engineer.\n\nWorkspace:\n\n/home/shade/.agents\n\n\nCurrent completed:\n\
+      \nPhase 7 Foundation Hardening:\n- Router Runtime COMPLETE\n- Memory Lifecycle\
+      \ COMPLETE\n- Orchestrator COMPLETE\n\n\nPhase 8.1:\nMulti-Agent Runtime Foundation\
+      \ COMPLETE\n\nExisting pipeline:\n\nTask\n ↓\nRouter\n ↓\nOrchestrator\n ↓\n\
+      TeamPlan\n ↓\nTaskDecomposer\n ↓\nScheduler\n ↓\nAggregator\n\n\nCurrent limitation:\n\
+      \nScheduler uses stub executor.\n\nMulti-agent workflow is simulated.\n\nObjective:\n\
+      \nImplement Phase 8.2 Real Agent Execution Bridge.\n\n\nGoal:\n\nConnect collaboration\
+      \ runtime with real Agent execution.\n\n\nDo NOT redesign:\n- Router\n- Memory\
+      \ architecture\n- Orchestrator rules\n- Host Integration\n\n\nImplement:\n\n\
+      \n1. Create:\n\nruntime/collaboration/executor.py\n\n\nResponsibilities:\n\n\
+      - Convert TaskCard into Agent execution request\n- Resolve agent role\n- Load\
+      \ corresponding Skill\n- Retrieve relevant Memory\n- Build Agent Context\n-\
+      \ Call OpenCode host adapter\n\n\nFlow:\n\nTaskCard\n\n↓\n\nExecutor\n\n↓\n\n\
+      Skill Loader\n\n↓\n\nMemory Retrieval\n\n↓\n\nHost Adapter\n\n↓\n\nAgent Result\n\
+      \n\n\n2. Integrate Scheduler\n\nReplace stub executor with real executor interface.\n\
+      \n\nScheduler should support:\n\n- dry-run mode\n- real execution mode\n\n\n\
+      3. Skill Injection\n\nFor each TaskCard:\n\nrole:\n\nbackend-architect\n\nshould\
+      \ load:\n\nskills/**/backend-architect/SKILL.md\n\n\n4. Memory Injection\n\n\
+      Before execution:\n\nretrieve relevant memories\n\nfrom:\n\nruntime/memory-feedback\n\
+      \nand\n\nmemory/retrieval-index.yaml\n\n\nInject into agent context.\n\n\n5.\
+      \ Host Adapter Integration\n\nUse existing:\n\nruntime/hosts/opencode/\n\n\n\
+      Do not duplicate host logic.\n\n\n6. Add Tests\n\n\nCreate:\n\nruntime/collaboration/tests/test_executor.py\n\
+      \n\nTests:\n\n- TaskCard to AgentContext\n- Skill loading\n- Memory retrieval\n\
+      - Host adapter mock\n- Scheduler integration\n\n\n7. Real Execution Verification\n\
+      \nRun one REAL_HOST test.\n\n\nRequired output:\n\n/home/shade/.agents/evolution/Phase-8.2-Real-Agent-Execution-Bridge-Report.md\n\
+      \n\nAcceptance:\n\n1.\nNo stub executor required for normal workflow\n\n2.\n\
+      TaskCard can execute through real agent path\n\n3.\nSkill context injected\n\
+      \n4.\nMemory context injected\n\n5.\nTrace generated\n\n6.\nPrevious tests remain\
+      \ passing\n\n\nAt completion provide:\n\n- files created\n- architecture changes\n\
+      - tests\n- real execution result\n- limitations\n- next phase recommendation "
+    category: testing
+    domains:
+    - frontend
+    - backend
+    - database
+    - ai
+    - architecture
+    - testing
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - indexing
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - E-001
+- timestamp: '2026-09-01T03:37:19.140056+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T03:37:21.279252+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T03:47:35.214229+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:16:20.115396+00:00'
+  query:
+    task_text: 分析并优化这条 MySQL 慢查询，EXPLAIN 显示 type=ALL，需要加索引
+    category: optimization
+    domains:
+    - database
+    - ai
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    - indexing
+    - optimization
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - S-001
+- timestamp: '2026-09-01T04:16:21.157546+00:00'
+  query:
+    task_text: Spring Boot 接口存在 JWT 鉴权漏洞，需要做安全加固，涉及 RBAC 权限
+    category: security
+    domains:
+    - backend
+    - security
+    roles:
+    - backend-architect
+    - security-engineer
+    keywords:
+    - api
+    - spring
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - E-007
+  - F-002
+- timestamp: '2026-09-01T04:16:22.194588+00:00'
+  query:
+    task_text: 请对这个 Vue 前端 PR 做 code review，检查组件边界和 TypeScript 类型
+    category: review
+    domains:
+    - frontend
+    roles:
+    - frontend-architect
+    keywords:
+    - typescript
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:16:23.254847+00:00'
+  query:
+    task_text: 我想学习 Spring Boot 微服务怎么上手，给我一条学习路线
+    category: learning
+    domains:
+    - backend
+    - distributed
+    roles:
+    - backend-architect
+    - system-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-002
+- timestamp: '2026-09-01T04:16:24.295073+00:00'
+  query:
+    task_text: 设计一个基于 Spring Boot 的高并发秒杀系统，需要库存扣减、RabbitMQ 消息队列和 MySQL 数据库一致性
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - system-architect
+    keywords:
+    - mysql
+    - spring
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T04:16:25.331507+00:00'
+  query:
+    task_text: 线上 Java 订单服务出现 NPE 报错，需要排查 Controller 到 Service 的异常链路
+    category: debug
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:16:26.341171+00:00'
+  query:
+    task_text: 把现有单体 Spring 应用重构为微服务架构，按 DDD 拆分订单与库存
+    category: architecture
+    domains:
+    - backend
+    - distributed
+    - architecture
+    roles:
+    - backend-architect
+    - system-architect
+    keywords:
+    - spring
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - E-001
+  - T-002
+  - T-001
+  - T-005
+- timestamp: '2026-09-01T04:16:27.380878+00:00'
+  query:
+    task_text: 设计一个 RAG 知识库问答系统，需要向量检索 embedding 和 rerank
+    category: architecture
+    domains:
+    - ai
+    roles:
+    - rag-engineer
+    keywords:
+    - rag
+    - vector
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-001
+  - T-005
+  - S-001
+  - E-001
+  - T-002
+- timestamp: '2026-09-01T04:16:28.394492+00:00'
+  query:
+    task_text: PostgreSQL 连接池耗尽导致接口超时，需要做数据库调优
+    category: optimization
+    domains:
+    - backend
+    - database
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    keywords:
+    - optimization
+    - api
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - S-002
+  - T-005
+  - T-009
+  - P-002
+- timestamp: '2026-09-01T04:16:29.434651+00:00'
+  query:
+    task_text: 把 AIView 后端和 Ollama 容器化，编写 Docker 与 Kubernetes 部署和 CI/CD pipeline
+    category: deployment
+    domains:
+    - backend
+    - ai
+    - devops
+    roles:
+    - backend-architect
+    - devops-engineer
+    keywords:
+    - docker
+    - deploy
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:16:30.508229+00:00'
+  query:
+    task_text: 对比 DeepSeek 和 Ollama 作为面试评分 LLM 的选型，分析延迟和成本
+    category: research
+    domains:
+    - ai
+    roles:
+    - llm-engineer
+    keywords:
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - E-005
+  - S-002
+  - P-002
+- timestamp: '2026-09-01T04:16:31.578297+00:00'
+  query:
+    task_text: 给 AIView 面试流程补集成测试和单测用例，覆盖 InterviewService
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:16:32.629527+00:00'
+  query:
+    task_text: 设计一个多租户 AI SaaS 平台，包含租户隔离、计费和知识库 RAG
+    category: architecture
+    domains:
+    - distributed
+    - ai
+    roles:
+    - rag-engineer
+    keywords:
+    - multi-tenant
+    - rag
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-001
+  - T-002
+  - S-002
+  - T-005
+  - P-001
+- timestamp: '2026-09-01T04:16:33.678285+00:00'
+  query:
+    task_text: 支付系统要存储银行卡数据，必须满足 PCI-DSS 加密与 token 化要求
+    category: security
+    domains:
+    - security
+    - data
+    roles:
+    - security-engineer
+    keywords:
+    - pci-dss
+    - encryption
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-007
+  - P-002
+  - T-005
+  - S-002
+  - F-002
+- timestamp: '2026-09-01T04:16:34.741742+00:00'
+  query:
+    task_text: React 页面首屏 LCP 很慢，需要做前端性能优化和 bundle 排查
+    category: optimization
+    domains:
+    - frontend
+    roles:
+    - frontend-architect
+    keywords:
+    - optimization
+    - react
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - P-002
+- timestamp: '2026-09-01T04:16:35.796069+00:00'
+  query:
+    task_text: 实现一个 Agent 工具调用工作流，支持 MCP tool calling
+    category: coding
+    domains:
+    - ai
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-001
+  - S-002
+  - P-001
+  - E-005
+- timestamp: '2026-09-01T04:16:36.851314+00:00'
+  query:
+    task_text: 审查这份架构设计方案，做技术方案评审
+    category: review
+    domains:
+    - architecture
+    roles:
+    - system-architect
+    keywords: []
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - E-001
+  - T-005
+  - P-002
+  - P-001
+- timestamp: '2026-09-01T04:16:37.926101+00:00'
+  query:
+    task_text: 简单查询一下 users 表的单个字段，基础 SQL
+    category: data
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords: []
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:16:38.988164+00:00'
+  query:
+    task_text: 线上 k8s 集群 Pod 频繁重启，需要排查 Docker 镜像和部署流水线
+    category: deployment
+    domains:
+    - devops
+    roles:
+    - devops-engineer
+    keywords:
+    - docker
+    - deploy
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:16:40.044838+00:00'
+  query:
+    task_text: 设计分布式事务方案，覆盖 Saga 和消息队列最终一致性
+    category: architecture
+    domains:
+    - distributed
+    roles:
+    - system-architect
+    keywords:
+    - distributed
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-002
+  - S-002
+  - E-001
+  - P-001
+  - T-009
+- timestamp: '2026-09-01T04:17:31.587496+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:19:42.341293+00:00'
+  query:
+    task_text: '▣ DCP | -25.7K removed, +8K summary
+
+
+      │⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█████████████│
+
+      ▣ Compression #1 -25.7K removed, +8K summary
+
+      → Topic: Agent OS Runtime Verification
+
+      → Items: 6 messages and 18 tools compressed'
+    category: coding
+    domains:
+    - ai
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-001
+  - S-002
+  - P-001
+  - E-005
+- timestamp: '2026-09-01T04:34:08.929864+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:35:12.312574+00:00'
+  query:
+    task_text: '▣ DCP | -10.2K removed, +9K summary
+
+
+      │⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███████████████████████████████████│
+
+      ▣ Compression #1 -10.2K removed, +9K summary
+
+      → Topic: Initial Setup & Skill Loading
+
+      → Items: 3 messages and 6 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:35:39.053227+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:35:40.770676+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:35:42.266463+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:35:43.864418+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - S-001
+- timestamp: '2026-09-01T04:41:35.525910+00:00'
+  query:
+    task_text: '▣ DCP | -42.7K removed, +27.7K summary
+
+
+      │░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+
+      ▣ Compression #2 -32.5K removed, +27.7K summary
+
+      → Topic: Codebase Exploration & Root Cause Analysis
+
+      → Items: 23 messages and 27 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:58:32.630568+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:58:33.906195+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-001
+  - E-001
+  - T-005
+  - T-002
+- timestamp: '2026-09-01T04:59:50.218893+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T04:59:51.522520+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - P-002
+- timestamp: '2026-09-01T05:02:03.987355+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-002
+  - P-001
+  - T-010
+- timestamp: '2026-09-01T05:02:05.631461+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-001
+  - E-001
+  - T-005
+  - T-002
+- timestamp: '2026-09-01T05:03:21.983979+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:03:23.324171+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - P-001
+- timestamp: '2026-09-01T05:03:33.456248+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - S-002
+  - T-005
+  - P-001
+- timestamp: '2026-09-01T05:03:34.811010+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:03:36.488019+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-002
+  - T-009
+- timestamp: '2026-09-01T05:03:37.864012+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-001
+  - S-002
+  - P-001
+  - E-004
+- timestamp: '2026-09-01T05:04:17.351783+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-009
+  - S-002
+  - T-005
+  - P-001
+- timestamp: '2026-09-01T05:04:18.742086+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:04:20.440511+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-002
+  - T-009
+- timestamp: '2026-09-01T05:04:21.836969+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-001
+  - P-001
+  - S-002
+  - E-004
+- timestamp: '2026-09-01T05:04:56.639760+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:04:58.471254+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-001
+  - T-005
+  - E-001
+  - T-002
+- timestamp: '2026-09-01T05:06:14.972131+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:06:16.456302+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - P-001
+- timestamp: '2026-09-01T05:06:24.795390+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T05:06:26.597781+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - T-001
+  - E-001
+  - T-002
+- timestamp: '2026-09-01T05:07:43.075991+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T05:07:44.537803+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - P-001
+- timestamp: '2026-09-01T05:11:37.896394+00:00'
+  query:
+    task_text: '你是 Agent OS Runtime Host。
+
+
+      目标：
+
+      验证当前 ~/.agents 是否已经具备真实多 Agent Runtime 能力。
+
+
+      测试任务：
+
+
+      [粘贴 Grok Task Card]
+
+
+      目标项目：
+
+
+      /home/shade/Public/test
+
+
+
+      执行要求：
+
+
+      1. 必须从 Agent OS 主入口启动。
+
+
+      禁止：
+
+      - 手动调用 Router
+
+      - 手动调用 Orchestrator
+
+      - 绕过 loop_controller
+
+
+
+      必须记录完整链路：
+
+
+      Router
+
+      DecisionContext
+
+      Memory Retrieval
+
+      Skill Routing
+
+      Orchestrator
+
+      TeamPlan
+
+      TaskDecomposer
+
+      Scheduler
+
+      Agent Execution
+
+      Aggregator
+
+      Memory Lifecycle
+
+
+
+      验证：
+
+
+      1. 是否真实形成多 Agent Team
+
+      2. 是否真实执行 TaskCard
+
+      3. 是否读取真实项目代码
+
+      4. 是否产生代码证据
+
+      5. 是否生成 Execution Trace
+
+      6. 是否生成 TeamResult
+
+      7. 是否产生 Memory 更新
+
+
+
+      输出：
+
+
+      Runtime Validation Report:
+
+
+      包括：
+
+
+      - execution-trace
+
+      - team-plan
+
+      - task-cards
+
+      - scheduler result
+
+      - team-result
+
+      - memory changes
+
+      - failures
+
+      - gaps
+
+
+
+      禁止修改：
+
+
+      ~/.agents
+
+      /home/shade/Public/test
+
+
+      只验证。 '
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - S-002
+  - T-005
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T05:12:20.988985+00:00'
+  query:
+    task_text: "你是 Agent OS Runtime Host。\n\n目标：\n验证当前 ~/.agents 是否已经具备真实多 Agent Runtime\
+      \ 能力。\n\n测试任务：\n\n# Task Card\n\n## Background\nThe project at /home/shade/Public/test\
+      \ is a real full-stack AI interview platform with a Java Spring Boot backend\
+      \ and a Vue frontend. It includes:\n- auth/security\n- interview state and scoring\n\
+      - AI client integration\n- RAG/knowledge retrieval\n- Redis, RabbitMQ, MySQL\
+      \ usage\n- multi-module backend structure under /home/shade/Public/test/backend\n\
+      \nThis is not a toy app. It is a realistic application where failures emerge\
+      \ from the interaction between authentication, interview state, AI evaluation,\
+      \ and persistence rather than from isolated code generation.\n\nThe pressure\
+      \ test is designed to expose whether an Agent OS can truly orchestrate a multi-agent\
+      \ runtime investigation across real code, rather than simply producing a textual\
+      \ recommendation.\n\n## Initial State\n- The application has a real backend\
+      \ under /home/shade/Public/test/backend with Java modules such as auth, interview,\
+      \ rag, and agent.\n- Frontend exists under /home/shade/Public/test/frontend\
+      \ and interacts with the backend APIs.\n- There are multiple crossing concerns:\n\
+      \  - session continuity\n  - JWT auth flow\n  - state handoff between interview\
+      \ lifecycle and result persistence\n  - AI tool calls / LLM client integration\n\
+      \  - backend caching and message queueing\n- Symptoms observed in production-like\
+      \ staging:\n  - interview sessions occasionally resume with stale state\n  -\
+      \ duplicate or inconsistent result records occasionally appear\n  - auth state\
+      \ and interview state sometimes diverge after retries/timeouts\n  - AI evaluation\
+      \ may generate results that do not match the current session context\n- No single\
+      \ root-cause hypothesis is trusted yet. The issue spans multiple modules and\
+      \ execution boundaries.\n\n## Expected Agent OS Behavior\nThe Agent OS must\
+      \ behave as a real runtime system, not as a single LLM “advisor.”\n\nRequired\
+      \ behavior:\n- Router identifies the issue as a cross-module backend/runtime\
+      \ investigation, not a generic feature task.\n- Orchestrator breaks the issue\
+      \ into parallel tracks:\n  - auth/session integrity\n  - interview state transitions\n\
+      \  - AI evaluation and tool invocation path\n  - persistence and eventual consistency\n\
+      \  - frontend/backend contract boundary\n- Scheduler assigns work across multiple\
+      \ specialized agents with time-bound execution windows.\n- Collaboration Runtime\
+      \ allows multiple agents to work in parallel with synchronized observations.\n\
+      - Agent Execution runs against the real repository, reading actual code and\
+      \ validating hypotheses against code paths.\n- Aggregator consolidates agent\
+      \ outputs into a single diagnostic narrative and evidence set.\n- Memory Lifecycle\
+      \ records what was learned in one phase and reuses it when hypotheses change.\n\
+      \nThis task should force the system to:\n- reason across modules\n- revisit\
+      \ dead ends without losing context\n- coordinate team work effectively\n- maintain\
+      \ traceable findings through multiple rounds of analysis\n\n## Required Skills\n\
+      - Router\n- Orchestrator\n- Scheduler\n- Collaboration Runtime\n- Agent Execution\n\
+      - Aggregator\n- Memory Lifecycle\n- Java backend analysis\n- Spring Security/JWT\
+      \ analysis\n- MyBatis/MySQL persistence reasoning\n- Redis/RabbitMQ integration\
+      \ reasoning\n- AI client / tool-call tracing\n- frontend-backend contract validation\n\
+      - real codebase investigation and evidence gathering\n\n## Expected Team\nA\
+      \ realistic team for this task should include:\n- Trae: system architect and\
+      \ auditor\n- OpenCode: runtime host and live executor\n- Backend Debugger: sequence\
+      \ and service flow analysis\n- Security/Auth Specialist: JWT/session integrity\
+      \ and authorization issues\n- Persistence Specialist: MyBatis, transaction,\
+      \ state persistence, duplicate writes\n- AI/Agent Specialist: LLM client, tool\
+      \ call, session context correctness\n- Frontend/Integration Specialist: API\
+      \ contracts and user-visible state\n- Auditor: verifies evidence, constraints,\
+      \ and final findings\n\nThe important point is not team names alone, but that\
+      \ the system must form a meaningful multi-agent team based on real failure domains.\n\
+      \n## Validation Criteria\nThe task passes only if the Agent OS demonstrates\
+      \ all of the following:\n- It routes the problem correctly as a real runtime\
+      \ debugging task\n- It forms a team with relevant specialized agents\n- It executes\
+      \ code analysis on the actual project structure\n- It produces real runtime\
+      \ evidence from the project, not pure conceptual discussion\n- It uses memory\
+      \ to refine hypotheses across phases\n- It coordinates work across multiple\
+      \ subsystems instead of a single monolithic analysis\n- It identifies likely\
+      \ root-cause candidates with evidence from code and architecture\n- It produces\
+      \ a final result that is traceable to code paths, system behavior, and runtime\
+      \ observations\n- It differentiates between symptoms, hypotheses, and confirmed\
+      \ findings\n\n## Failure Signals\nThe Agent OS fails this test if:\n- Router\
+      \ is bypassed or the task is treated as a generic coding request\n- Orchestrator\
+      \ does not split the investigation into parallel workstreams\n- Team formation\
+      \ is superficial or irrelevant to the actual problem\n- Agents act in isolation\
+      \ without shared context or memory\n- The system cannot explain cross-module\
+      \ interactions\n- It proposes fixes without evidence\n- It does not revisit\
+      \ prior findings after new evidence appears\n- It remains at the level of abstraction\
+      \ and never inspects the real code\n- It cannot produce structured runtime outputs\
+      \ or audit trails\n- It treats the problem as “conversation quality” rather\
+      \ than execution quality\n\nThis task is intentionally designed to validate\
+      \ whether the Agent OS truly works as a runtime, collaborative engineering system\
+      \ rather than a single-agent chat wrapper.\n\n目标项目：\n\n/home/shade/Public/test\n\
+      \n\n执行要求：\n\n1. 必须从 Agent OS 主入口启动。\n\n禁止：\n- 手动调用 Router\n- 手动调用 Orchestrator\n\
+      - 绕过 loop_controller\n\n\n必须记录完整链路：\n\nRouter\nDecisionContext\nMemory Retrieval\n\
+      Skill Routing\nOrchestrator\nTeamPlan\nTaskDecomposer\nScheduler\nAgent Execution\n\
+      Aggregator\nMemory Lifecycle\n\n\n验证：\n\n1. 是否真实形成多 Agent Team\n2. 是否真实执行 TaskCard\n\
+      3. 是否读取真实项目代码\n4. 是否产生代码证据\n5. 是否生成 Execution Trace\n6. 是否生成 TeamResult\n7.\
+      \ 是否产生 Memory 更新\n\n\n输出：\n\nRuntime Validation Report:\n\n包括：\n\n- execution-trace\n\
+      - team-plan\n- task-cards\n- scheduler result\n- team-result\n- memory changes\n\
+      - failures\n- gaps\n\n\n禁止修改：\n\n~/.agents\n/home/shade/Public/test\n\n只验证。 "
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - architecture
+    - testing
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - security-engineer
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - mysql
+    - api
+    - spring
+    - java
+    - auth
+    - rag
+    - llm
+    - agent
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T05:13:56.712760+00:00'
+  query:
+    task_text: "Runtime Diagnosis: Session Resume Stale State and Auth-State Corruption\
+      \ in AI Interview Platform.\nCross-module investigation across auth (JWT, SecurityContext),\
+      \ interview state (Redis InterviewStateStore, state machine), \nscoring (RabbitMQ\
+      \ consumers, EvaluationService), and persistence (MyBatis-Plus, interview_session/interview_message/interview_result\
+      \ tables).\nSymptoms: (1) session resume restores stale/duplicated state from\
+      \ DB after Redis expiry, (2) retries/timeout expose wrong question set, \n(3)\
+      \ interview results recorded twice due to non-idempotent scoring consumer, (4)\
+      \ user role/identity checks inconsistent across login and interview action.\n\
+      Requires: multi-agent team with backend-architect lead, security-engineer for\
+      \ JWT analysis, distributed-system for Redis/MQ consistency, \ndatabase-engineer\
+      \ for persistence patterns, code-reviewer for evidence validation. \nRead actual\
+      \ code at /home/shade/Public/test/backend/src/main/java/com/aiview/ across auth,\
+      \ interview, agent, config modules."
+    category: security
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - security-engineer
+    - system-architect
+    - llm-engineer
+    keywords:
+    - java
+    - auth
+    - distributed
+    - agent
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:25:54.603322+00:00'
+  query:
+    task_text: "Debug Spring Boot interview platform: JWT auth inconsistency, Redis\
+      \ session state staleness, \nRabbitMQ scoring duplicate writes. Read Java code\
+      \ at /home/shade/Public/test/backend."
+    category: debug
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - testing
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    - java
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:32:40.199707+00:00'
+  query:
+    task_text: "Debug cross-module runtime failures in Spring Boot Java interview\
+      \ platform.\nJWT auth inconsistency, Redis session state staleness, RabbitMQ\
+      \ scoring duplicate writes, \nMyBatis-Plus unconditional INSERT. Read code at\
+      \ /home/shade/Public/test/backend."
+    category: debug
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    - java
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T05:34:56.942780+00:00'
+  query:
+    task_text: '▣ DCP | -116.7K removed, +29.3K summary
+
+
+      │░░░░░░░░░░░░░░░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+
+      ▣ Compression #3 -74K removed, +29.3K summary
+
+      → Topic: Agent OS Runtime Validation Execution
+
+      → Items: 25 messages and 32 tools compressed'
+    category: coding
+    domains:
+    - ai
+    roles:
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-005
+  - S-001
+  - S-002
+  - T-010
+- timestamp: '2026-09-01T05:48:14.155324+00:00'
+  query:
+    task_text: 只读取 pom.xml 和 application.yml，告诉我 Java 版本和使用的技术栈，不修改任何文件
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T05:49:02.709515+00:00'
+  query:
+    task_text: 诊断 AI Interview Platform 的 session 状态漂移问题：检查 InterviewStateStore 的
+      Redis 过期后 DB 回退逻辑，以及 InterviewService 的 answer 方法幂等性。只分析不修改文件。
+    category: testing
+    domains:
+    - backend
+    - database
+    - ai
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T06:14:10.880546+00:00'
+  query:
+    task_text: 分析 AI Interview Platform 的 auth 模块安全风险：检查 JWT token 刷新机制、refresh token
+      吊销、SecurityConfig 配置
+    category: security
+    domains:
+    - security
+    - ai
+    roles:
+    - security-engineer
+    keywords:
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - E-007
+  - S-002
+  - P-002
+  - P-001
+- timestamp: '2026-09-01T07:10:48.884218+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-009
+  - S-002
+  - T-005
+  - P-001
+- timestamp: '2026-09-01T07:10:50.683576+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:10:52.707018+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-002
+  - T-009
+- timestamp: '2026-09-01T07:10:54.426441+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - S-001
+  - S-002
+  - E-004
+- timestamp: '2026-09-01T07:11:04.226645+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:11:06.251877+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - T-001
+  - E-001
+  - T-002
+- timestamp: '2026-09-01T07:12:22.821966+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:12:24.581182+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - P-001
+- timestamp: '2026-09-01T07:14:11.677988+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-009
+  - S-002
+  - P-001
+  - T-005
+- timestamp: '2026-09-01T07:14:13.525348+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:14:15.616110+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-009
+  - T-002
+- timestamp: '2026-09-01T07:14:17.516264+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - S-002
+  - S-001
+  - E-004
+- timestamp: '2026-09-01T07:14:43.681509+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:14:45.824974+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - T-001
+  - E-001
+  - T-002
+- timestamp: '2026-09-01T07:16:02.458311+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:16:04.334219+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - T-009
+  - S-002
+  - P-001
+- timestamp: '2026-09-01T07:17:51.548406+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-009
+  - S-002
+  - P-001
+  - T-005
+- timestamp: '2026-09-01T07:17:53.554224+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:17:55.752582+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-009
+  - T-002
+- timestamp: '2026-09-01T07:17:57.725542+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - S-002
+  - S-001
+  - E-004
+- timestamp: '2026-09-01T07:25:08.868422+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:28:07.290343+00:00'
+  query:
+    task_text: 'Investigate session-state drift and auth/interview consistency in
+      the real backend at /home/shade/Public/test. The platform is an AI interview
+      application where user sessions span authentication, interview lifecycle, result
+      persistence, and AI evaluation. Some interview resumes or results appear inconsistent
+      after retries, timeout handling, or repeated session actions. The backend merges
+      identity, auth state, interview state, and AI evaluation context across multiple
+      modules: auth, interview, agent, rag, config, common. Identify why auth/session
+      state can diverge from interview state, why stale or duplicated interview context
+      can persist, and where the design is vulnerable to retry-driven inconsistency
+      or duplicate state transitions. Analyze the real code paths in /home/shade/Public/test/backend/src/main/java/com/aiview/
+      for auth/security, interview, agent, rag, and config modules.'
+    category: security
+    domains:
+    - backend
+    - security
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    - security-engineer
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - java
+    - rag
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - S-002
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T07:39:31.072112+00:00'
+  query:
+    task_text: Investigate session-state drift and auth/interview consistency in the
+      real backend at /home/shade/Public/test. The platform is an AI interview application
+      where user sessions span authentication, interview lifecycle, result persistence,
+      and AI evaluation. Some interview resumes or results appear inconsistent after
+      retries, timeout handling, or repeated session actions. Identify why auth/session
+      state can diverge from interview state, why stale or duplicated interview context
+      can persist, and where the design is vulnerable to retry-driven inconsistency.
+      Analyze the real code paths in /home/shade/Public/test/backend/src/main/java/com/aiview/
+      for auth/security, interview, agent, rag, and config modules.
+    category: security
+    domains:
+    - backend
+    - security
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    - security-engineer
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - java
+    - rag
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - S-002
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T07:48:10.110238+00:00'
+  query:
+    task_text: '▣ DCP | -55.6K removed, +725 summary
+
+
+      │⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███████████████████████████████│
+
+      ▣ Compression #1 -55.6K removed, +725 summary
+
+      → Topic: Pre-run checks and pipeline analysis
+
+      → Items: 11 messages and 33 tools compressed'
+    category: devops
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T07:48:38.303004+00:00'
+  query:
+    task_text: Investigate session-state drift and auth/interview consistency in the
+      real backend at /home/shade/Public/test. The platform is an AI interview application
+      where user sessions span authentication, interview lifecycle, result persistence,
+      and AI evaluation. Some interview resumes or results appear inconsistent after
+      retries, timeout handling, or repeated session actions. Identify why auth/session
+      state can diverge from interview state, why stale or duplicated interview context
+      can persist, and where the design is vulnerable to retry-driven inconsistency.
+      Analyze the real code paths in /home/shade/Public/test/backend/src/main/java/com/aiview/
+      for auth/security, interview, agent, rag, and config modules.
+    category: security
+    domains:
+    - backend
+    - security
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    - security-engineer
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - java
+    - rag
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - P-001
+  - S-002
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T08:06:41.762965+00:00'
+  query:
+    task_text: Analyze the auth module at /home/shade/Public/test/backend/src/main/java/com/aiview/auth/
+      for session state management issues. Focus on JWT token handling, session persistence,
+      and state consistency patterns.
+    category: security
+    domains:
+    - backend
+    - security
+    - ai
+    - architecture
+    - testing
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    - auth
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T08:19:41.532628+00:00'
+  query:
+    task_text: '▣ DCP | -110.7K removed, +1.6K summary
+
+
+      │░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+
+      ▣ Compression #2 -55K removed, +859 summary
+
+      → Topic: Run #1 execution and results
+
+      → Items: 34 messages and 37 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T08:20:56.009211+00:00'
+  query:
+    task_text: /home/shade/Public/test
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T08:22:33.060367+00:00'
+  query:
+    task_text: Review the project at /home/shade/Public/test for backend performance
+      issues. Focus on database query efficiency, API response times, and caching
+      opportunities. Look at the interview module's database queries and the rag module's
+      retrieval performance.
+    category: optimization
+    domains:
+    - backend
+    - database
+    - ai
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - rag-engineer
+    keywords:
+    - optimization
+    - api
+    - rag
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - T-005
+  - S-002
+  - P-001
+  - T-009
+- timestamp: '2026-09-01T08:51:29.912261+00:00'
+  query:
+    task_text: '▣ DCP | -132.4K removed, +2.8K summary
+
+
+      │░░░░░░░░░░░░░░░░░░░░░░░░░░█⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+
+      ▣ Compression #3 -20.6K removed, +1.2K summary
+
+      → Topic: Run #2 execution and analysis
+
+      → Items: 38 messages and 40 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:10:56.834466+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - S-001
+- timestamp: '2026-09-01T09:13:20.643319+00:00'
+  query:
+    task_text: 在当前真实项目 /home/shade/Public/test 中，诊断并解释一个真实的后端工程问题：系统在高并发/跨模块使用条件下，出现
+      API 读到陈旧数据、权限校验不稳定，或者数据库与应用层状态不一致的问题。请从代码、调用链、数据访问模式和安全边界共同分析这个问题，而不是只定位表面症状。最终输出需要说明：问题来源、影响范围、根因路径、风险级别，以及建议的修正方向。该任务是复杂的架构级诊断，需要代码审查和跨模块分析，涉及后端、数据库、分布式并发和安全多个领域。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - distributed
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:15:23.032211+00:00'
+  query:
+    task_text: 在当前真实项目 /home/shade/Public/test 中，诊断并解释一个真实的后端工程问题：系统在高并发/跨模块使用条件下，出现
+      API 读到陈旧数据、权限校验不稳定，或者数据库与应用层状态不一致的问题。请从代码、调用链、数据访问模式和安全边界共同分析这个问题，而不是只定位表面症状。最终输出需要说明：问题来源、影响范围、根因路径、风险级别，以及建议的修正方向。该任务是复杂的架构级诊断，需要代码审查和跨模块分析，涉及后端、数据库、分布式并发和安全多个领域。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - distributed
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:17:26.283527+00:00'
+  query:
+    task_text: 在当前真实项目 /home/shade/Public/test 中，诊断并解释一个真实的后端工程问题：系统在高并发/跨模块使用条件下，出现
+      API 读到陈旧数据、权限校验不稳定，或者数据库与应用层状态不一致的问题。请从代码、调用链、数据访问模式和安全边界共同分析这个问题，而不是只定位表面症状。最终输出需要说明：问题来源、影响范围、根因路径、风险级别，以及建议的修正方向。该任务是复杂的架构级诊断，需要代码审查和跨模块分析，涉及后端、数据库、分布式并发和安全多个领域。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - distributed
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:20:11.161674+00:00'
+  query:
+    task_text: '在当前真实项目 /home/shade/Public/test 中，诊断并解释一个真实的后端工程问题：系统在高并发/跨模块使用条件下，出现
+      API 读到陈旧数据、权限校验不稳定，或者数据库与应用层状态不一致的问题。请从代码、调用链、数据访问模式和安全边界共同分析这个问题，而不是只定位表面症状。最终输出需要说明：问题来源、影响范围、根因路径、风险级别，以及建议的修正方向。该任务是复杂的架构级诊断，需要代码审查和跨模块分析，涉及后端、数据库、分布式并发和安全多个领域。
+
+      '
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - distributed
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:20:15.302988+00:00'
+  query:
+    task_text: '在当前真实项目 /home/shade/Public/test 中，诊断并解释一个真实的后端工程问题：系统在高并发/跨模块使用条件下，出现
+      API 读到陈旧数据、权限校验不稳定，或者数据库与应用层状态不一致的问题。请从代码、调用链、数据访问模式和安全边界共同分析这个问题，而不是只定位表面症状。最终输出需要说明：问题来源、影响范围、根因路径、风险级别，以及建议的修正方向。该任务是复杂的架构级诊断，需要代码审查和跨模块分析，涉及后端、数据库、分布式并发和安全多个领域。
+
+      '
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - distributed
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:20:21.800753+00:00'
+  query:
+    task_text: 请分析当前项目 /home/shade/Public/test 的一个小问题：InterviewService 中的一个简单方法逻辑
+    category: testing
+    domains:
+    - backend
+    - testing
+    roles: []
+    keywords: []
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:22:16.575215+00:00'
+  query:
+    task_text: 在当前真实项目 /home/shade/Public/test 中，诊断并解释一个真实的后端工程问题：系统在高并发/跨模块使用条件下，出现
+      API 读到陈旧数据、权限校验不稳定，或者数据库与应用层状态不一致的问题。请从代码、调用链、数据访问模式和安全边界共同分析这个问题，而不是只定位表面症状。最终输出需要说明：问题来源、影响范围、根因路径、风险级别，以及建议的修正方向。该任务是复杂的架构级诊断，需要代码审查和跨模块分析，涉及后端、数据库、分布式并发和安全多个领域。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - distributed
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - P-001
+  - T-005
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T09:25:24.983919+00:00'
+  query:
+    task_text: '▣ DCP | -103.9K removed, +307 summary
+
+
+      │█⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██████████████████████│
+
+      ▣ Compression #1 -103.9K removed, +307 summary
+
+      → Topic: Benchmark Exploration
+
+      → Items: 26 messages and 26 tools compressed'
+    category: optimization
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-010
+  - T-005
+  - T-009
+  - P-001
+- timestamp: '2026-09-01T09:26:07.062668+00:00'
+  query:
+    task_text: 在当前真实项目 /home/shade/Public/test 中，诊断后端工程问题：InterviewService 在高并发下出现
+      API 读到陈旧数据，权限校验不稳定，数据库与应用层状态不一致。请从代码调用链、数据访问模式和安全边界共同分析，而不是只定位表面症状。最终输出需要说明问题来源、影响范围、根因路径、风险级别和修正方向。涉及后端、数据库、安全、测试领域，需要跨模块分析。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002
+- timestamp: '2026-09-01T12:21:57.975285+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - S-001
+- timestamp: '2026-09-01T12:23:05.346684+00:00'
+  query:
+    task_text: '[SUPERMEMORY UPDATE]
+
+      Supermemory update available: v2.0.12 -> v2.0.13
+
+      Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+
+      Otherwise (e.g. standalone opencode binary), pin "opencode-supermemory@2.0.13"
+      in your opencode config and restart.'
+    category: testing
+    domains:
+    - backend
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - S-001
+- timestamp: '2026-09-01T12:25:16.959646+00:00'
+  query:
+    task_text: 在同一真实仓库 /home/shade/Public/test 中，执行一项相关但不同的工程诊断任务：识别并解释 KnowledgeMapService
+      或 EvaluationService 中是否存在与 InterviewService 类似的陈旧读、权限绕过或事务边界风险，且发生在不同的服务路径。该问题与首次诊断的“并发陈旧读/权限不一致”在结构上相似，但不是完全重复。需要判断是否应采用与首次相同的防护思路，还是需要调整策略。涉及后端、数据库、安全。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T12:25:35.125168+00:00'
+  query:
+    task_text: 在同一真实仓库 /home/shade/Public/test 中，执行一项相关但不同的工程诊断任务：识别并解释 KnowledgeMapService
+      或 EvaluationService 中是否存在与 InterviewService 类似的陈旧读、权限绕过或事务边界风险，且发生在不同的服务路径。该问题与首次诊断的“并发陈旧读/权限不一致”在结构上相似，但不是完全重复。需要判断是否应采用与首次相同的防护思路，还是需要调整策略。涉及后端、数据库、安全。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T12:25:49.422834+00:00'
+  query:
+    task_text: 在同一真实仓库 /home/shade/Public/test 中，执行一项相关但不同的工程诊断任务：识别并解释 KnowledgeMapService
+      或 EvaluationService 中是否存在与 InterviewService 类似的陈旧读、权限绕过或事务边界风险，且发生在不同的服务路径。该问题与首次诊断的“并发陈旧读/权限不一致”在结构上相似，但不是完全重复。需要判断是否应采用与首次相同的防护思路，还是需要调整策略。涉及后端、数据库、安全。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T12:26:11.849007+00:00'
+  query:
+    task_text: 在同一真实仓库 /home/shade/Public/test 中，执行一项相关但不同的工程诊断任务：识别并解释 KnowledgeMapService
+      或 EvaluationService 中是否存在与 InterviewService 类似的陈旧读、权限绕过或事务边界风险，且发生在不同的服务路径。该问题与首次诊断的“并发陈旧读/权限不一致”在结构上相似，但不是完全重复。需要判断是否应采用与首次相同的防护思路，还是需要调整策略。涉及后端、数据库、安全。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T12:30:54.962817+00:00'
+  query:
+    task_text: 在同一真实仓库 /home/shade/Public/test 中，执行一项相关但不同的工程诊断任务：识别并解释 KnowledgeMapService
+      或 EvaluationService 中是否存在与 InterviewService 类似的陈旧读、权限绕过或事务边界风险，且发生在不同的服务路径。该问题与首次诊断的“并发陈旧读/权限不一致”在结构上相似，但不是完全重复。需要判断是否应采用与首次相同的防护思路，还是需要调整策略。涉及后端、数据库、安全。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T12:37:37.894348+00:00'
+  query:
+    task_text: 在同一真实仓库 /home/shade/Public/test 中，执行一项相关但不同的工程诊断任务：识别并解释 KnowledgeMapService
+      或 EvaluationService 中是否存在与 InterviewService 类似的陈旧读、权限绕过或事务边界风险，且发生在不同的服务路径。该问题与首次诊断的“并发陈旧读/权限不一致”在结构上相似，但不是完全重复。需要判断是否应采用与首次相同的防护思路，还是需要调整策略。涉及后端、数据库、安全。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - P-002
+  - T-010
+- timestamp: '2026-09-01T12:47:05.016709+00:00'
+  query:
+    task_text: 在当前真实项目 /home/shade/Public/test 中，诊断后端工程问题：InterviewService 在高并发下出现
+      API 读到陈旧数据，权限校验不稳定，数据库与应用层状态不一致。请从代码调用链、数据访问模式和安全边界共同分析，而不是只定位表面症状。最终输出需要说明问题来源、影响范围、根因路径、风险级别和修正方向。涉及后端、数据库、安全、测试领域，需要跨模块分析。
+    category: security
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    keywords:
+    - api
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-005
+  - P-001
+  - T-010
+  - P-002

@@ -228,8 +228,12 @@ def build_prompt(task_text, decision_context, project_root=""):
 
 # ── Provider Invocation ──────────────────────────────────────────
 
-def _invoke_opencode_provider(prompt, model, timeout_seconds=300):
-    """OpenCode provider: call opencode CLI and parse JSONL output."""
+def _invoke_opencode_provider(prompt, model, timeout_seconds=600):
+    """OpenCode provider: call opencode CLI and parse JSONL output.
+
+    Phase 7.5: Default timeout increased from 300s to 600s.
+    Complex multi-agent code analysis tasks require longer execution windows.
+    """
     cmd = [
         "opencode", "run",
         "--pure",
@@ -344,9 +348,11 @@ PROVIDER_DISPATCH = {
 }
 
 
-def invoke_runtime(provider, prompt, model, timeout_seconds=300):
+def invoke_runtime(provider, prompt, model, timeout_seconds=600):
     """
     Dispatch to the appropriate runtime provider.
+
+    Phase 7.5: Default timeout increased from 300s to 600s.
 
     Args:
         provider: str, provider name (opencode, ...)
@@ -378,15 +384,19 @@ def invoke_runtime(provider, prompt, model, timeout_seconds=300):
 def execute_with_reliability(task_id, task_text, decision_context,
                              model="", provider="opencode",
                              project_root="",
-                             reliability_config=None):
+                             reliability_config=None,
+                             timeout_seconds=None):
     """
     Execute a task with reliability guard (P0-1).
+
+    Phase 7.5: Added timeout_seconds override for per-task timeout control.
 
     Features:
       - Retry with exponential backoff on REAL_AGENT_FAILURE
       - Model fallback chain
       - Early termination on RETRY_STORM or ORCHESTRATION_FAILURE
       - Failure classification and tracking
+      - Per-task timeout override (timeout_seconds)
 
     Args:
         task_id: str
@@ -396,12 +406,18 @@ def execute_with_reliability(task_id, task_text, decision_context,
         provider: str, runtime provider
         project_root: str, project root for stack detection (P0-2)
         reliability_config: ReliabilityConfig or None (uses defaults)
+        timeout_seconds: int or None. If set, overrides the config base_timeout.
 
     Returns:
         dict: execution result with reliability summary
     """
     if reliability_config is None:
         reliability_config = create_default_config()
+
+    # Phase 7.5: Apply per-task timeout override if provided
+    if timeout_seconds is not None:
+        reliability_config.base_timeout_seconds = timeout_seconds
+        reliability_config.max_timeout_seconds = max(timeout_seconds, reliability_config.max_timeout_seconds)
 
     summary = ReliabilitySummary()
     current_model = model

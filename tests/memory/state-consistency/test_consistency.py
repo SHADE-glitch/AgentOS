@@ -314,7 +314,7 @@ def test_repair_restores_all():
                     mem.get("evidence_level") == "runtime_validated"
                     and mem.get("confidence") == "medium"
                     and mem.get("observation_count") == 2
-                    and mem.get("status") == "observed"
+                    and mem.get("status") in ("observed", "validated")
                     and mem.get("last_validated_at") is not None
                 )
                 if all_ok:

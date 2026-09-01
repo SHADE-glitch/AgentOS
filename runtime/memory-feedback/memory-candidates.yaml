@@ -1,15 +1,44 @@
 version: '1.0'
 phase: 5.8.2.2
-generated_at: '2026-09-01T02:19:21Z'
+generated_at: '2026-09-01T08:47:19Z'
 generated_by: collector.py (Phase 5.8.2.2 Loop Controller)
 source_executions:
-- EXEC-1788228162
-- EXEC-1788229083
-- EXEC-1788229111
+- LOOP-20260901071053
 - EXEC-1788091469
+- EXEC-1788239176
+- LOOP-20260901071051
+- EXEC-1788238924
+- EXEC-1788239003
+- EXEC-1788239264
+- LOOP-20260901071754
+- LOOP-20260901071756
+- EXEC-1788239058
+- EXEC-1788246883
+- LOOP-20260901071750
+- EXEC-1788246664
+- EXEC-1788246853
+- LOOP-20260901082231
+- EXEC-1788246650
+- LOOP-20260901080640
+- EXEC-1788239014
+- LOOP-20260901071601
+- EXEC-1788246744
 - EXEC-1788137999
-- EXEC-1788229112
+- EXEC-1788229111
+- LOOP-20260901071414
+- EXEC-1788241726
+- EXEC-1788239184
+- EXEC-1788239096
+- LOOP-20260901071416
 - EXEC-1788229160
+- LOOP-20260901071410
+- EXEC-1788229083
+- EXEC-1788246964
+- EXEC-1788247073
+- LOOP-20260901071221
+- EXEC-1788228162
+- LOOP-20260901071047
+- EXEC-1788229112
 candidates:
 - candidate_id: CAND-EXEC-1788137999-E-004
   source_execution: EXEC-1788137999
@@ -709,11 +738,4015 @@ candidates:
     latency_ms: 39500
     is_real_execution: true
   outcome: promoted
+- candidate_id: CAND-EXEC-1788238924-S-002
+  source_execution: EXEC-1788238924
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788238924 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_79a116d33b94
+    model: ''
+    tokens: &id007
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788238924-T-005
+  source_execution: EXEC-1788238924
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788238924 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_79a116d33b94
+    model: ''
+    tokens: *id007
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788238924-P-002
+  source_execution: EXEC-1788238924
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788238924 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_79a116d33b94
+    model: ''
+    tokens: *id007
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788238924-P-001
+  source_execution: EXEC-1788238924
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788238924 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_79a116d33b94
+    model: ''
+    tokens: *id007
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788238924-T-010
+  source_execution: EXEC-1788238924
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788238924 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_79a116d33b94
+    model: ''
+    tokens: *id007
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239003-T-010
+  source_execution: EXEC-1788239003
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788239003 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bfa28e78297a
+    model: ''
+    tokens: &id008
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239003-T-005
+  source_execution: EXEC-1788239003
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788239003 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bfa28e78297a
+    model: ''
+    tokens: *id008
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239003-T-009
+  source_execution: EXEC-1788239003
+  target_memory: T-009
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-009 was used in EXEC-1788239003 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bfa28e78297a
+    model: ''
+    tokens: *id008
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239003-S-002
+  source_execution: EXEC-1788239003
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788239003 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bfa28e78297a
+    model: ''
+    tokens: *id008
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239003-P-001
+  source_execution: EXEC-1788239003
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788239003 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bfa28e78297a
+    model: ''
+    tokens: *id008
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239014-S-002
+  source_execution: EXEC-1788239014
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788239014 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_a9a6af2841d2
+    model: ''
+    tokens: &id009
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239014-T-005
+  source_execution: EXEC-1788239014
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788239014 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_a9a6af2841d2
+    model: ''
+    tokens: *id009
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239014-P-001
+  source_execution: EXEC-1788239014
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788239014 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_a9a6af2841d2
+    model: ''
+    tokens: *id009
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239014-P-002
+  source_execution: EXEC-1788239014
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788239014 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_a9a6af2841d2
+    model: ''
+    tokens: *id009
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239014-T-010
+  source_execution: EXEC-1788239014
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788239014 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_a9a6af2841d2
+    model: ''
+    tokens: *id009
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239058-S-002
+  source_execution: EXEC-1788239058
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788239058 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_b3e3c6a40d7b
+    model: ''
+    tokens: &id010
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239058-T-005
+  source_execution: EXEC-1788239058
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788239058 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_b3e3c6a40d7b
+    model: ''
+    tokens: *id010
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239058-P-001
+  source_execution: EXEC-1788239058
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788239058 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_b3e3c6a40d7b
+    model: ''
+    tokens: *id010
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239058-P-002
+  source_execution: EXEC-1788239058
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788239058 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_b3e3c6a40d7b
+    model: ''
+    tokens: *id010
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239058-T-010
+  source_execution: EXEC-1788239058
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788239058 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_b3e3c6a40d7b
+    model: ''
+    tokens: *id010
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239096-S-002
+  source_execution: EXEC-1788239096
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788239096 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_df3869d1fff7
+    model: ''
+    tokens: &id011
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239096-T-005
+  source_execution: EXEC-1788239096
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788239096 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_df3869d1fff7
+    model: ''
+    tokens: *id011
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239096-P-001
+  source_execution: EXEC-1788239096
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788239096 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_df3869d1fff7
+    model: ''
+    tokens: *id011
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239096-P-002
+  source_execution: EXEC-1788239096
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788239096 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_df3869d1fff7
+    model: ''
+    tokens: *id011
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239096-T-010
+  source_execution: EXEC-1788239096
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788239096 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_df3869d1fff7
+    model: ''
+    tokens: *id011
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239176-T-010
+  source_execution: EXEC-1788239176
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788239176 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_98772cc6d92e
+    model: ''
+    tokens: &id012
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239176-T-005
+  source_execution: EXEC-1788239176
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788239176 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_98772cc6d92e
+    model: ''
+    tokens: *id012
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239176-T-009
+  source_execution: EXEC-1788239176
+  target_memory: T-009
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-009 was used in EXEC-1788239176 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_98772cc6d92e
+    model: ''
+    tokens: *id012
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239176-S-002
+  source_execution: EXEC-1788239176
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788239176 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_98772cc6d92e
+    model: ''
+    tokens: *id012
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239176-P-001
+  source_execution: EXEC-1788239176
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788239176 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_98772cc6d92e
+    model: ''
+    tokens: *id012
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239184-S-002
+  source_execution: EXEC-1788239184
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788239184 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_6fbd109df622
+    model: ''
+    tokens: &id013
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239184-T-005
+  source_execution: EXEC-1788239184
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788239184 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_6fbd109df622
+    model: ''
+    tokens: *id013
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239184-P-001
+  source_execution: EXEC-1788239184
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788239184 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_6fbd109df622
+    model: ''
+    tokens: *id013
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239184-T-010
+  source_execution: EXEC-1788239184
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788239184 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_6fbd109df622
+    model: ''
+    tokens: *id013
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239184-P-002
+  source_execution: EXEC-1788239184
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788239184 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_6fbd109df622
+    model: ''
+    tokens: *id013
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239264-T-010
+  source_execution: EXEC-1788239264
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788239264 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7690b0c80a2d
+    model: ''
+    tokens: &id014
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239264-T-005
+  source_execution: EXEC-1788239264
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788239264 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7690b0c80a2d
+    model: ''
+    tokens: *id014
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239264-T-009
+  source_execution: EXEC-1788239264
+  target_memory: T-009
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-009 was used in EXEC-1788239264 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7690b0c80a2d
+    model: ''
+    tokens: *id014
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239264-S-002
+  source_execution: EXEC-1788239264
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788239264 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7690b0c80a2d
+    model: ''
+    tokens: *id014
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788239264-P-001
+  source_execution: EXEC-1788239264
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788239264 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_7690b0c80a2d
+    model: ''
+    tokens: *id014
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788241726-S-002
+  source_execution: EXEC-1788241726
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 2.15
+  quality_breakdown:
+    completeness: 2
+    accuracy: 2
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory S-002 was used in EXEC-1788241726 (RV-7.5-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa47d2b43ffeIqUJZuVmn6KpCT
+    model: ''
+    tokens: &id015
+      total: 23688
+      input: 392
+      output: 128
+      reasoning: 0
+      cache_read: 23168
+      cache_write: 0
+    output_hash: 67a9ed65fcffdedb
+    latency_ms: 32560
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788241726-T-005
+  source_execution: EXEC-1788241726
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 2.15
+  quality_breakdown:
+    completeness: 2
+    accuracy: 2
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory T-005 was used in EXEC-1788241726 (RV-7.5-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa47d2b43ffeIqUJZuVmn6KpCT
+    model: ''
+    tokens: *id015
+    output_hash: 67a9ed65fcffdedb
+    latency_ms: 32560
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788241726-P-001
+  source_execution: EXEC-1788241726
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 2.15
+  quality_breakdown:
+    completeness: 2
+    accuracy: 2
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory P-001 was used in EXEC-1788241726 (RV-7.5-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa47d2b43ffeIqUJZuVmn6KpCT
+    model: ''
+    tokens: *id015
+    output_hash: 67a9ed65fcffdedb
+    latency_ms: 32560
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788241726-T-010
+  source_execution: EXEC-1788241726
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 2.15
+  quality_breakdown:
+    completeness: 2
+    accuracy: 2
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory T-010 was used in EXEC-1788241726 (RV-7.5-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa47d2b43ffeIqUJZuVmn6KpCT
+    model: ''
+    tokens: *id015
+    output_hash: 67a9ed65fcffdedb
+    latency_ms: 32560
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788241726-P-002
+  source_execution: EXEC-1788241726
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 2.15
+  quality_breakdown:
+    completeness: 2
+    accuracy: 2
+    structure: 3
+    actionability: 3
+    novelty: 0
+  reasoning: 'Memory P-002 was used in EXEC-1788241726 (RV-7.5-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: ses_fa47d2b43ffeIqUJZuVmn6KpCT
+    model: ''
+    tokens: *id015
+    output_hash: 67a9ed65fcffdedb
+    latency_ms: 32560
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071047-backend-architect-TEAM
+  source_execution: LOOP-20260901071047
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-1a18835f
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071047-database-engineer-TEAM
+  source_execution: LOOP-20260901071047
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''database-engineer'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071047-frontend-performance-TEAM
+  source_execution: LOOP-20260901071047
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''frontend-performance'' contributed to successful multi-agent
+    execution (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: frontend-performance
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071047-distributed-system-TEAM
+  source_execution: LOOP-20260901071047
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''distributed-system'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: distributed-system
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071047-security-engineer-TEAM
+  source_execution: LOOP-20260901071047
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''security-engineer'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.59.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: security-engineer
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246650-S-002
+  source_execution: EXEC-1788246650
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788246650 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_ff24d5bbdece
+    model: ''
+    tokens: &id016
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246650-T-005
+  source_execution: EXEC-1788246650
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788246650 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_ff24d5bbdece
+    model: ''
+    tokens: *id016
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246650-P-001
+  source_execution: EXEC-1788246650
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788246650 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_ff24d5bbdece
+    model: ''
+    tokens: *id016
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246650-T-010
+  source_execution: EXEC-1788246650
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788246650 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_ff24d5bbdece
+    model: ''
+    tokens: *id016
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246650-P-002
+  source_execution: EXEC-1788246650
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788246650 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_ff24d5bbdece
+    model: ''
+    tokens: *id016
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071051-backend-architect-TEAM
+  source_execution: LOOP-20260901071051
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-1fdafb8e
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071051-database-engineer-TEAM
+  source_execution: LOOP-20260901071051
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''database-engineer'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071051-distributed-system-TEAM
+  source_execution: LOOP-20260901071051
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''distributed-system'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: distributed-system
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071051-system-architect-TEAM
+  source_execution: LOOP-20260901071051
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''system-architect'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071051-technical-reviewer-TEAM
+  source_execution: LOOP-20260901071051
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''technical-reviewer'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: technical-reviewer
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071053-code-reviewer-TEAM
+  source_execution: LOOP-20260901071053
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''code-reviewer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-86927c53
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071053-system-architect-TEAM
+  source_execution: LOOP-20260901071053
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''system-architect'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071053-prompt-engineer-TEAM
+  source_execution: LOOP-20260901071053
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''prompt-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: prompt-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071053-technical-reviewer-TEAM
+  source_execution: LOOP-20260901071053
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''technical-reviewer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: technical-reviewer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071053-devops-engineer-TEAM
+  source_execution: LOOP-20260901071053
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''devops-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: devops-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071053-rag-engineer-TEAM
+  source_execution: LOOP-20260901071053
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''rag-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: rag-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071053-llm-engineer-TEAM
+  source_execution: LOOP-20260901071053
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''llm-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246664-S-002
+  source_execution: EXEC-1788246664
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788246664 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_d6c6b9e762b3
+    model: ''
+    tokens: &id017
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246664-T-005
+  source_execution: EXEC-1788246664
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788246664 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_d6c6b9e762b3
+    model: ''
+    tokens: *id017
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246664-P-001
+  source_execution: EXEC-1788246664
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788246664 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_d6c6b9e762b3
+    model: ''
+    tokens: *id017
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246664-T-010
+  source_execution: EXEC-1788246664
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788246664 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_d6c6b9e762b3
+    model: ''
+    tokens: *id017
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246664-P-002
+  source_execution: EXEC-1788246664
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788246664 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_d6c6b9e762b3
+    model: ''
+    tokens: *id017
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071221-backend-architect-TEAM
+  source_execution: LOOP-20260901071221
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-6f66691d). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-6f66691d
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071221-testing-engineer-TEAM
+  source_execution: LOOP-20260901071221
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''testing-engineer'' contributed to successful multi-agent execution
+    (team-6f66691d). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: testing-engineer
+    team_id: team-6f66691d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071221-code-reviewer-TEAM
+  source_execution: LOOP-20260901071221
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''code-reviewer'' contributed to successful multi-agent execution
+    (team-6f66691d). Output: 235 chars, confidence: 0.59.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-6f66691d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246744-T-010
+  source_execution: EXEC-1788246744
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788246744 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_b4ae0a628257
+    model: ''
+    tokens: &id018
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246744-T-005
+  source_execution: EXEC-1788246744
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788246744 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_b4ae0a628257
+    model: ''
+    tokens: *id018
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246744-T-009
+  source_execution: EXEC-1788246744
+  target_memory: T-009
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-009 was used in EXEC-1788246744 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_b4ae0a628257
+    model: ''
+    tokens: *id018
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246744-S-002
+  source_execution: EXEC-1788246744
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788246744 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_b4ae0a628257
+    model: ''
+    tokens: *id018
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246744-P-001
+  source_execution: EXEC-1788246744
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788246744 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_b4ae0a628257
+    model: ''
+    tokens: *id018
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071410-backend-architect-TEAM
+  source_execution: LOOP-20260901071410
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-1a18835f
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071410-database-engineer-TEAM
+  source_execution: LOOP-20260901071410
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''database-engineer'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071410-frontend-performance-TEAM
+  source_execution: LOOP-20260901071410
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''frontend-performance'' contributed to successful multi-agent
+    execution (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: frontend-performance
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071410-distributed-system-TEAM
+  source_execution: LOOP-20260901071410
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''distributed-system'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: distributed-system
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071410-security-engineer-TEAM
+  source_execution: LOOP-20260901071410
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''security-engineer'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.59.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: security-engineer
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246853-S-002
+  source_execution: EXEC-1788246853
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788246853 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_f5e83c3de375
+    model: ''
+    tokens: &id019
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246853-T-005
+  source_execution: EXEC-1788246853
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788246853 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_f5e83c3de375
+    model: ''
+    tokens: *id019
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246853-P-001
+  source_execution: EXEC-1788246853
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788246853 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_f5e83c3de375
+    model: ''
+    tokens: *id019
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246853-T-010
+  source_execution: EXEC-1788246853
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788246853 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_f5e83c3de375
+    model: ''
+    tokens: *id019
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246853-P-002
+  source_execution: EXEC-1788246853
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788246853 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_f5e83c3de375
+    model: ''
+    tokens: *id019
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071414-backend-architect-TEAM
+  source_execution: LOOP-20260901071414
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-1fdafb8e
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071414-database-engineer-TEAM
+  source_execution: LOOP-20260901071414
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''database-engineer'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071414-distributed-system-TEAM
+  source_execution: LOOP-20260901071414
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''distributed-system'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: distributed-system
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071414-system-architect-TEAM
+  source_execution: LOOP-20260901071414
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''system-architect'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071414-technical-reviewer-TEAM
+  source_execution: LOOP-20260901071414
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''technical-reviewer'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: technical-reviewer
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071416-code-reviewer-TEAM
+  source_execution: LOOP-20260901071416
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''code-reviewer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-86927c53
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071416-system-architect-TEAM
+  source_execution: LOOP-20260901071416
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''system-architect'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071416-prompt-engineer-TEAM
+  source_execution: LOOP-20260901071416
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''prompt-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: prompt-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071416-technical-reviewer-TEAM
+  source_execution: LOOP-20260901071416
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''technical-reviewer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: technical-reviewer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071416-devops-engineer-TEAM
+  source_execution: LOOP-20260901071416
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''devops-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: devops-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071416-rag-engineer-TEAM
+  source_execution: LOOP-20260901071416
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''rag-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: rag-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071416-llm-engineer-TEAM
+  source_execution: LOOP-20260901071416
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''llm-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246883-S-002
+  source_execution: EXEC-1788246883
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788246883 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bd7895c1a386
+    model: ''
+    tokens: &id020
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246883-T-005
+  source_execution: EXEC-1788246883
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788246883 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bd7895c1a386
+    model: ''
+    tokens: *id020
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246883-P-001
+  source_execution: EXEC-1788246883
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788246883 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bd7895c1a386
+    model: ''
+    tokens: *id020
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246883-T-010
+  source_execution: EXEC-1788246883
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788246883 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bd7895c1a386
+    model: ''
+    tokens: *id020
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246883-P-002
+  source_execution: EXEC-1788246883
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788246883 (FULL-A-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_bd7895c1a386
+    model: ''
+    tokens: *id020
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071601-backend-architect-TEAM
+  source_execution: LOOP-20260901071601
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-6f66691d). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-6f66691d
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071601-testing-engineer-TEAM
+  source_execution: LOOP-20260901071601
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''testing-engineer'' contributed to successful multi-agent execution
+    (team-6f66691d). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: testing-engineer
+    team_id: team-6f66691d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071601-code-reviewer-TEAM
+  source_execution: LOOP-20260901071601
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''code-reviewer'' contributed to successful multi-agent execution
+    (team-6f66691d). Output: 235 chars, confidence: 0.59.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-6f66691d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246964-T-010
+  source_execution: EXEC-1788246964
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788246964 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_706027397447
+    model: ''
+    tokens: &id021
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246964-T-005
+  source_execution: EXEC-1788246964
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788246964 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_706027397447
+    model: ''
+    tokens: *id021
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246964-T-009
+  source_execution: EXEC-1788246964
+  target_memory: T-009
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-009 was used in EXEC-1788246964 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_706027397447
+    model: ''
+    tokens: *id021
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246964-S-002
+  source_execution: EXEC-1788246964
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788246964 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_706027397447
+    model: ''
+    tokens: *id021
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788246964-P-001
+  source_execution: EXEC-1788246964
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788246964 (FULL-D-001). Execution succeeded.
+    Memory influence: confirmation. This confirms the memory is valid and useful.'
+  evidence:
+    session_id: test_ses_706027397447
+    model: ''
+    tokens: *id021
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071750-backend-architect-TEAM
+  source_execution: LOOP-20260901071750
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-1a18835f
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071750-database-engineer-TEAM
+  source_execution: LOOP-20260901071750
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''database-engineer'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071750-frontend-performance-TEAM
+  source_execution: LOOP-20260901071750
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''frontend-performance'' contributed to successful multi-agent
+    execution (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: frontend-performance
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071750-distributed-system-TEAM
+  source_execution: LOOP-20260901071750
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''distributed-system'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: distributed-system
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071750-security-engineer-TEAM
+  source_execution: LOOP-20260901071750
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''security-engineer'' contributed to successful multi-agent execution
+    (team-1a18835f). Output: 235 chars, confidence: 0.59.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: security-engineer
+    team_id: team-1a18835f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788247073-S-002
+  source_execution: EXEC-1788247073
+  target_memory: S-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory S-002 was used in EXEC-1788247073 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_baa9e1fc069d
+    model: ''
+    tokens: &id022
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788247073-T-005
+  source_execution: EXEC-1788247073
+  target_memory: T-005
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-005 was used in EXEC-1788247073 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_baa9e1fc069d
+    model: ''
+    tokens: *id022
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788247073-P-001
+  source_execution: EXEC-1788247073
+  target_memory: P-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-001 was used in EXEC-1788247073 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_baa9e1fc069d
+    model: ''
+    tokens: *id022
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788247073-T-010
+  source_execution: EXEC-1788247073
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788247073 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_baa9e1fc069d
+    model: ''
+    tokens: *id022
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-EXEC-1788247073-P-002
+  source_execution: EXEC-1788247073
+  target_memory: P-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory P-002 was used in EXEC-1788247073 (INT-7.4-B-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_baa9e1fc069d
+    model: ''
+    tokens: *id022
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071754-backend-architect-TEAM
+  source_execution: LOOP-20260901071754
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''backend-architect'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-1fdafb8e
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071754-database-engineer-TEAM
+  source_execution: LOOP-20260901071754
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''database-engineer'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071754-distributed-system-TEAM
+  source_execution: LOOP-20260901071754
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''distributed-system'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: distributed-system
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071754-system-architect-TEAM
+  source_execution: LOOP-20260901071754
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''system-architect'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071754-technical-reviewer-TEAM
+  source_execution: LOOP-20260901071754
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''technical-reviewer'' contributed to successful multi-agent execution
+    (team-1fdafb8e). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: technical-reviewer
+    team_id: team-1fdafb8e
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071756-code-reviewer-TEAM
+  source_execution: LOOP-20260901071756
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 1.8
+  quality_breakdown:
+    completeness: 3
+    accuracy: 1
+    structure: 3
+    actionability: 1
+    novelty: 1
+    weighted: 1.8
+  reasoning: 'Agent ''code-reviewer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.64.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-86927c53
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071756-system-architect-TEAM
+  source_execution: LOOP-20260901071756
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''system-architect'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071756-prompt-engineer-TEAM
+  source_execution: LOOP-20260901071756
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''prompt-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: prompt-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071756-technical-reviewer-TEAM
+  source_execution: LOOP-20260901071756
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''technical-reviewer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: technical-reviewer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071756-devops-engineer-TEAM
+  source_execution: LOOP-20260901071756
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''devops-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: devops-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071756-rag-engineer-TEAM
+  source_execution: LOOP-20260901071756
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''rag-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: rag-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901071756-llm-engineer-TEAM
+  source_execution: LOOP-20260901071756
+  target_memory: TEAM-COLLAB
+  candidate_type: reinforce
+  quality_score: 0.9
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 1
+    actionability: 0
+    novelty: 0
+    weighted: 0.9
+  reasoning: 'Agent ''llm-engineer'' contributed to successful multi-agent execution
+    (team-86927c53). Output: 235 chars, confidence: 0.56.'
+  evidence:
+    output_hash: 9d764047da81585c
+    token_usage:
+      total: 500
+      input: 100
+      output: 400
+    latency_ms: 0
+    output_length: 235
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-86927c53
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-security-engineer-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: &id023
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''security-engineer''
+    identified pattern: Cache expiration pattern. Confidence: 0.87. Team: 7/7 completed.'
+  evidence: &id024
+    output_hash: cf4e73667fdea29d
+    token_usage: &id037
+      total: 36474
+      input: 232
+      output: 2962
+      reasoning: 0
+      cache_read: 33280
+      cache_write: 0
+    latency_ms: 142496
+    output_length: 9911
+    is_real_execution: true
+    agent_role: security-engineer
+    team_id: team-6822c169
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-security-engineer-P8-TOKEN-MANAGEMENT-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-TOKEN-MANAGEMENT-PATTERN
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id023
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''security-engineer''
+    identified pattern: Token management pattern. Confidence: 0.87. Team: 7/7 completed.'
+  evidence: *id024
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-security-engineer-P8-SECURITY-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-SECURITY-PATTERN
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id023
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''security-engineer''
+    identified pattern: Security pattern. Confidence: 0.87. Team: 7/7 completed.'
+  evidence: *id024
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-code-reviewer-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.65
+  quality_breakdown: &id025
+    completeness: 5
+    accuracy: 4
+    structure: 2
+    actionability: 3
+    novelty: 3
+    weighted: 3.65
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''code-reviewer''
+    identified pattern: Cache expiration pattern. Confidence: 0.74. Team: 7/7 completed.'
+  evidence: &id026
+    output_hash: 458af04627389000
+    token_usage:
+      total: 31962
+      input: 172
+      output: 878
+      reasoning: 0
+      cache_read: 30912
+      cache_write: 0
+    latency_ms: 102729
+    output_length: 4103
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-6822c169
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-code-reviewer-P8-TOKEN-MANAGEMENT-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-TOKEN-MANAGEMENT-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.65
+  quality_breakdown: *id025
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''code-reviewer''
+    identified pattern: Token management pattern. Confidence: 0.74. Team: 7/7 completed.'
+  evidence: *id026
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-code-reviewer-P8-STREAMING-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-STREAMING-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.65
+  quality_breakdown: *id025
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''code-reviewer''
+    identified pattern: Streaming pattern. Confidence: 0.74. Team: 7/7 completed.'
+  evidence: *id026
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-llm-engineer-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.85
+  quality_breakdown: &id027
+    completeness: 5
+    accuracy: 4
+    structure: 2
+    actionability: 4
+    novelty: 3
+    weighted: 3.85
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''llm-engineer''
+    identified pattern: Cache expiration pattern. Confidence: 0.74. Team: 7/7 completed.'
+  evidence: &id028
+    output_hash: f695e9398366b2ad
+    token_usage:
+      total: 29370
+      input: 903
+      output: 1139
+      reasoning: 0
+      cache_read: 27328
+      cache_write: 0
+    latency_ms: 70516
+    output_length: 4653
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-6822c169
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-llm-engineer-P8-TOKEN-MANAGEMENT-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-TOKEN-MANAGEMENT-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.85
+  quality_breakdown: *id027
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''llm-engineer''
+    identified pattern: Token management pattern. Confidence: 0.74. Team: 7/7 completed.'
+  evidence: *id028
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-llm-engineer-P8-SECURITY-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-SECURITY-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.85
+  quality_breakdown: *id027
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''llm-engineer''
+    identified pattern: Security pattern. Confidence: 0.74. Team: 7/7 completed.'
+  evidence: *id028
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-rag-engineer-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: &id029
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 3
+    novelty: 3
+    weighted: 3.8
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''rag-engineer''
+    identified pattern: Cache expiration pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: &id030
+    output_hash: 748cc8cc124c1507
+    token_usage:
+      total: 26545
+      input: 1424
+      output: 1505
+      reasoning: 0
+      cache_read: 23616
+      cache_write: 0
+    latency_ms: 62794
+    output_length: 5852
+    is_real_execution: true
+    agent_role: rag-engineer
+    team_id: team-6822c169
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-rag-engineer-P8-TOKEN-MANAGEMENT-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-TOKEN-MANAGEMENT-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id029
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''rag-engineer''
+    identified pattern: Token management pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id030
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-rag-engineer-P8-CONCURRENCY-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CONCURRENCY-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id029
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''rag-engineer''
+    identified pattern: Concurrency pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id030
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-prompt-engineer-P8-TOKEN-MANAGEMENT-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-TOKEN-MANAGEMENT-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: &id031
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 4
+    novelty: 3
+    weighted: 4.0
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: Token management pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: &id032
+    output_hash: dcecd5c6f2b87f95
+    token_usage:
+      total: 31893
+      input: 806
+      output: 2479
+      reasoning: 0
+      cache_read: 28608
+      cache_write: 0
+    latency_ms: 96717
+    output_length: 11424
+    is_real_execution: true
+    agent_role: prompt-engineer
+    team_id: team-6822c169
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-prompt-engineer-P8-CONCURRENCY-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CONCURRENCY-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id031
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: Concurrency pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id032
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-prompt-engineer-P8-STREAMING-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-STREAMING-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id031
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: Streaming pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id032
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-agent-engineer-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: &id033
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 3
+    novelty: 3
+    weighted: 3.8
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''agent-engineer''
+    identified pattern: Cache expiration pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: &id034
+    output_hash: 9ad47186bc399385
+    token_usage:
+      total: 29108
+      input: 4170
+      output: 1770
+      reasoning: 0
+      cache_read: 23168
+      cache_write: 0
+    latency_ms: 151184
+    output_length: 7416
+    is_real_execution: true
+    agent_role: agent-engineer
+    team_id: team-6822c169
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-agent-engineer-P8-TOKEN-MANAGEMENT-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-TOKEN-MANAGEMENT-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id033
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''agent-engineer''
+    identified pattern: Token management pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id034
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-agent-engineer-P8-STREAMING-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-STREAMING-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id033
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''agent-engineer''
+    identified pattern: Streaming pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id034
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-system-architect-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: &id035
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 4
+    novelty: 3
+    weighted: 4.0
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''system-architect''
+    identified pattern: Cache expiration pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: &id036
+    output_hash: 2a73882690c27e40
+    token_usage:
+      total: 33266
+      input: 1557
+      output: 1693
+      reasoning: 0
+      cache_read: 30016
+      cache_write: 0
+    latency_ms: 103889
+    output_length: 7541
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-6822c169
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-system-architect-P8-TOKEN-MANAGEMENT-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-TOKEN-MANAGEMENT-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id035
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''system-architect''
+    identified pattern: Token management pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id036
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-system-architect-P8-CONCURRENCY-PATTERN
+  source_execution: LOOP-20260901080640
+  target_memory: P8-CONCURRENCY-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id035
+  reasoning: 'Multi-agent team (team-6822c169) execution succeeded. Agent ''system-architect''
+    identified pattern: Concurrency pattern. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: *id036
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901080640-HYP-P8-PROBLEM-NULL-POINTER
+  source_execution: LOOP-20260901080640
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (security-engineer) identified problem: Null
+    pointer. Context: Now I have a complete picture. Here is my analysis.
+
+
+    ---
+
+
+    ## Security Analysis: Auth Module Session . Confidence: 0.87. Consider creating
+    a new hypothesis memory for this pattern.'
+  evidence:
+    output_hash: cf4e73667fdea29d
+    token_usage: *id037
+    latency_ms: 142496
+    output_length: 9911
+    is_real_execution: true
+    agent_role: security-engineer
+    team_id: team-6822c169
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260901080640-HYP-P8-PROBLEM-INJECTION-VULNERABILIT
+  source_execution: LOOP-20260901080640
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (security-engineer) identified problem: Injection
+    vulnerability. Context: Now I have a complete picture. Here is my analysis.
+
+
+    ---
+
+
+    ## Security Analysis: Auth Module Session . Confidence: 0.87. Consider creating
+    a new hypothesis memory for this pattern.'
+  evidence:
+    output_hash: cf4e73667fdea29d
+    token_usage: *id037
+    latency_ms: 142496
+    output_length: 9911
+    is_real_execution: true
+    agent_role: security-engineer
+    team_id: team-6822c169
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260901082231-backend-architect-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: &id038
+    completeness: 4
+    accuracy: 5
+    structure: 4
+    actionability: 3
+    novelty: 3
+    weighted: 4.0
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''backend-architect''
+    identified pattern: Cache expiration pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: &id039
+    output_hash: f57091aaddf76be7
+    token_usage:
+      total: 66856
+      input: 2693
+      output: 1251
+      reasoning: 0
+      cache_read: 62912
+      cache_write: 0
+    latency_ms: 135496
+    output_length: 3018
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-d1f9ed4d
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-backend-architect-P8-IDEMPOTENCY-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-IDEMPOTENCY-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id038
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''backend-architect''
+    identified pattern: Idempotency pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id039
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-backend-architect-P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  source_execution: LOOP-20260901082231
+  target_memory: P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id038
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''backend-architect''
+    identified pattern: Index/query optimization pattern. Confidence: 0.82. Team:
+    7/7 completed.'
+  evidence: *id039
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-database-engineer-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: &id040
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 1
+    novelty: 4
+    weighted: 3.8
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''database-engineer''
+    identified pattern: Cache expiration pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: &id041
+    output_hash: fe0cb08e4298ee45
+    token_usage:
+      total: 57174
+      input: 4799
+      output: 2583
+      reasoning: 0
+      cache_read: 49792
+      cache_write: 0
+    latency_ms: 102983
+    output_length: 7695
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-d1f9ed4d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-database-engineer-P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  source_execution: LOOP-20260901082231
+  target_memory: P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id040
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''database-engineer''
+    identified pattern: Index/query optimization pattern. Confidence: 0.82. Team:
+    7/7 completed.'
+  evidence: *id041
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-database-engineer-P8-STREAMING-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-STREAMING-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id040
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''database-engineer''
+    identified pattern: Streaming pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id041
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-frontend-performance-P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  source_execution: LOOP-20260901082231
+  target_memory: P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: &id042
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 1
+    novelty: 4
+    weighted: 3.8
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''frontend-performance''
+    identified pattern: Index/query optimization pattern. Confidence: 0.82. Team:
+    7/7 completed.'
+  evidence: &id043
+    output_hash: 0d00b0adebb3d1e6
+    token_usage:
+      total: 64410
+      input: 1568
+      output: 3514
+      reasoning: 0
+      cache_read: 59328
+      cache_write: 0
+    latency_ms: 119492
+    output_length: 9346
+    is_real_execution: true
+    agent_role: frontend-performance
+    team_id: team-d1f9ed4d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-frontend-performance-P8-CONCURRENCY-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-CONCURRENCY-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id042
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''frontend-performance''
+    identified pattern: Concurrency pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id043
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-frontend-performance-P8-STREAMING-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-STREAMING-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id042
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''frontend-performance''
+    identified pattern: Streaming pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id043
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-llm-engineer-P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  source_execution: LOOP-20260901082231
+  target_memory: P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: &id044
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 3
+    novelty: 4
+    weighted: 4.2
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''llm-engineer''
+    identified pattern: Index/query optimization pattern. Confidence: 0.82. Team:
+    7/7 completed.'
+  evidence: &id045
+    output_hash: 12c17b4c2d1b069d
+    token_usage:
+      total: 60300
+      input: 3596
+      output: 4416
+      reasoning: 0
+      cache_read: 52288
+      cache_write: 0
+    latency_ms: 278318
+    output_length: 15279
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-d1f9ed4d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-llm-engineer-P8-STREAMING-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-STREAMING-PATTERN
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id044
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''llm-engineer''
+    identified pattern: Streaming pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id045
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-rag-engineer-P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  source_execution: LOOP-20260901082231
+  target_memory: P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  candidate_type: reinforce
+  quality_score: 2.35
+  quality_breakdown:
+    completeness: 5
+    accuracy: 2
+    structure: 2
+    actionability: 1
+    novelty: 0
+    weighted: 2.35
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''rag-engineer''
+    identified pattern: Index/query optimization pattern. Confidence: 0.69. Team:
+    7/7 completed.'
+  evidence:
+    output_hash: 129d50cd202f6238
+    token_usage:
+      total: 82631
+      input: 364
+      output: 283
+      reasoning: 0
+      cache_read: 81984
+      cache_write: 0
+    latency_ms: 577076
+    output_length: 1072
+    is_real_execution: true
+    agent_role: rag-engineer
+    team_id: team-d1f9ed4d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-prompt-engineer-P8-CACHE-EXPIRATION-PATTERN
+  source_execution: LOOP-20260901082231
+  target_memory: P8-CACHE-EXPIRATION-PATTERN
+  candidate_type: reinforce
+  quality_score: 3.7
+  quality_breakdown: &id046
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 1
+    novelty: 3
+    weighted: 3.7
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: Cache expiration pattern. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: &id047
+    output_hash: 99c99dc35115facf
+    token_usage:
+      total: 48802
+      input: 2327
+      output: 1867
+      reasoning: 0
+      cache_read: 44608
+      cache_write: 0
+    latency_ms: 93440
+    output_length: 6346
+    is_real_execution: true
+    agent_role: prompt-engineer
+    team_id: team-d1f9ed4d
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-prompt-engineer-P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  source_execution: LOOP-20260901082231
+  target_memory: P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  candidate_type: reinforce
+  quality_score: 3.7
+  quality_breakdown: *id046
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: Index/query optimization pattern. Confidence: 0.82. Team:
+    7/7 completed.'
+  evidence: *id047
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260901082231-agent-engineer-P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  source_execution: LOOP-20260901082231
+  target_memory: P8-INDEX-QUERY-OPTIMIZATION-PATTE
+  candidate_type: reinforce
+  quality_score: 2.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 1
+    structure: 1
+    actionability: 1
+    novelty: 1
+    weighted: 2.0
+  reasoning: 'Multi-agent team (team-d1f9ed4d) execution succeeded. Agent ''agent-engineer''
+    identified pattern: Index/query optimization pattern. Confidence: 0.58. Team:
+    7/7 completed.'
+  evidence:
+    output_hash: e3e4290f0c9caedc
+    token_usage:
+      total: 68133
+      input: 2936
+      output: 109
+      reasoning: 0
+      cache_read: 65088
+      cache_write: 0
+    latency_ms: 178799
+    output_length: 402
+    is_real_execution: true
+    agent_role: agent-engineer
+    team_id: team-d1f9ed4d
+    is_lead: false
+  outcome: promoted
 cycle_summary:
-  total_candidates: 32
-  reinforce: 32
+  total_candidates: 207
+  reinforce: 205
   weaken: 0
-  create_hypothesis: 0
+  create_hypothesis: 2
   safety_checks:
     no_memory_off_processed: PASS
     all_candidates_from_real_traces: PASS
