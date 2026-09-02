@@ -2,12 +2,10 @@
 
 Agent OS (AOS) integration for Freebuff via **automatic prompt injection** (Option C).
 
-This is the same pattern as the OpenCode plugin — AOS context is automatically injected into every prompt without the agent needing to call any tools.
-
 ## Architecture
 
 ```
-User submits prompt
+User submits prompt in Freebuff CLI
   ↓
 Freebuff UserPromptSubmit hook fires
   ↓
@@ -24,71 +22,57 @@ Context prepended to prompt
 Freebuff agent executes with AOS context
 ```
 
-**This is identical to how the OpenCode plugin works:**
-
-| | OpenCode Plugin | Freebuff Hook |
-|--|----------------|---------------|
-| **Intercept** | `chat.message` hook | `UserPromptSubmit` hook |
-| **Backend** | `aos_host_adapter.py` | `aos_bootstrap.py` → `aos_host_adapter.py` |
-| **Inject** | `experimental.chat.system.transform` | Prepend to prompt |
-| **Reliability** | Automatic, 100% trigger | Automatic, 100% trigger |
-
 ## Installation
 
 ```bash
-# Global installation (applies to all Freebuff sessions)
 bash ~/.agents/runtime/hosts/freebuff/install.sh
-
-# Project-local installation (applies to current project only)
-bash ~/.agents/runtime/hosts/freebuff/install.sh --local
 ```
+
+## Configuration
+
+**Freebuff CLI** reads its config from `~/.config/manicode/settings.json`.
+
+The installer adds a `UserPromptSubmit` hook that intercepts every prompt and injects AOS context.
 
 ## How It Works
 
-1. **Interception**: Freebuff's `UserPromptSubmit` hook fires on every prompt
-2. **Backend Call**: Hook calls `aos_bootstrap.py` which calls `aos_host_adapter.py`
-3. **Decision Context**: AOS returns classification, memory, routing, warnings, instructions
-4. **Injection**: Context is prepended to the user's prompt
-5. **Execution**: Freebuff agent sees the context and uses it to inform its approach
+1. Freebuff's `UserPromptSubmit` hook fires on every prompt
+2. Hook calls `aos_bootstrap.py` → `aos_host_adapter.py`
+3. AOS returns classification, memory, routing, warnings, instructions
+4. Context is prepended to the user's prompt
+5. Freebuff agent executes with AOS context
 
 ## What Gets Injected
 
-The AOS context includes:
 - **Task classification** (category, difficulty, domains)
 - **Recommended role** (e.g., backend-architect, security-engineer)
 - **Relevant memories** (past decisions and patterns)
 - **Safety warnings** (destructive actions, sensitive data)
 - **Execution instructions** (role-based guidance)
 
-## Comparison with MCP Approach
-
-| | MCP (old) | Hook (Option C) |
-|--|-----------|-----------------|
-| **Trigger** | Agent must call tool | Automatic on every prompt |
-| **Reliability** | Agent may forget | 100% guaranteed |
-| **Latency** | Extra tool call | No extra call |
-| **Agent awareness** | Agent knows about AOS | Agent unaware, behavior guided |
-| **Pattern** | Agent opts in | System intercepts |
-
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `aos_bootstrap.py` | Python backend — calls AOS adapter, formats context |
-| `hooks/prompt_submit.sh` | Bash hook — receives prompt, calls bootstrap, prepends context |
-| `settings.json` | Freebuff hook configuration |
+| `hooks/prompt_submit.sh` | Bash hook — intercepts prompt, injects context |
+| `settings.json` | Config template (for reference, not directly installed) |
 | `install.sh` | Installation script |
 
 ## Uninstall
 
-Remove the `UserPromptSubmit` hook entry from your Freebuff `settings.json`:
-
 ```bash
-# Global
-~/.freebuff/settings.json
-
-# Project-local
-.freebuff/settings.json
+bash ~/.agents/runtime/hosts/freebuff/install.sh --uninstall
 ```
 
-Delete the hook entry from the `hooks.UserPromptSubmit` array.
+Or manually remove the `UserPromptSubmit` entry from `~/.config/manicode/settings.json`.
+
+## Verification
+
+After installing, send a prompt in Freebuff CLI and check:
+
+```bash
+cat /tmp/aos_hook_log.txt
+```
+
+Look for `HOOK_TRIGGERED` and `AOS_CONTEXT_INJECTED` entries.

@@ -59,6 +59,90 @@ def find_memory_entry(memory_id: str) -> Optional[dict]:
     return None
 
 
+def _infer_domain_metadata(pattern_name: str) -> dict:
+    """
+    Infer domain, category, and technical tags from a pattern name.
+    Maps pattern name keywords to retrieval-compatible domain/category/tag values.
+
+    This ensures H-xxx hypotheses can be matched by the retrieval optimizer's
+    domain_match and keyword_match scoring dimensions.
+
+    Returns:
+        dict with keys: domain, category, technical_tags
+    """
+    name_lower = pattern_name.lower()
+
+    # ── Domain inference ──────────────────────────────────────
+    domain = "backend"  # default
+    if any(kw in name_lower for kw in ["redis", "database", "sql", "schema", "db", "transaction"]):
+        domain = "database"
+    elif any(kw in name_lower for kw in ["test", "testing", "assert", "mock"]):
+        domain = "testing"
+    elif any(kw in name_lower for kw in ["rag", "llm", "embedding", "vector", "prompt", "ai", "model"]):
+        domain = "ai"
+    elif any(kw in name_lower for kw in ["frontend", "vue", "react", "ui", "component"]):
+        domain = "frontend"
+    elif any(kw in name_lower for kw in ["security", "auth", "token", "permission", "rbac"]):
+        domain = "security"
+
+    # ── Category inference ────────────────────────────────────
+    category = "engineering_pattern"
+    if any(kw in name_lower for kw in ["bug", "defect", "race", "leak", "deadlock", "corruption"]):
+        category = "bug_pattern"
+    elif any(kw in name_lower for kw in ["performance", "slow", "optimize", "bottleneck"]):
+        category = "performance"
+    elif any(kw in name_lower for kw in ["security", "vulnerability", "injection", "xss"]):
+        category = "security"
+    elif any(kw in name_lower for kw in ["architecture", "design", "pattern", "structure"]):
+        category = "architecture"
+
+    # ── Technical tags inference ──────────────────────────────
+    technical_tags = []
+    kw_map = {
+        "redis": ["redis", "cache", "ttl", "expiration"],
+        "database": ["database", "sql", "persistence", "fallback"],
+        "state": ["state", "state-management", "session", "lifecycle"],
+        "idempotency": ["idempotency", "deduplication", "exactly-once"],
+        "java": ["java", "backend", "service"],
+        "interview": ["interview", "session", "application"],
+        "service": ["service", "api", "endpoint"],
+        "answer": ["answer", "request", "response"],
+        "rag": ["rag", "retrieval", "vector", "embedding"],
+        "llm": ["llm", "ai", "model", "generation"],
+        "test": ["testing", "validation", "assertion"],
+        "concurrency": ["concurrency", "locking", "race-condition"],
+        "atomic": ["atomic", "transaction", "rollback"],
+        "write": ["dual-write", "consistency", "write-path"],
+        "read": ["read-path", "query", "fetch"],
+        "null": ["null", "nil", "null-check", "defensive"],
+        "exception": ["exception", "error-handling", "resilience"],
+        "lock": ["locking", "distributed-lock", "mutex"],
+        "stream": ["streaming", "sse", "async"],
+        "mq": ["message-queue", "rabbitmq", "event"],
+        "question": ["question", "quiz", "assessment"],
+        "count": ["counting", "increment", "drift"],
+    }
+
+    for key, tags in kw_map.items():
+        if key in name_lower:
+            technical_tags.extend(tags)
+
+    # Deduplicate and limit
+    seen = set()
+    unique_tags = []
+    for t in technical_tags:
+        if t not in seen:
+            seen.add(t)
+            unique_tags.append(t)
+    technical_tags = unique_tags[:10]
+
+    return {
+        "domain": domain,
+        "category": category,
+        "technical_tags": technical_tags,
+    }
+
+
 def bootstrap_hypothesis(pattern_name: str, source_loop_id: str,
                          source_team_id: str, agent_role: str,
                          lesson: str = "", context: str = "") -> str:
@@ -99,15 +183,21 @@ def bootstrap_hypothesis(pattern_name: str, source_loop_id: str,
             if clean.lower() in [t.lower() for t in m.get("tags", [])]:
                 return m["memory_id"]
 
+    # Infer domain-aware metadata for retrieval compatibility
+    domain_meta = _infer_domain_metadata(pattern_name)
+
     # Create .md file
     os.makedirs(HYPOTHESIS_DIR, exist_ok=True)
     md_filename = f"{memory_id}.md"
     md_path = os.path.join(HYPOTHESIS_DIR, md_filename)
 
+    tags_yaml = "\n".join([f"  - {t}" for t in ["auto-bootstrapped", clean.lower()] + domain_meta["technical_tags"]])
+
     md_content = f"""---
 memory_id: {memory_id}
 type: hypothesis
-category: engineering_pattern
+category: {domain_meta["category"]}
+domain: {domain_meta["domain"]}
 source_loop: {source_loop_id}
 source_team: {source_team_id}
 source_agent: {agent_role}
@@ -116,8 +206,7 @@ confidence: low
 observation_count: 1
 created_at: {datetime.now(timezone.utc).isoformat()}
 tags:
-  - auto-bootstrapped
-  - {clean.lower()}
+{tags_yaml}
 ---
 
 # {pattern_name}
@@ -129,6 +218,11 @@ tags:
 ## Context
 
 {context[:200] if context else 'First observed in multi-agent team execution.'}
+
+## Domain
+
+- Domain: {domain_meta["domain"]}
+- Technical Tags: {', '.join(domain_meta["technical_tags"])}
 
 ## Source
 
@@ -147,18 +241,20 @@ observation before it can be elevated to a validated memory.
         f.write(md_content)
 
     # Add to retrieval-index
+    all_tags = ["auto-bootstrapped", clean.lower()] + domain_meta["technical_tags"]
     new_entry = {
         "memory_id": memory_id,
         "file": f"memory/hypotheses/{md_filename}",
         "type": "hypothesis",
-        "category": "engineering_pattern",
+        "category": domain_meta["category"],
+        "domain": domain_meta["domain"],
         "source_loop": source_loop_id,
         "source_team": source_team_id,
         "source_agent": agent_role,
         "evidence_level": "hypothesis",
         "confidence": "low",
         "observation_count": 1,
-        "tags": ["auto-bootstrapped", clean.lower()],
+        "tags": all_tags,
         "status": "hypothesis",
         "bootstrapped_at": datetime.now(timezone.utc).isoformat(),
     }

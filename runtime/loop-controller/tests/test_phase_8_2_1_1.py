@@ -466,5 +466,382 @@ class TestFullFeedbackLoop(unittest.TestCase):
         self.assertEqual(status, "validated")  # Graduated!
 
 
+# ── Phase 8.2.1.2 Tests ────────────────────────────────────────────
+
+
+class TestTeamResultCollectorSessionId(unittest.TestCase):
+    """Fix 1: TeamResultCollector evidence must include session_id."""
+
+    def setUp(self):
+        _backup_index()
+
+    def tearDown(self):
+        _restore_index()
+
+    def test_evidence_contains_session_id(self):
+        """TeamResultCollector.generate_candidates should produce evidence with session_id."""
+        from team_result_collector import TeamResultCollector
+
+        collector = TeamResultCollector()
+
+        # Build a minimal source dict that passes validate_source
+        source = {
+            "team_id": "team-test0001",
+            "loop_id": "LOOP-TEST001",
+            "team_result": {
+                "status": "success",
+                "completed_count": 3,
+                "failed_count": 0,
+                "lead_output": {
+                    "agent": "backend-architect",
+                    "output": "Test output with InterviewStateStore.java:34 Redis fallback analysis",
+                    "status": "completed",
+                },
+            },
+        }
+
+        # Create minimal experiences
+        experiences = [{
+            "experience_id": "EXP-001",
+            "agent_role": "backend-architect",
+            "confidence": 0.82,
+            "is_lead": True,
+            "team_status": "success",
+            "title": "Test",
+            "lesson": "Test lesson",
+            "context": "Test context",
+            "technical_patterns": ["InterviewStateStore.java:34 Redis过期后DB回退"],
+            "problem_patterns": [],
+            "solutions": [],
+            "evidence": {
+                "output_hash": "abc123",
+                "token_usage": {"total": 30000},
+                "latency_ms": 100000,
+                "output_length": 5000,
+            },
+        }]
+
+        candidates = collector.generate_candidates(experiences, source)
+
+        # At least one candidate should be produced
+        self.assertGreater(len(candidates), 0, "Should produce at least one candidate")
+
+        # Every candidate's evidence should contain session_id
+        for c in candidates:
+            ev = c.get("evidence", {})
+            self.assertIn("session_id", ev, f"Candidate {c['candidate_id']} missing session_id")
+            self.assertTrue(len(ev["session_id"]) > 0, "session_id should not be empty")
+            self.assertTrue(
+                ev["session_id"].startswith("TEAM-"),
+                f"session_id should be TEAM- format, got: {ev['session_id']}"
+            )
+
+    def test_session_id_matches_format(self):
+        """session_id should follow TEAM-{team_id}-{loop_id} format."""
+        from team_result_collector import TeamResultCollector
+
+        collector = TeamResultCollector()
+        source = {
+            "team_id": "team-7adee145",
+            "loop_id": "LOOP-20260902001553",
+            "team_result": {
+                "status": "success",
+                "completed_count": 7,
+                "failed_count": 0,
+                "lead_output": {
+                    "agent": "backend-architect",
+                    "output": "Real analysis output",
+                    "status": "completed",
+                },
+            },
+        }
+        experiences = [{
+            "experience_id": "EXP-001",
+            "agent_role": "backend-architect",
+            "confidence": 0.85,
+            "is_lead": True,
+            "team_status": "success",
+            "title": "Session State Drift",
+            "lesson": "Redis fallback causes drift",
+            "context": "InterviewStateStore.java:34",
+            "technical_patterns": ["InterviewStateStore.java:34 Redis过期后DB回退"],
+            "problem_patterns": ["data-inconsistency"],
+            "solutions": ["add CAS check"],
+            "evidence": {
+                "output_hash": "abc123",
+                "token_usage": {"total": 35966},
+                "latency_ms": 118710,
+                "output_length": 6370,
+            },
+        }]
+
+        candidates = collector.generate_candidates(experiences, source)
+        self.assertGreater(len(candidates), 0)
+
+        for c in candidates:
+            ev = c.get("evidence", {})
+            expected = f"TEAM-team-7adee145-LOOP-20260902001553"
+            self.assertEqual(ev["session_id"], expected,
+                             f"Expected {expected}, got {ev['session_id']}")
+
+
+class TestValidatorMultiAgentCandidate(unittest.TestCase):
+    """Fix 1: Validator accepts multi-agent candidates with session_id."""
+
+    def setUp(self):
+        _backup_index()
+
+    def tearDown(self):
+        _restore_index()
+
+    def test_validator_accepts_candidate_with_session_id(self):
+        """Validator should accept H-xxx candidate with session_id (not reject)."""
+        # Bootstrap a hypothesis
+        memory_id = bootstrap_hypothesis(
+            "InterviewStateStore.java:34 Redis过期后DB回退",
+            source_loop_id="LOOP-TEST001",
+            source_team_id="team-test0001",
+            agent_role="backend-architect",
+        )
+
+        # Create candidate with session_id in evidence
+        candidate = _make_candidate(memory_id, "LOOP-TEST001")
+        candidate["evidence"]["session_id"] = "TEAM-team-test0001-LOOP-TEST001"
+
+        group = _make_group(memory_id, [candidate])
+
+        # Verify group has session_id
+        self.assertGreater(len(group["all_session_ids"]), 0,
+                           "Group should have session_ids from evidence")
+
+        status, result = validate_memory_group(memory_id, group)
+
+        # Should NOT be rejected with "Missing session_id"
+        self.assertNotEqual(status, "rejected",
+                            f"Should not reject: {result.get('rejection_reason')}")
+        self.assertIn(status, ["hypothesis", "validated"],
+                      f"Status should be hypothesis or validated, got: {status}")
+
+    def test_validator_rejects_candidate_without_session_id(self):
+        """Validator should still reject candidates without session_id."""
+        memory_id = bootstrap_hypothesis(
+            "Test Pattern No Session", "LOOP-TEST001", "team-test0001", "agent"
+        )
+
+        # Create candidate WITHOUT session_id
+        candidate = _make_candidate(memory_id, "LOOP-TEST001")
+        candidate["evidence"].pop("session_id", None)
+
+        group = _make_group(memory_id, [candidate])
+
+        status, result = validate_memory_group(memory_id, group)
+        self.assertEqual(status, "rejected")
+        self.assertIn("session_id", result.get("rejection_reason", "").lower())
+
+    def test_two_observations_with_session_id_graduates(self):
+        """Two observations with session_id should graduate to validated."""
+        memory_id = bootstrap_hypothesis(
+            "Test Graduation Pattern", "LOOP-TEST001", "team-test0001", "agent"
+        )
+
+        c1 = _make_candidate(memory_id, "LOOP-TEST001")
+        c1["evidence"]["session_id"] = "TEAM-team-test0001-LOOP-TEST001"
+
+        c2 = _make_candidate(memory_id, "LOOP-TEST002")
+        c2["evidence"]["session_id"] = "TEAM-team-test0002-LOOP-TEST002"
+
+        group = _make_group(memory_id, [c1, c2])
+
+        status, result = validate_memory_group(memory_id, group)
+        self.assertEqual(status, "validated")
+        self.assertEqual(result["validation_runs"], 2)
+
+
+class TestResolverDomainTags(unittest.TestCase):
+    """Fix 2: Resolver generates domain-aware metadata."""
+
+    def setUp(self):
+        _backup_index()
+
+    def tearDown(self):
+        _restore_index()
+
+    def test_infer_domain_backend(self):
+        """Pattern names with java/service keywords should infer backend domain."""
+        from memory_resolver import _infer_domain_metadata
+        meta = _infer_domain_metadata("InterviewStateStore.java:34 Redis过期后DB回退")
+        self.assertEqual(meta["domain"], "database")  # "redis" and "database" keywords
+        self.assertIn("redis", meta["technical_tags"])
+        self.assertIn("state", meta["technical_tags"])
+
+    def test_infer_domain_tags_present(self):
+        """Technical tags should be generated for recognizable patterns."""
+        from memory_resolver import _infer_domain_metadata
+        meta = _infer_domain_metadata("InterviewService.java:372 answer idempotency")
+        # Most critical tags should be present (10-tag limit may truncate lower-priority ones)
+        self.assertIn("idempotency", meta["technical_tags"])
+        self.assertIn("java", meta["technical_tags"])
+        self.assertGreater(len(meta["technical_tags"]), 3, "Should have at least 4 technical tags")
+
+    def test_bootstrap_has_domain_metadata(self):
+        """Bootstrap should add domain and technical_tags to the index entry."""
+        memory_id = bootstrap_hypothesis(
+            "Test Unique Pattern XYZ 2026 Domain Metadata",
+            source_loop_id="LOOP-TEST001",
+            source_team_id="team-test0001",
+            agent_role="backend-architect",
+        )
+        entry = find_memory_entry(memory_id)
+        self.assertIsNotNone(entry)
+
+        # Should have domain field
+        self.assertIn("domain", entry, f"Entry missing domain field: {list(entry.keys())}")
+        self.assertIn(entry["domain"], ["backend", "database", "testing", "ai", "frontend", "security"])
+
+        # Should have technical tags beyond the original auto-bootstrapped tag
+        self.assertGreater(len(entry.get("tags", [])), 2,
+                           f"Should have >2 tags (auto-bootstrapped + pattern + technical), got: {entry.get('tags')}")
+
+        # Should still have the original auto-bootstrapped tag
+        self.assertIn("auto-bootstrapped", entry.get("tags", []))
+
+    def test_bootstrap_md_file_has_domain_section(self):
+        """Bootstrap .md file should contain Domain section."""
+        memory_id = bootstrap_hypothesis(
+            "InterviewService.java:372 answer method idempotency",
+            source_loop_id="LOOP-TEST001",
+            source_team_id="team-test0001",
+            agent_role="backend-architect",
+        )
+        md_path = os.path.join(_AGENT_HOME, "memory", "hypotheses", f"{memory_id}.md")
+        self.assertTrue(os.path.exists(md_path))
+
+        with open(md_path) as f:
+            content = f.read()
+        self.assertIn("## Domain", content)
+        self.assertIn("Domain:", content)
+        self.assertIn("Technical Tags:", content)
+
+        # Cleanup
+        os.remove(md_path)
+
+
+class TestRetrievalCanHitHypothesis(unittest.TestCase):
+    """Fix 2: Retrieval should be able to match H-xxx with domain tags."""
+
+    def setUp(self):
+        _backup_index()
+
+    def tearDown(self):
+        _restore_index()
+
+    def test_hypothesis_tags_match_query_domains(self):
+        """H-xxx technical tags should overlap with query domain keywords."""
+        from memory_resolver import _infer_domain_metadata
+
+        # Simulate a pattern from the real benchmark
+        meta = _infer_domain_metadata("InterviewStateStore.java:34 Redis过期后DB回退")
+
+        # Query domains from the benchmark
+        query_domains = {"backend", "database", "ai", "testing"}
+        query_keywords = {"java", "redis", "session", "state", "drift"}
+
+        # Domain should match
+        self.assertIn(meta["domain"], query_domains,
+                      f"Domain {meta['domain']} should be in query domains {query_domains}")
+
+        # Technical tags should overlap with query keywords
+        tag_set = set(meta["technical_tags"])
+        overlap = tag_set & query_keywords
+        self.assertGreater(len(overlap), 0,
+                           f"Tags {tag_set} should have overlap with keywords {query_keywords}")
+
+    def test_multiple_patterns_all_have_domain(self):
+        """All common patterns should produce valid domain metadata."""
+        from memory_resolver import _infer_domain_metadata
+
+        patterns = [
+            "InterviewStateStore.java:34 Redis过期后DB回退",
+            "InterviewService.java:372 answer idempotency",
+            "InterviewService.java:373 requireAsking fallback",
+            "InterviewStateStore.java:15 Redis single authority",
+            "InterviewService.java:124 answer method",
+            "RagService.retrieveChunks vector search",
+            "InterviewService.java:182 dual write",
+            "InterviewService.java:354 lock timeout",
+        ]
+
+        for pattern in patterns:
+            meta = _infer_domain_metadata(pattern)
+            self.assertIsNotNone(meta.get("domain"), f"Pattern '{pattern}' missing domain")
+            self.assertIsNotNone(meta.get("category"), f"Pattern '{pattern}' missing category")
+            self.assertGreater(len(meta.get("technical_tags", [])), 0,
+                               f"Pattern '{pattern}' has no technical tags")
+
+
+class TestPromoterReceivesValidated(unittest.TestCase):
+    """Fix 3: Promoter should receive promoted hypothesis."""
+
+    def setUp(self):
+        _backup_index()
+
+    def tearDown(self):
+        _restore_index()
+
+    def test_promoter_receives_validated_hypothesis(self):
+        """Promoter should be able to handle a validated hypothesis result."""
+        memory_id = bootstrap_hypothesis(
+            "Cache Expiration Pattern", "LOOP-TEST001", "team-test0001", "agent"
+        )
+
+        # Simulate validated result
+        result = _make_hypothesis_validated_result(memory_id, f"CAND-TEST-{memory_id}")
+        result["status"] = "hypothesis"
+
+        # Trust gate should pass
+        passed, reason = check_trust_gate(result)
+        self.assertTrue(passed, f"Trust gate failed: {reason}")
+
+    def test_promoter_handles_graduated_validated(self):
+        """Promoter should handle graduated (validated) hypothesis."""
+        memory_id = bootstrap_hypothesis(
+            "Graduated Pattern", "LOOP-TEST001", "team-test0001", "agent"
+        )
+
+        result = _make_hypothesis_validated_result(memory_id, f"CAND-TEST-{memory_id}")
+        result["status"] = "validated"
+        result["validation_runs"] = 2
+
+        passed, reason = check_trust_gate(result)
+        self.assertTrue(passed, f"Trust gate should pass for validated: {reason}")
+
+    def test_promoter_rejects_non_validated(self):
+        """Promoter should reject non-validated, non-hypothesis results."""
+        # Use a non-hypothesis memory
+        result = {
+            "memory_id": "T-001",
+            "best_candidate_id": "CAND-TEST-001",
+            "status": "rejected",
+            "validation_runs": 1,
+            "quality_score": 3.0,
+            "all_quality_scores": [3.0],
+            "confidence": 0.2,
+            "gate_results": {
+                "M1_provenance": "fail", "M2_evidence_level": "fail",
+                "M3_duplicate": "skip",
+                "M4_confidence": "fail", "M5_relevance": "pass", "M6_staleness": "pass",
+            },
+            "evidence_sources": ["LOOP-TEST001"],
+            "unique_sessions": 1,
+            "checks": {},
+            "rejection_reason": "Only 1 observation",
+            "validated_at": "2026-09-01T12:00:00Z",
+        }
+
+        passed, reason = check_trust_gate(result)
+        self.assertFalse(passed)
+        self.assertIn("failed", reason.lower())
+
+
 if __name__ == "__main__":
     unittest.main()

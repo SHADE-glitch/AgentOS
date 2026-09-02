@@ -4498,3 +4498,317 @@ Auditor
     injection_status: "success"
     aos_status: "completed"
     lead_agent: "general"
+  - event_id: "EVT-V49CD4YM"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T00:12:03.042Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+当前阶段：
+
+Phase 8.2.1.1 Runtime Validation
+
+
+你的任务：
+
+执行 Phase 8.2.1.1 Benchmark。
+
+
+你不是：
+
+Developer
+
+Architect
+
+Auditor
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改 Agent OS 架构
+- 修复发现的问题
+- 手工创"
+    prompt_length: 8577
+    session_id: "ses_fa3c3a4f0ffe8djx1uTrjM170I"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-OYT1Q6QZ"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T00:12:03.042Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-TI9I4LTX"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+当前阶段：
+
+Phase 8.2.1.1 Runtime Validation
+
+
+你的任务：
+
+执行 Phase 8.2.1.1 Benchmark。
+
+
+你不是：
+
+Developer
+
+Architect
+
+Auditor
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改 Agent OS 架构
+- 修复发现的问题
+- 手工创"
+    session_id: "ses_fa3c3a4f0ffe8djx1uTrjM170I"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-XTMH1CQO"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T00:12:04.464Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-TI9I4LTX"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1422
+    session_id: "ses_fa3c3a4f0ffe8djx1uTrjM170I"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WC4CH7CU"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T00:13:03.587Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+当前阶段：
+
+Phase 8.2.1.1 Runtime Validation
+
+
+你的任务：
+
+执行 Phase 8.2.1.1 Benchmark。
+
+
+你不是：
+
+Developer
+
+Architect
+
+Auditor
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改 Agent OS 架构
+- 修复发现的问题
+- 手工创"
+    prompt_length: 8577
+    session_id: "ses_fa3c3a4f0ffe8djx1uTrjM170I"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-19LD7IBD"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T00:13:03.587Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OTBZYRYZ"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+当前阶段：
+
+Phase 8.2.1.1 Runtime Validation
+
+
+你的任务：
+
+执行 Phase 8.2.1.1 Benchmark。
+
+
+你不是：
+
+Developer
+
+Architect
+
+Auditor
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改 Agent OS 架构
+- 修复发现的问题
+- 手工创"
+    session_id: "ses_fa3c3a4f0ffe8djx1uTrjM170I"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-4MTUKCQV"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T00:13:04.970Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OTBZYRYZ"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1383
+    session_id: "ses_fa3c3a4f0ffe8djx1uTrjM170I"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LLL6XGFX"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T00:13:18.619Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-D2LMT9PR"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T00:13:18.619Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HZYUNEFM"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DKG0CITF"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T00:13:19.824Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HZYUNEFM"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 1205
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JRQJBPWZ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T00:13:19.870Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HZYUNEFM"
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-58IZRQAY"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T00:58:02.320Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+当前任务：
+
+执行 Phase 8.2.1.2 Runtime Validation Benchmark
+
+
+你的职责：
+
+验证 Agent OS 真实运行能力。
+
+
+不是：
+
+Developer
+
+不是：
+
+Architect
+
+不是：
+
+Auditor
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改源码
+- 创建假数据
+- 手"
+    prompt_length: 16446
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CQF7FYFP"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T00:58:02.321Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ENDREZUV"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+当前任务：
+
+执行 Phase 8.2.1.2 Runtime Validation Benchmark
+
+
+你的职责：
+
+验证 Agent OS 真实运行能力。
+
+
+不是：
+
+Developer
+
+不是：
+
+Architect
+
+不是：
+
+Auditor
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改源码
+- 创建假数据
+- 手"
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TTCF0POR"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T00:58:03.908Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ENDREZUV"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1587
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-EVVH3MJO"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T00:58:04.269Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ENDREZUV"
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"

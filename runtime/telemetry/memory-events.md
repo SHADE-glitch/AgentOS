@@ -2002,3 +2002,57 @@ memory_ids:
 hypothesis_count: 0
 timestamp: '2026-09-02T07:12:31.976117+00:00'
 ```
+
+## Memory Event — 2026-09-02T00:15:55.085714+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788308153
+task_id: BENCH-RUN1-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T00:15:55.085714+00:00'
+```
+
+## Memory Event — 2026-09-02T00:25:15.537081+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788308714
+task_id: BENCH-RUN2-001
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-002
+- T-005
+- P-001
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T00:25:15.537081+00:00'
+```
+
+## Memory Event — 2026-09-02T00:58:31.392182+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788310709
+task_id: BENCH8-2-1-2-RUN1
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T00:58:31.392182+00:00'
+```

@@ -1,0 +1,1192 @@
+loop_id: LOOP-20260902001553
+team_id: team-7adee145
+team_result:
+  team_id: team-7adee145
+  status: success
+  lead_output:
+    agent: backend-architect
+    status: completed
+    summary: '**[LEAD team-7adee145] 诊断报告 — Session 状态漂移 + `answer` 幂等缺失 | 只分析未修改**
+
+
+      协同: `Testing Engineer` -> Redis/TTL回退路径, `Code Reviewer` -> 幂等性/去重。 verified
+      via `read` + `grep` + `schema.sql`。
+
+
+      ### 1. 核心结论
+
+
+      两个'
+    output: "**[LEAD team-7adee145] 诊断报告 — Session 状态漂移 + `answer` 幂等缺失 | 只分析未修改**\n\
+      \n协同: `Testing Engineer` -> Redis/TTL回退路径, `Code Reviewer` -> 幂等性/去重。 verified\
+      \ via `read` + `grep` + `schema.sql`。\n\n### 1. 核心结论\n\n两个缺陷叠加形成 `at-least-once`\
+      \ 漂移链: `Redis(单一权威)` -> 过期 `null` -> `DB(冗余列)` 回退 ->脏重建-> `answer` 无幂等重复落库->\
+      \ `questionCount` 与 `interview_message` 分叉-> 评分/结束判定失真, `interview_result.session_id\
+      \ UNIQUE` 二次插入必 `500`。\n\n---\n\n### 2. InterviewStateStore.java:34 Redis过期后DB回退\n\
+      \n**现状** `InterviewStateStore.java:15` 注释称 Redis 是单一权威, `read:34-46` 失效即 `return\
+      \ null`, 解析异常亦 `null`。\n\n**唯一回退点** `InterviewService.java:372-391` `requireAsking()`:\n\
+      ```java\n// InterviewService.java:373-381\nSessionState state = stateStore.read(sessionId);\n\
+      if(state==null){\n  InterviewSession s = sessionMapper.selectById(sessionId);\
+      \ // DB\n  state = new SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId());\n\
+      \  stateStore.write(sessionId, state); // 无条件续期 24h\n}\n```\n\n**Findings:**\n\
+      \n| # | 级别 | 描述 | file:line |\n|---|---|---|---|\n| R1 | **High** | `FINISHED`\
+      \ 复活泄漏: 结束后 Redis 过期, 任何 `answer` 探测先 `write(FINISHED, TTL=24h)` 再抛 `INTERVIEW_FINISHED:383`/`INTERVIEW_STATE_ERROR:388`。每探测一次续命24h,\
+      \ `delete():58` 从未调用, 违背过期即GC预期 | `InterviewStateStore.java:25,51` `InterviewService.java:379-383`\
+      \ `340` |\n| R2 | **High** | 双写非原子回滚: `create:112-116` / `answer:182-186` /\
+      \ `248-259` `updateById(DB)->write(Redis)` 无事务。若一端失败, 24h后回退读取旧 `questionCount/currentQuestionId`,\
+      \ 下一次 `newCount=state.questionCount()+1:176,249` 重复计数, 绕过 `MAX_QUESTIONS=6:64`\
+      \ | `InterviewService.java:176,182-186` |\n| R3 | **High** | 封装分层错误: 回退仅在 `requireAsking`\
+      \ 生效, 其他直接 `stateStore.read:34` 的调用方得 `null` 误判会话不存在; `read:43` 解析失败静默 `null`\
+      \ 掩盖序列化损坏 | `InterviewStateStore.java:34-46` |\n| R4 | **Med** | `questionCount`\
+      \ 未与 `messageMapper.selectList:134-137` 的真实 `kind=question` 数校验, `pickQuestion`\
+      \ 去重 `askedQuestionIds:140` 依赖消息表, 计数分叉 | `InterviewService.java:140-143` |\n\
+      | R5 | **Med** | `START` 瞬态残留: `create:90 write START` 后崩溃未 `updateById ASKING:110`,\
+      \ 过期回退得 `START`, `requireAsking:386` 仍放行提交答案 | `InterviewService.java:90,386`\
+      \ `InterviewStatus.java:9` |\n| R6 | **Low** | `TTL_HOURS=24` 硬编码 `InterviewStateStore.java:25`,\
+      \ `docker-compose.yml:24-37` 无 `maxmemory-policy`/`notify-keyspace-events` 可观测性\
+      \ | - |\n\n**DB schema 侧证据** `backend/src/main/resources/db/schema.sql:46-60`\
+      \ `interview_session.questionCount/current_question_id` 为冗余列, `interview_message:62-72`\
+      \ 无 `UNIQUE(session_id,role)` 约束, 回退完全信任冗余列。\n\n### 3. InterviewService.java:372\
+      \ `answer` 幂等性\n\n**判定: 完全缺失** 全仓 `grep idempoten 0命中`, `answer:124-192` / `answerStream:194-276`\
+      \ 参数 `(userId,sessionId,answer)` 无 `Idempotency-Key`。\n\n```java\n// InterviewService.java:128-131\
+      \ 关键缺陷\nSessionState state = requireAsking(sessionId); // 读取 currentQuestionId\
+      \ 后丢弃\nsaveUserMessage(sessionId,\"answer\",answer); // 412-420 无条件 insert,\
+      \ 未比对 currentQuestionId\n// ...\nint newCount = state.questionCount()+1; //\
+      \ 176 基于旧state\nsaveAiMessage(...); // 177-178 再插入一题\n```\n\n| 检查项 | 结果 | 证据\
+      \ |\n|---|---|---|\n| Header/Key | 缺失 | `InterviewController:59` 无header, `frontend/src/api/client.ts:67`/`interview.ts:59`\
+      \ 无Key |\n| DB唯一约束 | 缺失 | `InterviewMessage:16 AUTO`, `schema.sql:62` 仅FK |\n\
+      | `currentQuestionId` 比对 | 缺失 | `128->131` 未使用 `state.currentQuestionId()` |\n\
+      | 锁防重 | 仅防并发, `tryLock 5s:353` 释放后重试串行通过 | `InterviewService.java:125-126` |\n\
+      | 前端防重 | 内存 `submitting` 刷新即丢失, 失败保留 `answer.value` 鼓励重试 `Interview.vue:69`\
+      \ | - |\n\n**影响推演(每次重试线性叠加):**\n- `USER answer` 行翻倍 -> `extractQAPairs:320-333`\
+      \ 多配对, `EvaluationService.shouldFinish` 误提前/虚高分\n- `questionCount` 每次+1漂移 ->\
+      \ 提前耗尽题库\n- 结束分支 `resultMapper.insert:149,165` 前无 `selectOne` 防重, `schema.sql:76\
+      \ session_id UNIQUE` 第二次必 `DuplicateKeyException` -> 500 -> 再重试污染加剧\n- 重复 `rabbitTemplate.convertAndSend:345`\
+      \ 投递评分MQ\n\n### 4. 漂移交互\n\n`R2` 脏 `questionCount` 被重建入 Redis, 成为后续 `answer`\
+      \ 的 `newCount` 基准, 幂等缺失放大漂移; `FINISHED` 复活 `R1` 使已结束会话仍可被重试污染。\n\n### 5. 复现/验证建议(只读)\n\
+      \n1. **TTL漂移:** `redis-cli EXPIRE interview:session:{id} 1` -> 睡眠2s -> `POST\
+      \ /answer` -> 观察 `session.questionCount` 是否回退为旧值; `redis-cli GET` 验证复活。\n2.\
+      \ **幂等:** `create -> answer Q1` 同时 `curl --retry 2` 或前端超时kill后立即重发同 `content`\
+      \ -> `SELECT count(*) FROM interview_message WHERE session_id=? AND role='USER'`\
+      \ 应=1 实际=2, `questionCount` +2。\n3. **FINISHED泄漏:** `FINISHED` 后 `redis-cli\
+      \ DEL interview:session:{id}` -> `POST /answer` -> `GET` 验证key重现TTL~24h。\n\n\
+      ### 6. 架构建议(待实施, 未改文件)\n\n- **P0** `requireAsking` 分支 `if FINISHED -> stateStore.delete()而非write`;\
+      \ `answer` 入口比对 `lastUserMsg`/`currentQuestionId`或加 `UNIQUE(session_id, question_message_id)`\
+      \ 兜底, `result insert` 前 `selectOne`。\n- **P1** `Idempotency-Key` 协议 `SETNX interview:idempotency:{key}\
+      \ 24h -> messageId`; `answer` 加 `@Transactional`; `write(FINISHED)` 短TTL或 `delete`。\n\
+      - **P2** 下沉回退至 `StateStore.readOrRestore()` 并校验 `questionCount==count(question)`,\
+      \ 外置 `interview.state-ttl-hours`, Redis 配置 `maxmemory-policy allkeys-lru` +\
+      \ `notify-keyspace-events Ex`。\n\n> 本报告仅分析, 未执行任何文件写入/修改, 符合任务约束。\n"
+    execution_id: ''
+    trace_id: ''
+    tokens:
+      total: 35966
+      input: 324
+      output: 1864
+      reasoning: 193
+      cache_read: 33585
+      cache_write: 0
+    latency_ms: 118710
+    reliability:
+      summary:
+        total_attempts: 1
+        retries_performed: 0
+        fallbacks_used: []
+        models_tried:
+        - ''
+        final_status: success
+        total_latency_ms: 118710
+        classification: success
+      cross_stack: null
+  contributions:
+  - role: backend-architect
+    task_id: task-backend-architect-fdc356
+    output:
+      agent: backend-architect
+      status: completed
+      summary: '**[LEAD team-7adee145] 诊断报告 — Session 状态漂移 + `answer` 幂等缺失 | 只分析未修改**
+
+
+        协同: `Testing Engineer` -> Redis/TTL回退路径, `Code Reviewer` -> 幂等性/去重。 verified
+        via `read` + `grep` + `schema.sql`。
+
+
+        ### 1. 核心结论
+
+
+        两个'
+      output: "**[LEAD team-7adee145] 诊断报告 — Session 状态漂移 + `answer` 幂等缺失 | 只分析未修改**\n\
+        \n协同: `Testing Engineer` -> Redis/TTL回退路径, `Code Reviewer` -> 幂等性/去重。 verified\
+        \ via `read` + `grep` + `schema.sql`。\n\n### 1. 核心结论\n\n两个缺陷叠加形成 `at-least-once`\
+        \ 漂移链: `Redis(单一权威)` -> 过期 `null` -> `DB(冗余列)` 回退 ->脏重建-> `answer` 无幂等重复落库->\
+        \ `questionCount` 与 `interview_message` 分叉-> 评分/结束判定失真, `interview_result.session_id\
+        \ UNIQUE` 二次插入必 `500`。\n\n---\n\n### 2. InterviewStateStore.java:34 Redis过期后DB回退\n\
+        \n**现状** `InterviewStateStore.java:15` 注释称 Redis 是单一权威, `read:34-46` 失效即 `return\
+        \ null`, 解析异常亦 `null`。\n\n**唯一回退点** `InterviewService.java:372-391` `requireAsking()`:\n\
+        ```java\n// InterviewService.java:373-381\nSessionState state = stateStore.read(sessionId);\n\
+        if(state==null){\n  InterviewSession s = sessionMapper.selectById(sessionId);\
+        \ // DB\n  state = new SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId());\n\
+        \  stateStore.write(sessionId, state); // 无条件续期 24h\n}\n```\n\n**Findings:**\n\
+        \n| # | 级别 | 描述 | file:line |\n|---|---|---|---|\n| R1 | **High** | `FINISHED`\
+        \ 复活泄漏: 结束后 Redis 过期, 任何 `answer` 探测先 `write(FINISHED, TTL=24h)` 再抛 `INTERVIEW_FINISHED:383`/`INTERVIEW_STATE_ERROR:388`。每探测一次续命24h,\
+        \ `delete():58` 从未调用, 违背过期即GC预期 | `InterviewStateStore.java:25,51` `InterviewService.java:379-383`\
+        \ `340` |\n| R2 | **High** | 双写非原子回滚: `create:112-116` / `answer:182-186`\
+        \ / `248-259` `updateById(DB)->write(Redis)` 无事务。若一端失败, 24h后回退读取旧 `questionCount/currentQuestionId`,\
+        \ 下一次 `newCount=state.questionCount()+1:176,249` 重复计数, 绕过 `MAX_QUESTIONS=6:64`\
+        \ | `InterviewService.java:176,182-186` |\n| R3 | **High** | 封装分层错误: 回退仅在\
+        \ `requireAsking` 生效, 其他直接 `stateStore.read:34` 的调用方得 `null` 误判会话不存在; `read:43`\
+        \ 解析失败静默 `null` 掩盖序列化损坏 | `InterviewStateStore.java:34-46` |\n| R4 | **Med**\
+        \ | `questionCount` 未与 `messageMapper.selectList:134-137` 的真实 `kind=question`\
+        \ 数校验, `pickQuestion` 去重 `askedQuestionIds:140` 依赖消息表, 计数分叉 | `InterviewService.java:140-143`\
+        \ |\n| R5 | **Med** | `START` 瞬态残留: `create:90 write START` 后崩溃未 `updateById\
+        \ ASKING:110`, 过期回退得 `START`, `requireAsking:386` 仍放行提交答案 | `InterviewService.java:90,386`\
+        \ `InterviewStatus.java:9` |\n| R6 | **Low** | `TTL_HOURS=24` 硬编码 `InterviewStateStore.java:25`,\
+        \ `docker-compose.yml:24-37` 无 `maxmemory-policy`/`notify-keyspace-events`\
+        \ 可观测性 | - |\n\n**DB schema 侧证据** `backend/src/main/resources/db/schema.sql:46-60`\
+        \ `interview_session.questionCount/current_question_id` 为冗余列, `interview_message:62-72`\
+        \ 无 `UNIQUE(session_id,role)` 约束, 回退完全信任冗余列。\n\n### 3. InterviewService.java:372\
+        \ `answer` 幂等性\n\n**判定: 完全缺失** 全仓 `grep idempoten 0命中`, `answer:124-192` /\
+        \ `answerStream:194-276` 参数 `(userId,sessionId,answer)` 无 `Idempotency-Key`。\n\
+        \n```java\n// InterviewService.java:128-131 关键缺陷\nSessionState state = requireAsking(sessionId);\
+        \ // 读取 currentQuestionId 后丢弃\nsaveUserMessage(sessionId,\"answer\",answer);\
+        \ // 412-420 无条件 insert, 未比对 currentQuestionId\n// ...\nint newCount = state.questionCount()+1;\
+        \ // 176 基于旧state\nsaveAiMessage(...); // 177-178 再插入一题\n```\n\n| 检查项 | 结果\
+        \ | 证据 |\n|---|---|---|\n| Header/Key | 缺失 | `InterviewController:59` 无header,\
+        \ `frontend/src/api/client.ts:67`/`interview.ts:59` 无Key |\n| DB唯一约束 | 缺失\
+        \ | `InterviewMessage:16 AUTO`, `schema.sql:62` 仅FK |\n| `currentQuestionId`\
+        \ 比对 | 缺失 | `128->131` 未使用 `state.currentQuestionId()` |\n| 锁防重 | 仅防并发, `tryLock\
+        \ 5s:353` 释放后重试串行通过 | `InterviewService.java:125-126` |\n| 前端防重 | 内存 `submitting`\
+        \ 刷新即丢失, 失败保留 `answer.value` 鼓励重试 `Interview.vue:69` | - |\n\n**影响推演(每次重试线性叠加):**\n\
+        - `USER answer` 行翻倍 -> `extractQAPairs:320-333` 多配对, `EvaluationService.shouldFinish`\
+        \ 误提前/虚高分\n- `questionCount` 每次+1漂移 -> 提前耗尽题库\n- 结束分支 `resultMapper.insert:149,165`\
+        \ 前无 `selectOne` 防重, `schema.sql:76 session_id UNIQUE` 第二次必 `DuplicateKeyException`\
+        \ -> 500 -> 再重试污染加剧\n- 重复 `rabbitTemplate.convertAndSend:345` 投递评分MQ\n\n###\
+        \ 4. 漂移交互\n\n`R2` 脏 `questionCount` 被重建入 Redis, 成为后续 `answer` 的 `newCount`\
+        \ 基准, 幂等缺失放大漂移; `FINISHED` 复活 `R1` 使已结束会话仍可被重试污染。\n\n### 5. 复现/验证建议(只读)\n\n\
+        1. **TTL漂移:** `redis-cli EXPIRE interview:session:{id} 1` -> 睡眠2s -> `POST\
+        \ /answer` -> 观察 `session.questionCount` 是否回退为旧值; `redis-cli GET` 验证复活。\n\
+        2. **幂等:** `create -> answer Q1` 同时 `curl --retry 2` 或前端超时kill后立即重发同 `content`\
+        \ -> `SELECT count(*) FROM interview_message WHERE session_id=? AND role='USER'`\
+        \ 应=1 实际=2, `questionCount` +2。\n3. **FINISHED泄漏:** `FINISHED` 后 `redis-cli\
+        \ DEL interview:session:{id}` -> `POST /answer` -> `GET` 验证key重现TTL~24h。\n\
+        \n### 6. 架构建议(待实施, 未改文件)\n\n- **P0** `requireAsking` 分支 `if FINISHED -> stateStore.delete()而非write`;\
+        \ `answer` 入口比对 `lastUserMsg`/`currentQuestionId`或加 `UNIQUE(session_id, question_message_id)`\
+        \ 兜底, `result insert` 前 `selectOne`。\n- **P1** `Idempotency-Key` 协议 `SETNX\
+        \ interview:idempotency:{key} 24h -> messageId`; `answer` 加 `@Transactional`;\
+        \ `write(FINISHED)` 短TTL或 `delete`。\n- **P2** 下沉回退至 `StateStore.readOrRestore()`\
+        \ 并校验 `questionCount==count(question)`, 外置 `interview.state-ttl-hours`, Redis\
+        \ 配置 `maxmemory-policy allkeys-lru` + `notify-keyspace-events Ex`。\n\n> 本报告仅分析,\
+        \ 未执行任何文件写入/修改, 符合任务约束。\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 35966
+        input: 324
+        output: 1864
+        reasoning: 193
+        cache_read: 33585
+        cache_write: 0
+      latency_ms: 118710
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 118710
+          classification: success
+        cross_stack: null
+    is_lead: true
+  - role: testing-engineer
+    task_id: task-testing-engineer-b2035c
+    output:
+      agent: testing-engineer
+      status: completed
+      summary: '# AI Interview Platform Session 状态漂移 — 诊断报告 (只分析不改码)
+
+
+        **Team:** `team-7adee145` | **角色:** `testing-engineer` | **Scope:** `InterviewStateStore.java:34`,
+        `InterviewService.java:372` (`requireAsking`) +'
+      output: "# AI Interview Platform Session 状态漂移 — 诊断报告 (只分析不改码)\n\n**Team:** `team-7adee145`\
+        \ | **角色:** `testing-engineer` | **Scope:** `InterviewStateStore.java:34`,\
+        \ `InterviewService.java:372` (`requireAsking`) + `InterviewService.java:124`\
+        \ (`answer`) 幂等性\n\n> 结论先行：存在**双源漂移** + **非幂等写入**。两者叠加可在正常重试/Redis 过期/崩溃窗口下100%复现\
+        \ `questionCount` / `currentQuestionId` 不一致。按当前实现无需混沌注入即可在测试环境用 5 个用例复现。\n\
+        \n---\n\n## 1. InterviewStateStore.java:34 — Redis 过期后 DB 回退逻辑\n\n### 1.1\
+        \ 现状代码证据\n\n`InterviewStateStore.java:34-46`:\n```java\npublic SessionState\
+        \ read(Long sessionId) { //:34\n  RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\n\
+        \  String json = bucket.get(); // null = 不存在/已过期\n  if (json==null) return\
+        \ null;\n  try{ return objectMapper.readValue(json, SessionState.class); }\n\
+        \  catch(Exception e){ log.warn(...); return null; } //:44 污染==过期\n}\npublic\
+        \ void write(Long s, SessionState st){ //:48\n  redissonClient.getBucket(key(s)).set(json,\
+        \ TTL_HOURS, TimeUnit.HOURS); //:51 TTL=24h 固定\n}\n```\n\n`InterviewService.java:372-391`:\n\
+        ```java\nprivate SessionState requireAsking(Long sessionId){ //:372\n  SessionState\
+        \ state = stateStore.read(sessionId); //:373\n  if(state==null){ //:374 Fallback\n\
+        \    InterviewSession s = sessionMapper.selectById(sessionId); //:375\n  \
+        \  if(s==null) throw NOT_FOUND;\n    state = new SessionState(s.getStatus(),\
+        \ s.getQuestionCount(), s.getCurrentQuestionId()); //:379\n    stateStore.write(sessionId,\
+        \ state); //:381 回写缓存\n  }\n  if(FINISHED.equals(state.status())) throw FINISHED;\
+        \ //:383\n  if(!ASKING && !START) throw STATE_ERROR; //:386\n  return state;\n\
+        }\n```\n\n注释 `InterviewStateStore.java:15` 宣称 *\"作为状态机的单一权威来源\"* — 实际是双写非事务。\n\
+        \n### 1.2 5 类缺陷（按风险排序）\n\n| # | 风险 | 现象 | 根因 |\n|---|------|------|------|\n\
+        | **R1** | \U0001F534 High | **写后读不一致导致 questionCount 漂移** | `answer():183`\
+        \ 先 `sessionMapper.updateById` 后 `stateStore.write`，无 `@Transactional`，崩溃/异常间隙\
+        \ `Redis` 留存旧值。下一次 `read` 命中旧值**不走 fallback**，`newCount=old+1` 越算越偏。 |\n|\
+        \ **R2** | \U0001F534 High | **过期≠损坏混淆** | `read:44` 对 JSON 解析异常也 `return\
+        \ null`，触发 DB 回退并 `write` 覆盖。攻击者或脏数据可注入 `\"{bad}\"` 强制复活/篡改状态，且无 `TTL` 区分日志。\
+        \ |\n| **R3** | \U0001F7E1 Medium | **TTL 语义缺失** | `TTL_HOURS=24` 硬编码，仅 `write`\
+        \ 刷新。冷会话 24h 后自动回退复活，无 `finishedAt` 过期校验，`FINISHED` 会话过期后仍重建 `FINISHED` 状态并重置\
+        \ TTL（无意义写）。长时间面试（24h+）无预警。 |\n| **R4** | \U0001F7E1 Medium | **读路径不一致** |\
+        \ `detail():286` / `listByUser():278` 直接读 DB，不走 `StateStore`；`answer()` 读\
+        \ Redis。同一 `sessionId` 在过期窗口内两路径看到不同 `status/questionCount`。 |\n| **R5** |\
+        \ \U0001F7E0 Low | **隐式竞态** | `requireAsking` 在 `answer:124` 的 `RLock(5s)`\
+        \ 内执行，单会话串行安全。但 `answerStream:194` 用 `Thread.ofVirtual` + 同锁，若客户端 25h 后重试，两线程都\
+        \ `read==null` → 双 `write`（虽持锁但跨虚线程可见性依赖 Redisson 锁可重入性），无 `SET NX` 语义。 |\n\
+        \n### 1.3 时序漂移模型\n\n```\nT0: answer#1 DB count=1 Redis count=1\nT1: answer#2\
+        \ DB update count=2 -> 进程 Crash before Redis write -> Redis=1 DB=2 [DRIFT=1]\n\
+        T2: answer#3 Redis hit count=1 -> newCount=2 -> DB update count=2 (幂等写入掩盖)\
+        \ -> Redis=2 DB=2 [看似恢复但已丢一次递增]\nT3: 24h无操作 Redis expire\nT4: answer#4 fallback\
+        \ DB count=2 -> Redis=2 -> 正常，但若 T1 DB未提交则 fallback 读旧值\n```\n→ 任何非原子双写 +\
+        \ 固定 TTL 即产生可累积漂移。\n\n---\n\n## 2. InterviewService.java:124 / 372 — `answer`\
+        \ 幂等性\n\n### 2.1 现状证据\n\n`InterviewService.java:124-192` 关键序列：\n```java\n\
+        public MessageVO answer(Long userId, Long sessionId, String answer){ //:124\n\
+        \  RLock lock = lockFor(sessionId); //:125 WAIT 5s\n  InterviewSession session\
+        \ = requireOwnedSession(...); //:127\n  SessionState state = requireAsking(sessionId);\
+        \ //:128\n  saveUserMessage(sessionId,\"answer\",answer); //:131 INSERT 无去重\n\
+        \  List<InterviewMessage> messages = selectList...; //:134\n  // ... shouldFinish\
+        \ / score / pickQuestion\n  int newCount = state.questionCount()+1; //:176\
+        \ 来自 Redis\n  InterviewMessage msg = saveAiMessage(...); //:177\n  session.setQuestionCount(newCount);\
+        \ sessionMapper.updateById(session); //:182-183\n  stateStore.write(sessionId,\
+        \ new SessionState(ASKING,newCount,msg.getId())); //:185\n}\n```\n\n`InterviewController.java:60-66`：`POST\
+        \ /interviews/{id}/answer` Body 仅 `{\"content\": \"...\"}`，无 `Idempotency-Key`，无问卷版本。\n\
+        \n### 2.2 7 类幂等问题\n\n1. **无请求级幂等键**：网络超时重试（前端/网关/LB 自动重试）会二次 `INSERT` 用户 `answer`，`questionCount`\
+        \ 每次 +1，`interview_message` 成倍增长。`MAX_QUESTIONS=6` 被突破 → `shouldFinish:102`\
+        \ 仅靠 `qaPairs.size()>=6` 无法防御重复计数。\n2. **消息级去重缺失**：应以 `(sessionId, currentQuestionId)`\
+        \ 唯一锚定一次回答，当前以 `state.currentQuestionId` 计算 `newCount`，但不校验 `answer` 是否已对该问题提交过。第二次重试\
+        \ `currentQuestionId` 已更新，仍视为新问答。\n3. **非事务性**：无 `@Transactional`，`saveUserMessage`\
+        \ 成功后若 `questionBank.pickQuestion` 或 `saveAiMessage` 抛异常，DB 留存孤儿 `answer`\
+        \ 无对应 `question`，下次 `extractQAPairs:320` 配对错位。\n4. **计数源错误**：`askedQuestionIds:140-143`\
+        \ 用 `KnowledgePointId` 去重却传给 `QuestionBank:60` 按 `Question.id NOT IN` 过滤 →\
+        \ 去重失效，可能重复发题，幂等重试加剧重复。\n5. **并发语义误导**：`lockFor:353` `tryLock 5s` 失败抛 `INTERVIEW_STATE_ERROR:357`，客户端视作业务错而非\
+        \ `409/429`，不会用同一 `Idempotency-Key` 重试，而会新建请求导致雪崩。\n6. **`answerStream:194-275`\
+        \ 更差**：虚线程内持锁 `SseEmitter 300s`，重试期间锁占用导致 `tryLock` 超时。流式接口无 `Emitter` 级幂等，去重更难。\n\
+        7. **`finishSession:335-351`** 双重试下可并发 `resultMapper.insert` 两次，无 `sessionId\
+        \ UNIQUE` 约束 → 重复评分行（需查 `interview_result` 表 DDL 验证）。\n\n### 2.3 最小复现 PoC（测试工程师可直接执行）\n\
+        \n```bash\n# 1. 创建会话，拿到 sessionId=1, currentQuestionId=10\n# 2. 同一 content\
+        \ 重发两次（模拟超时重试）\ncurl -X POST /api/interviews/1/answer -H \"Authorization:\
+        \ Bearer $TOKEN\" -d '{\"content\":\"回答A\"}' &\ncurl -X POST /api/interviews/1/answer\
+        \ -H \"Authorization: Bearer $TOKEN\" -d '{\"content\":\"回答A\"}' &\nwait\n\
+        # 观察：select count(*) from interview_message where session_id=1 and kind='answer'\
+        \ => 2 (期望1)\n# select question_count from interview_session where id=1 =>\
+        \ 3 (期望2) -> 漂移+1\n```\n\n```java\n// 集成测试: Redis过期回退\n@Test void redisExpiryFallback_shouldRehydrateFromDB(){\n\
+        \  var s = createSession(userId); // DB count=1 Redis=1\n  redissonClient.getBucket(\"\
+        interview:session:\"+s.getId()).delete(); // 模拟 24h 过期\n  InterviewStateStore.SessionState\
+        \ st = invokeRequireAsking(s.getId());\n  assertEquals(\"ASKING\", st.status());\n\
+        \  assertNotNull(redissonClient.getBucket(key).get()); // 回写成功\n  // 断言：若\
+        \ DB 与 Redis 曾漂移，此处回写会固化错误值\n}\n```\n\n---\n\n## 3. 测试工程师视角 — 验证计划（给 Lead\
+        \ 评审）\n\n### 3.1 分层策略\n\n| 层级 | 目标 | 工具 | 用例数建议 |\n|------|------|------|------------|\n\
+        | **Unit** | `StateStore.read` null/损坏/TTL | JUnit5 + Mockito + AssertJ, `ObjectMapper`\
+        \ 真实实例 | 6 |\n| **Integration** | `requireAsking` Fallback + 双写原子性 | Testcontainers\
+        \ `redis:7-alpine` + `mysql:8` + MyBatis-Plus | 8 |\n| **Concurrency** | `answer`\
+        \ 幂等 + 锁 | Awaitility + `ExecutorService` 20线程, `Testcontainers` | 5 |\n|\
+        \ **Chaos** | Redis `FLUSHALL` / 网络分区 / 进程 Kill | `toxiproxy` / `docker kill\
+        \ redis` | 3 |\n| **Contract** | Controller `Idempotency-Key` 缺失检测 | REST-Assured\
+        \ + OpenAPI 校验 | 2 |\n\n### 3.2 必须新增的 12 个用例（优先级 P0-P1）\n\n**P0 - 阻塞发布**\n\
+        1. `testRequireAsking_redisMiss_rehydratesFromDB_andWritesTTL` — `delete`\
+        \ 后调用，断言 `TTL==24h`\n2. `testRequireAsking_corruptedJson_fallsBackAndLogsWarn`\
+        \ — `set(\"{bad\")` 后 `read`→`null`→fallback，断言 `warn` 计数1\n3. `testAnswer_idempotent_sameContent_sameQuestion_returnsSameMsgId`\
+        \ — 同 `sessionId+currentQuestionId+content` 两次调用，期望第二 次返回相同 `MessageVO.id`\
+        \ 且 `message count` 不变（当前会失败，预期暴露缺陷）\n4. `testAnswer_concurrentRetry_onlyOneIncrement`\
+        \ — 20并发同 `answer`，断言 `questionCount` 仅 +1\n5. `testAnswer_noTransaction_partialFailure_leavesNoOrphanAnswer`\
+        \ — `questionBank.pickQuestion` mock 抛异常，断言 `answer` 行回滚\n\n**P1 - 高风险**\n\
+        6. `testAnswer_stream_lockTimeout_returns429not500` — 占锁 6s 后并发请求应得 `429`\n\
+        7. `testStateDrift_crashBetweenDbAndRedis_nextAnswerResolves` — `sessionMapper.updateById`\
+        \ 后 `stateStore.write` 前注入异常，验证漂移检测\n8. `testFinish_idempotent_doubleFinish_singleResultRow`\
+        \ — 两次 `finish` 仅一 `interview_result`\n9. `testAskedQuestionIds_mismatch_kpIdVsQuestionId`\
+        \ — 验证去重 bug\n10. `testTTL_24h_expiry_doesNotResurrectFinished` — `FINISHED`\
+        \ 会话过期后 `requireAsking` 应仍抛 `FINISHED`\n11. `testDetailVsAnswer_consistency_afterExpiry`\
+        \ — `detail` 与 `answer` 读同值\n12. `testAnswer_emptyContent_rejectedAtController`\
+        \ — `{\"content\":\"\"}` →400（已有但需契约化）\n\n### 3.3 可观测性埋点建议（测试可验证）\n\n- `stateStore.read`\
+        \ 加 `Counter interview_state_cache_hit/miss/corrupted` + `Gauge interview_state_ttl_remaining`\n\
+        - `requireAsking` fallback 时 `log.warn` 带 `sessionId, dbStatus, dbCount, redisNullReason`\n\
+        - `answer` 入口记录 `idempotencyKey`（即便当前无，后续加），测试可断言日志\n\n---\n\n## 4. 配置与架构建议（不改码，仅建议）\n\
+        \n**短期（保持简单，低风险）**\n- `InterviewStateStore:25` `TTL_HOURS` 改为可配置 `app.interview.state-ttl-hours:24`\
+        \ + `spring.data.redis` 监控；`read` 区分 `null` vs `parseError`（抛异常而非回退，或打 `corrupted`\
+        \ 指标）。\n- `InterviewService` 加 `@Transactional`（或至少 `answer:124` 与 `answerStream:194`），`required`\
+        \ 传播，确保 `saveUserMessage+sessionUpdate+resultInsert` 原子。\n- Controller 加 `Idempotency-Key`\
+        \ 透传：`@RequestHeader(required=false) String idempotencyKey` → Redis `SET NX\
+        \ EX 24h` 去重。若 `key` 已存在直接返回缓存 `MessageVO`。\n\n**中期（正确性优先）**\n- 改为**DB 单一可信源\
+        \ + Redis Cache-Aside**：`requireAsking` 读 DB 校验 `status`，Redis 仅缓存非权威副本；或用\
+        \ Redisson `RBucket.setIfAbsent` + Lua 原子双写。\n- `questionCount` 以 `SELECT\
+        \ COUNT(kind='question')` 派生而非累加，消除 `state.questionCount()+1` 漂移。或用乐观锁 `version`\
+        \ 字段：`update ... set question_count=question_count+1, version=version+1 where\
+        \ id=? and version=?`。\n- 修复 `askedQuestionIds` 映射：`QuestionBank:60` 应 `notIn(Question::getKnowledgePointId,\
+        \ excludeKpIds)` 或传入 `questionIds`。\n\n**长期（可扩展）**\n- 事件溯源：`interview_message`\
+        \ 为事实表，状态机由事件流折叠，Redis 物化视图可重建。\n- 统一 `answer` 与 `answerStream` 逻辑，抽 `AnswerOrchestrator`\
+        \ 避免双份实现漂移。\n\n**示例幂等实现（供评审，非落地）：**\n```java\n// controller\n@PostMapping(\"\
+        /{id}/answer\")\npublic Result<MessageVO> answer(@PathVariable Long id,\n\
+        \  @RequestHeader(value=\"Idempotency-Key\", required=false) String key,\n\
+        \  @RequestBody Map<String,String> body){\n  String ik = key!=null ? key :\
+        \ hash(userId+\":\"+id+\":\"+body.get(\"content\"));\n  String redisKey =\
+        \ \"interview:idempotency:\"+ik;\n  MessageVO cached = redis.get(redisKey);\n\
+        \  if(cached!=null) return Result.ok(cached);\n  MessageVO res = interviewService.answer(...);\
+        \ // @Transactional\n  redis.setex(redisKey, 24*3600, res);\n  return Result.ok(res);\n\
+        }\n```\n\n```java\n// service 事务 + 乐观锁\n@Transactional\npublic MessageVO answer(...){\n\
+        \  // saveUserMessage 需唯一约束: UNIQUE(session_id, current_question_id, role)\n\
+        \  // 捕获 DuplicateKeyException 直接返回已生成的问题\n}\n```\n\n---\n\n## 5. 风险矩阵与发布建议\n\
+        \n| 风险 | 概率 | 影响 | 缓解前 | 缓解后 |\n|------|------|------|--------|--------|\n\
+        | 重试导致 `questionCount` 漂移 | 高 (前端超时重试普遍) | 中 (错题/提前结束) | \U0001F534 | \U0001F7E2\
+        \ 加幂等键+派生计数 |\n| Redis 过期复活脏状态 | 中 (24h冷会话) | 中 (状态机绕过) | \U0001F7E1 | \U0001F7E2\
+        \ 区分 null/corrupted + DB权威 |\n| 非事务孤儿回答 | 低 | 高 (评分错) | \U0001F7E1 | \U0001F7E2\
+        \ @Transactional |\n| 锁超时误报 2002 | 中 | 低 | \U0001F7E1 | \U0001F7E2 409 + Retry-After\
+        \ |\n\n**发布门槛**：P0 用例通过前不建议暴露 `answer` 给公网重试客户端；若必须发布，建议网关层禁用自动重试 + 前端防抖 `once`。\n\
+        \n---\n\n**附：证据索引**\n- `InterviewStateStore.java:34` `read:36-44` 过期/损坏混淆\n\
+        - `InterviewStateStore.java:51` `TTL_HOURS` 硬编码\n- `InterviewService.java:372-391`\
+        \ `requireAsking` 回退\n- `InterviewService.java:124-192` `answer` 非幂等、非事务、计数源\
+        \ Redis\n- `InterviewService.java:140-143` `askedQuestionIds` 映射错\n- `InterviewService.java:353-364`\
+        \ `lockFor` 5s 语义\n- `InterviewController.java:60-66` 无 Idempotency-Key\n\n\
+        *仅分析未改文件，上述代码示例为建议实现，需 Lead 评审后再建分支落地。*\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 46975
+        input: 3536
+        output: 4063
+        reasoning: 95
+        cache_read: 39281
+        cache_write: 0
+      latency_ms: 66550
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 66550
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: code-reviewer
+    task_id: task-code-reviewer-88812c
+    output:
+      agent: code-reviewer
+      status: completed
+      summary: '# AI Interview Platform Session 状态漂移诊断报告 | team-7adee145 | code-reviewer
+
+
+        **范围:** 只分析不修改. 聚焦 `InterviewStateStore.java:34` Redis过期后DB回退, `InterviewService.java:372`
+        / `124` answer幂等性. 验证方式：静态代码审查 + 锁/'
+      output: "# AI Interview Platform Session 状态漂移诊断报告 | team-7adee145 | code-reviewer\n\
+        \n**范围:** 只分析不修改. 聚焦 `InterviewStateStore.java:34` Redis过期后DB回退, `InterviewService.java:372`\
+        \ / `124` answer幂等性. 验证方式：静态代码审查 + 锁/事务/缓存一致性推演.\n\n---\n\n## 1. 总体结论\n\n\
+        | 维度 | 结论 | 严重度 |\n|---|---|---|\n| 会话状态一致性 | Redis被文档定义为`单一权威来源`但代码实现为`Redis缓存+DB兜底`的双源模型,存在注释与实现不一致导致的认知漂移\
+        \ | **P1** |\n| 过期回退正确性 | `requireAsking():372` 兜底逻辑在Happy Path可用,但存在非原子重建、异常吞没、TTL语义错误3类缺陷\
+        \ | **P1** |\n| 幂等性 | `answer():124` / `answerStream():194` 完全无幂等保障,依赖`lockFor():353`防并发但不防重放\
+        \ | **P0** |\n| 漂移可重现性 | 网络重试 / Redis抖动 / 24h过期后首请求 三种场景均可稳定复现 | 阻塞 |\n\n\
+        ---\n\n## 2. 问题A: `InterviewStateStore.java:34` Redis过期后DB回退\n\n### 2.1 当前实现链路\n\
+        \n```\nInterviewStateStore.java:34 read()\n  -> InterviewStateStore.java:37\
+        \ if(json==null) return null // 过期/丢失/未写入\n  -> InterviewStateStore.java:43\
+        \ catch(JsonException) return null // 解析失败同样归一为null\n    -> InterviewService.java:372\
+        \ requireAsking()\n       -> InterviewService.java:373 stateStore.read()\n\
+        \       -> InterviewService.java:374 if(state==null)\n       -> InterviewService.java:375\
+        \ sessionMapper.selectById() // DB回读\n       -> InterviewService.java:379\
+        \ new SessionState(s.getStatus(),s.getQuestionCount(),s.getCurrentQuestionId())\n\
+        \       -> InterviewService.java:381 stateStore.write() // 回写Redis TTL 24h\n\
+        ```\n\n### 2.2 缺陷分解\n\n**A1 - 错误归一化 (`InterviewStateStore.java:37-45`)**\n\
+        \n```java\n// InterviewStateStore.java:34-45\nString json = bucket.get();\n\
+        if (json == null) return null; // 语义: 过期|未创建|Redis不可用|被delete\ntry { return\
+        \ objectMapper.readValue(json,SessionState.class); }\ncatch(Exception e){\
+        \ log.warn(...); return null; } // 语义: 数据损坏\n```\n两种截然不同的故障(预期过期 vs 非预期序列化损坏)返回同一`null`,上层无法区分.\
+        \ `parse failed`应告警/指标而非静默降级为DB重建,会掩盖写入格式错误(如`SessionState` record字段变更后旧数据无法解析).\
+        \ 当前`log.warn`等级不足.\n\n**A2 - 文档与实现矛盾 (`InterviewStateStore.java:14-15`)**\n\
+        \n注释: `面试会话运行时状态，存于 Redis，作为状态机的单一权威来源` . 若Redis是SSoT则DB不应被信任回退; 若DB是SSoT则Redis仅是缓存.\
+        \ 现状是**双写+懒重建**,既非Cache-Aside也非Write-Through,导致维护者对“以谁为准”产生分歧,即状态漂移的组织级根因.\
+        \ 证据: `InterviewService.java:183 sessionMapper.updateById()` 先写DB, `InterviewService.java:185\
+        \ stateStore.write()` 后写Redis — 顺序暗示DB为准,但注释相反.\n\n**A3 - 非原子重建并发窗口 (`InterviewService.java:372-381`)**\n\
+        \n`requireAsking`本身无事务/原子保障,依赖调用方持锁. `answer():124` 与 `answerStream():194`\
+        \ 均在`lockFor():125/199`后调用`requireAsking`, Happy Path受`interview:lock:{id}`保护.\
+        \ 但`detail():286`/`result():296`/`listByUser():278`未走`requireAsking`,若未来有其他写路径调用`requireAsking`但忘加锁(如新增`cancel`接口),两个并发`read()==null`会同时`selectById`+`write`,虽结果一致但放大DB读.\
+        \ 更关键是`read==null -> selectById -> write`三步非原子: 在`selectById`与`write`之间若`finishSession():335`并发修改DB\
+        \ status为FINISHED,重建的state会短暂为旧ASKING,直到下次TTL过期.\n\n**A4 - TTL语义错误 (`InterviewStateStore.java:25,51,341`)**\n\
+        \n`TTL_HOURS=24` 对`FINISHED`会话无意义. `finishSession():340` 仍以24h缓存已结束会话,浪费Redis且延长“可重放”窗口.\
+        \ 正确应: `ASKING: 2-4h` + 滑动过期,`FINISHED: 删除或 5min`. 当前24h允许用户24h后对已`FINISHED`的DB会话发起`answer`,重建后才被`InterviewService.java:383`拦截\
+        \ `INTERVIEW_FINISHED`,多一次无效DB/Redis往返.\n\n**A5 - 双写不一致窗口 (`InterviewService.java:183\
+        \ vs 185`, `InterviewService.java:339 vs 340`)**\n\n所有状态变更均为 `DB update ->\
+        \ Redis write` 无事务. 若`stateStore.write()`在`InterviewStateStore.java:53`抛出`BizException(500)`,DB已提交,Redis仍旧值.\
+        \ 下一次请求`read()`命中旧Redis直接返回过期状态,直到TTL自然过期才触发DB回退纠正,窗口=剩余TTL(最长24h). 反之若Redis先写DB后失败(当前未出现,但重构可能引入),DB丢失.\
+        \ 缺少`@Transactional`+`try/catch`后补偿删除缓存.\n\n**A6 - 可观测性缺失**\n\n`read()==null`未区分`expired`\
+        \ vs `never created` vs `corrupted`,无`counter/metrics`. 难以在生产环境区分正常过期与Redis故障.\n\
+        \n### 2.3 漂移场景推演\n\n| 场景 | 步骤 | 结果 |\n|---|---|---|\n| **S1 过期首击** | T0: session\
+        \ ASKING, questionCount=3, currentQuestionId=102. T0+24h: Redis过期. T1: 用户提交answer,\
+        \ `requireAsking`重建`3,102`正确. 但若期间管理员已通过DB脚本将session置FINISHED,重建会瞬时回退为ASKING(若FINISHED\
+        \ DB写入发生在`selectById`之后) | 状态回退 |\n| **S2 双写失败** | `answer`中 `sessionMapper.updateById(newCount=4)`成功,\
+        \ `stateStore.write(4)`抛异常->客户端500重试->第二次`requireAsking`读取旧Redis`count=3`,\
+        \ 虽持锁但基于旧count计算`newCount=4`再次写入, `questionCount`未递增到5而是重复4, `currentQuestionId`指向第一次新问题的msgId,第二次新问题成为孤儿消息\
+        \ | count漂移+孤儿消息 |\n| **S3 序列化损坏** | `SessionState` record新增字段后,旧JSON反序列化失败->`read`返回null->每次请求都走DB回退`selectById`+`write`(新格式),放大DB读且日志仅warn\
+        \ | 性能退化+日志噪音掩盖 |\n\n---\n\n## 3. 问题B: `InterviewService.java:124 answer`\
+        \ / `372 requireAsking` 幂等性\n\n### 3.1 现有防护\n\n`InterviewService.java:353\
+        \ lockFor()` : `Redisson RLock tryLock(5s)` + `unlockQuietly():366` . 能防并发(同一sessionId的并行answer),不能防重放(串行重试).\n\
+        \n### 3.2 幂等性缺失证据\n\n**B1 - 无幂等键, 无去重表 (`InterviewService.java:124-131`)**\n\
+        \n```java\n// InterviewService.java:124\npublic MessageVO answer(Long userId,\
+        \ Long sessionId, String answer) {\n  RLock lock = lockFor(sessionId); //\
+        \ 防并发\n  InterviewSession session = requireOwnedSession(userId, sessionId);\n\
+        \  InterviewStateStore.SessionState state = requireAsking(sessionId);\n  saveUserMessage(sessionId,\"\
+        answer\",answer); // InterviewService.java:131 直接INSERT,无唯一约束\n  // ... 后续均基于新插入的行计算\n\
+        }\n```\n`InterviewController.java:59` 接收`Map<String,String> body`仅`content`,无`Idempotency-Key`\
+        \ header. `interview_message`表 `schema.sql:62` 主键`AUTO_INCREMENT`,无`(session_id,\
+        \ content_hash)`唯一键. 客户端超时重试、前端`Interview.vue:70`重试、网关重试均会产生重复`answer`行.\n\
+        \n**B2 - 副作用非幂等且不可回滚 (`InterviewService.java:131-186`)**\n\n单次`answer`内含4类副作用,均非幂等,方法无`@Transactional`\
+        \ (全仓库仅`RagService.java:59`有`@Transactional`) :\n\n1. `saveUserMessage():412`\
+        \ `INSERT interview_message`\n2. `resultMapper.insert():150/165` `INSERT interview_result`\
+        \ (有`UNIQUE(session_id)`但未捕获`DuplicateKeyException`,第二次重放会抛500而非幂等返回)\n3.\
+        \ `saveAiMessage():401` `INSERT` 新question/feedback\n4. `rabbitTemplate.convertAndSend():345`\
+        \ 发送评分消息(至少一次,无去重)\n5. `QuestionBank.java:85` `usage_count = usage_count +\
+        \ 1` 原子自增,重放会错误累加\n6. `sessionMapper.updateById():183` `questionCount+1`,\
+        \ `currentQuestionId`覆盖\n\n重试=上述6步重做一遍. 锁在第一次完成后已释放`finally:190`,第二次可立即获取新锁.\n\
+        \n**B3 - 未校验 `currentQuestionId` (`InterviewService.java:372-390`)**\n\n`requireAsking`仅校验`status\
+        \ IN (ASKING,START)` 未校验`answer`是否对应当前`state.currentQuestionId`. 导致: 用户对已过期的questionId(前端缓存旧消息)提交answer,仍被接受并推进到下一题.\
+        \ 幂等设计的正确做法是校验`if(lastAnswer.messageId == currentQuestionId)`去重.\n\n**B4 -\
+        \ `answerStream():194` 同构问题 + 额外风险**\n\n逻辑与`answer`重复,但运行于`Thread.ofVirtual():196`虚拟线程中.\
+        \ 锁在虚拟线程内获取`199`, 若客户端断开`SseEmitter`提前`complete`,DB已插入的`saveUserMessage():204`无法回滚.\
+        \ 且`SseEmitter` 300s超时`195`与`lock 5s`不匹配,长流持有锁会阻塞正常`answer`.\n\n**B5 - 结束分支重复计分\
+        \ (`InterviewService.java:146-172`)**\n\n`shouldFinish()`后`evaluationService.score()+resultMapper.insert()+reportService.generateFeedback()`在`pickQuestion==null`分支`163-172`重复一份,重放会尝试第二次`insert`.\
+        \ 依赖DB唯一键兜底但体验为500.\n\n### 3.3 重放推演\n\n```\nT0: client POST /interviews/1/answer\
+        \ content=\"我的回答...\" -> server DB insert answer#100, question#101, count\
+        \ 3->4, Redis 4, 返回 101, 但网关超时客户端未收到\nT1: client retry 同content -> server\
+        \ 获取新锁, requireAsking 读取 Redis 4 (ASKING), insert answer#102(重复), insert question#103(新题),\
+        \ count 4->5\n```\n结果: `interview_message` 2条重复answer, `questionCount` 5(应4),\
+        \ `usage_count` +2, `interview_result` 若命中结束阈值则第二次500.\n\n---\n\n## 4. 建议\
+        \ (仅分析,不修改)\n\n### 4.1 状态存储 (P1)\n\n1. **明确SSoT**: 修改`InterviewStateStore.java:14`注释为`Redis为缓存,DB为SSoT`或反之统一.\
+        \ 推荐DB为SSoT,Redis为加速.\n2. **区分null原因**: `InterviewStateStore.java:34` `read()`\
+        \ 应`catch`后`throw BizException(INTERNAL_ERROR)`或返回`Optional`+`Result`区分`EXPIRED\
+        \ vs CORRUPTED`, `CORRUPTED`时删除key并告警`metrics.increment(\"state.corrupted\"\
+        )`.\n3. **TTL分级**: `InterviewStateStore.java:25` 拆分为`ASKING_TTL=2h`(滑动), `FINISHED_TTL=5m`或`delete()`.\
+        \ `finishSession():340` 改为`stateStore.delete()`或短TTL.\n4. **双写一致性**: `InterviewService.java:183/185`\
+        \ 改为 `DB事务提交后删除缓存` (Cache-Aside) 而非更新缓存,或引入`@Transactional`+`TransactionSynchronization.afterCommit`异步写Redis.\
+        \ 失败时`catch`后`stateStore.delete(sessionId)`使下次读触发重建,而非残留旧值.\n5. **重建原子性**:\
+        \ `requireAsking():381` 回写时使用`SET NX`或Lua,避免并发重建风暴.\n\n### 4.2 幂等性 (P0)\n\n\
+        1. **幂等键**: `InterviewController.java:59` 接受`Idempotency-Key: UUID` header,\
+        \ `answer()`首行查`idempotency_store(sessionId, key)`,命中直接返回缓存的`MessageVO`.\n\
+        \   ```java\n   // 伪代码\n   String key = request.getHeader(\"Idempotency-Key\"\
+        );\n   if(key!=null){ MessageVO cached = idempotencyStore.get(sessionId,key);\
+        \ if(cached!=null) return cached; }\n   // ... 业务 ...\n   idempotencyStore.put(sessionId,key,result,24h);\n\
+        \   ```\n   最小侵入: 利用`interview_message`唯一约束`UNIQUE(session_id, content_hash,\
+        \ kind)`或新增`request_id`列,捕获`DuplicateKeyException`后返回已存在消息.\n\n2. **事务边界**:\
+        \ `InterviewService.java:124` 加`@Transactional`, 将`saveUserMessage`+`saveAiMessage`+`sessionMapper.updateById`+`resultMapper.insert`纳入同一事务,\
+        \ `stateStore.write`与`rabbitTemplate`移至`afterCommit`.\n\n3. **currentQuestionId校验**:\
+        \ `answer`入参增加`questionId`, `requireAsking`后校验`state.currentQuestionId().equals(requestQuestionId)`,\
+        \ 不等则`throw INTERVIEW_STATE_ERROR`或幂等返回已生成的下一题.\n\n4. **结果表幂等**: `resultMapper.insert()`前`selectOne`判重,或`INSERT\
+        \ ... ON DUPLICATE KEY UPDATE`语义.\n\n5. **`answerStream`去重**: 复用同一幂等逻辑,避免两套分支漂移.\
+        \ 考虑提取`AnswerUseCase`共享.\n\n### 4.3 测试建议 (Testing Engineer)\n\n- 增加`Redis失效集成测试`:\
+        \ `stateStore.delete()`后调用`answer`,断言DB回退后`questionCount`正确.\n- 增加`重放测试`:\
+        \ 同一`Idempotency-Key`串行调用`answer`两次,断言`message count`仅+1, `questionCount`仅+1.\n\
+        - 增加`双写失败测试`: mock `stateStore.write()`抛异常,断言DB未残留孤儿消息(需事务).\n\n---\n\n**交付物说明:**\
+        \ 本报告为lead review用,未修改任何源文件(符合 `只分析不修改` 约束). 建议优先级: B1/B2(P0) > A2/A4/A5(P1)\
+        \ > A1/A6(P2).\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 44919
+        input: 1774
+        output: 3543
+        reasoning: 1665
+        cache_read: 37937
+        cache_write: 0
+      latency_ms: 73672
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 73672
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: database-engineer
+    task_id: task-database-engineer-24e265
+    output:
+      agent: database-engineer
+      status: completed
+      summary: '**Team: team-7adee145 | Role: database-engineer | 只分析不修改**
+
+
+        ### 1. 结论前置 (Executive Summary)
+
+
+        `InterviewStateStore` 被注释为`面试会话运行时状态，存于Redis，作为状态机的单一权威来源` (`InterviewStateStore.java:15-16`)，但
+        `InterviewS'
+      output: "**Team: team-7adee145 | Role: database-engineer | 只分析不修改**\n\n### 1.\
+        \ 结论前置 (Executive Summary)\n\n`InterviewStateStore` 被注释为`面试会话运行时状态，存于Redis，作为状态机的单一权威来源`\
+        \ (`InterviewStateStore.java:15-16`)，但 `InterviewService.java:372 requireAsking()`\
+        \ 实现的 `Redis过期→DB回退` 破坏了该不变量；同时 `InterviewService.java:124 answer()` / `194\
+        \ answerStream()` 完全无幂等保障。两者叠加在 `TTL=24h` + 无事务 + 无版本控制下必然导致 **session状态漂移(State\
+        \ Drift)**: `questionCount`/`currentQuestionId`/`status` 在 Redis/DB/MSG 三层不一致，重试会产生幽灵问题(duplicate\
+        \ question)。\n\n> 风险评级: **P0 - 数据一致性**，可稳定复现于 Redis 逐出/过期、网络重试、并发抢答场景。\n\n\
+        ---\n\n### 2. 问题A: `InterviewStateStore.java:34` Redis过期后DB回退逻辑\n\n#### 2.1\
+        \ 现状代码\n\n```java\n// InterviewStateStore.java:34-46\npublic SessionState\
+        \ read(Long sessionId){\n  RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\
+        \ // key=interview:session:{id}\n  String json = bucket.get();\n  if(json==null)\
+        \ return null; // ① 过期/逐出/未写入 均返回null\n  try{ return objectMapper.readValue(json,\
+        \ SessionState.class); }\n  catch(Exception e){ log.warn(...); return null;\
+        \ } // ② 解析失败也返回null → 触发回退\n}\n// InterviewStateStore.java:48-56\npublic\
+        \ void write(Long sessionId, SessionState state){\n  redissonClient.getBucket(key(sessionId)).set(json,\
+        \ 24, TimeUnit.HOURS); // 固定24h,无续期\n}\n\n// InterviewService.java:372-391\
+        \ requireAsking()\nInterviewStateStore.SessionState state = stateStore.read(sessionId);\
+        \ //373\nif(state==null){\n  InterviewSession s = sessionMapper.selectById(sessionId);\
+        \ //375 DB回退\n  state = new SessionState(s.getStatus(), s.getQuestionCount(),\
+        \ s.getCurrentQuestionId());\n  stateStore.write(sessionId, state); //381\
+        \ 回填Redis\n}\nif(FINISHED.equals(state.status())) throw FINISHED; //383\n\
+        if(!ASKING && !START) throw STATE_ERROR; //386\n```\n\n#### 2.2 漂移根因 (DB视角)\n\
+        \n| # | 缺陷 | 证据 |\n|---|---|---|\n| **A1 真实权威分裂** | 注释称Redis为权威，但回退时DB成为权威。无\
+        \ `version`/`updatedAt` 校验，无法判断DB快照是否过期。`interview_session`表 `schema.sql:46-60`\
+        \ 无 `version` 乐观锁字段。 | `InterviewSession.java:25-31` 仅 `status, currentQuestionId,\
+        \ questionCount`，无版本号 |\n| **A2 静默腐败掩盖** | `read()` 区分不了 `key不存在` vs `JSON损坏`\
+        \ vs `Redis不可用(异常上抛)`。损坏数据被当作过期处理，用脏DB数据回填，雪球效应。 | `InterviewStateStore.java:40-44`\
+        \ `catch→return null` |\n| **A3 非原子重建** | `read==null → selectById → write`\
+        \ 三步非原子。并发两个 `answer()` 同时过期回退，均读到同一DB快照 `questionCount=2`，各自 `+1` 后 `updateById`\
+        \ 覆盖，丢失一次递增。 | 虽有 `lockFor(sessionId)` (`InterviewService.java:353`, `Rlock\
+        \ tryLock 5s`) 包住 `requireAsking()`，但 `create()` 与 `answer()` TTL窗口外仍可能交叉；且\
+        \ `read()` 在锁内，过期瞬间多线程排队重建仍会写同一值 |\n| **A4 DB与Redis写入非事务** | `answer()` 中\
+        \ `sessionMapper.updateById()` (`InterviewService.java:183`) 与 `stateStore.write()`\
+        \ (`185`) 分离，且方法无 `@Transactional`。JVM崩溃/Redis超时则DB已提交而Redis仍旧值，下次回退又用DB旧值\
+        \ → 永久漂移。 | `InterviewService.java:124` 无事务注解；`finishSession()` 同理 `updateById(339)`\
+        \ + `write(340)` + `rabbitTemplate.convertAndSend(345)` 三者均不原子 |\n| **A5 TTL策略缺陷**\
+        \ | `TTL_HOURS=24` (`InterviewStateStore.java:25`) 固定，`read` 不续期 `TTL`。长会话(暂停>24h)必过期；`delete()`\
+        \ (`58`) 仅在显式调用，过期后无补偿。 | 对比 `startedAt` 默认 `CURRENT_TIMESTAMP` (`schema.sql:56`)，无过期对齐逻辑\
+        \ |\n| **A6 校验缺失** | 回填未校验 `s.getQuestionCount()` 与 `interview_message` 实际\
+        \ `question` 数量一致性。若 `saveAiMessage()` 失败但 `session` 已更新，DB自相矛盾。 | `extractQAPairs()`\
+        \ (`320`) 依赖 `interview_message` 表，而 `requireAsking` 仅信任 `interview_session`\
+        \ |\n| **A7 索引/性能隐患** | `interview_message` (`schema.sql:62-72`) 仅有 `FK(session_id)`，无\
+        \ `idx_msg_session_id` 显式索引。`answer()` 每次 `selectList where sessionId order\
+        \ by id` (`134`) 全量扫 + 回填时全表读，随 `MAX_QUESTIONS=6` 尚可，但无覆盖。 | `schema.sql:108-112`\
+        \ 未给 `interview_message` 建索引 |\n\n#### 2.3 可复现漂移场景\n\n**Scenario 1 - 过期重放:**\n\
+        1. `T0` 创建会话 `questionCount=1, currentQuestionId=101` (DB+Redis一致)\n2. `T+24h+1ms`\
+        \ Redis过期 `read→null`\n3. 用户提交 `answer` → `requireAsking` 从DB重建 `1,101` →\
+        \ 处理后 `newCount=2` 写入 `msg 102` 并 `update DB=2` + `write Redis=2`\n4. 若步骤3中\
+        \ `updateById` 成功但 `write` 超时，重试的第二次请求再次 `read→null` (旧Redis) → 又读DB `1` →\
+        \ 又生成 `msg 103` → DB `questionCount` 被覆盖为 `2` 但多出一条幽灵 `question`。\n\n**Scenario\
+        \ 2 - 损坏JSON:**\n`objectMapper` 升级导致旧JSON反序列化失败 → `read→null` → 用DB回填旧状态覆盖已推进的正确状态。\n\
+        \n---\n\n### 3. 问题B: `InterviewService.java:124 answer()` 幂等性 (`372`为 `requireAsking`\
+        \ 被调点)\n\n#### 3.1 现状\n\n```java\n// InterviewService.java:124-131\npublic\
+        \ MessageVO answer(Long userId, Long sessionId, String answer){\n  RLock lock\
+        \ = lockFor(sessionId); //353 tryLock 5s\n  InterviewSession session = requireOwnedSession(userId,\
+        \ sessionId);\n  InterviewStateStore.SessionState state = requireAsking(sessionId);\n\
+        \  saveUserMessage(sessionId, \"answer\", answer); //131 无条件insert\n  // ...\
+        \ shouldFinish ? finishSession : pickQuestion → saveAiMessage → update session\
+        \ → stateStore.write\n}\nprivate InterviewMessage saveUserMessage(Long sId,String\
+        \ k,String c){\n  InterviewMessage m=new InterviewMessage(); m.setSessionId(sId);\
+        \ ...; messageMapper.insert(m); return m; //418\n}\n```\n\n#### 3.2 幂等缺口 (DB工程师关注)\n\
+        \n| # | 缺陷 | 后果 |\n|---|---|---|\n| **B1 无幂等键** | `Controller` (`InterviewController.java:59-67`)\
+        \ 接收 `Map<String,String> body.content`，未要求 `Idempotency-Key` / `requestId`。`saveUserMessage`\
+        \ 直接 `INSERT`，`interview_message` 无 `UNIQUE(session_id, client_request_id)`\
+        \ 约束。 | 前端超时重试/用户双击 → 同一答案插入两行 `answer`，`extractQAPairs` (`320`) 多算一轮，`shouldFinish`\
+        \ 提前触发或评分失真 |\n| **B2 锁≠幂等** | `RLock` (`InterviewService.java:353`) 仅互斥，非幂等。重试请求在前一次释放后可重新获取锁并再次执行业务。`LOCK_WAIT=5s`\
+        \ 超时后抛 `INTERVIEW_STATE_ERROR` 语义错误 (应返回幂等成功)。 | 幂等重试被误判为并发冲突 |\n| **B3 计数器基于易失状态**\
+        \ | `int newCount = state.questionCount()+1` (`176`,`249`) 依赖 `state` (可能来自过期回退的脏读)。无\
+        \ `UPDATE interview_session SET question_count=question_count+1 WHERE id=?\
+        \ AND question_count=?` 乐观锁。 | 重放导致 `questionCount` 跳变或回退 |\n| **B4 非事务边界**\
+        \ | `saveUserMessage` + `saveAiMessage` + `updateById` + `insert result` +\
+        \ `rabbit send` 无 `@Transactional`。中途失败已插入的 `answer` 残留，下次重试又插入一条。 | `interview_message:answer`\
+        \ 孤儿数据，`interview_result` 可能重复插入 (虽有 `UNIQUE(session_id)` (`schema.sql:76`)\
+        \ 但会抛 `DuplicateKey` 未被幂等处理) |\n| **B5 Stream同源问题** | `answerStream()` (`194`)\
+        \ 在 `Thread.ofVirtual()` 内复用同样逻辑，且 `saveUserMessage` 在虚线程内，无请求级去重。SSE `emitter.completeWithError`\
+        \ 后客户端必重试。 | 流式重试产生双重副作用 |\n| **B6 重放风暴** | `finishSession()` (`335`) 内的 `rabbitTemplate.convertAndSend`\
+        \ (`345`) 无去重，重复 `answer` 在 `FINISHED` 边界会重复投递 `ScoringMessage`。 | 下游评分服务重复消费\
+        \ |\n\n#### 3.3 幂等性数学证明缺失\n理想幂等: `f(f(x))=f(x)`。当前 `answer` 满足 `f(x) → DB+1\
+        \ row`，二次调用 `f(f(x)) → DB+2 rows` ≠ `f(x)`。\n\n---\n\n### 4. 修复建议 (仅建议，不修改文件)\n\
+        \n**DB层 (优先级P0):**\n1. `interview_session` 加 `version INT NOT NULL DEFAULT\
+        \ 1` + `@Version` 乐观锁；更新改为 `UPDATE ... SET question_count=?, version=version+1\
+        \ WHERE id=? AND version=?`。失败则抛 `STATE_ERROR` 重试回读。\n2. `interview_message`\
+        \ 加 `client_request_id VARCHAR(64)` + `UNIQUE KEY uk_session_req (session_id,\
+        \ client_request_id)`；或 `UNIQUE(session_id, kind, content_hash)` + 时间窗口。Controller\
+        \ 接收 `Idempotency-Key` Header/Body，`saveUserMessage` 前 `SELECT ... FOR UPDATE`\
+        \ 或 `INSERT ... ON DUPLICATE KEY UPDATE` 实现幂等返回。\n3. 补索引: `CREATE INDEX idx_msg_session\
+        \ ON interview_message(session_id, id);` (`schema.sql` 漏)；`interview_session`\
+        \ 已有 `idx_session_user_status` 够用。\n4. 给 `InterviewService.answer/create/finishSession`\
+        \ 加 `@Transactional`，`stateStore.write` 改为 `TransactionSynchronization.afterCommit`\
+        \ 异步回填，或采用 `Transactional Outbox` 保证DB与Redis/Rabbit最终一致。\n\n**Redis层 (P1):**\n\
+        ```java\n// 建议 Lua 原子回退 + 校验\nString lua = \"if redis.call('exists',KEYS[1])==1\
+        \ then return redis.call('get',KEYS[1]) else redis.call('set',KEYS[1],ARGV[1],'EX',86400)\
+        \ return ARGV[1] end\";\n// 或 Java 层: \nSessionState s = stateStore.read(sessionId);\n\
+        if(s==null){\n  s = rebuildFromDBWithMessageCountCheck(sessionId); // 校验 questionCount\
+        \ == count(question kind)\n  if(!stateStore.compareAndSet(sessionId, null,\
+        \ s, 24h)) s = stateStore.read(sessionId); // SET NX\n}\n```\n* `read` 异常应上抛而非\
+        \ `return null`；区分 `RedisTimeout` vs `JsonCorrupt` vs `NotFound`。\n* 每次 `write`\
+        \ 或 `read` 成功续期 `TTL` (`expire 24h`) 或采用滑动过期。\n\n**服务层 (P1):**\n```java\n\
+        // 幂等伪代码 (不落地)\npublic MessageVO answer(Long userId, Long sessionId, String\
+        \ answer, String idempotencyKey){\n  String ik = \"idem:answer:\"+sessionId+\"\
+        :\"+hash(idempotencyKey);\n  if(Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(ik,\
+        \ \"1\", 10, MINUTES))){\n    return getLastMessage(sessionId); // 幂等返回\n\
+        \  }\n  // + DB唯一键双保险\n  try{ saveUserMessageWithRequestId(sessionId, answer,\
+        \ idempotencyKey); }\n  catch(DuplicateKeyException e){ return getLastMessage(sessionId);\
+        \ }\n}\n```\n* `requireAsking` 回退时增加 `questionCount` 与 `SELECT COUNT(*) FROM\
+        \ interview_message WHERE session_id=? AND kind='question'` 一致性校验，不一致则以 `message`\
+        \ 为准并修复 `session`。\n\n**配置层:**\n* `InterviewStateStore.TTL_HOURS` 可配置化 (`application.yml:\
+        \ app.interview.state-ttl:24h`)，不同环境可调。\n* Redisson `lockWatchdogTimeout`\
+        \ 显式配置，避免 `answerStream` 虚线程持有锁超时。\n\n### 5. 验证清单 (给 Testing Engineer)\n\n\
+        - [ ] 单元: Mock `bucket.get()=null` → 断言 `requireAsking` 回填且 `questionCount`\
+        \ 正确\n- [ ] 单元: Mock `objectMapper.readValue` 抛异常 → 不应回填脏数据\n- [ ] 集成: `TTL=1s`\
+        \ 过期后并发 `10` 线程 `answer` → 断言 `questionCount` 最终 `+1` 且 `message` 仅 `+1 answer\
+        \ +1 question`\n- [ ] 集成: 同一 `Idempotency-Key` 重放 `answer` 5次 → 断言 `message`\
+        \ 表仅1条 `answer`\n- [ ] 混沌: Redis `flushall` 后 `answer` → 断言无 `DuplicateKey`\
+        \ 且状态自愈\n- [ ] 性能: `EXPLAIN SELECT ... FROM interview_message WHERE session_id=?`\
+        \ 确认走 `idx_msg_session`\n\n### 6. 引用\n\n- `InterviewStateStore.java:34-46`\
+        \ 过期判空 + 腐败吞掉\n- `InterviewStateStore.java:48-56` 固定TTL写入\n- `InterviewService.java:372-391`\
+        \ DB回退无校验无版本\n- `InterviewService.java:124-192` / `194-276` 无幂等键无事务\n- `InterviewService.java:353-369`\
+        \ 锁实现\n- `schema.sql:46-60`, `62-72`, `76`, `108-112` 表结构与索引缺口\n- `InterviewController.java:59-67`\
+        \ 入口无幂等参数\n\n> 交付物为分析报告，未修改任何源文件。\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 37809
+        input: 2261
+        output: 3473
+        reasoning: 1626
+        cache_read: 30449
+        cache_write: 0
+      latency_ms: 62503
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 62503
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: llm-engineer
+    task_id: task-llm-engineer-5075eb
+    output:
+      agent: llm-engineer
+      status: completed
+      summary: '## AI Interview Platform Session 状态漂移 诊断报告 — 供 Lead 评审 (只分析不改码)
+
+
+        **Team:** `team-7adee145` | **Role:** `llm-engineer` | **Scope:** `InterviewStateStore.java:34`
+        Redis过期后DB回退, `InterviewService.java:12'
+      output: "## AI Interview Platform Session 状态漂移 诊断报告 — 供 Lead 评审 (只分析不改码)\n\n\
+        **Team:** `team-7adee145` | **Role:** `llm-engineer` | **Scope:** `InterviewStateStore.java:34`\
+        \ Redis过期后DB回退, `InterviewService.java:124`/`372` answer幂等性\n\n> 证据链均基于已读取源码验证,\
+        \ 未做任何文件修改。\n\n---\n\n### 1. 摘要\n\n| 检查项 | 状态 | 风险等级 |\n|---|---|---|\n| Redis\
+        \ TTL过期后 DB 回退一致性 | **Fail** | **P0** 可导致 `questionCount/currentQuestionId/status`\
+        \ 漂移 |\n| `answer()/answerStream()` 幂等性 | **Fail** | **P0** 网络重试/双击/超时重试即产生重复\
+        \ `USER answer` 与 `AI question` |\n| 事务与原子性 | **缺失** | **P1** 无 `@Transactional`,\
+        \ 6 步写操作非原子 |\n| 分布式锁可靠性 | **弱** | P1 5s 锁 + Redis 单点, 与 StateStore 同 Redis\
+        \ 故障域 |\n\n**结论:** 当前设计宣称 `InterviewStateStore.java:15` “Redis 是状态机单一权威来源”,\
+        \ 但 `InterviewService.java:372` 的回退实现又让 MySQL 成为影子权威, 两者无版本对账, 加上 `answer`\
+        \ 完全无幂等键, 在生产重试/并发/Redis 抖动下 100% 复现计数漂移与重复提问。\n\n---\n\n### 2. 发现 #1: `InterviewStateStore.java:34`\
+        \ + `InterviewService.java:372` — Redis 过期后 DB 回退逻辑漂移\n\n#### 2.1 现状代码\n\n\
+        ```java\n// backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:34-46\n\
+        public SessionState read(Long sessionId){\n  RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\
+        \ // interview:session:{id}\n  String json = bucket.get(); // null => 过期/Redis\
+        \ 丢失\n  if(json==null) return null;\n  // parse失败也return null -> 调用方视为 miss\n\
+        }\n\n// backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:48-56\n\
+        public void write(Long sessionId, SessionState state){\n  redissonClient.getBucket(key(sessionId)).set(json,\
+        \ 24, TimeUnit.HOURS); // 每次 write 重置 24h, read 不续期\n}\n\n// backend/src/main/java/com/aiview/interview/service/InterviewService.java:372-391\n\
+        private SessionState requireAsking(Long sessionId){\n  SessionState state\
+        \ = stateStore.read(sessionId); // line 373\n  if(state==null){\n    InterviewSession\
+        \ s = sessionMapper.selectById(sessionId); // line 375 DB回退\n    if(s==null)\
+        \ throw INTERVIEW_NOT_FOUND;\n    state = new SessionState(s.getStatus(),\
+        \ s.getQuestionCount(), s.getCurrentQuestionId()); // line 379-380\n    stateStore.write(sessionId,\
+        \ state); // line 381 回写缓存,不带 NX/版本号\n  }\n  if(FINISHED.equals(state.status()))\
+        \ throw INTERVIEW_FINISHED;\n  if(!ASKING && !START) throw INTERVIEW_STATE_ERROR;\n\
+        \  return state;\n}\n```\n\n`TTL_HOURS=24` 硬编码 `InterviewStateStore.java:25`.\n\
+        \n#### 2.2 缺陷 1: 单一权威自相矛盾 → 幽灵状态\n\n*注释称 Redis 单一权威, 但过期后自动 `SELECT interview_session`\
+        \ 补全并回写, 形成双主。DB 的 `questionCount/currentQuestionId/status` 仅在 `InterviewService.java:113/183/339`\
+        \ 的 `updateById` 时异步更新, 若上一轮 `saveAiMessage() 插入成功 + updateById 失败/超时` 则 **DB\
+        \ 落后于 `interview_message` 真实历史**。回退读取 DB 会生成过旧 `SessionState`, 下一次 `newCount\
+        \ = state.questionCount()+1` (`InterviewService.java:176,249`) 即产生 `gap` 或\
+        \ `duplicated question`. 验证:`schema.sql:46-60` 的 `interview_session` 无 `version`\
+        \ 乐观锁字段, 也无 `updatedAt` 校验。*\n\n**复现路径 A (崩溃窗口):**\n`answer()` 内部顺序 `saveUserMessage(insert)\
+        \ -> selectList(messages) -> saveAiMessage(insert) -> sessionMapper.updateById\
+        \ -> stateStore.write`. 进程在 `updateById` 之后/ `stateStore.write` 之前崩溃 → DB\
+        \ 已 +1 但 Redis 仍旧值 → 24h 后 Redis 过期, 回退读 DB 是正确的新值, 漂移不发生。反之, 在 `saveAiMessage`\
+        \ 成功后 `updateById` 网络超时失败 → DB 旧值, Redis 也未写, 消息表已多 1 条 `question`, 下次回退读\
+        \ DB 会**少计 1 题**, 后续 `shouldFinish()` 取 `qaPairs` 自 `message` 表(真实计 6 题应结束)与\
+        \ `state.questionCount` (错误计 5 题) 不一致, 导致多发一题或提前 `feedback`。\n\n#### 2.3 缺陷\
+        \ 2: 无版本/CAS 的盲写回补\n\n`stateStore.write` 是无条件 `SET`。如果 Redis 刚刚因 `TTL` 过期,\
+        \ 两个并发 `answer` 请求都在 `requireAsking:373` 读到 `null`, 都会 `SELECT DB` 得到同一快照并分别\
+        \ `SET`, 随后各自进入 `saveUserMessage`。虽有 `Redisson RLock:353 tryLock(5s)` 保护 `answer()`\
+        \ 全段, 但 **锁本身也存储于同一 Redis** (`interview:lock:{id}`)。当 Redis 抖动/主从切换导致 State\
+        \ `bucket` 丢失时, `lock` 也可能同时失效/不可获取, 退化为无锁并发。此为同故障域耦合, 违背隔离原则。\n\n#### 2.4\
+        \ 缺陷 3: 读不续期 + 固定 24h → 长会话必丢\n\n`write` 才重置 TTL, `read` 不做 `expire` 或 `remainTTL`。用户间隔\
+        \ >24h 继续作答(面试暂停场景), 必走 DB 回退。回退虽能恢复 `status`, 但 `currentQuestionId` 指向的 `interview_message.id`\
+        \ 可能已被 `questionCount` 漂移影响: 前端 `InterviewSessionVO:422-430` 依赖 `currentQuestionId`\
+        \ 过滤展示, 会显示错误题目。\n\n且 `read` 在 `ObjectMapper` 解析失败时仅 `log.warn` 并 `return\
+        \ null` (`InterviewStateStore.java:43`), 调用方无法区分 “真过期” vs “序列化损坏”, 一律重建成 DB\
+        \ 快照并覆盖, 可能掩盖兼容性故障且无指标埋点。\n\n#### 2.5 缺陷 4: 与消息表无对账\n\nDB 回退只信 `interview_session`\
+        \ 一行, 不校验 `interview_message` 聚合。权威的 `shouldFinish` 与 `askedQuestionIds` 实际来源于\
+        \ `messageMapper.selectList:134,207` 全表扫描。建议但未实现的 `COUNT(question)` 对账应作为\
+        \ `read` 后断言。\n\n**观测缺口:** 无 `fallback_count` 指标、无 `Redis hit/miss` 日志(仅解析失败有\
+        \ warn), 线上无法量化漂移率。\n\n---\n\n### 3. 发现 #2: `InterviewService.java:124 answer()`\
+        \ + `194 answerStream()` + `372 requireAsking()` — 幂等性完全缺失\n\n#### 3.1 现状\n\
+        \n```java\n// InterviewService.java:124\npublic MessageVO answer(Long userId,\
+        \ Long sessionId, String answer){\n  RLock lock = lockFor(sessionId); // 353:\
+        \ tryLock 5s\n  try{\n    requireOwnedSession(userId, sessionId); // 394:\
+        \ SELECT\n    SessionState state = requireAsking(sessionId); // 372\n    saveUserMessage(sessionId,\"\
+        answer\",answer); // 412: 无条件 INSERT, 无唯一键\n    List<InterviewMessage> messages\
+        \ = messageMapper.selectList(...); // 134\n    // shouldFinish / pickQuestion\
+        \ / saveAiMessage / updateById / stateStore.write\n  } finally{ unlockQuietly(lock);}\n\
+        }\n```\n\nController: `InterviewController.java:59` 仅校验 `content != blank`,\
+        \ 接收 `Map<String,String>` 无 `Idempotency-Key` 头/体字段。\n\nSchema: `interview_message:62`\
+        \ 无 `(session_id, content_hash, created_at)` 唯一约束; `interview_result:74` 虽有\
+        \ `UNIQUE(session_id)`, 但 `answer` 中 `resultMapper.insert:150,166` 前未 `SELECT`\
+        \ 判重, 并发结束时可能抛 `DuplicateKeyException` 未被翻译。\n\n#### 3.2 幂等失效三类场景 (已验证逻辑可达)\n\
+        \n**a) 客户端重试 (最常见生产故障):**\n用户提交后网关超时, 前端/网关自动重试同一 `POST /interviews/{id}/answer`。第一次已执行\
+        \ `INSERT answer + INSERT next question + UPDATE sessionCount 1->2` 但响应丢失;\
+        \ 第二次锁已释放 (5s 后), 再次 `INSERT answer` (重复行, `id` 自增不同, `content` 相同), `state.questionCount`\
+        \ 已为2, 第二次 `newCount=3` 导致计数跳跃, 前端收到题2, DB 却有 2 条相同用户回答, 评分 `extractQAPairs:320`\
+        \ 会误配对 (`currentQuestion` 指针一次只配一对, 重复 answer 会使第二条 answer 丢失配对或错配), 干扰 `EvaluationService.score`\
+        \ 准确性。\n\n**b) 并发双击/流式双发:**\nUI 未禁用按钮或 `answerStream` (SSE) + `answer` 同时调用,\
+        \ `tryLock(5s)` 能挡住并发表, 但**串行重试**挡不住 (上文 a)。`answerStream:196-273` 在虚线程内才加锁,\
+        \ 主线程已返回 `SseEmitter`, 客户端关闭重连会触发第二次虚线程执行, 再次 `INSERT`。\n\n**c) 消息/计分重复:**\n\
+        `finishSession:335` 内 `resultMapper.insert + rabbitTemplate.convertAndSend(SCORING...)`\
+        \ 均非幂等。若 `answer` 因 `shouldFinish==true` 重试 (第一次已 `insert result + update\
+        \ FINISHED + MQ`), 第二次因 `requireAsking` 在第一次提交后已为 `FINISHED` 会抛 `INTERVIEW_FINISHED`,\
+        \ 表现正确; 但若重试发生在第一次 `insert result` 前崩溃、且未达 DB, 第二次可成功插入, 不算重复。风险在于 `RuleBasedScoringService:55`\
+        \ / `InterviewScoringService:104` 消费者端也无去重 (需查 MQ 消费是否判 `UNIQUE` 约束)。\n\n\
+        #### 3.3 为什么分布式锁不是幂等方案\n\n| 属性 | `RLock` 现状 | 幂等要求 |\n|---|---|---|\n| 保护窗口\
+        \ | 仅持锁期间 (最大 5s 等待, 无 lease 自动续期配置可见) | 跨请求生命周期 (数秒~数分钟) |\n| 覆盖范围 | 同 Redis\
+        \ 实例, Master 挂即丢锁 | 需 DB/唯一键 持久化 |\n| 语义 | 互斥 (Mutual Exclusion) | 去重 (Deduplication)\
+        \ |\n\n#### 3.4 事务缺口放大幂等问题\n\n`InterviewService` **无 `@Transactional`** (已扫\
+        \ `backend -- include *.java` 仅 `RagService/AuthService/LegacyAiRagService`\
+        \ 有)。`answer` 内 `saveUserMessage + saveAiMessage + updateById + stateStore.write`\
+        \ 分属 4 个独立事务 `autoCommit`。任一步失败后已写的前步不回滚, 重试幂等无补偿。例如 `saveUserMessage` 已提交,\
+        \ `pickQuestion` 抛异常, 客户端重试会再插一遍 answer。\n\n---\n\n### 4. 交叉影响与 AI/RAG 链路\n\
+        \n* `QuestionBank.pickQuestion` 依赖 `askedQuestionIds` (自消息表提取 `knowledgePointId`),\
+        \ 若因重复 answer 导致 `askedQuestionIds` 长度膨胀, 可能误判题库耗尽过早 `FINISHED`.\n* `ReportService.generateFeedback`\
+        \ / `EvaluationService.score` 均基于 `messages` 快照, 重复行会导致维度分虚高或弱点误判 (待查 `EvaluationService:shouldFinish`\
+        \ 阈值是否依赖 `qaPairs.size()==MAX_QUESTIONS=6`)。\n* `RabbitConfig.SCORING_*` 重复投递若消费端幂等不足,\
+        \ `interview_result.total_score/report` 可能被覆写。\n* `DashboardService:38` 10min\
+        \ Redis 缓存聚合分数无视漂移中污染数据。\n\n---\n\n### 5. 建议方案 (Not Yet Applied — 仅设计, 供 Lead\
+        \ 决策)\n\n**不改动现有文件前提下的 Code Example 仅作评审附件:**\n\n**5.1 状态回退硬化 (Stale-Read\
+        \ 防御)**\n* `StateStore.read` 改为 `RBucket.remainTimeToLive` + `get` 原子 LUA,\
+        \ 或至少 `read` 后 `expire(24h)` 续期; `requireAsking` 回退后增加对账断言:\n  ```java\n \
+        \ // 建议插入 requireAsking:381 之后\n  long actualCount = messageMapper.selectCount(W.eq(\"\
+        session_id\",sessionId).eq(\"kind\",\"question\"));\n  if(actualCount != s.getQuestionCount())\
+        \ log.error(\"drift session={} dbCount={} msgCount={}\",...);\n  // 选择以 msgCount\
+        \ 为准或告警人工介入\n  ```\n* 引入 `version` (乐观锁) 于 `interview_session` + `SessionState(version)`,\
+        \ `write` 使用 `SET if version == expected` (Redisson `RBucket.compareAndSet`\
+        \ 或 `RLock` 内二次校验 `SELECT ... FOR UPDATE`)。\n\n**5.2 幂等键设计 (P0)**\n* Controller\
+        \ 接收 `Idempotency-Key: <uuid>` (Header 或 body `requestId`) , 服务端落地 `interview_idempotency(sessionId,\
+        \ requestId UNIQUE, createdAt)` 或利用 `Redis SETNX idemp:{sessionId}:{hash}\
+        \ 60s`。\n* 执行伪码:\n  ```java\n  String idemKey = \"idemp:answer:\" + sessionId\
+        \ + \":\" + sha256(answer) + \":\" + clientRequestId; // clientRequestId 必传\n\
+        \  if(!redis.setIfAbsent(idemKey, \"1\", 30, MINUTES)) return queryExistingAiMessage(sessionId);\
+        \ // 去重返回已生成题目\n  // 原流程; 异常时 del key 以便重试\n  ```\n* DB 层补 `UNIQUE(session_id,\
+        \ client_request_id)` 最强保障; `interview_message` 新增 `client_request_id` 列。\n\
+        \n**5.3 事务与原子性**\n* 为 `answer()` 增加 `@Transactional` (配合 `TransactionSynchronizationManager`\
+        \ 在提交后才 `stateStore.write` + `rabbitTemplate.convertAndSend`) 或采用 Transactional\
+        \ Outbox。\n* `finishSession` 先 `SELECT result by sessionId` 判重再 `INSERT`,\
+        \ 捕获 `DuplicateKeyException` 转幂等成功。\n\n**5.4 可观测性**\n* `Counter interview_state_fallback_total{reason=\"\
+        miss|corrupt\"}` + `Histogram drift_qcount`.\n* `WARN` 升级为 `ERROR` 附带 `sessionId/reason`\
+        \ 并入 Loki/ELK 告警 `>5/min` 即 P1。\n\n**5.5 配置建议**\n```yaml\napp:\n  interview:\n\
+        \    state-ttl-hours: 24\n    lock-wait-seconds: 5\n    lock-lease-seconds:\
+        \ 30  # 新增, 避免虚线程长任务锁过期\n    idempotency-ttl-minutes: 30\nspring:\n  data:\n\
+        \    redis:\n      timeout: 2s\n      redisson:\n        lockWatchdogTimeout:\
+        \ 30000\n```\n\n---\n\n### 6. 测试工程师关注 — 建议补充的测试用例 (Testing Focus)\n\n1. **TTL\
+        \ 漂移用例:** Mock `RBucket.get()=null` 强制触发 `requireAsking` DB 回退, 预置 `interview_session.questionCount=3`\
+        \ 但 `interview_message` 有 5 条 question, 断言回退后 `state.questionCount` 以哪为准及是否告警。需覆盖\
+        \ `ObjectMapper` 坏 JSON 分支。\n2. **重试幂等用例:** 使用 `Testcontainers + Redisson`\
+        \ 并发双 `POST /answer` 相同 `Idempotency-Key`, 验证 `interview_message` 仅 1 新增,\
+        \ 第二次返回同一 `messageId`。\n3. **锁失效用例:** Kill Redis 容器后调用 `answer`, 验证退化为 DB\
+        \ `SELECT FOR UPDATE` 仍拒绝并发 (混沌测试)。\n4. **事务部分失败:** 在 `sessionMapper.updateById`\
+        \ 后注入 `throw`, 重试后断言无重复 answer 且 `questionCount` 不自增。\n5. **`answerStream`\
+        \ SSE 断连重连:** 模拟 `SseEmitter.completeWithError` 后客户端重放, 断言无第二条 `feedback`/`result`\
+        \ 写入 (查 `interview_result UNIQUE` 生效)。\n\n---\n\n### 7. 风险优先级与工作量估算\n\n* **P0\
+        \ 幂等键 + DB 唯一约束** (1-2d) 不做则线上每 1% 重试率即产生 1% 脏数据。\n* **P0 状态对账 + 读续期** (0.5d)\
+        \ 低成本堵漂移。\n* **P1 @Transactional + Outbox** (2-3d) 需回归全量面试流程。\n* **P1 锁与状态\
+        \ Redis 解耦** (可选: 锁用独立 Redis/DB) 中长期。\n\n---\n**复核人备注:** 本诊断完全基于 `read` 已验证源码与\
+        \ `schema.sql` 约束, 未执行写操作。若 Lead 认可, 下一步可建分支实施上述 5.1-5.3 并以第 6 节用例做门禁。\n\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 41424
+        input: 3639
+        output: 4058
+        reasoning: 270
+        cache_read: 33457
+        cache_write: 0
+      latency_ms: 70971
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 70971
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: rag-engineer
+    task_id: task-rag-engineer-021a4f
+    output:
+      agent: rag-engineer
+      status: completed
+      summary: '## AI Interview Platform Session 状态漂移与幂等性诊断报告
+
+
+        > 只分析不修改 · Team `team-7adee145` · `rag-engineer`视角转 `backend-architect`会诊
+
+        > 靶点: `InterviewStateStore.java:34` Redis过期DB回退、`InterviewService.java:372`(`re'
+      output: "## AI Interview Platform Session 状态漂移与幂等性诊断报告\n\n> 只分析不修改 · Team `team-7adee145`\
+        \ · `rag-engineer`视角转 `backend-architect`会诊\n> 靶点: `InterviewStateStore.java:34`\
+        \ Redis过期DB回退、`InterviewService.java:372`(`requireAsking`)/`:124`(`answer`)\
+        \ 幂等性\n\n### 1. 结论摘要\n\n| 检查项 | 风险等级 | 是否会导致状态漂移 |\n|--------|----------|-------------------|\n\
+        | Redis过期后DB回退 `InterviewStateStore.java:34-46` + `InterviewService.java:372-391`\
+        \ | **P1 高** | 是：可重现 |\n| `answer()` 幂等性 `InterviewService.java:124-192` |\
+        \ **P1 高** | 是：重试即产生幽灵问答对+计数漂移 |\n| 异步评分双写 `InterviewService.java:335-351`\
+        \ + `RuleBasedScoringService.java:54-55` | **P0 高** | 是：`interview_result`重复插入\
+        \ |\n\n---\n\n### 2. `InterviewStateStore.java:34` - Redis过期后DB回退逻辑\n\n####\
+        \ 2.1 现状\n\n```java\n// InterviewStateStore.java:34-46 - Store自身无回退，仅返回null\n\
+        public SessionState read(Long sessionId){ // :34\n  RBucket<String> bucket\
+        \ = redissonClient.getBucket(key(sessionId));\n  String json = bucket.get();\
+        \ // :36  null => 过期/驱逐/重启丢失\n  if(json==null) return null; // :37-38\n  try\
+        \ { return objectMapper.readValue(json, SessionState.class);}\n  catch(Exception\
+        \ e){ return null; } // :43 解析失败也吞为null\n}\n// 回退由调用方完成\n// InterviewService.java:372-381\n\
+        private SessionState requireAsking(Long sessionId){ // :372\n  SessionState\
+        \ state = stateStore.read(sessionId); // :373\n  if(state==null){\n    InterviewSession\
+        \ s = sessionMapper.selectById(sessionId); // :375 DB回退\n    state = new SessionState(s.getStatus(),s.getQuestionCount(),s.getCurrentQuestionId());\n\
+        \    stateStore.write(sessionId, state); // :381 回写Redis TTL 24h\n  }\n}\n\
+        ```\n\n注释 `InterviewStateStore.java:14-15` 宣称`Redis作为状态机单一权威来源`，实际为**DB+Redis双权威+读时惰性修复**，架构自相矛盾。\n\
+        \n#### 2.2 缺陷链路\n\n**1. 状态维度不一致：`questionCount`/`status`/`currentQuestionId`\
+        \ vs `interview_message` 真实历史**\n* `questionCount` 在DB由 `answer():182-183`\
+        \ `create():112-113` 显式维护，但 `shouldFinish()` `EvaluationService.java:102`\
+        \ 依据 `messages.size()` 判定结束。重建的 `state.questionCount = s.getQuestionCount()`\
+        \ 与 `messages` 计数可能偏离1（见2.3）。\n* `askedQuestionIds` `InterviewService.java:140-143`\
+        \ 从 `message.knowledgePointId`推导，而 `state.currentQuestionId` 不参与去重，删/增题库后两者无法交叉验证。\n\
+        \n**2. 非滑动TTL导致活跃会话过期**\n`InterviewStateStore.java:51` `set(json, TTL_HOURS=24,\
+        \ HOURS)`固定24h，`read()`不续期。面试虽在进行，24h后仍过期触发回退。竞态：客户端轮询期间恰好过期，回退读到旧DB快照，后续\
+        \ `newCount = state.questionCount()+1` `InterviewService.java:176` 基于旧值递增。\n\
+        \n**3. 解析失败被误判为过期**\n`InterviewStateStore.java:43-44` `readValue`失败返回`null`触发DB回退，掩盖序列化/版本不兼容问题，且无告警指标。线上升级`SessionState`字段后会批量回退。\n\
+        \n**4. 失败语义不一致**\n`InterviewStateStore.java:54` `write()`失败抛 `BizException(INTERNAL_ERROR)`。`requireAsking:381`\
+        \ 回写若抛异常，整体`answer()`失败，但DB数据可用，本可降级为内存态继续服务。可用性被Redis写可用性綁架。\n\n**5. 锁边界正确但持有期外仍可读脏**\n\
+        `answer():125-128` 先`lockFor()`再`requireAsking()`，回写在锁内，规避了并发回写竞争。但`detail()/result()`等读接口无锁直接`requireOwnedSession`+读DB，可能读到中间态（已写`answer`行但未`updateById`）。\n\
+        \n#### 2.3 可复现的漂移时序\n\n```\nT0: create() DB count=1, Redis ASKING(1, msg1),\
+        \ messages=[q1]\nT1: answer(\"A1\") saveUserMessage(a1) -> DB messages=[q1,a1]\
+        \  // 129-131\n     进程崩溃 before sessionMapper.updateById + stateStore.write\n\
+        \     -> DB count仍1，Redis仍(1,msg1)，messages已含a1\nT2: 24h后 Redis过期\nT3: 客户端重试\
+        \ answer(\"A1\") -> requireAsking读null -> DB count=1重建 -> state=(ASKING,1,msg1)\n\
+        \     extractQAPairs => 1对 -> shouldFinish false -> newCount=2 -> 保存q2 ->\
+        \ DB count=2\n     实际已产生 [q1,a1,a1(重复),q2] 计数应为2但含重复答案，后续MAX_QUESTIONS=6提前1轮结束\n\
+        ```\n\n#### 2.4 设计建议（不实施，仅供评审）\n\n```java\n// 推荐：版本号+滑动过期+回退后校验\n// 1. read续期或改用\
+        \ RBucket.remainTimeToLive + expire\n// 2. InterviewSession增加 version 乐观锁，requireAsking校验\
+        \ messages.count vs questionCount\n// 3. write失败降级：catch后log.warn并返回DB重建state，不抛异常\n\
+        // 4. FINISHED会话 delete key而非保留TTL\n// 5. SessionState增加 schemaVersion 字段，解析失败\
+        \ metrics计数而非回退\n```\n\n---\n\n### 3. `InterviewService.java:124`/`372` -\
+        \ `answer()`幂等性\n\n#### 3.1 现状判定：**完全非幂等**\n\n```java\n// InterviewService.java:124-132\n\
+        public MessageVO answer(Long userId, Long sessionId, String answer){\n  RLock\
+        \ lock = lockFor(sessionId); // :125 tryLock 5s\n  InterviewSession session\
+        \ = requireOwnedSession(...); // :127\n  SessionState state = requireAsking(sessionId);\
+        \ // :128\n  saveUserMessage(sessionId,\"answer\",answer); // :131 无条件INSERT\n\
+        \  List<InterviewMessage> messages = messageMapper.selectList(...); // :134\n\
+        \  // ... shouldFinish / pickQuestion / saveAiMessage / updateById / write\n\
+        }\n```\n\n* 无`Idempotency-Key`、无`contentHash`唯一约束、无去重表。\n* 锁仅防**并发**（`LOCK_WAIT_SECONDS=5`\
+        \ `InterviewService.java:63`），不防**重试**：首次成功释放锁后，客户端超时重试会作为**新答案**处理。\n* `InterviewController.java:60-66`\
+        \ 直接透传`body.get(\"content\")`，未要求前端生成幂等token。\n\n#### 3.2 后果\n\n| 场景 | 现象\
+        \ |\n|------|------|\n| 网络超时重试（最常见） | `interview_message`产生重复`USER answer`行，`extractQAPairs()`\
+        \ `InterviewService.java:320-331`多计1对，可能误触`shouldFinish`提前结束或`askedQuestionIds`污染\
+        \ |\n| `answer()`内异常重试 | 已插入`answer`但未插入`question`，下次重试会看到`questionCount`未+1却多一条answer，`newCount\
+        \ = state+1`少算 |\n| `answerStream():194-275` 重复调用 | 虚拟线程持有`RLock` `InterviewService.java:198-271`\
+        \ 达300s，`SseEmitter`断连后`lock`才释放，期间另一`answer()`被`INTERVIEW_STATE_ERROR`拒绝，客户端再重试即漂移\
+        \ |\n\n#### 3.3 缺少事务原子性加剧漂移\n\n`answer()`无`@Transactional`，`InterviewService.java:48`未标注。序列`saveUserMessage`→`selectList`→`evaluation`→`insert\
+        \ result`→`saveAiMessage`→`updateById`→`stateStore.write`，任意一步异常留下半提交。典型：`RabbitTemplate.convertAndSend`在`finishSession():345`失败仅`log.error`，但DB已`FINISHED`，MQ未投递导致`RuleBasedScoringService.java:38-63`不执行，而`finishSession`内已`evaluationService.score()+resultMapper.insert()`先插了一条结果，异步消费者若后续重试会再插一条（无`sessionId`唯一约束）。\n\
+        \n验证：`InterviewResult`表当前无`UNIQUE(sessionId)`，`RuleBasedScoringService.java:55`\
+        \ `resultMapper.insert(result)`与`InterviewService.java:150/165`重复插入同一会话。\n\
+        \n#### 3.4 推荐幂等方案（供评审）\n\n```java\n// 方案A：业务幂等键（推荐，前端无改或微改）\n// DDL: ALTER\
+        \ TABLE interview_message ADD COLUMN idempotency_key VARCHAR(64) UNIQUE;\n\
+        //      ALTER TABLE interview_result ADD UNIQUE(sessionId);\n// Controller接收\
+        \ Header Idempotency-Key / body.answerId\n// answer()首行：SELECT * FROM interview_message\
+        \ WHERE sessionId=? AND idempotencyKey=? 若存在直接返回对应question\n\n// 方案B：内容去重（零前端改动，兜底）\n\
+        long count = messageMapper.selectCount(W.eq(sessionId).eq(role,USER).eq(content,answer).ge(createdAt,\
+        \ now-5m));\nif(count>0 && messages.getLast().getContent().equals(answer))\
+        \ return toMessageVO(lastAiQuestion);\n\n// 方案C：Transactional + Redis SETNX\
+        \ 幂等标记\n// RBucket<String> idem = redisson.getBucket(\"interview:idem:\"+sessionId+\"\
+        :\"+hash(answer));\n// if(!idem.trySet(\"1\",5,MINUTES)) return cachedResponse;\n\
+        \n// 统一加 @Transactional + 乐观锁：UPDATE interview_session SET ... WHERE id=?\
+        \ AND version=?\n```\n\n---\n\n### 4. 测试与可观测性建议（Testing Engineer协作）\n\n* **回退测试**：`Redis\
+        \ flushdb` 后调用`answer`，断言`stateStore.read`为空时仍返回正确`ASKING`且`questionCount`与`SELECT\
+        \ COUNT(*) FROM interview_message WHERE kind='question'`一致。\n* **重试测试**：Mock\
+        \ `messageMapper.insert`后抛异常，二次`answer`同`content`应返回同一`messageId`，`interview_message`行数不+1。\n\
+        * **并发测试**：JMeter 20线程同`sessionId`并发`answer`，仅1成功其余`INTERVIEW_STATE_ERROR`或幂等返回，`questionCount`最终+1。\n\
+        * **双写测试**：完成面试后断言`interview_result`仅1行，`totalScore`与`reportService`一致。\n\
+        * **指标**：新增`interview_state_redis_miss_total`、`interview_state_rehydrated_total`、`interview_answer_duplicate_total`、`interview_scoring_duplicate_total`。\n\
+        \n---\n\n### 5. 风险定级与处置优先级\n\n1. **P0** 评分双写 → 加`UNIQUE(sessionId)`并使`finishSession`与MQ仅一处写结果（建议移至异步消费者）。\n\
+        2. **P1** `answer`非幂等+无事务 → 补幂等键+`@Transactional`，`answerStream`与`answer`抽取公共`doAnswer()`消除分叉。\n\
+        3. **P1** 固定TTL+静默回退 → 改滑动过期/续期+解析失败告警，`FINISHED`后`delete()`。\n\n*本报告仅分析，未修改任何源文件。*\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 44159
+        input: 8688
+        output: 2726
+        reasoning: 1784
+        cache_read: 30961
+        cache_write: 0
+      latency_ms: 56783
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 56783
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: prompt-engineer
+    task_id: task-prompt-engineer-521c1e
+    output:
+      agent: prompt-engineer
+      status: completed
+      summary: '# AI Interview Platform — Session 状态漂移诊断报告 (只读分析)
+
+
+        **Team:** `team-7adee145` | **Scope:** `InterviewStateStore.java:34` + `InterviewService.java:372`
+        | **Verdict:** 存在可复现的状态漂移与幂等性缺陷，风险 `P1`
+
+
+        > 约束：只分析不'
+      output: "# AI Interview Platform — Session 状态漂移诊断报告 (只读分析)\n\n**Team:** `team-7adee145`\
+        \ | **Scope:** `InterviewStateStore.java:34` + `InterviewService.java:372`\
+        \ | **Verdict:** 存在可复现的状态漂移与幂等性缺陷，风险 `P1`\n\n> 约束：只分析不修改文件，所有修复建议为 lead review\
+        \ 待审。\n\n## 1. 结论摘要\n\n| 检查点 | 结论 | 风险 |\n|---|---|---|\n| `InterviewStateStore.java:34`\
+        \ `read()` | 自身无 DB 回退，依赖调用方 `requireAsking()` 重建；名为“单一权威来源”实为“双源” | 高：过期后静默重放陈旧\
+        \ DB 状态 |\n| `InterviewStateStore.java:51` `write()` | `TTL=24h` 固定，读不续期，写非原子\
+        \ | 中：长会话/暂停后过期漂移 |\n| `InterviewService.java:372` `requireAsking()` | 过期回退用\
+        \ `interview_session` 快照重建 `SessionState`，未校验 `interview_message` 真实进度 | 高：`questionCount/currentQuestionId`\
+        \ 与消息表不一致 |\n| `InterviewService.java:124` `answer()` / `194` `answerStream()`\
+        \ | 零幂等：无 `Idempotency-Key`、无去重约束、每次必 `saveUserMessage` + `+1` | 高：重试 => 重复落库\
+        \ + 计数膨胀 + 多题生成 |\n\n## 2. `InterviewStateStore.java` 逐行取证\n\n**文件:** `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java`\n\
+        \n```java\n// 22: 注释宣称 Redis 为单一权威\n/** 面试会话运行时状态，存于 Redis，作为状态机的单一权威来源。 */\n\
+        private static final long TTL_HOURS = 24; // 25\n\npublic SessionState read(Long\
+        \ sessionId) { // 34\n    RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\
+        \ //35\n    String json = bucket.get(); //36\n    if (json == null) return\
+        \ null; //37-38  <- 过期/驱逐/反序列化失败 全返回 null\n    try { return objectMapper.readValue(json,\
+        \ SessionState.class); }\n    catch (Exception e) { log.warn(...); return\
+        \ null; } //43-44\n}\npublic void write(Long sessionId, SessionState state){\
+        \ //48\n    String json = objectMapper.writeValueAsString(state);\n    redissonClient.getBucket(key(sessionId)).set(json,\
+        \ TTL_HOURS, TimeUnit.HOURS); //51\n}\n```\n\n### 2.1 发现\n\n1.  **无 DB 回退逻辑的\
+        \ Store:** `read()` 仅穿透 Redis。若 `json==null` 直接返回 `null`，调用方自行决定。Store 不知\
+        \ DB 存在，违背“单一权威”注释 — 实际权威在 `InterviewService.java:372` 扩散。\n2.  **固定 TTL 无滑动续期:**\
+        \ `51` 每次 `set` 重置 24h，但 `36` 的 `get` 不续期。用户暂停 >24h 后 `read` 必然 `null`，触发\
+        \ `requireAsking` 的 DB 重建路径。`24h` 硬编码，无 `application.yml` 可配，无按 `finishedAt`\
+        \ 区分。\n3.  **反序列化失败吞错:** `43-44` `catch Exception -> return null` 与“过期”同义，都会进入\
+        \ DB 回退，无法区分“数据损坏”与“正常过期”，埋点也仅 `warn`。\n4.  **非原子写:** `write()` 单 `SET`，与\
+        \ `InterviewService.java:183` 的 `sessionMapper.updateById(session)` 非事务。时序：`DB\
+        \ 成功 -> Redis set 失败 -> 下次 read 命中过期回退 -> 用 DB 旧 `questionCount` 重建`。\n\n\
+        ### 2.2 过期后 DB 回退链路 (`InterviewService.java:372`)\n\n```java\nprivate SessionState\
+        \ requireAsking(Long sessionId){ //372\n    SessionState state = stateStore.read(sessionId);\
+        \ //373\n    if (state == null) { //374\n        InterviewSession s = sessionMapper.selectById(sessionId);\
+        \ //375\n        if (s == null) throw INTERVIEW_NOT_FOUND; //376-378\n   \
+        \     state = new SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId());\
+        \ //379-380\n        stateStore.write(sessionId, state); //381 <- 回填\n   \
+        \ }\n    if (FINISHED.equals(state.status())) throw INTERVIEW_FINISHED; //383\n\
+        \    if (!ASKING && !START) throw INTERVIEW_STATE_ERROR; //386-388\n    return\
+        \ state;\n}\n```\n\n**漂移根因:**\n\n*   **DB 快照陈旧:** `s.getQuestionCount()` 来自\
+        \ `interview_session` 行，更新点在 `InterviewService.java:182-183` (answer) 与 `115-116`\
+        \ (create)。若上次 `answer()` 在 `182 DB更新成功 + 185 Redis write失败/过期` 后崩溃，DB 的 `questionCount`\
+        \ 可能是 `N`，而 `interview_message` 已有 `N+1` 条 `answer+question`。重建后 `state.questionCount()==N`，下次\
+        \ `176: int newCount = state.questionCount()+1` 会复用/跳号，`askedQuestionIds`\
+        \ 从消息表算，`questionCount` 从 Session 算，二者永久分叉。\n*   **无 `SELECT FOR UPDATE` /\
+        \ 乐观锁:** `375` 普通 `selectById`，与并发 `answer` 正在 `183 updateById` 竞争。即使有 `InterviewService.java:354\
+        \ RLock`，`requireAsking` 在锁内读 Redis/DB，但锁 TTL `5s` (`63 LOCK_WAIT_SECONDS`)\
+        \ 可能在 `requireAsking` 重建写入前过期释放。\n*   **状态校验不完整:** `386` 允许 `START`，但 `START`\
+        \ 实际不应进入 `answer()` (应在 `create` 后为 `ASKING`)。且未校验 `currentQuestionId` 是否仍指向最新\
+        \ `question` 消息，可能指向已过期被重试覆盖的旧 `msgId`。\n*   **过期风暴:** 大量会话同时过期，全部击穿到 `375\
+        \ selectById`，无 `cache-aside` 防击穿 (如 `setnx` 占位)。\n\n## 3. `InterviewService.java:124\
+        \ answer()` 幂等性缺失\n\n**调用链:** `InterviewController.java:59 POST /interviews/{id}/answer`\
+        \ -> `InterviewService.java:124`\n\n```java\npublic MessageVO answer(Long\
+        \ userId, Long sessionId, String answer){ //124\n    RLock lock = lockFor(sessionId);\
+        \ //125  tryLock 5s\n    try {\n        InterviewSession session = requireOwnedSession(userId,\
+        \ sessionId); //127\n        SessionState state = requireAsking(sessionId);\
+        \ //128\n        saveUserMessage(sessionId, \"answer\", answer); //131  <-\
+        \ 无幂等键，每次插入\n        List<InterviewMessage> messages = messageMapper.selectList(...);\
+        \ //134\n        // 145 shouldFinish / 160 pickQuestion / 176 newCount = state.questionCount()+1\n\
+        \        InterviewMessage msg = saveAiMessage(sessionId, \"question\", ...);\
+        \ //177\n        session.setQuestionCount(newCount); sessionMapper.updateById(session);\
+        \ //182-183\n        stateStore.write(sessionId, new SessionState(ASKING,\
+        \ newCount, msg.getId())); //185\n    } finally { unlockQuietly(lock); }\n\
+        }\n```\n\n### 3.1 为什么不幂等\n\n1.  **无请求级去重:** `Controller 61 body.get(\"content\"\
+        )` 无 `Idempotency-Key` 头/`requestId`。前端 `frontend/src/api/interview.ts:59\
+        \ answerInterview` 与 `Interview.vue:52` 仅前端 `submitting` 禁用，网络重试/Gateway retry/用户双击绕过。\n\
+        2.  **DB 无唯一约束:** `schema.sql:62 interview_message` 仅 `id PK + session_id\
+        \ FK`，无 `(session_id, client_request_id)` 唯一索引。`131 saveUserMessage` + `177\
+        \ saveAiMessage` 每次调用各 `+1` 行。\n3.  **计数推导依赖易漂的 State:** `176 newCount = state.questionCount()+1`\
+        \ 依赖 `state` (可能已从过期 DB 重建的旧值)，而非 `messages.size()` 或 `MAX_QUESTIONS` 真实进度。重试两次\
+        \ => `questionCount` 连续 `+2`，前端显示与 DB `questionCount` 错位。\n4.  **分布式锁 ≠ 幂等:**\
+        \ `353 lockFor` 用 `Redisson RLock` 5s，解决并发竞跑，但重试是串行：`T0 answer(A) 完成并释放锁 ->\
+        \ T1 retry(answer A) 再次获取锁 -> 再次落库`。锁已释放，无法去重。\n5.  **副作用不可重放安全:** `149 resultMapper.insert(result)`\
+        \ + `152 reportService.generateFeedback` + `335 finishSession` 内 `345 rabbitTemplate.convertAndSend(SCORING)`，重试会导致重复\
+        \ `interview_result` (虽 `session_id UNIQUE` 会抛异常但无捕获) 与重复 MQ 投递。\n6.  **双入口不一致:**\
+        \ `194 answerStream()` 在 `Thread.ofVirtual()` 内复刻 `204 saveUserMessage` 同样无幂等，且\
+        \ `SseEmitter` 异常时 `268 emitter.completeWithError(e)` 但 DB 已落库，客户端超时重试必重复。\n\
+        \n### 3.2 可复现场景\n\n*   **S1 客户端超时重试:** `POST /answer`  server 已 `131/177`\
+        \ 成功但响应超时，客户端 1s 后重发 => 多一条 `answer` + 多一条 `question`。\n*   **S2 网关重试:** Ingress\
+        \ `retry 3` 对 `500` 重试，`answer` 抛 `BizException` 前已 `saveUserMessage`，重试叠加。\n\
+        *   **S3 Redis 过期后重试:** 会话静置 24h+ 后首次 `answer` 走 `374-381` 重建，`state.questionCount`\
+        \ 滞后，`176` 算出错误 `newCount`，后续 `MAX_QUESTIONS=6` 判断提前/延后结束。\n\n## 4. 影响面量化\n\
+        \n*   `interview_message` 膨胀：每重试 +2 行，`EvaluationService.java:102 shouldFinish`\
+        \ 基于 `qaPairs` 计数，会误判 `FINISHED`。\n*   `interview_session.questionCount` 与\
+        \ `SELECT COUNT(*) FROM interview_message WHERE kind='question'` 长期不一致 → Dashboard\
+        \ `KnowledgeMapService.java:32` 聚合失真。\n*   MQ 重复投递 → `RuleBasedScoringService`\
+        \ 重复评分。\n\n## 5. 修复建议 (待 Lead 评审，不改文件)\n\n**P0 幂等：**\n*   `POST /answer` 引入\
+        \ `Idempotency-Key: <uuid>` (Header 或 `body.requestId`)，`interview_message`\
+        \ 加 `request_id VARCHAR(64) UNIQUE` + `UNIQUE(session_id, request_id)`；Service\
+        \ 层 `INSERT ... ON CONFLICT DO NOTHING` 或先 `SELECT by request_id` 返回既有 `MessageVO`。\n\
+        *   替代：内容哈希去重 `UNIQUE(session_id, hash(content), created_at 5min window)`，但需防“用户真重复答案”误判，推荐显式\
+        \ `requestId`。\n*   `finishSession` 内 `resultMapper.insert` 前查 `selectOne\
+        \ sessionId` 已存在则跳过；MQ 发送加幂等 `messageId` 去重表。\n\n**P0 状态一致性：**\n*   `RequireAsking`\
+        \ 重建时以 `interview_message` 为准：`SELECT COUNT(kind='question')` + `SELECT MAX(id)\
+        \ WHERE kind='question'` 推导 `questionCount/currentQuestionId`，而非直接信任 `interview_session`\
+        \ 列；或加 `CHECK` 约束/定时对账 job。\n*   `updateById + stateStore.write` 包事务或 `Transactional\
+        \ outbox` + 监听 BINLOG 回填 Redis；短期可 `write` 失败抛 `BizException` 并回滚 DB (当前 `54\
+        \ throw BizException` 已有，但 `183` 后 `185` 失败未回滚，因非 `@Transactional`)。建议 `answer()`\
+        \ 加 `@Transactional`。\n*   `TTL` 改为可配置滑动过期：`application.yml: interview.state-ttl:\
+        \ 2h` + `read` 时 `expire` 续期，或 `FINISHED` 状态 `TTL=7d` 归档。\n\n**P1 加固：**\n\
+        *   `RBucket` 改 `RBucket<String>.set(json, TTL, EXPIRE)` + `read` 时 `bucket.remainTimeToLive()`\
+        \ < 30min 则续期。\n*   反序列化失败 `return null` 改抛 `INTERVIEW_STATE_ERROR` 并 `delete`\
+        \ 脏 key，避免静默回退。\n*   `InterviewController.java:59` 加 `RateLimit + 去重拦截器`，`SseEmitter\
+        \ 300_000L` 超时与锁超时对齐。\n\n## 6. 验证清单 (QA/Testing Engineer 移交)\n\n*   **过期回退：**\
+        \ `TTL 1s` 模拟过期 → `answer` → 断言 `state.questionCount == messageCount/2`。\n\
+        *   **幂等重放：** 同 `requestId` 发 5 次 `POST /answer` → 断言 `message` 行数 `+1` 而非\
+        \ `+5`，`questionCount +1`。\n*   **并发：** `JMeter 50 threads / same sessionId`\
+        \ → 无 `questionCount` 跳号。\n*   **对账：** `SELECT session.questionCount - COUNT(question)`\
+        \ 非零告警。\n\n---\n*产出供 lead review，未修改源码。*\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 39089
+        input: 3277
+        output: 3093
+        reasoning: 222
+        cache_read: 32497
+        cache_write: 0
+      latency_ms: 52102
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 52102
+          classification: success
+        cross_stack: null
+    is_lead: false
+  conflicts: []
+  summary: Lead agent (backend-architect) completed primary work. Support agents (testing-engineer,
+    code-reviewer, database-engineer, llm-engineer, rag-engineer, prompt-engineer)
+    contributed
+  agent_count: 7
+  completed_count: 7
+  failed_count: 0
+task_cards:
+- task_id: task-backend-architect-fdc356
+  role: backend-architect
+  status: completed
+  output_summary: '**[LEAD team-7adee145] 诊断报告 — Session 状态漂移 + `answer` 幂等缺失 | 只分析未修改**
+
+
+    协同: `Testing Engineer` -> Redis/TTL回退路径, `Code Reviewer` -> 幂等性/去重。 verified via
+    `read` + `grep` + `schema.sql`。
+
+
+    ### 1. 核心结论
+
+
+    两个'
+  output_len: 4893
+  latency_ms: 118710
+- task_id: task-testing-engineer-b2035c
+  role: testing-engineer
+  status: completed
+  output_summary: '# AI Interview Platform Session 状态漂移 — 诊断报告 (只分析不改码)
+
+
+    **Team:** `team-7adee145` | **角色:** `testing-engineer` | **Scope:** `InterviewStateStore.java:34`,
+    `InterviewService.java:372` (`requireAsking`) +'
+  output_len: 10794
+  latency_ms: 66550
+- task_id: task-code-reviewer-88812c
+  role: code-reviewer
+  status: completed
+  output_summary: '# AI Interview Platform Session 状态漂移诊断报告 | team-7adee145 | code-reviewer
+
+
+    **范围:** 只分析不修改. 聚焦 `InterviewStateStore.java:34` Redis过期后DB回退, `InterviewService.java:372`
+    / `124` answer幂等性. 验证方式：静态代码审查 + 锁/'
+  output_len: 9039
+  latency_ms: 73672
+- task_id: task-database-engineer-24e265
+  role: database-engineer
+  status: completed
+  output_summary: '**Team: team-7adee145 | Role: database-engineer | 只分析不修改**
+
+
+    ### 1. 结论前置 (Executive Summary)
+
+
+    `InterviewStateStore` 被注释为`面试会话运行时状态，存于Redis，作为状态机的单一权威来源` (`InterviewStateStore.java:15-16`)，但
+    `InterviewS'
+  output_len: 9416
+  latency_ms: 62503
+- task_id: task-llm-engineer-5075eb
+  role: llm-engineer
+  status: completed
+  output_summary: '## AI Interview Platform Session 状态漂移 诊断报告 — 供 Lead 评审 (只分析不改码)
+
+
+    **Team:** `team-7adee145` | **Role:** `llm-engineer` | **Scope:** `InterviewStateStore.java:34`
+    Redis过期后DB回退, `InterviewService.java:12'
+  output_len: 10572
+  latency_ms: 70971
+- task_id: task-rag-engineer-021a4f
+  role: rag-engineer
+  status: completed
+  output_summary: '## AI Interview Platform Session 状态漂移与幂等性诊断报告
+
+
+    > 只分析不修改 · Team `team-7adee145` · `rag-engineer`视角转 `backend-architect`会诊
+
+    > 靶点: `InterviewStateStore.java:34` Redis过期DB回退、`InterviewService.java:372`(`re'
+  output_len: 7292
+  latency_ms: 56783
+- task_id: task-prompt-engineer-521c1e
+  role: prompt-engineer
+  status: completed
+  output_summary: '# AI Interview Platform — Session 状态漂移诊断报告 (只读分析)
+
+
+    **Team:** `team-7adee145` | **Scope:** `InterviewStateStore.java:34` + `InterviewService.java:372`
+    | **Verdict:** 存在可复现的状态漂移与幂等性缺陷，风险 `P1`
+
+
+    > 约束：只分析不'
+  output_len: 8402
+  latency_ms: 52102
+execution_order:
+- task-backend-architect-fdc356
+- task-llm-engineer-5075eb
+- task-database-engineer-24e265
+- task-rag-engineer-021a4f
+- task-prompt-engineer-521c1e
+- task-code-reviewer-88812c
+- task-testing-engineer-b2035c
+completed_count: 7
+failed_count: 0

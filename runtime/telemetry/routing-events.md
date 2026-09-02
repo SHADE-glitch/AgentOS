@@ -2742,3 +2742,80 @@ started_at: '2026-09-02T07:12:31.976498+00:00'
 completed_at: '2026-09-02T07:12:31.976889+00:00'
 timestamp: '2026-09-02T07:12:31.976914+00:00'
 ```
+
+## Route Event — 2026-09-02T00:15:55.086960+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788308153
+task_id: BENCH-RUN1-001
+intent: testing
+domains:
+- backend
+- database
+- ai
+- testing
+lead_skill: backend-architect
+support_skills:
+- testing-engineer
+- code-reviewer
+confidence: low
+memory_influence: confirmation
+rules_applied:
+- Domain 'backend' → lead backend-architect
+started_at: '2026-09-02T00:15:55.086369+00:00'
+completed_at: '2026-09-02T00:15:55.086924+00:00'
+timestamp: '2026-09-02T00:15:55.086960+00:00'
+```
+
+## Route Event — 2026-09-02T00:25:15.537773+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788308714
+task_id: BENCH-RUN2-001
+intent: testing
+domains:
+- backend
+- database
+- ai
+- testing
+lead_skill: backend-architect
+support_skills:
+- testing-engineer
+- code-reviewer
+confidence: low
+memory_influence: confirmation
+rules_applied:
+- Domain 'backend' → lead backend-architect
+started_at: '2026-09-02T00:25:15.537516+00:00'
+completed_at: '2026-09-02T00:25:15.537751+00:00'
+timestamp: '2026-09-02T00:25:15.537773+00:00'
+```
+
+## Route Event — 2026-09-02T00:58:31.396145+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788310709
+task_id: BENCH8-2-1-2-RUN1
+intent: testing
+domains:
+- frontend
+- backend
+- database
+- testing
+- data
+lead_skill: frontend-architect
+support_skills:
+- frontend-performance
+- testing-engineer
+- code-reviewer
+confidence: low
+memory_influence: confirmation
+rules_applied:
+- Domain 'frontend' → lead frontend-architect
+started_at: '2026-09-02T00:58:31.394269+00:00'
+completed_at: '2026-09-02T00:58:31.396104+00:00'
+timestamp: '2026-09-02T00:58:31.396145+00:00'
+```

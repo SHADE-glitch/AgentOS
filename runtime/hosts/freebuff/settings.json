@@ -2,13 +2,17 @@
   "hooks": {
     "UserPromptSubmit": [
       {
-        "type": "command",
-        "command": "bash ~/.agents/.freebuff/worktrees/*/runtime/hosts/freebuff/hooks/prompt_submit.sh",
-        "timeout": 20
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/shade/.agents/runtime/hosts/freebuff/hooks/prompt_submit.sh",
+            "timeout": 20
+          }
+        ]
       }
     ]
   },
   "env": {
-    "AGENT_OS_ROOT": "~/.agents"
+    "AGENT_OS_ROOT": "/home/shade/.agents"
   }
 }

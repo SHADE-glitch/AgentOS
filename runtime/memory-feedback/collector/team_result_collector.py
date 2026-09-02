@@ -116,6 +116,7 @@ class TeamResultCollector(Collector):
                 # Quality assessment
                 quality = self._assess_quality(exp)
                 evidence = {
+                    "session_id": f"TEAM-{team_id}-{loop_id}",
                     "output_hash": exp["evidence"]["output_hash"],
                     "token_usage": exp["evidence"]["token_usage"],
                     "latency_ms": exp["evidence"]["latency_ms"],
@@ -186,6 +187,7 @@ class TeamResultCollector(Collector):
                         quality_score=quality["weighted"],
                         quality_breakdown=quality,
                         evidence={
+                            "session_id": f"TEAM-{team_id}-{loop_id}",
                             "output_hash": exp["evidence"]["output_hash"],
                             "token_usage": exp["evidence"]["token_usage"],
                             "latency_ms": exp["evidence"]["latency_ms"],
@@ -218,6 +220,7 @@ class TeamResultCollector(Collector):
                             quality_score=quality["weighted"],
                             quality_breakdown=quality,
                             evidence={
+                                "session_id": f"TEAM-{team_id}-{loop_id}",
                                 "output_hash": exp["evidence"]["output_hash"],
                                 "token_usage": exp["evidence"]["token_usage"],
                                 "latency_ms": exp["evidence"]["latency_ms"],

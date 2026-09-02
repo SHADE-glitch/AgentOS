@@ -1,50 +1,173 @@
-Benchmark Results: Agent OS Memory Loop
-Run #1 — Security Audit (BENCH-R1-SHORT)
-Stage	Result
-Memory Retrieval	5 memories returned (S-002, T-005, P-001, P-002, T-010)
-Router	intent=security, lead=security-engineer, confidence=low
-Orchestrator	7 agents formed (security-engineer lead)
-Collaboration	All 7 TaskCards completed (~12 min)
-Collector	23 candidates extracted
-Validator	0 validated, 6 rejected (M4: memory_id not found)
-Promoter	0 promoted
-Output quality: Security-engineer produced 10 findings (4 CRITICAL, 3 HIGH, 2 MEDIUM, 1 LOW) covering token revocation, rate limiting, refresh token rotation, etc. — genuinely useful analysis.
-Run #2 — Performance Audit (BENCH-R2)
-Stage	Result
-Memory Retrieval	5 memories returned (T-010, T-005, S-002, P-001, T-009)
-Router	intent=optimization, lead=backend-architect, confidence=low
-Orchestrator	7 agents formed (backend-architect lead)
-Collaboration	All 7 TaskCards completed (~25 min)
-Collector	15 candidates extracted
-Validator	0 validated, 5 rejected (M4: memory_id not found)
-Promoter	0 promoted
-Output quality: Backend-architect identified critical perf issues: RAG full table scan + in-memory cosine similarity, QuestionBank repeated queries per request, InterviewService full message history fetch.
-Cross-Run Memory Comparison
-Aspect	Run #1	Run #2	Delta
-Intent classified	security	optimization	Different (correct)
-Lead agent	security-engineer	backend-architect	Different (correct)
-Memory IDs retrieved	S-002,T-005,P-001,P-002,T-010	T-010,T-005,S-002,P-001,T-009	P-002→T-009 swap
-Candidate count	23	15	-8
-Promotion rate	0%	0%	No improvement
-Memory retrieval was NOT identical — different intents produced different retrievals, which is correct behavior. However, both runs share 4/5 memories (S-002, T-005, P-001, T-010), suggesting the retrieval optimizer is somewhat generic.
-Systemic Bug: Promotion Pipeline Broken
-Root cause: _pattern_to_memory_id() in team_result_collector.py:298 maps technical patterns to P8-{CLEAN_NAME} format (e.g., cache-expiration-pattern → P8-CACHE-EXPIRATION-PATTERN). These P8-xxx memories don't exist in retrieval-index.yaml. The validator M4 check rejects all candidates, so nothing ever promotes.
-Impact: The memory feedback loop is completely broken. Agent outputs are captured but never persisted, so the system cannot learn from past analyses.
-Benchmark Scores
-Metric	Score	Notes
-Memory retrieval	6/10	Returns 5 memories but ranking is generic; cross-run variance is low
-Routing accuracy	8/10	Correctly classifies intent and assigns appropriate lead/support
-Team formation	7/10	Always forms 7 agents (hits C5 cap); rules work but over-assigns
-Agent execution	9/10	All TaskCards complete; outputs are high quality
-Candidate extraction	5/10	Extracts many candidates but targets non-existent P8-xxx memories
-Validation	4/10	M4 check correctly rejects invalid targets, but no valid candidates exist
-Promotion	0/10	Nothing ever promotes — memory loop is dead
-Cross-run learning	0/10	Cannot evaluate since no memories are promoted
-End-to-end latency	6/10	12-25 min per loop; acceptable for async but too slow for interactive
-Overall	4.4/10	Pipeline works but memory loop is fundamentally broken
-Recommendations
-1. Fix P8-xxx memory creation — Either auto-create pattern memories in the index when collector generates them, or change the collector to target existing memory types (T-xxx, S-xxx)
-2. Add M4 bypass for new patterns — Allow promoter to create new memory files for previously unseen pattern IDs
-3. Reduce team size — C5 cap of 7 is excessive for most tasks; consider dynamic sizing based on complexity
-4. Parallelize TaskCards — Sequential execution is the latency bottleneck; independent agents could run concurrently
-5. Improve memory ranking — Cross-run retrieval variance is low; consider intent-weighted ranking
+Thought · 916ms
+Phase 8.2.1.1 Runtime Validation Report
+Host: Agent OS Runtime Host (Phase 8.2.1.1)  
+Date: 2026-09-02  
+Workspace: /home/shade/Public/test (AIView)  
+Agent OS Root: ~/.agents (未修改架构, 未手工创建Memory)  
+Provider: opencode REAL_HOST
+Environment
+Component	Path / Version
+Agent OS	~/.agents master fe3cbb5
+Loop Controller	~/.agents/runtime/loop-controller/loop_controller.py:1
+Collector	~/.agents/runtime/memory-feedback/collector/team_result_collector.py:39
+ExperienceExtractor	~/.agents/runtime/memory-feedback/collector/experience_extractor.py:135
+Memory Resolver	~/.agents/runtime/memory-feedback/promotion/memory_resolver.py:62
+Validator	~/.agents/runtime/memory-feedback/promotion/validator.py:85
+Promoter	~/.agents/runtime/memory-feedback/promotion/promoter.py:88
+Retrieval	~/.agents/runtime/memory-feedback/retrieval/retrieval_optimizer.py:335
+Retrieval Index	~/.agents/memory/retrieval-index.yaml:1
+Bin	~/.agents/bin/aos:264
+Pre-run snapshot:
+cp ~/.agents/memory/retrieval-index.yaml /tmp/retrieval-before.yaml  # 580 lines, 0 H-xxx
+ls ~/.agents/memory/hypotheses/ -> No such file (0)
+cat ~/.agents/runtime/loop-controller/state/*.yaml | wc -l =128 states
+Benchmark Used
+Benchmark: Phase 8.2.1.1 所述验证目标 - Memory Feedback Loop 真实运行证明
+Multi-Agent Execution → TeamResult → ExperienceExtractor → MemoryCandidate → MemoryResolver → H-xxx Hypothesis → Promoter → Memory Index → Retrieval → Decision Influence → Validated Memory
+任务设计: 采用真实工程 aiview 的共性缺陷模式，而非孤立BUG:
+- Run1 Task (BENCH-RUN1-001): 诊断 AI Interview Platform 的 session 状态漂移问题：检查 InterviewStateStore.java:34 的 Redis 过期后 DB 回退逻辑，以及 InterviewService.java:372 的 answer 方法幂等性。只分析不修改文件。 (225 chars)
+- Run2 Task (BENCH-RUN2-001): 同一任务文本复现，用于验证幂等bootstrap与二次观测晋升（team_id 哈希确定性 team-7adee145）
+难度: hard (should_form_team: difficulty==hard||domain>=2||intent==architecture) -> 触发 Orchestrator R1/C1
+期望多智能体: backend-architect(lead) + testing-engineer, code-reviewer, database-engineer, llm-engineer, rag-engineer, prompt-engineer = 7 agents
+Run1 Execution
+Command (真实Host, 非mock):
+timeout 900 python3 ~/.agents/runtime/loop-controller/loop_controller.py \
+  "BENCH-RUN1-001" \
+  "诊断 AI Interview Platform 的 session 状态漂移问题：检查 InterviewStateStore.java:34 的 Redis 过期后 DB 回退逻辑，以及 InterviewService.java:372 的 answer 方法幂等性。只分析不修改文件。" \
+  enabled "" opencode
+Loop State: ~/.agents/runtime/loop-controller/state/LOOP-20260902001553.yaml:1
+loop_id: LOOP-20260902001553   # provenance根
+task_id: BENCH-RUN1-001
+team_id: team-7adee145          # Orchestrator form_team(task) md5生成
+started_at: 2026-09-02T00:15:53
+completed_at: 2026-09-02T00:24:18
+final_status: completed
+runtime: delegated TEAM-team-7adee145 TRACE-TEAM-team-7adee145 executor: multi-agent
+Stage 1 Retrieval: retrieved_count=5 hypotheses=0 memory_ids=[S-002,T-005,P-001,T-010,S-001] - 无H-xxx (前置状态清洁)
+Stage 3.5 Orchestrator: should_form_team True is_multi_agent True cards_total=7
+Stage 3.6 Collaboration: cards_completed 7/7 failed 0 team_status success execution_order [backend-architect, llm-engineer, database-engineer, rag-engineer, prompt-engineer, code-reviewer, testing-engineer]
+TeamResult File (真实产物, 105KB):
+~/.agents/runtime/loop-controller/validation/team-result-LOOP-20260902001553.yaml:1
+- 包含 lead_output 6370+chars 含 InterviewStateStore.java:34-46 + InterviewService.java:376-395 漂移分析 + 7 contributions token 45104 等真实执行痕迹 (非stub)
+Stage 6 Collector (真实路径):
+Multi-agent TeamResult collector: 23 candidates  # team_result_collector.py:322 collect_from_team_results
+CAND-LOOP-20260902001553-backend-architect-P8-INTERVIEWSTATESTORE-JAVA-34-RE reinforce P8-INTERVIEWSTATESTORE-JAVA-34-RE quality 5.0
+...
+ExperienceExtractor: 7 experiences technical_patterns enriched domain_patterns 10 each (file:line, class.method, code_block)
+Run1 Memory Lifecycle
+Candidate (真实Collector)
+- 数量: 23 (R1 reinforce 每agent 1-3 pattern + R2 create_hypothesis 2)
+- 质量: _assess_quality weighted 4.4-5.0 (completeness/accuracy/structure/actionability/novelty)
+- 证据字段: output_hash sha256 16chars, latency_ms, output_length, is_real_execution True, team_id, agent_role - 缺 session_id (缺陷见下)
+- target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-RE, P8-INTERVIEWSERVICE-JAVA-372-391- 等14唯一P8前缀 (通过 _pattern_to_memory_id 清洗截断30 chars)
+Hypothesis (Resolver 真实Bootstrap)
+Stage 6.5 Memory Resolution (loop_controller.py:981):
+candidates = resolve_candidates_targets(candidates)
+Memory Resolver: 21/23 bootstrapped → H-xxx
+P8-INTERVIEWSTATESTORE-JAVA-34-RE → H-001-INTERVIEWSTATESTORE-JAVA-34-RE
+P8-INTERVIEWSERVICE-JAVA-372-391- → H-002-INTERVIEWSERVICE-JAVA-372-391-
+...
+- Resolver 源码: memory_resolver.py:62 bootstrap_hypothesis 顺序生成 H-001..H-014, 幂等检查 tags 已存在则复用, 创建 memory/hypotheses/H-xxx.md 并追加 retrieval-index.yaml
+- 检索索引变化 (真实diff):
+# /tmp/retrieval-before.yaml (580 lines) vs ~/.agents/memory/retrieval-index.yaml (710 lines after Run1)
++ H-001-INTERVIEWSTATESTORE-JAVA-34-RE hypothesis loop LOOP-20260902001553 team team-7adee145 agent backend-architect observation_count 1 status hypothesis bootstrapped_at 2026-09-02T00:24:16...
+... (+14 entries, each with provenance source_loop/source_team/source_agent/tags auto-bootstrapped)
+- Hypothesis文件 (真实文件, 非手工): ~/.agents/memory/hypotheses/*.md:1 共14个, 每个 --- frontmatter memory_id/type/category/source_loop/... + 段落 Bootstrapped: <iso> + status: hypothesis requires second observation
+例 H-001-INTERVIEWSTATESTORE-JAVA-34-RE.md:1:
+memory_id: H-001-INTERVIEWSTATESTORE-JAVA-34-RE
+source_loop: LOOP-20260902001553
+source_team: team-7adee145
+source_agent: backend-architect
+tags: [auto-bootstrapped, interviewstatestore-java-34-re]
+observation_count: 1
+Promotion (阻塞 - 真实缺陷)
+Validator Stage 7 (validator.py:85):
+Validated: 0  Hypothesis: 0  Rejected: 15
+H-001 ... rejected — Missing session_id — cannot verify as real execution  # validator.py:118 is_real_execution check fails
+NEW rejected — Memory NEW not found ...
+- 根因: TeamResultCollector:91 evidence 未填 session_id, 而 validator.py:107 checks is_real_execution = len(all_session_ids)>0 导致全部 rejected, 即使 HYPOTHESIS_MIN_OBSERVATIONS=1 也未进入 hypothesis 状态
+- 因此: loop_state.validation.hypothesis_ids=[] rejected_ids=[H-001..H-014,NEW] promotion.promoted_ids=[]
+- 全局文件未更新: runtime/memory-feedback/promotion/validation-results.yaml:4 仍为 2026-09-01T02:02:55 (12 candidates) 未写入Run1的23, promotion-results.yaml:3 仍为 2026-09-01T03:09:53 (0 promoted) - loop_controller 的 quiet 模式未落盘全局文件 (仅state)
+结论 Run1: 部分真实: Collector→Resolver→Index 写入真实发生 (数据流经过, 文件可验证), 但 Resolver→Validator→Promoter 链路在 Validator 被证据缺陷拦截, 未产生 hypothesis 状态与 Promoter 晋升。
+Run2 Execution
+Command (同任务复现, 验证幂等与二次观测):
+timeout 900 python3 ~/.agents/runtime/loop-controller/loop_controller.py \
+  "BENCH-RUN2-001" "诊断 AI Interview Platform 的 session 状态漂移问题：检查 InterviewStateStore.java:34 ..." enabled "" opencode
+Loop State: ~/.agents/runtime/loop-controller/state/LOOP-20260902002514.yaml:1
+loop_id: LOOP-20260902002514
+task_id: BENCH-RUN2-001
+team_id: team-7adee145  # 同哈希, 确认确定性
+retrieved_count: 5  hypotheses: 0  # 未检索到H-xxx
+TeamResult: team-result-LOOP-20260902002514.yaml 122KB, 同7 agents, 23 candidates (21 bootstrapped)
+Resolver (幂等验证):
+H-001-INTERVIEWSTATESTORE-JAVA-34-RE → H-001 (复用Run1)
+H-004-INTERVIEWSTATESTORE-JAVA-34-46 → H-004 (复用)
+... + 8 新 H-015..H-022
+Total hypotheses after Run2: 22 (14+8)
+Validator: 同样 Rejected:14 Missing session_id (含复用H-001/H-002 等)
+Retrieval Evidence
+Run1前检索测试 (python adapt):
+adapt(task=Run1_text) -> total_retrieved 5 ranking [S-002,T-005,P-001,T-010,S-001] hypotheses []
+Run2检索 (真实loop的Stage1, retrieval_adapter.py:372):
+Stage1/10 Memory Retrieval: Retrieved 5 memories, 0 hypotheses Memory IDs [S-002,T-005,P-001,T-010,S-001]
+retrieval-history.yaml: ... BENCH-RUN2-001 retrieved_memories [S-002,T-005,P-001,T-010,S-001] (无H-xxx)
+深层诊断 (retrieval_optimizer.py:330):
+query classify InterviewStateStore.java:34 -> domains [backend,database,testing]
+hypothesis tags [auto-bootstrapped, interviewstatestore-java-34-re] domain_match 0 static_relevance 0.0 final_score 0.165 (< top5 0.36)
+after_filter 32 but TOP_K=5 -> hypotheses 被挤出 (排名~20)
+- 是否被找到: 否 (0/22 可检索, TopK外)
+- 是否进入Agent context: 否 (decision_context.memories 含 S-002等, hypotheses=[], prompt_prefix 未含H-xxx)
+- 证据: runtime/memory-feedback/retrieval/retrieval-history.yaml timestamp 2026-09-02T00:25:15 的 entry exclude_hypothesis false 仍为空; loop_state.retrieval.hypotheses=[]
+Decision Influence
+- Router influence: memory_influence: confirmation (基于既有T-005等非H-xxx)
+- Orchestrator: 未受H-xxx影响 (lead仍 backend-architect, rules R1/C1 未变)
+- Agent prompt: skill_loader 未注入H-xxx上下文 (检索为空)
+- 执行差异: Run1 vs Run2 的 task_cards 与 execution_order 几乎一致 (仅llm-engineer输出细微差异), 无基于历史假设的决策变更可观测
+结论: 未影响 Agent decision (因检索未命中)
+Validation Result
+预期二次观测晋升: hypothesis (1 obs) -> validated (2 obs) (validator.py:138 validation_runs>=2 -> validated)
+实际 Run2:
+- 对复用记忆如 H-001 应有 validation_runs=2 (source_executions LOOP-20260902001553 + LOOP-20260902002514) 但因 is_real_execution false 在 group_candidates_by_memory:107 前即 rejected, validate_memory_group:118 未进入 hypothesis分支
+- loop_state.validation.validated_ids=[] hypothesis_ids=[] 连续两轮
+- 无 validated 状态, 无 Promoter 证据升级 hypothesis -> runtime_validated
+全局状态:
+retrieval-index.yaml 中所有 H-xxx 仍 evidence_level hypothesis confidence low observation_count 1 status hypothesis
+无 validated, 无 last_validated_at 升级, state_version 未增
+是否升级 validated: 否
+Artifact Evidence
+要求产物	路径	变化/存在
+team-result 文件	~/.agents/runtime/loop-controller/validation/team-result-LOOP-20260902001553.yaml (105K) <br> team-result-LOOP-20260902002514.yaml (122K)	存在, 7 agents, status success, lead_output含真实缺陷分析
+retrieval-index.yaml 变化	~/.agents/memory/retrieval-index.yaml 580 -> 910 lines <br> diff /tmp/retrieval-before.yaml 显示 +210 lines	存在, +22 H-xxx entries
+memory/hypotheses/*.md	~/.agents/memory/hypotheses/H-001..H-022.md (22 files)	存在
+memory candidate	runtime/memory-feedback/memory-candidates.yaml (未自动更新, 但 loop_state.feedback.candidate_ids 非空) <br> loop_state.feedback.candidate_ids Run1 23, Run2 23	存在于 state, 全局文件滞后
+loop-state.yaml	runtime/loop-controller/state/LOOP-20260902001553.yaml <br> LOOP-20260902002514.yaml	存在
+validation-results.yaml	runtime/memory-feedback/promotion/validation-results.yaml	存在但 未更新 (仍2026-09-01)
+promotion-results.yaml	runtime/memory-feedback/promotion/promotion-results.yaml	存在但 未更新 (仍2026-09-01 0 promoted)
+retrieval-history.yaml	runtime/memory-feedback/retrieval/retrieval-history.yaml	存在, 新增Run1/Run2 entries
+数据流真实性验证 (Collector→Resolver→Validator→Promoter→Retrieval):
+- Collector→Resolver: 真实 (/tmp/run1.log TeamResult collector:23 candidates -> Memory Resolver:21/23 bootstrapped 可grep)
+- Resolver→Index: 真实 (git diff retrieval-index + ls hypotheses 已验证, bootstrapped_at 与 loop 时间一致)
+- Resolver→Validator: 经过但失败 (Validator: Rejected Missing session_id 日志证明调用 validate_candidates 真实执行, 非跳过)
+- Validator→Promoter: 未触发 (validated_results 空 -> promoter 0, 日志 Promoted:0)
+- Promoter→Index: 未触发 (无 evidence_level 升级)
+- Index→Retrieval: 经过但未命中TopK (retrieval_adapter 真实调用 retrieve 返回 5, 日志 Retrieved:5 memories,0 hypotheses 可验证, scoring计算 0.165 vs 0.36 已演算)
+- Retrieval→Decision: 空 (hypotheses[] -> Agent context 未注入)
+- Decision→Validation二次观测: 未晋升 (state validated_ids 仍空)
+Final Verdict
+FAIL
+理由:
+1. Run1 部分成功: 证明了 Multi-Agent → TeamResult → ExperienceExtractor (domain_patterns 10/exp) → MemoryCandidate (23) → MemoryResolver (21 bootstrapped) → H-xxx (14 md + index provenance) 为真实运行时, 非伪造 (team-result 100K+, resolver日志, git diff, 前置快照对比可复现)
+2. 关键链路断裂:
+- Validator 阻塞: TeamResultCollector evidence 缺 session_id 导致 is_real_execution 校验全部 rejected (14 hypotheses -> 0), 违反 Phase8.2.1.1 Test 预期 (_make_candidate 含 session_id 才能通过). 这是代码缺陷, 非配置问题.
+- Retrieval 失效: H-xxx 标签设计 (interviewstatestore-java-34-re) 与 domain/keyword scoring 无重叠, 静态 relevance 0.0 -> final 0.165 远低于既有记忆 0.36, TopK=5 永远不可达, hypothesis 永不被检索. 需Resolver生成domain相关tags或调整权重.
+- 因此 Promoter, Retrieval决策影响, 二次观测validated 均未发生. 尽管 Run2 复用H-001幂等, 仍因同缺陷 rejected, 未晋升 validated (需2 obs).
+3. 禁止修复约束下: 作为 Runtime Host 未修改 ~/.agents 架构, 未手工创建Memory, 保留真实缺陷现场, 故不能给出 PASS. 若仅考察 Resolver阶段可判 PARTIAL PASS, 但按 "必须确认数据流真实经过 Collector→Resolver→Validator→Promoter→Retrieval" 的严格标准, 整体闭环 未真实贯通, 判 FAIL.
+建议 (不修复, 仅记录):
+- team_result_collector.py:118 补充 session_id: f"TEAM-{team_id}-{loop_id}" 或复用 output_hash 作为 session 证据
+- memory_resolver.py:162 tags 增加 domain关键词 (如 backend, database, testing, cache-expiration, idempotency) 以提升 static relevance
+- loop_controller.py:1039 使 validate_candidates 结果落盘至全局 validation-results.yaml / promotion-results.yaml 便于审计, 或调整 reconciler 同步
+可复现命令 (已执行, 日志保留 /tmp/run1.log /tmp/run2.log):
+python3 ~/.agents/runtime/loop-controller/loop_controller.py BENCH-RUN1-001 "..." enabled "" opencode  # LOOP-20260902001553
+python3 ~/.agents/runtime/loop-controller/loop_controller.py BENCH-RUN2-001 "..." enabled "" opencode  # LOOP-20260902002514
+diff /tmp/retrieval-before.yaml ~/.agents/memory/retrieval-index.yaml
+ls ~/.agents/memory/hypotheses/H-*.md | wc -l  # 22

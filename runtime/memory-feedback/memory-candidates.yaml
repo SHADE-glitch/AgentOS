@@ -1,44 +1,46 @@
 version: '1.0'
 phase: 5.8.2.2
-generated_at: '2026-09-01T08:47:19Z'
+generated_at: '2026-09-02T00:33:53Z'
 generated_by: collector.py (Phase 5.8.2.2 Loop Controller)
 source_executions:
-- LOOP-20260901071053
-- EXEC-1788091469
-- EXEC-1788239176
 - LOOP-20260901071051
-- EXEC-1788238924
-- EXEC-1788239003
-- EXEC-1788239264
-- LOOP-20260901071754
-- LOOP-20260901071756
-- EXEC-1788239058
-- EXEC-1788246883
 - LOOP-20260901071750
-- EXEC-1788246664
-- EXEC-1788246853
-- LOOP-20260901082231
-- EXEC-1788246650
-- LOOP-20260901080640
-- EXEC-1788239014
-- LOOP-20260901071601
 - EXEC-1788246744
-- EXEC-1788137999
-- EXEC-1788229111
 - LOOP-20260901071414
-- EXEC-1788241726
-- EXEC-1788239184
-- EXEC-1788239096
-- LOOP-20260901071416
-- EXEC-1788229160
-- LOOP-20260901071410
-- EXEC-1788229083
-- EXEC-1788246964
-- EXEC-1788247073
-- LOOP-20260901071221
-- EXEC-1788228162
-- LOOP-20260901071047
 - EXEC-1788229112
+- EXEC-1788241726
+- LOOP-20260901071754
+- EXEC-1788246964
+- LOOP-20260901071053
+- LOOP-20260901071416
+- EXEC-1788091469
+- EXEC-1788239096
+- EXEC-1788228162
+- EXEC-1788239264
+- EXEC-1788239176
+- LOOP-20260901071410
+- EXEC-1788239003
+- EXEC-1788239058
+- LOOP-20260901071047
+- LOOP-20260902002514
+- EXEC-1788246664
+- EXEC-1788246883
+- LOOP-20260901071601
+- EXEC-1788246650
+- EXEC-1788239184
+- EXEC-1788229083
+- LOOP-20260901082231
+- LOOP-20260901080640
+- LOOP-20260902001553
+- EXEC-1788246853
+- LOOP-20260901071221
+- EXEC-1788137999
+- EXEC-1788239014
+- LOOP-20260901071756
+- EXEC-1788229160
+- EXEC-1788238924
+- EXEC-1788247073
+- EXEC-1788229111
 candidates:
 - candidate_id: CAND-EXEC-1788137999-E-004
   source_execution: EXEC-1788137999
@@ -4742,11 +4744,867 @@ candidates:
     team_id: team-d1f9ed4d
     is_lead: false
   outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-backend-architect-P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  candidate_type: reinforce
+  quality_score: 4.85
+  quality_breakdown: &id048
+    completeness: 5
+    accuracy: 5
+    structure: 4
+    actionability: 5
+    novelty: 5
+    weighted: 4.85
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewStateStore.java:34 Redis过期后DB回退. Confidence: 0.82.
+    Team: 7/7 completed.'
+  evidence: &id049
+    output_hash: 73b759738a77963b
+    token_usage: &id062
+      total: 35966
+      input: 324
+      output: 1864
+      reasoning: 193
+      cache_read: 33585
+      cache_write: 0
+    latency_ms: 118710
+    output_length: 4893
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-7adee145
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-backend-architect-P8-INTERVIEWSERVICE-JAVA-372-391-
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-391-
+  candidate_type: reinforce
+  quality_score: 4.85
+  quality_breakdown: *id048
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewService.java:372 391` `requireAsking()`:. Confidence:
+    0.82. Team: 7/7 completed.'
+  evidence: *id049
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-backend-architect-P8-INTERVIEWSERVICE-JAVA-373-381
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-373-381
+  candidate_type: reinforce
+  quality_score: 4.85
+  quality_breakdown: *id048
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewService.java:373 381. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id049
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-testing-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id050
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewStateStore.java:34 Redis 过期后 DB 回退逻辑. Confidence:
+    0.82. Team: 7/7 completed.'
+  evidence: &id051
+    output_hash: 46b395f0f3a0b03a
+    token_usage:
+      total: 46975
+      input: 3536
+      output: 4063
+      reasoning: 95
+      cache_read: 39281
+      cache_write: 0
+    latency_ms: 66550
+    output_length: 10794
+    is_real_execution: true
+    agent_role: testing-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-testing-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id050
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewStateStore.java:34 46`:. Confidence: 0.82. Team:
+    7/7 completed.'
+  evidence: *id051
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-testing-engineer-P8-INTERVIEWSERVICE-JAVA-372-391-
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-391-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id050
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewService.java:372 391`:. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id051
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-code-reviewer-P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id052
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewStateStore.java:34 read(). Confidence: 0.85. Team:
+    7/7 completed.'
+  evidence: &id053
+    output_hash: 0b4762a3ce6a1ad3
+    token_usage:
+      total: 44919
+      input: 1774
+      output: 3543
+      reasoning: 1665
+      cache_read: 37937
+      cache_write: 0
+    latency_ms: 73672
+    output_length: 9039
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-code-reviewer-P8-INTERVIEWSTATESTORE-JAVA-37-IF
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-37-IF
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id052
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewStateStore.java:37 if(json==null) return null //
+    过期/丢失/未写入. Confidence: 0.85. Team: 7/7 completed.'
+  evidence: *id053
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-code-reviewer-P8-INTERVIEWSTATESTORE-JAVA-43-CA
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-43-CA
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id052
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewStateStore.java:43 catch(JsonException) return null
+    // 解析失败同样归一为null. Confidence: 0.85. Team: 7/7 completed.'
+  evidence: *id053
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-database-engineer-P8-INTERVIEWSTATESTORE-JAVA-15-16
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-15-16
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: &id054
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 4
+    novelty: 3
+    weighted: 4.0
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewStateStore.java:15 16`)，但 `InterviewService.java:372
+    requireAsking()` 实现的 `Redi. Confidence: 0.79. Team: 7/7 completed.'
+  evidence: &id055
+    output_hash: b385de3f1f832837
+    token_usage:
+      total: 37809
+      input: 2261
+      output: 3473
+      reasoning: 1626
+      cache_read: 30449
+      cache_write: 0
+    latency_ms: 62503
+    output_length: 9416
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-database-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id054
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewStateStore.java:34 46. Confidence: 0.79. Team: 7/7
+    completed.'
+  evidence: *id055
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-database-engineer-P8-INTERVIEWSTATESTORE-JAVA-48-56
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-48-56
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id054
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewStateStore.java:48 56. Confidence: 0.79. Team: 7/7
+    completed.'
+  evidence: *id055
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-llm-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id056
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''llm-engineer''
+    identified pattern: InterviewStateStore.java:34 46. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: &id057
+    output_hash: f4bfb8de69f92ed1
+    token_usage:
+      total: 41424
+      input: 3639
+      output: 4058
+      reasoning: 270
+      cache_read: 33457
+      cache_write: 0
+    latency_ms: 70971
+    output_length: 10572
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-llm-engineer-P8-INTERVIEWSTATESTORE-JAVA-48-56
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-48-56
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id056
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''llm-engineer''
+    identified pattern: InterviewStateStore.java:48 56. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id057
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-llm-engineer-P8-INTERVIEWSERVICE-JAVA-372-391
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-391
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id056
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''llm-engineer''
+    identified pattern: InterviewService.java:372 391. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id057
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-rag-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id058
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''rag-engineer''
+    identified pattern: InterviewStateStore.java:34 46` + `InterviewService.java:372-391`
+    | **P1 高** | 是：可重现 |. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: &id059
+    output_hash: fcb7b16cf1131317
+    token_usage:
+      total: 44159
+      input: 8688
+      output: 2726
+      reasoning: 1784
+      cache_read: 30961
+      cache_write: 0
+    latency_ms: 56783
+    output_length: 7292
+    is_real_execution: true
+    agent_role: rag-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-rag-engineer-P8-INTERVIEWSERVICE-JAVA-124-192-
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-124-192-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id058
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''rag-engineer''
+    identified pattern: InterviewService.java:124 192` | **P1 高** | 是：重试即产生幽灵问答对+计数漂移
+    |. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id059
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-rag-engineer-P8-INTERVIEWSERVICE-JAVA-335-351-
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-335-351-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id058
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''rag-engineer''
+    identified pattern: InterviewService.java:335 351` + `RuleBasedScoringService.java:54-55`
+    | **P0 高** | 是：`. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id059
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-prompt-engineer-P8-INTERVIEWSERVICE-JAVA-182-183-
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-182-183-
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: &id060
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 4
+    novelty: 3
+    weighted: 4.0
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: InterviewService.java:182 183` (answer) 与 `115-116` (create)。若上次
+    `answer()` 在 `182 DB更. Confidence: 0.77. Team: 7/7 completed.'
+  evidence: &id061
+    output_hash: 1efb13cd3930534f
+    token_usage:
+      total: 39089
+      input: 3277
+      output: 3093
+      reasoning: 222
+      cache_read: 32497
+      cache_write: 0
+    latency_ms: 52102
+    output_length: 8402
+    is_real_execution: true
+    agent_role: prompt-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-prompt-engineer-P8-INTERVIEWSERVICE-JAVA-354-RLOC
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-354-RLOC
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id060
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: InterviewService.java:354 RLock`，`requireAsking` 在锁内读 Redis/DB，但锁
+    TTL `5s` (`63 LOCK_W. Confidence: 0.77. Team: 7/7 completed.'
+  evidence: *id061
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-prompt-engineer-P8-INTERVIEWSERVICE-JAVA-124-ANSW
+  source_execution: LOOP-20260902001553
+  target_memory: P8-INTERVIEWSERVICE-JAVA-124-ANSW
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id060
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: InterviewService.java:124 answer()` 幂等性缺失. Confidence: 0.77.
+    Team: 7/7 completed.'
+  evidence: *id061
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902001553-HYP-P8-PROBLEM-DATA-INCONSISTENCY
+  source_execution: LOOP-20260902001553
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 4.85
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 4
+    actionability: 5
+    novelty: 5
+    weighted: 4.85
+  reasoning: 'High-confidence lead agent (backend-architect) identified problem: Data
+    inconsistency. Context: **[LEAD team-7adee145] 诊断报告 — Session 状态漂移 + `answer`
+    幂等缺失 | 只分析未修改**
+
+
+    协同: `Testing Engineer` -> Red. Confidence: 0.82. Consider creating a new hypothesis
+    memory for this pattern.'
+  evidence:
+    output_hash: 73b759738a77963b
+    token_usage: *id062
+    latency_ms: 118710
+    output_length: 4893
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-7adee145
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260902001553-HYP-P8-PROBLEM-DUPLICATE-SUBMISSION
+  source_execution: LOOP-20260902001553
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 4.85
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 4
+    actionability: 5
+    novelty: 5
+    weighted: 4.85
+  reasoning: 'High-confidence lead agent (backend-architect) identified problem: Duplicate
+    submission. Context: **[LEAD team-7adee145] 诊断报告 — Session 状态漂移 + `answer` 幂等缺失
+    | 只分析未修改**
+
+
+    协同: `Testing Engineer` -> Red. Confidence: 0.82. Consider creating a new hypothesis
+    memory for this pattern.'
+  evidence:
+    output_hash: 73b759738a77963b
+    token_usage: *id062
+    latency_ms: 118710
+    output_length: 4893
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-7adee145
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260902002514-backend-architect-P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: &id063
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewStateStore.java:34 Redis 过期后 DB 回退逻辑. Confidence:
+    0.90. Team: 7/7 completed.'
+  evidence: &id064
+    output_hash: f68a2ac32db1c0bc
+    token_usage: &id077
+      total: 46491
+      input: 9415
+      output: 3367
+      reasoning: 316
+      cache_read: 33393
+      cache_write: 0
+    latency_ms: 115552
+    output_length: 9217
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-7adee145
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-backend-architect-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id063
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewStateStore.java:34 46. Confidence: 0.90. Team: 7/7
+    completed.'
+  evidence: *id064
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-backend-architect-P8-INTERVIEWSERVICE-JAVA-372-391
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-391
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id063
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewService.java:372 391. Confidence: 0.90. Team: 7/7
+    completed.'
+  evidence: *id064
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-testing-engineer-P8-INTERVIEWSTATESTORE-JAVA-1-61-
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-1-61-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id065
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewStateStore.java:1 61`, `interview/service/InterviewService.java:1-438`,
+    `inter. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: &id066
+    output_hash: e86f98bdb9433fca
+    token_usage:
+      total: 47147
+      input: 6158
+      output: 3885
+      reasoning: 639
+      cache_read: 36465
+      cache_write: 0
+    latency_ms: 71659
+    output_length: 10560
+    is_real_execution: true
+    agent_role: testing-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-testing-engineer-P8-INTERVIEWSERVICE-JAVA-372-381-
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-381-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id065
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewService.java:372 381` 的隐式 DB 降级矛盾 + `InterviewService.java:124`
+    完全无幂等键。网络重试/前. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id066
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-testing-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id065
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewStateStore.java:34 46. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id066
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-code-reviewer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id067
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewStateStore.java:34 46`:**. Confidence: 0.85. Team:
+    7/7 completed.'
+  evidence: &id068
+    output_hash: 3b9b039335ebfd6d
+    token_usage:
+      total: 41225
+      input: 2362
+      output: 3742
+      reasoning: 0
+      cache_read: 35121
+      cache_write: 0
+    latency_ms: 64240
+    output_length: 10208
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-code-reviewer-P8-INTERVIEWSERVICE-JAVA-372-391-
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-391-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id067
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewService.java:372 391` 回退逻辑:**. Confidence: 0.85.
+    Team: 7/7 completed.'
+  evidence: *id068
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-code-reviewer-P8-INTERVIEWSERVICE-JAVA-180-186-
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSERVICE-JAVA-180-186-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id067
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewService.java:180 186` & `335-341`. Confidence: 0.85.
+    Team: 7/7 completed.'
+  evidence: *id068
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-database-engineer-P8-INTERVIEWSTATESTORE-JAVA-14-27
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-14-27
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id069
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewStateStore.java:14 27` 注释声明 `状态机的单一权威来源` 存于 Redis，TTL=24h。.
+    Confidence: 0.82. Team: 7/7 completed.'
+  evidence: &id070
+    output_hash: cc7d7d9f9d61979f
+    token_usage:
+      total: 45135
+      input: 3446
+      output: 5513
+      reasoning: 223
+      cache_read: 35953
+      cache_write: 0
+    latency_ms: 83942
+    output_length: 15296
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-database-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id069
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewStateStore.java:34 46. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id070
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-database-engineer-P8-INTERVIEWSERVICE-JAVA-372-391-
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-391-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id069
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewService.java:372 391 requireAsking(). Confidence:
+    0.82. Team: 7/7 completed.'
+  evidence: *id070
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-llm-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: &id071
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 4
+    novelty: 3
+    weighted: 4.0
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''llm-engineer''
+    identified pattern: InterviewStateStore.java:34 read()` Redis 过期后 DB 回退逻辑 + `InterviewService.java:372
+    requi. Confidence: 0.77. Team: 7/7 completed.'
+  evidence: &id072
+    output_hash: ea25373ebf2dda16
+    token_usage:
+      total: 36258
+      input: 1889
+      output: 3242
+      reasoning: 1958
+      cache_read: 29169
+      cache_write: 0
+    latency_ms: 58730
+    output_length: 8713
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-llm-engineer-P8-INTERVIEWSTATESTORE-JAVA-15---
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-15---
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id071
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''llm-engineer''
+    identified pattern: InterviewStateStore.java:15 /** 面试会话运行时状态，存于 Redis，作为状态机的单一权威来源。
+    */. Confidence: 0.77. Team: 7/7 completed.'
+  evidence: *id072
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-llm-engineer-P8-INTERVIEWSERVICE-JAVA-372-PRIV
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-PRIV
+  candidate_type: reinforce
+  quality_score: 4.0
+  quality_breakdown: *id071
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''llm-engineer''
+    identified pattern: InterviewService.java:372 private SessionState requireAsking(Long
+    sessionId){. Confidence: 0.77. Team: 7/7 completed.'
+  evidence: *id072
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-rag-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id073
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''rag-engineer''
+    identified pattern: InterviewStateStore.java:34 46` + `InterviewService.java:372-391`.
+    Confidence: 0.80. Team: 7/7 completed.'
+  evidence: &id074
+    output_hash: b46abe486aca18f8
+    token_usage:
+      total: 40318
+      input: 2845
+      output: 2659
+      reasoning: 205
+      cache_read: 34609
+      cache_write: 0
+    latency_ms: 53624
+    output_length: 7307
+    is_real_execution: true
+    agent_role: rag-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-rag-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-PU
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-PU
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id073
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''rag-engineer''
+    identified pattern: InterviewStateStore.java:34 public SessionState read(Long
+    sessionId){. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id074
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-rag-engineer-P8-INTERVIEWSERVICE-JAVA-372-INTE
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-INTE
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id073
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''rag-engineer''
+    identified pattern: InterviewService.java:372 InterviewStateStore.SessionState
+    state = stateStore.read(ses. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id074
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-prompt-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-RE
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id075
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: InterviewStateStore.java:34 Redis 过期后 DB 回退. Confidence: 0.82.
+    Team: 7/7 completed.'
+  evidence: &id076
+    output_hash: 1df72a607e80c8b1
+    token_usage:
+      total: 44213
+      input: 4391
+      output: 2768
+      reasoning: 1421
+      cache_read: 35633
+      cache_write: 0
+    latency_ms: 69958
+    output_length: 7424
+    is_real_execution: true
+    agent_role: prompt-engineer
+    team_id: team-7adee145
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-prompt-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id075
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: InterviewStateStore.java:34 46. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id076
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-prompt-engineer-P8-INTERVIEWSTATESTORE-JAVA-48-56
+  source_execution: LOOP-20260902002514
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-48-56
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id075
+  reasoning: 'Multi-agent team (team-7adee145) execution succeeded. Agent ''prompt-engineer''
+    identified pattern: InterviewStateStore.java:48 56. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id076
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902002514-HYP-P8-PROBLEM-DATA-INCONSISTENCY
+  source_execution: LOOP-20260902002514
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (backend-architect) identified problem: Data
+    inconsistency. Context: # [LEAD] AI Interview Platform Session 状态漂移诊断报告 — team-7adee145
+
+
+    **Role: Backend Architect (Lead) | . Confidence: 0.90. Consider creating a new
+    hypothesis memory for this pattern.'
+  evidence:
+    output_hash: f68a2ac32db1c0bc
+    token_usage: *id077
+    latency_ms: 115552
+    output_length: 9217
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-7adee145
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260902002514-HYP-P8-PROBLEM-DUPLICATE-SUBMISSION
+  source_execution: LOOP-20260902002514
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (backend-architect) identified problem: Duplicate
+    submission. Context: # [LEAD] AI Interview Platform Session 状态漂移诊断报告 — team-7adee145
+
+
+    **Role: Backend Architect (Lead) | . Confidence: 0.90. Consider creating a new
+    hypothesis memory for this pattern.'
+  evidence:
+    output_hash: f68a2ac32db1c0bc
+    token_usage: *id077
+    latency_ms: 115552
+    output_length: 9217
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-7adee145
+    is_lead: true
+  outcome: hold
 cycle_summary:
-  total_candidates: 207
-  reinforce: 205
+  total_candidates: 253
+  reinforce: 247
   weaken: 0
-  create_hypothesis: 2
+  create_hypothesis: 6
   safety_checks:
     no_memory_off_processed: PASS
     all_candidates_from_real_traces: PASS
