@@ -111,6 +111,15 @@ adapters:
     integration_method: "direct CLI"
     status: "active"
 
+  freebuff:
+    description: "Freebuff host adapter — UserPromptSubmit hook (same pattern as OpenCode plugin)"
+    entry_points:
+      - "Freebuff UserPromptSubmit hook (bash)"
+      - "AOS Bootstrap script (Python)"
+      - "AOS Host Adapter (Python)"
+    integration_method: "hook + adapter subprocess (automatic prompt injection)"
+    status: "active"
+
 # ── Result Contract ─────────────────────────────────────────────
 # Every AOS invocation returns this structure to the host
 result_schema:

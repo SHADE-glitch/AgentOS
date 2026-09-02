@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "bash ~/.agents/.freebuff/worktrees/*/runtime/hosts/freebuff/hooks/prompt_submit.sh",
+        "timeout": 20
+      }
+    ]
+  },
+  "env": {
+    "AGENT_OS_ROOT": "~/.agents"
+  }
+}

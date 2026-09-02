@@ -10,7 +10,7 @@ phase: "6.0.4"
 # ── Host Interface ──────────────────────────────────────────────
 # Each host provides: context + task → AOS processes → result
 host:
-  type: ""                     # opencode | standalone | (future)
+  type: ""                     # opencode | standalone | freebuff | (future)
   session:
     id: ""                     # host session identifier
     working_directory: ""      # project root from host
@@ -156,6 +156,29 @@ adapters:
       - "CLI: aos run"
     integration_method: "direct CLI"
     status: "active"
+
+  freebuff:
+    description: "Freebuff host adapter — UserPromptSubmit hook (same pattern as OpenCode plugin)"
+    entry_points:
+      - "Freebuff UserPromptSubmit hook (bash)"
+      - "AOS Bootstrap script (Python)"
+      - "AOS Host Adapter (Python)"
+    integration_method: "hook + adapter subprocess (automatic prompt injection)"
+    status: "active"
+    recursion_protection:
+      env_guard: "AOS_HOST_ADAPTER_ACTIVE"
+      plugin_guard: "AOS_HOST_PLUGIN_ACTIVE"
+    hook:
+      event: "UserPromptSubmit"
+      script: "runtime/hosts/freebuff/hooks/prompt_submit.sh"
+      timeout_seconds: 20
+    bootstrap:
+      script: "runtime/hosts/freebuff/aos_bootstrap.py"
+      adapter: "runtime/hosts/opencode/aos_host_adapter.py"
+    config_file: "settings.json"
+    config_locations:
+      - "project directory: .freebuff/settings.json"
+      - "global: ~/.freebuff/settings.json"
 
 # ── Result Contract ─────────────────────────────────────────────
 # Every AOS invocation returns this structure to the host
