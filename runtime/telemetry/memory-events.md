@@ -2056,3 +2056,21 @@ memory_ids:
 hypothesis_count: 0
 timestamp: '2026-09-02T00:58:31.392182+00:00'
 ```
+
+## Memory Event — 2026-09-02T01:07:19.117892+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788311237
+task_id: BENCH8-2-1-2-RUN2
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T01:07:19.117892+00:00'
+```

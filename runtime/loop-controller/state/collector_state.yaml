@@ -1,6 +1,6 @@
 version: '1.0'
 phase: 5.8.2.2
-last_scan: '2026-09-02T00:33:53.865647+00:00'
+last_scan: '2026-09-02T01:13:56.678032+00:00'
 processed_traces:
 - trace_id: EXEC-1788137160
   processed_at: '2026-08-31T00:47:23.574413+00:00'
@@ -250,4 +250,10 @@ processed_traces:
   candidates_generated: 23
 - trace_id: TEAM-team-7adee145
   processed_at: '2026-09-02T00:33:53.865616+00:00'
+  candidates_generated: 23
+- trace_id: TEAM-team-576c9378
+  processed_at: '2026-09-02T01:06:57.289174+00:00'
+  candidates_generated: 20
+- trace_id: TEAM-team-96faa50f
+  processed_at: '2026-09-02T01:13:56.677995+00:00'
   candidates_generated: 23

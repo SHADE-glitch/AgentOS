@@ -5,6 +5,11 @@
 # Called by Freebuff on every prompt submission.
 # Calls AOS bootstrap → gets decision context → prepends to prompt.
 #
+# ⚠ COMPATIBILITY (verified 2026-09-02): freebuff CLI v0.0.165 has NO
+#   UserPromptSubmit hook runner — the binary never executes this script.
+#   It can only be invoked manually (smoke tests) or by other hosts.
+#   See reports/host-integration-freebuff-hook-investigation-2026-09-02.md
+#
 # Pipeline (same as OpenCode plugin):
 #   User submits prompt → This hook → aos_bootstrap.py → aos_host_adapter.py
 #   → Router/Memory → decision context → prepended to prompt

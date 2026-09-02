@@ -10809,3 +10809,31 @@ retrievals:
   - P-001
   - T-010
   - P-002
+- timestamp: '2026-09-02T01:07:18.913011+00:00'
+  query:
+    task_text: 'Run 2 — Related but Different: Redis cache invalidation drift in dashboard
+      aggregation. Solve Redis cache freshness in DashboardService.build which caches
+      dashboard:user:{userId} with 10 minutes TTL and does not invalidate after new
+      InterviewResult is written. This creates stale dashboard data after new interview
+      results are written, different workflow from session drift but same root cause
+      cache freshness and authority assumptions. Inspect DashboardService.build Redis
+      bucket, compare InterviewResult source-of-truth, verify dashboard remains stale
+      until expiry, check invalidation path. Only analysis, do not modify files.'
+    category: research
+    domains:
+    - frontend
+    - backend
+    - database
+    - ai
+    - data
+    roles:
+    - frontend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002

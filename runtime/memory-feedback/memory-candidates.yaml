@@ -1,46 +1,48 @@
 version: '1.0'
 phase: 5.8.2.2
-generated_at: '2026-09-02T00:33:53Z'
+generated_at: '2026-09-02T01:13:56Z'
 generated_by: collector.py (Phase 5.8.2.2 Loop Controller)
 source_executions:
 - LOOP-20260901071051
-- LOOP-20260901071750
-- EXEC-1788246744
-- LOOP-20260901071414
-- EXEC-1788229112
-- EXEC-1788241726
-- LOOP-20260901071754
-- EXEC-1788246964
-- LOOP-20260901071053
-- LOOP-20260901071416
-- EXEC-1788091469
-- EXEC-1788239096
-- EXEC-1788228162
-- EXEC-1788239264
-- EXEC-1788239176
-- LOOP-20260901071410
-- EXEC-1788239003
-- EXEC-1788239058
-- LOOP-20260901071047
-- LOOP-20260902002514
-- EXEC-1788246664
-- EXEC-1788246883
-- LOOP-20260901071601
-- EXEC-1788246650
-- EXEC-1788239184
-- EXEC-1788229083
-- LOOP-20260901082231
-- LOOP-20260901080640
-- LOOP-20260902001553
-- EXEC-1788246853
-- LOOP-20260901071221
-- EXEC-1788137999
-- EXEC-1788239014
-- LOOP-20260901071756
-- EXEC-1788229160
-- EXEC-1788238924
-- EXEC-1788247073
 - EXEC-1788229111
+- LOOP-20260902001553
+- EXEC-1788239176
+- LOOP-20260901071601
+- LOOP-20260901071750
+- EXEC-1788238924
+- EXEC-1788239184
+- LOOP-20260901071221
+- EXEC-1788239058
+- EXEC-1788239096
+- EXEC-1788246883
+- EXEC-1788246744
+- LOOP-20260901080640
+- LOOP-20260901071414
+- LOOP-20260901071756
+- LOOP-20260901071047
+- LOOP-20260902010717
+- EXEC-1788246664
+- LOOP-20260901071754
+- EXEC-1788229083
+- EXEC-1788239014
+- LOOP-20260902005829
+- EXEC-1788247073
+- EXEC-1788229112
+- EXEC-1788229160
+- EXEC-1788137999
+- EXEC-1788241726
+- EXEC-1788228162
+- LOOP-20260901082231
+- LOOP-20260901071053
+- EXEC-1788239003
+- EXEC-1788091469
+- EXEC-1788239264
+- LOOP-20260902002514
+- LOOP-20260901071416
+- EXEC-1788246964
+- LOOP-20260901071410
+- EXEC-1788246650
+- EXEC-1788246853
 candidates:
 - candidate_id: CAND-EXEC-1788137999-E-004
   source_execution: EXEC-1788137999
@@ -5600,11 +5602,830 @@ candidates:
     team_id: team-7adee145
     is_lead: true
   outcome: hold
+- candidate_id: CAND-LOOP-20260902005829-frontend-architect-P8-INTERVIEWSTATESTORE-JAVA-37-44
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-37-44
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: &id078
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''frontend-architect''
+    identified pattern: InterviewStateStore.java:37 44`) which `InterviewService.requireAsking()`
+    treats as cach. Confidence: 0.87. Team: 6/6 completed.'
+  evidence: &id079
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: a4674d6650dd2416
+    token_usage: &id090
+      total: 59624
+      input: 14333
+      output: 3063
+      reasoning: 387
+      cache_read: 41841
+      cache_write: 0
+    latency_ms: 152989
+    output_length: 11791
+    is_real_execution: true
+    agent_role: frontend-architect
+    team_id: team-576c9378
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-frontend-architect-P8-INTERVIEWSTATESTORE-JAVA-48-51
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-48-51
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id078
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''frontend-architect''
+    identified pattern: InterviewStateStore.java:48 51` | `redissonClient.getBucket(key).set(json,
+    TTL_HOURS, Ti. Confidence: 0.87. Team: 6/6 completed.'
+  evidence: *id079
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-frontend-architect-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id078
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''frontend-architect''
+    identified pattern: InterviewStateStore.java:34 46` | `bucket.get()==null → return
+    null` and `catch(Exceptio. Confidence: 0.87. Team: 6/6 completed.'
+  evidence: *id079
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-frontend-performance-P8-INTERVIEWSTATESTORE-JAVA-36-38
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-36-38
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: &id080
+    completeness: 5
+    accuracy: 4
+    structure: 3
+    actionability: 3
+    novelty: 3
+    weighted: 3.8
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''frontend-performance''
+    identified pattern: InterviewStateStore.java:36 38` | `bucket.get()==null → return
+    null`; also `null` on `pa. Confidence: 0.79. Team: 6/6 completed.'
+  evidence: &id081
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: 666eb332095f62f0
+    token_usage:
+      total: 38725
+      input: 2905
+      output: 2491
+      reasoning: 768
+      cache_read: 32561
+      cache_write: 0
+    latency_ms: 70802
+    output_length: 9531
+    is_real_execution: true
+    agent_role: frontend-performance
+    team_id: team-576c9378
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-frontend-performance-P8-INTERVIEWSERVICE-JAVA-372-381-
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-381-
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id080
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''frontend-performance''
+    identified pattern: InterviewService.java:372 381` | `stateStore.read()==null
+    → selectById() → new Session. Confidence: 0.79. Team: 6/6 completed.'
+  evidence: *id081
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-frontend-performance-P8-INTERVIEWSERVICE-JAVA-383-389-
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSERVICE-JAVA-383-389-
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id080
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''frontend-performance''
+    identified pattern: InterviewService.java:383 389` | Rejects `FINISHED`, allows
+    only `ASKING`/`START` |. Confidence: 0.79. Team: 6/6 completed.'
+  evidence: *id081
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-testing-engineer-P8-INTERVIEWSTATESTORE-JAVA-34-39
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-39
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: &id082
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 3
+    novelty: 4
+    weighted: 4.2
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewStateStore.java:34 39` `read()` returns `null` when
+    bucket missing (`bucket.get. Confidence: 0.82. Team: 6/6 completed.'
+  evidence: &id083
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: 661b89e76f7a9084
+    token_usage:
+      total: 42952
+      input: 488
+      output: 3666
+      reasoning: 1693
+      cache_read: 37105
+      cache_write: 0
+    latency_ms: 66489
+    output_length: 14585
+    is_real_execution: true
+    agent_role: testing-engineer
+    team_id: team-576c9378
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-testing-engineer-P8-INTERVIEWSERVICE-JAVA-372-391-
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-391-
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id082
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewService.java:372 391` `requireAsking(Long sessionId)`
+    — if `state == null` fa. Confidence: 0.82. Team: 6/6 completed.'
+  evidence: *id083
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-testing-engineer-P8-INTERVIEWSTATUS-JAVA-11-18--BU
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATUS-JAVA-11-18--BU
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id082
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''testing-engineer''
+    identified pattern: InterviewStatus.java:11 18` but service only allows `ASKING/START`
+    `386-387`) or any. Confidence: 0.82. Team: 6/6 completed.'
+  evidence: *id083
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-code-reviewer-P8-INTERVIEWSERVICE-JAVA-372-REQU
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSERVICE-JAVA-372-REQU
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: &id084
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 1
+    novelty: 4
+    weighted: 3.8
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewService.java:372 requireAsking()` masks expiry by
+    silently rehydrating from D. Confidence: 0.83. Team: 6/6 completed.'
+  evidence: &id085
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: 4ebd1c886cb30451
+    token_usage:
+      total: 48644
+      input: 5425
+      output: 3245
+      reasoning: 693
+      cache_read: 39281
+      cache_write: 0
+    latency_ms: 59205
+    output_length: 12545
+    is_real_execution: true
+    agent_role: code-reviewer
+    team_id: team-576c9378
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-code-reviewer-P8-INTERVIEWSERVICE-JAVA-286-DETA
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSERVICE-JAVA-286-DETA
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id084
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewService.java:286 detail()` — direct DB read) still
+    showing `ASKING`. Not reco. Confidence: 0.83. Team: 6/6 completed.'
+  evidence: *id085
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-code-reviewer-P8-INTERVIEWSTATESTORE-JAVA-34-39
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-39
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id084
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''code-reviewer''
+    identified pattern: InterviewStateStore.java:34 39` | `read()` returns `null`
+    on missing bucket *or* parse f. Confidence: 0.83. Team: 6/6 completed.'
+  evidence: *id085
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-backend-architect-P8-INTERVIEWSTATESTORE-JAVA-14-16
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-14-16
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id086
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewStateStore.java:14 16` declares Redis as **single
+    authoritative source** for st. Confidence: 0.85. Team: 6/6 completed.'
+  evidence: &id087
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: b5f8d805dfb6d5bb
+    token_usage:
+      total: 45389
+      input: 980
+      output: 2834
+      reasoning: 438
+      cache_read: 41137
+      cache_write: 0
+    latency_ms: 84353
+    output_length: 11406
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-576c9378
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-backend-architect-P8-INTERVIEWSTATESTORE-JAVA-30-32
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-30-32
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id086
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewStateStore.java:30 32`) is volatile. MySQL `interview_session`
+    (`schema.sql:46-. Confidence: 0.85. Team: 6/6 completed.'
+  evidence: *id087
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-backend-architect-P8-INTERVIEWSTATESTORE-JAVA-34-46
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATESTORE-JAVA-34-46
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id086
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewStateStore.java:34 46`:. Confidence: 0.85. Team:
+    6/6 completed.'
+  evidence: *id087
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-database-engineer-P8-INTERVIEWSERVICE-JAVA-124-192-
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSERVICE-JAVA-124-192-
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: &id088
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 1
+    novelty: 4
+    weighted: 3.8
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewService.java:124 192,194-276,372-391`. Confidence:
+    0.82. Team: 6/6 completed.'
+  evidence: &id089
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: 395e022084f8e09f
+    token_usage:
+      total: 40941
+      input: 2923
+      output: 3480
+      reasoning: 1721
+      cache_read: 32817
+      cache_write: 0
+    latency_ms: 71465
+    output_length: 13826
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-576c9378
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-database-engineer-P8-INTERVIEWSESSION-JAVA-25-40-
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSESSION-JAVA-25-40-
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id088
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewSession.java:25 40`. Confidence: 0.82. Team: 6/6
+    completed.'
+  evidence: *id089
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-database-engineer-P8-INTERVIEWSTATUS-JAVA-7-21-
+  source_execution: LOOP-20260902005829
+  target_memory: P8-INTERVIEWSTATUS-JAVA-7-21-
+  candidate_type: reinforce
+  quality_score: 3.8
+  quality_breakdown: *id088
+  reasoning: 'Multi-agent team (team-576c9378) execution succeeded. Agent ''database-engineer''
+    identified pattern: InterviewStatus.java:7 21`. Confidence: 0.82. Team: 6/6 completed.'
+  evidence: *id089
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902005829-HYP-P8-PROBLEM-DATA-INCONSISTENCY
+  source_execution: LOOP-20260902005829
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (frontend-architect) identified problem:
+    Data inconsistency. Context: # Run 1 Analysis: Redis Session TTL Runtime State
+    Drift
+
+
+    **Team:** team-576c9378 — lead Frontend Arc. Confidence: 0.87. Consider creating
+    a new hypothesis memory for this pattern.'
+  evidence:
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: a4674d6650dd2416
+    token_usage: *id090
+    latency_ms: 152989
+    output_length: 11791
+    is_real_execution: true
+    agent_role: frontend-architect
+    team_id: team-576c9378
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260902005829-HYP-P8-PROBLEM-DUPLICATE-SUBMISSION
+  source_execution: LOOP-20260902005829
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (frontend-architect) identified problem:
+    Duplicate submission. Context: # Run 1 Analysis: Redis Session TTL Runtime State
+    Drift
+
+
+    **Team:** team-576c9378 — lead Frontend Arc. Confidence: 0.87. Consider creating
+    a new hypothesis memory for this pattern.'
+  evidence:
+    session_id: TEAM-team-576c9378-LOOP-20260902005829
+    output_hash: a4674d6650dd2416
+    token_usage: *id090
+    latency_ms: 152989
+    output_length: 11791
+    is_real_execution: true
+    agent_role: frontend-architect
+    team_id: team-576c9378
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260902010717-frontend-architect-P8-DASHBOARDSERVICE-JAVA-48-67--I
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67--I
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: &id091
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''frontend-architect''
+    identified pattern: DashboardService.java:48 67` implements a **read-through cache
+    with fixed TTL and no . Confidence: 0.85. Team: 7/7 completed.'
+  evidence: &id092
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: 4e33b590182ab29a
+    token_usage: &id105
+      total: 49493
+      input: 2013
+      output: 3301
+      reasoning: 226
+      cache_read: 43953
+      cache_write: 0
+    latency_ms: 51709
+    output_length: 13433
+    is_real_execution: true
+    agent_role: frontend-architect
+    team_id: team-96faa50f
+    is_lead: true
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-frontend-architect-P8-DASHBOARDSERVICE-JAVA-51-58--T
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-51-58--T
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id091
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''frontend-architect''
+    identified pattern: DashboardService.java:51 58` treats Redis as source-of-truth
+    until expiry. DB remains. Confidence: 0.85. Team: 7/7 completed.'
+  evidence: *id092
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-frontend-architect-P8-DASHBOARDSERVICE-JAVA-70-77---
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-70-77---
+  candidate_type: reinforce
+  quality_score: 5.0
+  quality_breakdown: *id091
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''frontend-architect''
+    identified pattern: DashboardService.java:70 77`; post-mutation they change, cache
+    does not |. Confidence: 0.85. Team: 7/7 completed.'
+  evidence: *id092
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-frontend-performance-P8-DASHBOARDSERVICE-JAVA-48-67--I
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67--I
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: &id093
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 3
+    novelty: 4
+    weighted: 4.2
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''frontend-performance''
+    identified pattern: DashboardService.java:48 67` implements **cache-aside without
+    write-through invalidat. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: &id094
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: d5e64e0af0ef9aa9
+    token_usage:
+      total: 53809
+      input: 888
+      output: 3969
+      reasoning: 7
+      cache_read: 48945
+      cache_write: 0
+    latency_ms: 56288
+    output_length: 15874
+    is_real_execution: true
+    agent_role: frontend-performance
+    team_id: team-96faa50f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-frontend-performance-P8-DASHBOARDSERVICE-JAVA-48-67-
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67-
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id093
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''frontend-performance''
+    identified pattern: DashboardService.java:48 67`. Confidence: 0.80. Team: 7/7
+    completed.'
+  evidence: *id094
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-frontend-performance-P8-REDISSONCONFIG-JAVA-22-28----R
+  source_execution: LOOP-20260902010717
+  target_memory: P8-REDISSONCONFIG-JAVA-22-28----R
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id093
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''frontend-performance''
+    identified pattern: RedissonConfig.java:22 28` (`redis://host:port`, pool 16)
+    — single-server, no clust. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id094
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-system-architect-P8-DASHBOARDSERVICE-JAVA-38-67-
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-38-67-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: &id095
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 4
+    novelty: 4
+    weighted: 4.4
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''system-architect''
+    identified pattern: DashboardService.java:38 67`. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: &id096
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: 15eda85a2779fc0d
+    token_usage:
+      total: 54536
+      input: 1774
+      output: 3914
+      reasoning: 735
+      cache_read: 48113
+      cache_write: 0
+    latency_ms: 68614
+    output_length: 15710
+    is_real_execution: true
+    agent_role: system-architect
+    team_id: team-96faa50f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-system-architect-P8-REDISSONCONFIG-JAVA-22-28--CON
+  source_execution: LOOP-20260902010717
+  target_memory: P8-REDISSONCONFIG-JAVA-22-28--CON
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id095
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''system-architect''
+    identified pattern: RedissonConfig.java:22 28` configures single-server Redisson
+    — no cluster invalidat. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id096
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-system-architect-P8-DASHBOARDSERVICE-JAVA-69-77-
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-69-77-
+  candidate_type: reinforce
+  quality_score: 4.4
+  quality_breakdown: *id095
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''system-architect''
+    identified pattern: DashboardService.java:69 77`. Confidence: 0.82. Team: 7/7
+    completed.'
+  evidence: *id096
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-technical-reviewer-P8-DASHBOARDSERVICE-JAVA-48-67
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: &id097
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 3
+    novelty: 4
+    weighted: 4.2
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''technical-reviewer''
+    identified pattern: DashboardService.java:48 67. Confidence: 0.82. Team: 7/7 completed.'
+  evidence: &id098
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: ccf1d8ec519436cb
+    token_usage:
+      total: 49252
+      input: 284
+      output: 2990
+      reasoning: 681
+      cache_read: 45297
+      cache_write: 0
+    latency_ms: 75301
+    output_length: 12172
+    is_real_execution: true
+    agent_role: technical-reviewer
+    team_id: team-96faa50f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-technical-reviewer-P8-REDISSONCONFIG-JAVA-22-28---RE
+  source_execution: LOOP-20260902010717
+  target_memory: P8-REDISSONCONFIG-JAVA-22-28---RE
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id097
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''technical-reviewer''
+    identified pattern: RedissonConfig.java:22 28` `redis://host:port` pool 4/16..
+    Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id098
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-technical-reviewer-P8-DASHBOARDSERVICE-JAVA-69-153--
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-69-153--
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id097
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''technical-reviewer''
+    identified pattern: DashboardService.java:69 153` aggregates **two DB tables**:.
+    Confidence: 0.82. Team: 7/7 completed.'
+  evidence: *id098
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-backend-architect-P8-DASHBOARDSERVICE-JAVA-48-67---
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67---
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: &id099
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 3
+    novelty: 4
+    weighted: 4.2
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''backend-architect''
+    identified pattern: DashboardService.java:48 67` (Redis bucket read/write + TTL).
+    Confidence: 0.83. Team: 7/7 completed.'
+  evidence: &id100
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: cf58d34e2017ea2d
+    token_usage:
+      total: 47755
+      input: 1118
+      output: 2706
+      reasoning: 234
+      cache_read: 43697
+      cache_write: 0
+    latency_ms: 43879
+    output_length: 10835
+    is_real_execution: true
+    agent_role: backend-architect
+    team_id: team-96faa50f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-backend-architect-P8-INTERVIEWSERVICE-JAVA-149-150-
+  source_execution: LOOP-20260902010717
+  target_memory: P8-INTERVIEWSERVICE-JAVA-149-150-
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id099
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''backend-architect''
+    identified pattern: InterviewService.java:149 150,165-166,222-223,238-239,335-351`,
+    `RuleBasedScoringServi. Confidence: 0.83. Team: 7/7 completed.'
+  evidence: *id100
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-backend-architect-P8-DASHBOARDCONTROLLER-JAVA-19-21
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDCONTROLLER-JAVA-19-21
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id099
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''backend-architect''
+    identified pattern: DashboardController.java:19 21`, `RedissonConfig.java:22-29`,
+    frontend `Dashboard.vue:16. Confidence: 0.83. Team: 7/7 completed.'
+  evidence: *id100
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-database-engineer-P8-DASHBOARDSERVICE-JAVA-48-67-
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67-
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: &id101
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 3
+    novelty: 4
+    weighted: 4.2
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''database-engineer''
+    identified pattern: DashboardService.java:48 67`. Confidence: 0.80. Team: 7/7
+    completed.'
+  evidence: &id102
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: a1c921aff8d819c8
+    token_usage:
+      total: 54110
+      input: 2173
+      output: 2949
+      reasoning: 235
+      cache_read: 48753
+      cache_write: 0
+    latency_ms: 48086
+    output_length: 12111
+    is_real_execution: true
+    agent_role: database-engineer
+    team_id: team-96faa50f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-database-engineer-P8-DASHBOARDCONTROLLER-JAVA-19-21
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDCONTROLLER-JAVA-19-21
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id101
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''database-engineer''
+    identified pattern: DashboardController.java:19 21` = `GET /api/dashboard` → `dashboardService.build(UserCon.
+    Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id102
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-database-engineer-P8-DASHBOARDSERVICE-JAVA-69-153--
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-69-153--
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id101
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''database-engineer''
+    identified pattern: DashboardService.java:69 153` aggregates two tables:**. Confidence:
+    0.80. Team: 7/7 completed.'
+  evidence: *id102
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-llm-engineer-P8-DASHBOARDSERVICE-JAVA-48-67--I
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67--I
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: &id103
+    completeness: 5
+    accuracy: 5
+    structure: 3
+    actionability: 3
+    novelty: 4
+    weighted: 4.2
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''llm-engineer''
+    identified pattern: DashboardService.java:48 67` implements a **read-through cache
+    without invalidation**. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: &id104
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: 64d0aca14e6ea823
+    token_usage:
+      total: 52454
+      input: 1055
+      output: 3824
+      reasoning: 294
+      cache_read: 47281
+      cache_write: 0
+    latency_ms: 52886
+    output_length: 15081
+    is_real_execution: true
+    agent_role: llm-engineer
+    team_id: team-96faa50f
+    is_lead: false
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-llm-engineer-P8-DASHBOARDSERVICE-JAVA-48-67
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-48-67
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id103
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''llm-engineer''
+    identified pattern: DashboardService.java:48 67. Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id104
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-llm-engineer-P8-DASHBOARDSERVICE-JAVA-69-153--
+  source_execution: LOOP-20260902010717
+  target_memory: P8-DASHBOARDSERVICE-JAVA-69-153--
+  candidate_type: reinforce
+  quality_score: 4.2
+  quality_breakdown: *id103
+  reasoning: 'Multi-agent team (team-96faa50f) execution succeeded. Agent ''llm-engineer''
+    identified pattern: DashboardService.java:69 153` aggregates **two source tables**:.
+    Confidence: 0.80. Team: 7/7 completed.'
+  evidence: *id104
+  outcome: promoted
+- candidate_id: CAND-LOOP-20260902010717-HYP-P8-PROBLEM-DATA-INCONSISTENCY
+  source_execution: LOOP-20260902010717
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (frontend-architect) identified problem:
+    Data inconsistency. Context: # Run 2 — Redis Cache Invalidation Drift in `DashboardService.build`
+    — Lead Analysis
+
+
+    **Team:** team. Confidence: 0.85. Consider creating a new hypothesis memory for
+    this pattern.'
+  evidence:
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: 4e33b590182ab29a
+    token_usage: *id105
+    latency_ms: 51709
+    output_length: 13433
+    is_real_execution: true
+    agent_role: frontend-architect
+    team_id: team-96faa50f
+    is_lead: true
+  outcome: hold
+- candidate_id: CAND-LOOP-20260902010717-HYP-P8-PROBLEM-NULL-POINTER
+  source_execution: LOOP-20260902010717
+  target_memory: NEW
+  candidate_type: create_hypothesis
+  quality_score: 5.0
+  quality_breakdown:
+    completeness: 5
+    accuracy: 5
+    structure: 5
+    actionability: 5
+    novelty: 5
+    weighted: 5.0
+  reasoning: 'High-confidence lead agent (frontend-architect) identified problem:
+    Null pointer. Context: # Run 2 — Redis Cache Invalidation Drift in `DashboardService.build`
+    — Lead Analysis
+
+
+    **Team:** team. Confidence: 0.85. Consider creating a new hypothesis memory for
+    this pattern.'
+  evidence:
+    session_id: TEAM-team-96faa50f-LOOP-20260902010717
+    output_hash: 4e33b590182ab29a
+    token_usage: *id105
+    latency_ms: 51709
+    output_length: 13433
+    is_real_execution: true
+    agent_role: frontend-architect
+    team_id: team-96faa50f
+    is_lead: true
+  outcome: hold
 cycle_summary:
-  total_candidates: 253
-  reinforce: 247
+  total_candidates: 296
+  reinforce: 286
   weaken: 0
-  create_hypothesis: 6
+  create_hypothesis: 10
   safety_checks:
     no_memory_off_processed: PASS
     all_candidates_from_real_traces: PASS
