@@ -2718,3 +2718,27 @@ started_at: '2026-09-01T09:26:07.244627+00:00'
 completed_at: '2026-09-01T09:26:07.244989+00:00'
 timestamp: '2026-09-01T09:26:07.245018+00:00'
 ```
+
+## Route Event — 2026-09-02T07:12:31.976914+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788333151
+task_id: BENCH-R2-EXACT
+intent: testing
+domains:
+- backend
+- ai
+- testing
+lead_skill: backend-architect
+support_skills:
+- testing-engineer
+- code-reviewer
+confidence: low
+memory_influence: confirmation
+rules_applied:
+- Domain 'backend' → lead backend-architect
+started_at: '2026-09-02T07:12:31.976498+00:00'
+completed_at: '2026-09-02T07:12:31.976889+00:00'
+timestamp: '2026-09-02T07:12:31.976914+00:00'
+```

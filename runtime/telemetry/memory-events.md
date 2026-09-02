@@ -1984,3 +1984,21 @@ memory_ids:
 hypothesis_count: 0
 timestamp: '2026-09-01T09:26:07.243926+00:00'
 ```
+
+## Memory Event — 2026-09-02T07:12:31.976117+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788333151
+task_id: BENCH-R2-EXACT
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- E-004
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T07:12:31.976117+00:00'
+```
