@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Agent OS - Generated runtime state
+runtime/loop-controller/state/
+runtime/logs/
+runtime/traces/
+runtime/metrics/
+runtime/telemetry/
+runtime/analytics/
+
+# Agent OS - Memory and hypotheses (generated during runtime)
+memory/hypotheses/
+memory/*/state/
+memory/*/retrieval/
+memory/*/feedback/
+
+# Freebuff worktrees
+.freebuff/worktrees/
+
+# Reports and audit files (if generated dynamically)
+reports/
+*Audit-Report.md
+*Implementation-Report.md
+*Validation-Report.md
+*Gap-Report.md
+*Code-Review.md
+
+# Test artifacts
+tests/__pycache__/
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
