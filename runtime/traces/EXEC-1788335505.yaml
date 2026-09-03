@@ -1,0 +1,179 @@
+# Execution Trace — AOS-CEFB35 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T07:51:45.747377+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788335505
+trace_id: TRACE-EXEC-1788335505-08a4cc40308e
+task_id: AOS-CEFB35
+task_text: KeywordKnowledgeRetriever fallback returns all child knowledge points for
+  a topic when no keyword match exists, diluting prompt context — assess impact.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T07:50:16.538490+00:00'
+    memory_retrieved: '2026-09-02T07:50:16.542959+00:00'
+    routing_completed: '2026-09-02T07:50:16.570848+00:00'
+    skill_loaded: '2026-09-02T07:50:16.575795+00:00'
+    orchestration_completed: '2026-09-02T07:50:16.576509+00:00'
+    agent_started: '2026-09-02T07:50:16.582324+00:00'
+    agent_completed: '2026-09-02T07:51:45.747280+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T07:50:16.418688+00:00'
+  pid: 756253
+  cwd: /home/shade/Public/test
+  task_id: AOS-CEFB35
+router:
+  intent: coding
+  lead_skill: prompt-engineer
+  support_skills:
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'ai' → lead prompt-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  influence: none
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: prompt-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  skills_loaded:
+  - prompt-engineer
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: prompt-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9ee71425ffe5vCvq09HsY5oK8
+  tokens:
+    total: 33346
+    input: 1681
+    output: 1843
+    reasoning: 126
+    cache_read: 29696
+    cache_write: 0
+  cost: 0
+  latency_ms: 89163
+agent_response: "## 目标\n- **业务目标:** 关键词检索在「规则模式」（`app.interview.mode=rule`，即无向量 RAG）下，为面试\
+  \ AI 提供与候选回答/题目相关的知识点上下文。\n- **当前约束:** 纯关键词匹配，无向量化；`KeywordKnowledgeRetriever.java:32-73`\
+  \ 是唯一实现；目前 `InterviewService` 声明了 `knowledgeRetriever` 字段但**尚未在任一 prompt 构建路径中调用**（已验证，全库仅匹配到声明这一处，见下方「关键发现」）。\n\
+  - **成功标准:** 注入上下文的 `信噪比` 高——只返回真正与 query 相关的知识点；上下文长度有界；prompt 不会被误导。\n\n## 问题判断\n\
+  \n**根因:** `matchCount == 0` 分支把该主题下的**全部子知识点**无上限地拼接进上下文，同时保留了误导性的前缀标语。\n\n**影响拆解（4\
+  \ 个独立缺陷）：**\n\n1. **语义误导（最严重）** —— `KeywordKnowledgeRetriever.java:48` 的前缀 `\"以下是与查询相关的知识点（供参考）：\\\
+  n\"` 在匹配流程和 fallback 流程中**共用**。fallback 命中的是 `\"当前主题知识点：\"` 也就是在 loop 结束后（`retrieveContext`\
+  \ 已返回 `String`）你无法改前缀——因为前缀是**方法顶部就 append** 的，fallback 只是接着追加。最终 prompt 会出现：\n\
+  \   ```\n   以下是与查询相关的知识点（供参考）：\n   当前主题知识点：A、B、C、D、E、F、…（几百个）\n   ```\n   模型被**明确告知**“这些都相关”，于是会把无关知识点当作证据去评分/追问\
+  \ → 检索不但没用，反而主动投毒。\n\n2. **上下文无界膨胀** —— 匹配分支有 `if (matchCount >= 5) break;` 上限（`:58`），fallback\
+  \ 分支**没有**任何上限（`:65-69`）。一个主题若有数百个子知识点，单次 `retrieveContext` 就能把上下文淹没，挤压问题/历史消息的\
+  \ token 预算。\n\n3. **可能返回“有头无内容”** —— 若主题只含根节点（`parentId == null`）、没有子节点，fallback\
+  \ 会返回 `\"以下是与查询相关的知识点（供参考）：\\n当前主题知识点：\"` 的空串尾巴，白白浪费 token 且无信息量。\n\n4. **格式瑕疵**\
+  \ —— 列表以 `、` 结尾（`:67`），无 `trim`/`String.join`；耦合度高，后续难以维护。\n\n**关键假设/已知限制:**\n-\
+  \ `KeywordKnowledgeRetriever` 目前**未接入任何 prompt 调用链**——字段已注入但从未调用。因此当前运行时**无实际影响**，但这是“潜伏的定时炸弹”：一旦接入即整体中毒。\n\
+  - 这是 F-NEG 负向控制任务本身，其技术结论与记忆基准口径一致：检索退化（miss 全量兜底）是**检索质量**问题，不是记忆影响力证据。\n\n## 方案设计\n\
+  \n**Option A —— 无兜底（miss 即返回空）**\n- Strengths: prompt 信噪比最高，token 完全有界，无误导风险。\n\
+  - Weaknesses: miss 时模型完全无外部参考，依赖自身知识。\n- Best for: 检索质量不能保证时的保守选项。\n\n**Option B\
+  \ —— 有界兜底 + 修正语义（推荐）**\n- Strengths: 保留兜底可用性，同时用明确标签与步长上限控制误导与膨胀。\n- Weaknesses:\
+  \ 仍需要合理选择兜底上限阈值。\n- Best for: 大多数场景，最小改动、行为可预期。\n\n**Option C —— 真正的 query 无关兜底被移除，fallback\
+  \ 改为泛化式（按父节点聚合）**\n- Strengths: 只输出父节点分类，信息更浓缩。\n- Weaknesses: 实现复杂度上升，需额外聚合逻辑。\n\
+  - Best for: 数据模型层级清晰、需要语义浓缩时。\n\n**Decision —— 推荐 Option B（修正语义 + 上限），并可选叠加 Option\
+  \ C 的聚合。**\n\n理由：最贴合当前地雷的最小、可测试修复；契合规则模式“无向量但要有参考”的定位。已接受权衡：miss 时仍可能给出部分无关上下文，但有界且明确标注；剩余风险：阈值选择与数据规模耦合，需用真实数据标定。\n\
+  \n## 实施方案\n\n修改位置：`backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:62-70`\n\
+  \n核心逻辑：把前缀拆成可复用的头部 + 有界语义区，加常数上限。\n\n```java\nprivate static final int MAX_FALLBACK_POINTS\
+  \ = 10;\n\npublic String retrieveContext(String query, String topic) {\n    if (query\
+  \ == null || query.isBlank()) return \"\";\n    List<KnowledgePoint> points = /*\
+  \ 原查询 */;\n    if (points.isEmpty()) return \"\";\n    StringBuilder sb = new StringBuilder();\n\
+  \    // 抽象出头部，放方法顶层不如在分支前统一声明\n    List<KnowledgePoint> matched = new ArrayList<>();\n\
+  \    String queryLower = query.toLowerCase();\n    for (KnowledgePoint point : points)\
+  \ {\n        if (point.getName().toLowerCase().contains(queryLower)\n          \
+  \      || (point.getDescription() != null\n                    && point.getDescription().toLowerCase().contains(queryLower)))\
+  \ {\n            matched.add(point);\n            if (matched.size() >= 5) break;\n\
+  \        }\n    }\n    if (!matched.isEmpty()) {\n        sb.append(\"以下是与查询相关、可能匹配的知识点（供参考）：\\\
+  n\");\n        for (KnowledgePoint point : matched)\n            sb.append(\"- \"\
+  ).append(point.getName()).append(\": \").append(point.getDescription()).append(\"\
+  \\n\");\n    } else {\n        // 兜底：明确标注为“主题概览”，不再误导为“与查询相关”\n        sb.append(\"\
+  （无法精确匹配查询，以下为主题全部子知识点概览，请仅据此判断回答是否命中相关主题）\\n\");\n        List<String> names = points.stream()\n\
+  \                .filter(p -> p.getParentId() != null)\n                .limit(MAX_FALLBACK_POINTS)\n\
+  \                .map(KnowledgePoint::getName)\n                .collect(Collectors.toList());\n\
+  \        if (names.isEmpty()) return \"\";          // 有头无内容：直接返回空\n        sb.append(\"\
+  主题知识点(前 \").append(names.size()).append(\" 条): \")\n          .append(String.join(\"\
+  、\", names));\n    }\n    return sb.toString();\n}\n```\n\n风险点与处理：\n- **风险 A（前缀仍可能与语义不符）**：将文案从“与查询相关”改为“主题概览”，消除误导——处理见上。\n\
+  - **风险 B（有头无内容）**：兜底前先判空，返回 `\"\"`——处理见上。\n- **风险 C（接入点缺失）**：当前字段未启用，无法真正验证端到端收益——需在\
+  \ `InterviewService` 的 prompt 组装处接入后再回归。\n\n## 验证方式\n\n- **测试/检查方式（推荐 JUnit，Mockito\
+  \ mock `KnowledgePointMapper`）**：\n  1. 无匹配时返回 < 上限条数，且文案含“概览”字样、不含“与查询相关”。\n  2.\
+  \ 只含根节点主题 → 返回 `\"\"`。\n  3. 子节点超过上限 → 返回恰好上限条。\n  4. 有匹配 → 与现状一致，仅返回命中项。\n- **预期结果:**\
+  \ miss 场景上下文 token 有界、语义诚实、不再污染评分/追问判断。\n- **额外基准建议:** 作为 F-NEG 观测点，记录两版命中提示，确认修复后“整包兜底放大\
+  \ miss”这一检索退化信号被消除，而非引入新的记忆相关性（该任务不应出现 AX1–AX4 的 memory-influence 提升）。\n\n---\n\
+  一句话结论：`matchCount==0` 分支当前**潜伏未启用**（`knowledgeRetriever` 字段无调用点），但接入后会造成「误导性前缀 +\
+  \ 无界上下文 + 全量无关知识点」——建议按 Option B 修复：**语义标签诚实化 + `MAX_FALLBACK_POINTS` 上限 + 空兜底直接返回\
+  \ `\"\"`**，并补 4 条 JUnit 用例。"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 89164
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T07:50:16.570848+00:00'
+    completed_at: '2026-09-02T07:50:16.570848+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-02T07:50:16.542959+00:00'
+    completed_at: '2026-09-02T07:50:16.542959+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T07:50:16.575795+00:00'
+    completed_at: '2026-09-02T07:50:16.575795+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T07:50:16.576509+00:00'
+    completed_at: '2026-09-02T07:50:16.576509+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T07:50:16.582324+00:00'
+    completed_at: '2026-09-02T07:51:45.747280+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

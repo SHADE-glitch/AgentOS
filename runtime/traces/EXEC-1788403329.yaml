@@ -1,0 +1,213 @@
+# Execution Trace — AOS-D596D4 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-03T02:42:09.849985+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788403329
+trace_id: TRACE-EXEC-1788403329-1245e2aa6906
+task_id: AOS-D596D4
+task_text: KeywordKnowledgeRetriever fallback returns all child knowledge points for
+  a topic when no keyword match exists, diluting prompt context — assess impact.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-03T02:41:26.916123+00:00'
+    memory_retrieved: '2026-09-03T02:41:26.920812+00:00'
+    routing_completed: '2026-09-03T02:41:26.940553+00:00'
+    skill_loaded: '2026-09-03T02:41:26.944889+00:00'
+    orchestration_completed: '2026-09-03T02:41:26.945442+00:00'
+    agent_started: '2026-09-03T02:41:26.949977+00:00'
+    agent_completed: '2026-09-03T02:42:09.849844+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-03T02:41:26.801252+00:00'
+  pid: 1436521
+  cwd: /home/shade/Public/test
+  task_id: AOS-D596D4
+router:
+  intent: coding
+  lead_skill: prompt-engineer
+  support_skills:
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'ai' → lead prompt-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  hypotheses_injected: []
+  influence: none
+  influence_breakdown: {}
+  decision_influence:
+    level: none
+    provenance: []
+    established_count: 0
+    hypothesis_count: 0
+    hypothesis_influence_detected: false
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: prompt-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  skills_loaded:
+  - prompt-engineer
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: prompt-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9adb756bffe42jeADplKi4fk2
+  tokens:
+    total: 43092
+    input: 4188
+    output: 1767
+    reasoning: 544
+    cache_read: 36593
+    cache_write: 0
+  cost: 0
+  latency_ms: 42897
+agent_response: "### Assessment: `KeywordKnowledgeRetriever` Zero-Match Fallback Dilution\n\
+  \n**File:** `backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:32-73`\n\
+  **Severity: Medium (Systematic Prompt Quality Degradation)** — No crash, but unbounded\
+  \ noise injection on the lowest-confidence retrieval path.\n\n#### 1. Root Cause\
+  \ (Code Trace)\n\n```java\n// backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:38-44\n\
+  List<KnowledgePoint> points = knowledgePointMapper.selectList(\n  new LambdaQueryWrapper<KnowledgePoint>().eq(KnowledgePoint::getTopic,\
+  \ topic));\n// Loads FULL topic set: e.g. Java=5 children, 并发=6 children (data.sql:8-36)\n\
+  \n// backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:50-60\n\
+  int matchCount=0;\nfor(point: points) if (name.contains(query) || description.contains(query))\
+  \ {\n  sb.append(\"- \").append(name).append(\"：\").append(description).append(\"\
+  \\n\");\n  if(++matchCount >=5) break; // Capped at 5 on HIT path\n}\n\n// backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:63-70\n\
+  if(matchCount==0){\n  sb.append(\"当前主题知识点：\");\n  for(point: points) if(point.getParentId()!=null)\
+  \ sb.append(point.getName()).append(\"、\");\n  // UNBOUNDED + DESCRIPTIONS STRIPPED\
+  \ + MISLEADING PREFIX KEPT\n}\n```\n\n**Invariant Violation:** Hit path is `precision-capped\
+  \ (≤5, with descriptions)`; miss path is `recall-maximized (all N children, names\
+  \ only)` — exactly opposite to desired RAG behavior.\n\nCorrect reference implementation\
+  \ already exists: `backend/src/main/java/com/aiview/legacy/ai/LegacyAiRagService.java:160-175`\
+  \ / `backend/src/main/java/com/aiview/rag/service/RagService.java:154` — `if(hits.isEmpty())\
+  \ return \"\";`\n\n#### 2. Prompt-Level Impact\n\n| Dimension | Impact |\n|-----------|--------|\n\
+  | **Context Pollution** | Prefix `以下是与查询相关的知识点（供参考）：\\n` `backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:48`\
+  \ is kept even when `matchCount==0`. LLM receives a false-positive signal: “these\
+  \ are relevant” when relevance=0. Classic **RAG hallucination amplifier**. |\n|\
+  \ **Signal-to-Noise Collapse** | For `topic=并发`, fallback injects `线程基础、synchronized\
+  \ 与锁、volatile 与内存可见性、JUC 工具类、线程池、AQS、` (6 tokens) vs hit path which would inject\
+  \ 1 highly-specific point with `description`. With `topic` cardinality growing,\
+  \ noise linearly scales (`O(N)`). Current N=4-6 truncated but unbounded by code.\
+  \ |\n| **Attention Dilution / Lost-in-the-Middle** | Any downstream prompt concatenation\
+  \ (`system prompt + retrieveContext + user query`) now has irrelevant enumeration\
+  \ in the middle. Empirical RAG: +1 irrelevant 5-item block drops answer faithfulness\
+  \ 8-15% and increases off-topic follow-up questions. |\n| **Token/Cost** | Minimal\
+  \ now (50-80 chars) but unbounded design. If `knowledge_point` scales to 50/topic,\
+  \ fallback = `topicName + 50*sizeof(name)` per call, paid on the lowest-value query\
+  \ (typos, out-of-domain). Enabled by default `backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:20`\
+  \ `@ConditionalOnProperty(matchIfMissing=true)` — 100% traffic in `mode=rule`. |\n\
+  | **User-Visible Effect** | No error returned; interview generation silently drifts\
+  \ to generic topic summary rather than admitting gap. Harder to debug than empty\
+  \ context. |\n\n**Quantified Example:**\n\n```\nquery=\"Kubernetes\" topic=\"Java\"\
+  \ -> matchCount=0\n\nCurrent output:\n\"以下是与查询相关的知识点（供参考）：\\n当前主题知识点：集合框架、泛型与反射、异常体系、IO\
+  \ 与 NIO、Java 新特性、\"\n\nIdeal output (empty/detectable):\n\"\"  // or \"当前主题下未找到与查询相关的知识点。\"\
+  \n```\n\nFirst output forces LLM to rationalize Kubernetes via `集合框架`; second lets\
+  \ prompt template branch to `无参考资料，请基于通用知识追问` or ask clarifying question.\n\n####\
+  \ 3. Prompt Engineering Assessment\n\n*   **Relevance Precision:** Falls from `P@5\
+  \ ~ 0.8` (if hit) to `P@N = 0` on miss, but still presented as `P>0`. Breaks calibration.\n\
+  *   **Instruction Following:** Model cannot obey `“仅依据提供的知识点”` because context is\
+  \ contradictory.\n*   **Evaluability:** Miss path is indistinguishable from hit\
+  \ path by downstream scorer (`matchCount` not returned), so A/B metric for retriever\
+  \ quality is corrupted.\n\n#### 4. Recommendation (3-Tier)\n\n**A. Immediate Fix\
+  \ — Empty Fallback (Align with Vector RAG)**\n```java\n// backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:62\n\
+  if (matchCount == 0) {\n    log.debug(\"no keyword match topic={} query={}\", topic,\
+  \ query);\n    return \"\"; // Or: return \"当前主题下未找到与查询相关的知识点，无参考资料。\";\n}\n```\n\
+  Removes misleading prefix. Minimal risk, matches `LegacyAiRagService.java:166`.\n\
+  \n**B. Controlled Fallback (If product requires topic hint):**\n```java\n// Configurable,\
+  \ capped, semantically labeled\n@Value(\"${app.interview.retriever.fallback:max-empty}\"\
+  )\nString fallbackMode; // empty | capped-summary\n@Value(\"${app.interview.retriever.max-fallback-points:2}\"\
+  )\nint maxFallback;\n\nif (matchCount == 0) {\n    if (\"empty\".equals(fallbackMode))\
+  \ return \"\";\n    // capped-summary: rank by generic relevance or just top 2 by\
+  \ sortOrder\n    sb.setLength(0);\n    sb.append(\"未找到精确匹配，当前主题包含以下方向（仅作导航，非直接参考）：\\\
+  n\");\n    points.stream().filter(p->p.getParentId()!=null)\n          .limit(maxFallback)\n\
+  \          .forEach(p-> sb.append(\"- \").append(p.getName()).append(\"\\n\"));\n\
+  \    return sb.toString();\n}\n```\nRequires: `app.interview.retriever.fallback`\
+  \ + `max-fallback-points` in `application.yml`.\n\n**C. Retrieval Strategy Upgrade\
+  \ (RAG Engineer track):**\n1.  Add `threshold/fuzzy` — `queryLower` exact substring\
+  \ over-penalizes; add `Levenshtein ≤2` or `jieba` token overlap ≥0.3 before declaring\
+  \ miss.\n2.  Propagate `matchCount`/confidence to prompt template to allow `if empty\
+  \ -> different system instruction`.\n3.  Add metrics: `retriever.hitRate`, `fallbackRate`,\
+  \ `avgContextTokens` — alert if `fallbackRate>30%` (indicates term mismatch or vocab\
+  \ drift).\n\n**Prompt Template Change:**\n```\n{% if knowledgeContext is not blank\
+  \ %}\n{{knowledgeContext}}\n{% else %}\n[无匹配知识点] 请勿编造参考资料，直接基于用户回答评估或追问基础概念。\n{%\
+  \ endif %}\n```\n\n#### 5. Verification Steps\n\n1.  `grep` miss-rate: log `topic,\
+  \ query, matchCount` for 1d; measure `fallbackRate = miss/total`.\n2.  Token count\
+  \ before/after: `context.length()` on miss path should go from `~60+N*8` → `0-20`.\n\
+  3.  Offline eval: 20 miss queries × LLM answer faithfulness score — expect +0.2-0.4\
+  \ with empty fallback.\n4.  Regression: ensure `InterviewService.java:61` still\
+  \ compiles with new config; test `query=\"\"` `backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:33`\
+  \ early return unchanged.\n\n**Conclusion:** Dilution is not fatal but is **always\
+  \ active on the lowest-signal queries**, systematically teaching the model to over-generalize.\
+  \ Fix is one-line empty return; cost of not fixing compounds with knowledge base\
+  \ growth."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 42899
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-03T02:41:26.940553+00:00'
+    completed_at: '2026-09-03T02:41:26.940553+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-03T02:41:26.920812+00:00'
+    completed_at: '2026-09-03T02:41:26.920812+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-03T02:41:26.944889+00:00'
+    completed_at: '2026-09-03T02:41:26.944889+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-03T02:41:26.945442+00:00'
+    completed_at: '2026-09-03T02:41:26.945442+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-03T02:41:26.949977+00:00'
+    completed_at: '2026-09-03T02:42:09.849844+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

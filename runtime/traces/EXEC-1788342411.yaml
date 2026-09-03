@@ -1,0 +1,180 @@
+# Execution Trace — AOS-797E44 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T09:46:51.266906+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788342411
+trace_id: TRACE-EXEC-1788342411-0db2efd9d220
+task_id: AOS-797E44
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T09:43:34.943243+00:00'
+    memory_retrieved: '2026-09-02T09:43:34.947831+00:00'
+    routing_completed: '2026-09-02T09:43:34.964835+00:00'
+    skill_loaded: '2026-09-02T09:43:34.967561+00:00'
+    orchestration_completed: '2026-09-02T09:43:34.968133+00:00'
+    agent_started: '2026-09-02T09:43:34.972585+00:00'
+    agent_completed: '2026-09-02T09:46:51.266816+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T09:43:34.818809+00:00'
+  pid: 868412
+  cwd: /home/shade/Public/test
+  task_id: AOS-797E44
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  influence: none
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9e7f578fffep4nkbFBhj6FEvF
+  tokens:
+    total: 45569
+    input: 984
+    output: 2127
+    reasoning: 1498
+    cache_read: 40960
+    cache_write: 0
+  cost: 0
+  latency_ms: 196292
+agent_response: "## 目标\n- **业务目标**:缓存透视 `dashboard:user:{userId}`（10 分钟 TTL）只应为“落后”提供有界的上限，绝不应在底层数据变更后仍作为事实来源被消耗。\n\
+  - **成功标准**:任何改变 `interview_result` 或已完成 `interview_session` 的写路径都必须使缓存失效；TTL 是最后兜底，而非主失效机制。\n\
+  \n## 问题判断\n当前代码 `DashboardService.java:52-71` 使用标准的 **cache-aside** 模式：\n- 读:`GET\
+  \ dashboard:user:{id}`;命中直接反序列化返回。\n- 未命中:`compute()` 从 DB(`interview_result` 行\
+  \ + 状态为 `FINISHED` 的会话，`DashboardService.java:93-177`)重新计算 → `SETEX 10min`。\n- `evict(userId)`\
+  \ 删除键，`DashboardService.java:81-91`。\n\n该聚合仅由**两个**实体喂入:`interview_result`(维度/建议)和\
+  \ `interview_session`(状态 FINISHED、totalScore、finishedAt)。因此只有触碰到这两个实体的变更才会使视图过期。\n\
+  \n### 缓存何时会过期\n1. 插入/更新 `interview_result`(新增或修改维度/总分数/建议)。\n2. `interview_session`\
+  \ 转为 `FINISHED`,或 `totalScore`/`finishedAt` 被填充——变更统计与趋势即会过期。\n3. 删除/软删除上述行(当前**不存在**任何此类删除路径,见下文)。\n\
+  4. 竞态窗口及失效失败(见“残余风险”)。\n\n对**不**影响聚类的修正(例如会话中的问答消息)无需失效——不调用 `evict` 是正确的。\n\n##\
+  \ 变更路径与 `evict` 覆盖情况(安全性审计)\n我枚举了每一条触碰这两个实体的写路径:\n\n| 路径 | 变更 | `evict` | 安全 |\n\
+  |---|---|---|---|\n| `InterviewService.answer()` 同步评分 | 插入 result、结束会话 | :152、:169,以及\
+  \ `finishSession` :349 | ✅(冗余) |\n| `InterviewService.answerStream()` | 同上 | :227、:244,+\
+  \ :349 | ✅ |\n| `finishSession()` → MQ 分发 | 状态 FINISHED、finishedAt | :349 | ✅ |\n\
+  | `RuleBasedScoringService`(异步,规则模式) | 插入 result、更新 totalScore | :57、:66 | ✅ |\n\
+  | `InterviewScoringService`(异步,AI 模式) | 同上 | :106、:111 | ✅ |\n| `LegacyAiScoringService`(遗留\
+  \ AI) | 同上 | :113、:118 | ✅ |\n| 删除 `interview_result`/`interview_session` | — |\
+  \ **不存在此类代码路径** | ✅(凭缺席实现) |\n| `GET /api/dashboard` | 只读 | 不调用 | ✅(无需) |\n\n共 11\
+  \ 个 `evict()` 调用点横跨四个服务,最终覆盖了**每一个**触及这两个实体的变更路径,且各个异步监听器通过 `@ConditionalOnProperty(app.interview.mode)`\
+  \ 互斥,因此运行时运行时不会发生双重消费。**结论:失效覆盖是全面的**——这些路径是安全/Cache stale 事实来源损坏风险是最低的。\n\n## 残余风险状态(即使覆盖完备)\n\
+  还存在多个有限窗口,其中缓存可能暂时过期——值得记录:\n\n1. **非原子提交→失效(cache-aside 的 T0/T2 竞态)**。DB insert/update\
+  \ 先执行,但 `evict()` 紧跟其后而且这些方法**没有** `@Transactional`。一个并发读取器可能:读取旧 DB → 计算 → 写入缓存,且发生在\
+  \ `evict()` 之后 → 将过期的聚合写入全新的 10 分钟 TTL,从而把过期窗口重置回完整 TTL。缩小窗口至毫秒级,但这是持续的真实存在。\n\n\
+  2. **失效是尽力而为**。`evict()` 是 try/catch、仅记录日志(`:88-90`)。如果 Redis `delete` 失败(连接抖动、集群故障转移),过期状态将持续到\
+  \ TTL 过期。同样 `bucket.set`(:66-69)失败会静默降级为未缓存(安全)但会产生 read-after-write miss。\n\n3.\
+  \ **没有 freshness stamp / version**。`build()` 信任缓存直到 TTL;从不会根据 DB 时间复杂度进行复核。通过对照\
+  \ `:58` 读取缓存、:64 未命中返回。缓存被当作权威数据处理,而不是作为投影。\n\n4. **相邻的正确性 bug 会污染返回值本体的正确性(缓存健康与否无关)**。`answer()`/`answerStream()`\
+  \ *同步*调用 `evaluationService.score` 并插入 result(:151/168/226/243),然后 `finishSession`\
+  \ 分发 RabbitMQ 评分,该监听器随后又对同一会话插入**另一个** result(`RuleBasedScoringService.java:56`、`InterviewScoringService.java:105`)。由于\
+  \ `interview_result.session_id` 是 `UNIQUE`(`schema.sql:76`),第二个插入会抛 `DuplicateKeyException`,并被\
+  \ catch(:113)捕获 → 无限 requeue/重试(platform 上配置未发现 DLQ)。这不会(由于唯一键)导致分数**双倍**计算,但会让异步管道持续失败,并重复无效缓存,同时该\
+  \ pipeline 会依靠哪个写入——存在事实来源模糊。\n\n## 决策\n**选项 A**:维持 cache-aside + 依赖 `evict` 覆盖(现状)\n\
+  - 优点:自己已有、性能最佳、失效覆盖已全面。\n- 缺点:T0/T2 竞态 + 尽力而为失效 ⇒ 记录不到的毫秒到 10 分钟过期窗口。\n\n**选项 B**:增加\
+  \ freshness stamp/version(GS version)\n- 优点:使“缓存是投影,不是事实来源”成为显式、不再依赖 TTL 隔离时效;可以在过期时检测到。\n\
+  - 缺点:每次读取需要维护/比较一个 counter;复杂度更高。\n\n**选项 C**:用 AFTER_COMMIT 失效 + 幂等评分\n- 优点:消除“提交前失效”竞态;让重复写对管道失效幂等。\n\
+  - 缺点:需要与 MQ 分发确认异步响应。\n\n**推荐**:A + C(针对现状态的最小低成本目标准确修复)。将 TTL 作为绑定上限即可,不必作为失效机制(理论上已接近);消除微小竞态,并修复相邻的错误。B\
+  \ 是可选的后续增强,只有当该面板会成为信任关键时才有必要。\n\n## 实施步骤\n**C1—保证在提交后调用 evict(消除“失效早于缓存重填”、“失效早于回滚”两个竞态)**\n\
+  ```java\n@Service\npublic class DashboardEvictionService {\n    private final DashboardService\
+  \ dashboardService;\n    // 仅当写事务提交后运行;回滚时不会失效\n    @EventListener\n    @Transactional(propagation\
+  \ = Propagation.REQUIRES_NEW)\n    public void onResultSaved(ResultPersistedEvent\
+  \ e) { dashboardService.evict(e.userId()); }\n}\n```\n在写入路径中:确认修改事务提交后发布 `ResultPersistedEvent(userId)`\
+  \ / `SessionFinishedEvent(userId)`(或直接调用 `dashboardService.evict(...)`,若方法为 `@Transactional`),因为当前方法既不执行\
+  \ `@Transactional`,而且 `evict` 位于提交前,就落在了最严重竞态路径上。在 `InterviewService.finishSession`、所有三个评分监听器中替换内联的\
+  \ `evict()` 调用。\n\n**C2—处理失败路径的幂等**\n- 在 `score()` 中插入前先检查是否存在 `result_by_session_id`:不存在再插入;否则仅更新会话并失效。这样重复异步投递会被自然吸收,避免\
+  \ `DuplicateKey → requeue → 无限重试`。\n- 为评分队列表配置一个 DLQ + `defaultRequeueRejected`;add\
+  \ `x-dead-letter-exchange`。\n\n**C3—降级为显式的 freshness 信号(可选,时机合适时)**。将缓存值包装为 `{ \"\
+  computedAt\": \"...\", \"payload\": {...} }`,并在 `build()` 中对比 DB 的 `MAX(updated_at)`——不要在每次读取都做(这会绕过缓存);仅当缓存旧于约定阈值时才重新计算,或将\
+  \ TTL 降至 `5m`,并将失效作为真实失效机制。如果想要更强:在 `compute` 写缓存时对 `dashboard:revision:{userId}`\
+  \ 使用 `INCR`,并在每次读到某版本标记时,若发现是旧版,则丢弃。\n\n**C4—可观测性**。为 `evict`/`rebuild` 增加 metrics/count(minimal/一次):`dashboard_cache_hit`,`dashboard_cache_miss`,`dashboard_evict`.同时调试将失败记录为\
+  \ warning(:89)的日志——失败只有变为即时可见,失效的可靠性才能可信。\n\n## 残留风险 & 下一步\n- 残余过期最大极限是竞态中的“失效→返回结果”窗口宽度(毫秒,或失效失败时最长\
+  \ 10 分钟)——对边界可接受,但要记录。\n- **验证**:编写一个集成测试——完成一次会话 → `build()` =缓存 V1;插入一条新 result\
+  \ 时不去失效 → 断言 `build()` 返回 V2(即失效已被调用)。并发:运行一个循环的 `build()`+`insert+evict` 200 次,断言最终读取值等于\
+  \ DB 的事实来源。\n- **回溯/复盘**:先解决重复写产生歧义的问题,否则缓存“正确”后仍可能被不稳定的管道喂入错误输入。"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 196294
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T09:43:34.964835+00:00'
+    completed_at: '2026-09-02T09:43:34.964835+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-02T09:43:34.947831+00:00'
+    completed_at: '2026-09-02T09:43:34.947831+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T09:43:34.967561+00:00'
+    completed_at: '2026-09-02T09:43:34.967561+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T09:43:34.968133+00:00'
+    completed_at: '2026-09-02T09:43:34.968133+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T09:43:34.972585+00:00'
+    completed_at: '2026-09-02T09:46:51.266816+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

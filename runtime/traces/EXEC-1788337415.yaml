@@ -1,0 +1,311 @@
+# Execution Trace — AOS-9AEDA9 (Memory ON)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T08:23:35.171206+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788337415
+trace_id: TRACE-EXEC-1788337415-fb9c52808016
+task_id: AOS-9AEDA9
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'on'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T08:22:06.306545+00:00'
+    memory_retrieved: '2026-09-02T08:22:08.356959+00:00'
+    routing_completed: '2026-09-02T08:22:08.358694+00:00'
+    skill_loaded: '2026-09-02T08:22:08.362046+00:00'
+    orchestration_completed: '2026-09-02T08:22:08.362853+00:00'
+    agent_started: '2026-09-02T08:22:08.368892+00:00'
+    agent_completed: '2026-09-02T08:23:35.171048+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T08:22:06.188496+00:00'
+  pid: 767632
+  cwd: /home/shade/Public/test
+  task_id: AOS-9AEDA9
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: confirmation
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: T-005
+    type: task
+    category: ai
+    relevance_score: 0.01
+    evidence_weight: 0.4
+    final_score: 0.361
+    used: true
+    match_reasons: &id003
+    - success_rate=0.85
+    - confidence=0.4
+  - memory_id: S-002
+    type: success
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.344
+    used: true
+    match_reasons: &id004
+    - success_rate=0.875
+    - confidence=0.4
+  - memory_id: P-001
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.339
+    used: true
+    match_reasons: &id005
+    - success_rate=0.857
+    - confidence=0.4
+  - memory_id: T-010
+    type: task
+    category: optimization
+    relevance_score: 0.0
+    evidence_weight: 0.0
+    final_score: 0.306
+    used: true
+    match_reasons: &id006
+    - success_rate=0.897
+  - memory_id: P-002
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.0
+    final_score: 0.289
+    used: true
+    match_reasons: &id007
+    - success_rate=0.95
+  memories_used:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002
+  influence: confirmation
+  memory_summary: Retrieved 5 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9ec9e6faffe9ECrpxcGhCC5LN
+  tokens:
+    total: 29521
+    input: 1222
+    output: 2547
+    reasoning: 152
+    cache_read: 25600
+    cache_write: 0
+  cost: 0
+  latency_ms: 86800
+agent_response: "No dashboard/aggregate source exists in this workspace — it holds\
+  \ prior-run logs and snapshots from the concurrent `InterviewStateStore` analysis\
+  \ (same domain: Redis + TTL, DB as source of truth, dual-write staleness). I'll\
+  \ deliver the assessment as a Database Engineer, structured and generalizable to\
+  \ your cache design, and explicitly flag where you must confirm against your actual\
+  \ code.\n\n# Dashboard Aggregate Caching in Redis: Staleness Assessment & Safe Mutation\
+  \ Paths\n\n## 1. Frame the model first\n\nA dashboard aggregate (`orders_today`,\
+  \ `total_revenue_7d`, `avg_checkout_time`, etc.) is a **derived, materialized read\
+  \ model**. Its source of truth is the transactional DB; Redis holds a hot projection\
+  \ with a TTL. The two questions — *when is it stale* and *which mutations are safe*\
+  \ — are both answered by the same principle:\n\n> **The cache is correct iff `(write_time\
+  \ of the projection's inputs) ≤ (cache build time)`.** Staleness is a function of\
+  \ the *write path*, not the TTL. TTL only bounds memory and bounds maximum visible\
+  \ lag; it does not restore freshness.\n\nSo assess stale-ness by classifying each\
+  \ **mutation path** against the cache's **invalidation strategy**, not by the TTL\
+  \ value alone.\n\n## 2. When is the cached view stale?\n\nA stale aggregate means:\
+  \ the projection in Redis reflects the DB **before** some committed write it should\
+  \ include. Root causes:\n\n| # | Condition | Mechanism | Detection |\n|---|-----------|-----------|-----------|\n\
+  | A | **Write landed in DB, cache not invalidated/refreshed** | missing invalidation\
+  \ on the mutation path | cache hits show old value; DB counters differ |\n| B |\
+  \ **Cache invalidated but not rebuilt before next read** | invalidation-on-write\
+  \ without read-through rebuild → thundering/empty miss, then rebuild | keyspace_misses\
+  \ spike; empty values served |\n| C | **TTL expiry between writes and reads** |\
+  \ passive or active TTL silently drops the key | `expired_keys`; aggregate absent\
+  \ on read |\n| D | **Write atomicity broken on dual-write** | DB committed, Redis\
+  \ set failed (non-transactional) → **stale-but-present**, no miss, no fallback |\
+  \ cache value ≠ DB value with no miss observed (the dangerous silent one) |\n| E\
+  \ | **Non-monotonic rebuild source** | rebuild reads a non-versioned, auto-correcting\
+  \ query (e.g. a rolling `SUM`) — a late/out-of-order event produces a wrong total\
+  \ | sampling consistency checks |\n\n### The three staleness \"shapes\"\n- **Missing**\
+  \ (A-over, C): cache returns nothing → next read rebuilds (correct, but costly +\
+  \ a reconstruction storm on mass expiry/flush).\n- **Stale-but-present** (D, B-if-rebuilt-later):\
+  \ cache returns an old numeric value and **no miss fires** → silently wrong dashboard.\
+  \ **This is the one TTL never helps.** A TTL could even prolong it (each write resets\
+  \ it — see pattern below).\n- **Corrupt/unparsable** (deserialization failure on\
+  \ a damaged value).\n\n## 3. The TTL trap (from the prior session's finding — applies\
+  \ directly)\n\nIf the write path is `bucket.set(key, json, TTL)` on every write,\
+  \ that is `SET k v EX <n>` = **\"TTL of inactivity,\" not \"TTL from creation.\"\
+  ** For an aggregate whose *only* writer is its source query it's \"max age of the\
+  \ value\" (good). But if anything touches the key during a hot period, the deadline\
+  \ keeps sliding — the aggregate becomes *older relative to the DB* despite a \"\
+  fresh\" TTL. Conversely, a key with a **fixed** TTL of `truth_age` guarantees max\
+  \ lag even when correct. Evaluate what the aggregate's own refresh cadence is, separately\
+  \ from the TTL.\n\n## 4. Classify the mutation paths — which are safe\n\nFor each\
+  \ mutation path, the question is: **does it leave the cache strictly consistent\
+  \ (equal or older-and-detectable), or ambiguous?**\n\n| Mutation path | Real-time?\
+  \ | Safe read-after? | Notes |\n|---|---|---|---|\n| **Create/insert** on the base\
+  \ tables | H | Depends on invalidation | count-aggregates drift if not invalidated\
+  \ |\n| **Update** of an existing row that feeds the aggregate | H | Only if your\
+  \ logic is 100% incremental + crash-consistent | see C1 vs C2 |\n| **Soft delete\
+  \ / status flip** (e.g. order→refunded) | H | Only if invalidation covers the *cancelling*\
+  \ write | the classic \"count was too high\" bug |\n| **Batch/EOD recompute** (cron\
+  \ rebuild of the whole aggregate) | L | ✅ safest — atomic `SET new`, read-through\
+  \ reads new or old, never partial | pair with `SET ... KEEPTTL`/generation |\n|\
+  \ **Backfill / data migration / back-dated rows** | L+ | \U0001F6A8 **unsafe by\
+  \ default** — the aggregate becomes wrong retroactively | must invalidate or version-bump\
+  \ + rebuild |\n| **Idempotent/non-versioned insert-insensitive aggregates** (`COUNT`,\
+  \ `SUM`) | H | Partial patterns | can use C1 below with care |\n| **Point-in-time\
+  \ snapshots (as-of)** | n/a | Always safe — staleness is inherent and declared |\
+  \ no invalidation needed |\n\n### Two rebuild strategies — pick (or mix) per aggregate\n\
+  - **C1 — Invalidation-on-write (read-through rebuild).** Any mutation that changes\
+  \ the aggregate: `DEL key` (or bump a generation key) then let the next read lazily\
+  \ rebuild from the canonical query. **Safe iff** the rebuild query is one deterministic\
+  \ read of the DB (no cross-table partial reads) and you accept the miss-storm. Best\
+  \ default for correctness.\n- **C2 — Incremental in-memory delta** (`INCR total_rev\
+  \ BY x`). **Safe only when** (a) the delta is computed from the same transaction\
+  \ that commits to DB, and (b) the base value can be reconstructed on miss (else\
+  \ drift becomes permanently baked in). Prefer a base cache + deltas stored keyed\
+  \ by an ID so a miss rebuilds both.\n\n**Recommendation: default to C1 (invalidate\
+  \ one-generational key on write; rebuild-on-read from DB).** Reserve C2 for hot,\
+  \ single-source, monotonic counters and attach a periodic DB reconcile.\n\n## 5.\
+  \ Concrete configuration recommendations\n\nRedis (`docker-compose` / `redis.conf`):\n\
+  \n```yaml\nservices:\n  redis:\n    image: redis:7-alpine\n    command:\n      -\
+  \ --maxmemory 256mb\n      - --maxmemory-policy volatile-lru   # or allkeys-lru\
+  \ IF careful\n      - --save \"\"                          # appendonly yes if you\
+  \ want durability; else no\n      - --appendonly yes\n```\n\n```conf\n# expire.log-keyspace-events\
+  \ so apps can register invalidation\nnotify-keyspace-events ExgK    # expired|generic|keyspace\
+  \ events\n```\n\nNaming & TTL guidance:\n- One **generation/version key** per aggregate\
+  \ type + an ID-scoped key:\n\n```\ndash:agg:{agg}:{tenantId}:{dimTs}        value\
+  \ = {json, version, builtAt}\ndash:gen:{agg}:{tenantId}               value = integer,\
+  \ monotonically bumped on mutation\n```\n\n- TTL = small, **bounded**, and treated\
+  \ purely as a *memory cap + max-lag cap*, e.g. `600s`, and refresh the *generation*\
+  \ not blindly the payload. Renewal on read only if you can prove monotonic freshness.\n\
+  \n## 6. Code pattern (staleness-aware read + safe mutation)\n\n```java\n// READ\
+  \ — reclaim the st@le-but-present case instead of trusting the cache blindly\nAggKey\
+  \ k = new AggKey(agg, tenant, dimTs);\nString json = redis.get(k.payload());\nif\
+  \ (json != null) {\n    Cached agg = JSON.parse(json);\n    long genCache = agg.generation;\n\
+  \    long genDb    = versionStore.current(aggName, tenant);   // cheap: a version/updated_at\
+  \ read\n    int cfgVer    = aggregateVersionForKey(k);\n    if (genCache == genDb\
+  \ && cfgVer == agg.schemaVersion) return agg; // fresh — serve\n    // else fall\
+  \ through to rebuild (newer generation exists)\n}\nString fresh = rebuildFromDb(k,\
+  \ aggName, tenant);   // deterministic canonical query\nredis.multi();         \
+  \                             // atomic swap: no partial window\nredis.setex(k.payload()s,\
+  \ TTL, fresh);\nredis.exec();\nreturn parse(fresh);\n```\n\n```java\n// MUTATION\
+  \ (safe C1 path)— transactional DB commit then atomic invalidation\n@Transactional\n\
+  public long commitOrder(Order o) {\n    long id = orderMapper.insert(o);       \
+  \       // DB commit is the truth\n    return id;\n}\n// AFTER_COMMIT: bound the\
+  \ cache write to the transaction's fate\n@TransactionalEventListener(phase = AFTER_COMMIT)\n\
+  public void onCommitted(OrderCommitted e) {\n    int gen = versionStore.bump(AGG_ORDERS,\
+  \ e.getTenant());   // monotonic bump\n    redis.setex(genKey(AGG_ORDERS, e.getTenant()),\
+  \ GEN_TTL, String.valueOf(gen));\n    // DEL aggregation payloads for secondary\
+  \ dimensions if any\n}\n```\n\nRules baked in:\n- **DB commits first; only then\
+  \ invalidate/bump.** Never write the aggregate before the DB commit.\n- On **Redis\
+  \ write failure after commit**: `DEL` the payload (or bump gen) so the next read\
+  \ rebuilds — never leave a stale-but-present value (case D).\n- **Backfill/migration**:\
+  \ always `gen++` (and rebuild), and consider a backfill \"epoch\" so reads can tell\
+  \ old schema from new.\n- Version column on the base `interview_session`/aggregate-source\
+  \ tables is the freshness referee (timestamp-only collides in a resolution window).\n\
+  \n## 7. Ops signals to wire up\n- Alerts: `expired_keys`, `evicted_keys`, `keyspace_hits`\
+  \ dropping / `keyspace_misses` spiking (reconstruction storms after flush/restart),\
+  \ and a periodic **sample reconcile** (`cache == computed-over-DB?`).\n- Bound **post-FLUSH/restart\
+  \ DB load** (case B storm) with lazy rebuild + a coalescing lock and a server-local\
+  \ reload budget.\n- Explicit `maxmemory-policy` (do not copy the shipped `noeviction`\
+  \ default blindly with `appendonly yes` — it turns writes into OOM errors).\n\n\
+  ## 8. Bottom line\n- Staleness = **mutations whose invalidation was missed** + **stale-but-present\
+  \ writes** + **retroactive backfills**, extended by TTL — not caused by TTL.\n-\
+  \ Use **DB-as-truth, Redis-as-read-through**, with a **generation/version** handed\
+  \ to every aggregate. Invalidate on `AFTER_COMMIT`, never pre-commit.\n- Sieve every\
+  \ mutation through: *“does my write path bump a generation or DEL a payload when\
+  \ the DB changes on this path — and does a stale Redis value ever go silently undetected?”*\
+  \ If yes → unsafe; make it missing (DEL) so read-through rebuilds or make it version-checked.\n\
+  \n> Note: this generalizes the existing `InterviewStateStore` finding (`lead-database-engineer-final.md:25-32`)\
+  \ to the dashboard read-model. Before wiring, pin down the actual cache library\
+  \ calls (is it `SET`-with-TTL-on-every-write, a generation key, or read-through\
+  \ rebuild?) and the base-table versioning in your codebase — those two facts determine\
+  \ which of cases A–E are live for you today."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 86802
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T08:22:08.358694+00:00'
+    completed_at: '2026-09-02T08:22:08.358694+00:00'
+  memory:
+    status: completed
+    started_at: '2026-09-02T08:22:08.356959+00:00'
+    completed_at: '2026-09-02T08:22:08.356959+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T08:22:08.362046+00:00'
+    completed_at: '2026-09-02T08:22:08.362046+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T08:22:08.362853+00:00'
+    completed_at: '2026-09-02T08:22:08.362853+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T08:22:08.368892+00:00'
+    completed_at: '2026-09-02T08:23:35.171048+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons:
+    T-005: *id003
+    S-002: *id004
+    P-001: *id005
+    T-010: *id006
+    P-002: *id007
+  orchestrator_rules:
+  - multi_skill

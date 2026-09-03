@@ -1,0 +1,175 @@
+# Execution Trace — AOS-BAB99C (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T09:52:14.434323+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788342734
+trace_id: TRACE-EXEC-1788342734-0656cd904c4f
+task_id: AOS-BAB99C
+task_text: KeywordKnowledgeRetriever fallback returns all child knowledge points for
+  a topic when no keyword match exists, diluting prompt context — assess impact.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T09:50:56.114100+00:00'
+    memory_retrieved: '2026-09-02T09:50:56.118671+00:00'
+    routing_completed: '2026-09-02T09:50:56.136879+00:00'
+    skill_loaded: '2026-09-02T09:50:56.141039+00:00'
+    orchestration_completed: '2026-09-02T09:50:56.141578+00:00'
+    agent_started: '2026-09-02T09:50:56.145984+00:00'
+    agent_completed: '2026-09-02T09:52:14.434244+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T09:50:56.008559+00:00'
+  pid: 871299
+  cwd: /home/shade/Public/test
+  task_id: AOS-BAB99C
+router:
+  intent: coding
+  lead_skill: prompt-engineer
+  support_skills:
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'ai' → lead prompt-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  influence: none
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: prompt-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  skills_loaded:
+  - prompt-engineer
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: prompt-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9e789ce9ffe56w1zO3OjLaBmM
+  tokens:
+    total: 32108
+    input: 1596
+    output: 1754
+    reasoning: 86
+    cache_read: 28672
+    cache_write: 0
+  cost: 0
+  latency_ms: 78287
+agent_response: "## 目标\n\n- **业务目标:** 判断 `KeywordKnowledgeRetriever` 无关键词命中时的兜底行为（回灌该主题**全部子知识点**）对提示词上下文的污染影响，并给出工程处置结论。\n\
+  - **当前约束:** 运行在 `app.interview.mode=rule`（`matchIfMissing=true` 默认即启用）；不可引入向量依赖；需保持规则模式可用。\n\
+  - **成功标准:** 给出有代码事实支撑的\"影响判定\"（有/无/多大），指出兜底逻辑的真实风险点与修复方案。\n\n## 问题判断\n\n**根因:**\
+  \ `KeywordKnowledgeRetriever.retrieveContext()`（`KeywordKnowledgeRetriever.java:32-73`）在关键词零命中时执行\
+  \ `matchCount == 0` 分支（`63-70`），把该主题下所有 `parentId != null` 的**子知识点名称**拼进提示词上下文，属无界（unbounded）回灌。\n\
+  \n**但关键事实（通过代码检索确认）：**\n1. **该方法全仓库无任何调用点。** `retrieveContext` 仅在三个文件出现：自身定义（`KeywordKnowledgeRetriever.java:32`）、`rag/service/RagService.java:154`（同名不同类、不同签名）、`legacy/.../LegacyAiRagService.java:160`（同名不同类）。无一处调用\
+  \ `KeywordKnowledgeRetriever` 的实例方法。\n2. **仅有的注入是\"死引用\"。** `InterviewService.java:61`\
+  \ 注入 `private final KeywordKnowledgeRetriever knowledgeRetriever;`，但全仓库 `knowledgeRetriever\\\
+  .` 引用数为 **0** —— 字段从未被使用。该反编译注释（`InterviewService.java:43`）明确\"移除了对 ChatClient、AiProperties、RagService\
+  \ 的直接依赖\"，题目和追问改由 `QuestionBank`（DB）生成。\n3. **唯一存活的 LLM 调用不走这条路径。** `InterviewScoringService.buildScoringPrompt()`（`126-138`）构造的是固定的四维评分\
+  \ system prompt，不含任何检索上下文；`InterviewService` 提问走 `QuestionBank.pickQuestion` 落库，也不构造提示词上下文。\n\
+  \n**结论 — 运行时影响 = 无。** 兜底分支当前是**未执行的死代码**，其\"上下文稀释\"从未注入任何真实 prompt。基准文档 `02-rubric-sheet.md`\
+  \ 的定位（\"dead-code hit、misleading prefix、unbounded dilution\"）与负控制判定（F-NEG 无改善、两臂持平）均与此证据一致。\n\
+  \n**连带风险点（即便未来接线启用）：**\n- `63-70` 无上限：`points` 全量拼接，主题知识点多时 prompt 膨胀。\n- 前缀自相矛盾：`48`\
+  \ 写\"以下是与查询相关的知识点\"，`64` 兜底却回灌**无关**知识点 → 误导模型把它当相关上下文。\n- 语义降级：仅回灌**名称**（不含 description），对模型无检索增益，是\"\
+  有内容但零信息\"。\n- `34` `query.isBlank()` 直接返回空串，与 `63` 兜底间逻辑不连续（空查询不稀释、非空但零命中反而稀释）。\n\
+  \n**已知限制:** 无法从当前代码/配置证明该 bean 在未来某条尚未接入的 prompt 路径会被启用；判定仅限于本次评审的现行工作树实现。\n\n##\
+  \ 方案设计\n\n**方案 A（推荐）—标记并隔离死代码**\n- `retrieveContext` 交由接线方（改造成单例输出、含上限与相关性标注），或在标准模板/重构中删除。\n\
+  - 优点：消除歧义、消除未来误接线风险、负成本为零。\n- 缺点：不改变任何现有行为（因为本来就无行为）。\n\n**方案 B —修缮兜底为有界、无误导**\n\
+  - 保留兜底但修正：加硬上限（如 5）、前缀改为\"以下为该主题知识点目录（非精确匹配，仅供参考）：\"、仅当确需时才回灌。\n- 优点：一旦接线即为安全默认；缺点：在死代码上投入加固，当前无收益。\n\
+  \n**Decision**\n- 推荐 **方案 A（标记 + 待接线治理）**，配合把 `63-70` 兜底收敛为 B 的有界形态。\n- 理由：现行为零影响，优先消除\"\
+  看似会稀释\"的误导面并防止未来误用；加固成本≤修缮成本，且不产生维护噪音。\n- 残留风险：未来若有人把它接到 prompt 而忘记走有界分支 → 已通过 B\
+  \ 的收敛默认值兜住。\n\n## 实施方案\n\n**修改位置:** `backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java`\n\
+  \n**核心逻辑**（将无界兜底收敛为有界且标注清晰）:\n\n```java\npublic String retrieveContext(String query,\
+  \ String topic) {\n    if (query == null || query.isBlank()) {\n        return \"\
+  \";\n    }\n    List<KnowledgePoint> points = knowledgePointMapper.selectList(\n\
+  \            new LambdaQueryWrapper<KnowledgePoint>().eq(KnowledgePoint::getTopic,\
+  \ topic));\n    if (points.isEmpty()) {\n        return \"\";\n    }\n\n    String\
+  \ queryLower = query.toLowerCase();\n    List<KnowledgePoint> matched = points.stream()\n\
+  \            .filter(p -> p.getName().toLowerCase().contains(queryLower)\n     \
+  \               || (p.getDescription() != null\n                            && p.getDescription().toLowerCase().contains(queryLower)))\n\
+  \            .limit(5)\n            .toList();\n\n    if (!matched.isEmpty()) {\n\
+  \        return \"以下是与查询相关的知识点（精确关键词命中，供参考）：\\n\"\n                + matched.stream()\n\
+  \                        .map(p -> \"- \" + p.getName() + \"：\" + p.getDescription())\n\
+  \                        .collect(Collectors.joining(\"\\n\"));\n    }\n\n    //\
+  \ 兜底：不回灌全量子知识点，仅给受限目录并明确标注\"非精确匹配\"\n    List<String> children = points.stream()\n\
+  \            .filter(p -> p.getParentId() != null)\n            .map(KnowledgePoint::getName)\n\
+  \            .limit(5)\n            .toList();\n    if (children.isEmpty()) {\n\
+  \        return \"\";\n    }\n    return \"以下为该主题知识点目录（非精确匹配，仅供参考，不一定相关）：\\n- \"\
+  \ + String.join(\"\\n- \", children);\n}\n```\n\n**脱敏/正确性说明：** 将同样的 `limit(5)` 上限统一到命中与兜底两条路径；兜底前缀去掉\"\
+  与查询相关\"的误导措辞，改为\"非精确匹配，仅供参考\"；`parentId != null` 的子知识点过滤保留。\n\n## 验证方式\n\n- **静态回归：**\
+  \ `rg -n \"knowledgeRetriever\\.\" backend/src` 仍为 0 —— 确认无反向调用引入（保持死代码/隔离态，若不打算接线）。\n\
+  - **行为回归：** 无测试框架依赖，验证靠编译 `mvn -q compile` + `InterviewService` 提问路径（`QuestionBank`）与\
+  \ `InterviewScoringService.buildScoringPrompt` 不引用本方法输出。\n- **预期结果：** 编译通过；`retrieveContext`\
+  \ 返回内容由\"无界全量子知识点\"变为\"有界 ≤5 条且标注非精确匹配\"；对现行任何 prompt 无行为变化（因无调用点）。\n- **复盘建议：**\
+  \ 在接线任何提示词上下文前，先确认 `parentId` 层级与数量上限；建议用单测固化\"命中前缀 vs 兜底前缀\"两条分支文案，防未来回退为误导措辞。\n\
+  \n**强项保留点（避免误判）：** 本次影响判定**是**\"无运行影响 / 死代码\"，但**不是**\"该逻辑无害\"。真正结论应表述为：兜底稀释是潜在缺陷，当前因无调用点而未触达\
+  \ prompt，故 F-NEG 对缓存/记忆类记忆向量应无改善——与基准负控制设计一致。"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 78288
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T09:50:56.136879+00:00'
+    completed_at: '2026-09-02T09:50:56.136879+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-02T09:50:56.118671+00:00'
+    completed_at: '2026-09-02T09:50:56.118671+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T09:50:56.141039+00:00'
+    completed_at: '2026-09-02T09:50:56.141039+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T09:50:56.141578+00:00'
+    completed_at: '2026-09-02T09:50:56.141578+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T09:50:56.145984+00:00'
+    completed_at: '2026-09-02T09:52:14.434244+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

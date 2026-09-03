@@ -229,25 +229,25 @@ def reconcile_before_decay():
         os.path.dirname(__file__), "memory_state_reconciler.py"
     )
     if not os.path.exists(reconciler):
-        print("WARNING: memory_state_reconciler.py not found — skip reconciliation")
+        print("WARNING: memory_state_reconciler.py not found — skip reconciliation", file=sys.stderr)
         return True
 
-    print("Phase 5.8.1: Checking state consistency before decay...")
+    print("Phase 5.8.1: Checking state consistency before decay...", file=sys.stderr)
     result = subprocess.run(
         ["python3", reconciler, "--check"],
         capture_output=True, text=True,
     )
 
     if result.returncode == 0:
-        print("  State consistency: CONSISTENT")
+        print("  State consistency: CONSISTENT", file=sys.stderr)
         return True
 
-    print("\n" + "!" * 60)
-    print("MEMORY_STATE_INCONSISTENCY")
-    print("!" * 60)
-    print(result.stdout.strip())
-    print("!" * 60)
-    print("\nDecay aborted. Run memory_state_reconciler.py --repair first.")
+    print("\n" + "!" * 60, file=sys.stderr)
+    print("MEMORY_STATE_INCONSISTENCY", file=sys.stderr)
+    print("!" * 60, file=sys.stderr)
+    print(result.stdout.strip(), file=sys.stderr)
+    print("!" * 60, file=sys.stderr)
+    print("\nDecay aborted. Run memory_state_reconciler.py --repair first.", file=sys.stderr)
     return False
 
 

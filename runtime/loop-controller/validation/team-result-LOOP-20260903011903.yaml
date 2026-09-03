@@ -1,0 +1,743 @@
+loop_id: LOOP-20260903011903
+team_id: team-18087af2
+team_result:
+  team_id: team-18087af2
+  status: success
+  lead_output:
+    agent: database-engineer
+    status: failed
+    summary: ''
+    output: ''
+    execution_id: ''
+    trace_id: ''
+    tokens:
+      total: 0
+      input: 0
+      output: 0
+    latency_ms: 266432
+    reliability:
+      summary:
+        total_attempts: 3
+        retries_performed: 2
+        fallbacks_used: []
+        models_tried:
+        - ''
+        - ''
+        - ''
+        final_status: failed
+        total_latency_ms: 266432
+        classification: real_agent_failure
+        terminated_early: true
+        termination_reason: Max retries (3) reached
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:29:26.852889+00:00'
+          latency_ms: 80165
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:30:56.254564+00:00'
+          latency_ms: 79401
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:32:33.118913+00:00'
+          latency_ms: 81864
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+      failures:
+      - attempt: 1
+        failure_type: model_failure
+        category: real_agent_failure
+        timestamp: '2026-09-03T01:29:26.852889+00:00'
+        latency_ms: 80165
+        error_message: 'opencode exit code 1: '
+        provider: opencode
+        model: ''
+        recovery_action: retry 1/3
+      - attempt: 2
+        failure_type: model_failure
+        category: real_agent_failure
+        timestamp: '2026-09-03T01:30:56.254564+00:00'
+        latency_ms: 79401
+        error_message: 'opencode exit code 1: '
+        provider: opencode
+        model: ''
+        recovery_action: retry 2/3
+      - attempt: 3
+        failure_type: model_failure
+        category: real_agent_failure
+        timestamp: '2026-09-03T01:32:33.118913+00:00'
+        latency_ms: 81864
+        error_message: 'opencode exit code 1: '
+        provider: opencode
+        model: ''
+        recovery_action: ''
+  contributions:
+  - role: database-engineer
+    task_id: task-database-engineer-7589c4
+    output:
+      agent: database-engineer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 266432
+      reliability:
+        summary:
+          total_attempts: 3
+          retries_performed: 2
+          fallbacks_used: []
+          models_tried:
+          - ''
+          - ''
+          - ''
+          final_status: failed
+          total_latency_ms: 266432
+          classification: real_agent_failure
+          terminated_early: true
+          termination_reason: Max retries (3) reached
+          failures:
+          - attempt: 1
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:29:26.852889+00:00'
+            latency_ms: 80165
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 1/3
+          - attempt: 2
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:30:56.254564+00:00'
+            latency_ms: 79401
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 2/3
+          - attempt: 3
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:32:33.118913+00:00'
+            latency_ms: 81864
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:29:26.852889+00:00'
+          latency_ms: 80165
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:30:56.254564+00:00'
+          latency_ms: 79401
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:32:33.118913+00:00'
+          latency_ms: 81864
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+    is_lead: true
+  - role: security-engineer
+    task_id: task-security-engineer-18c61d
+    output:
+      agent: security-engineer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 274349
+      reliability:
+        summary:
+          total_attempts: 3
+          retries_performed: 2
+          fallbacks_used: []
+          models_tried:
+          - ''
+          - ''
+          - ''
+          final_status: failed
+          total_latency_ms: 274349
+          classification: real_agent_failure
+          terminated_early: true
+          termination_reason: Max retries (3) reached
+          failures:
+          - attempt: 1
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:33:56.423898+00:00'
+            latency_ms: 83304
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 1/3
+          - attempt: 2
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:35:32.515666+00:00'
+            latency_ms: 86091
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 2/3
+          - attempt: 3
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:37:07.468166+00:00'
+            latency_ms: 79952
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:33:56.423898+00:00'
+          latency_ms: 83304
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:35:32.515666+00:00'
+          latency_ms: 86091
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:37:07.468166+00:00'
+          latency_ms: 79952
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  - role: code-reviewer
+    task_id: task-code-reviewer-a9f2d0
+    output:
+      agent: code-reviewer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 266605
+      reliability:
+        summary:
+          total_attempts: 3
+          retries_performed: 2
+          fallbacks_used: []
+          models_tried:
+          - ''
+          - ''
+          - ''
+          final_status: failed
+          total_latency_ms: 266605
+          classification: real_agent_failure
+          terminated_early: true
+          termination_reason: Max retries (3) reached
+          failures:
+          - attempt: 1
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:47:33.633060+00:00'
+            latency_ms: 78153
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 1/3
+          - attempt: 2
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:49:05.123043+00:00'
+            latency_ms: 81489
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 2/3
+          - attempt: 3
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:50:42.084984+00:00'
+            latency_ms: 81961
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:47:33.633060+00:00'
+          latency_ms: 78153
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:49:05.123043+00:00'
+          latency_ms: 81489
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:50:42.084984+00:00'
+          latency_ms: 81961
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  - role: backend-architect
+    task_id: task-backend-architect-1a507e
+    output:
+      agent: backend-architect
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 273053
+      reliability:
+        summary:
+          total_attempts: 3
+          retries_performed: 2
+          fallbacks_used: []
+          models_tried:
+          - ''
+          - ''
+          - ''
+          final_status: failed
+          total_latency_ms: 273053
+          classification: real_agent_failure
+          terminated_early: true
+          termination_reason: Max retries (3) reached
+          failures:
+          - attempt: 1
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:20:31.179920+00:00'
+            latency_ms: 84497
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 1/3
+          - attempt: 2
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:22:01.394602+00:00'
+            latency_ms: 80214
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 2/3
+          - attempt: 3
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:23:39.735146+00:00'
+            latency_ms: 83340
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:20:31.179920+00:00'
+          latency_ms: 84497
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:22:01.394602+00:00'
+          latency_ms: 80214
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:23:39.735146+00:00'
+          latency_ms: 83340
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  - role: llm-engineer
+    task_id: task-llm-engineer-308f27
+    output:
+      agent: llm-engineer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 266951
+      reliability:
+        summary:
+          total_attempts: 3
+          retries_performed: 2
+          fallbacks_used: []
+          models_tried:
+          - ''
+          - ''
+          - ''
+          final_status: failed
+          total_latency_ms: 266951
+          classification: real_agent_failure
+          terminated_early: true
+          termination_reason: Max retries (3) reached
+          failures:
+          - attempt: 1
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:24:57.705483+00:00'
+            latency_ms: 77970
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 1/3
+          - attempt: 2
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:26:30.452744+00:00'
+            latency_ms: 82747
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 2/3
+          - attempt: 3
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:28:06.686617+00:00'
+            latency_ms: 81233
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:24:57.705483+00:00'
+          latency_ms: 77970
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:26:30.452744+00:00'
+          latency_ms: 82747
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:28:06.686617+00:00'
+          latency_ms: 81233
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  - role: rag-engineer
+    task_id: task-rag-engineer-bce84e
+    output:
+      agent: rag-engineer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 270787
+      reliability:
+        summary:
+          total_attempts: 3
+          retries_performed: 2
+          fallbacks_used: []
+          models_tried:
+          - ''
+          - ''
+          - ''
+          final_status: failed
+          total_latency_ms: 270787
+          classification: real_agent_failure
+          terminated_early: true
+          termination_reason: Max retries (3) reached
+          failures:
+          - attempt: 1
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:38:28.363918+00:00'
+            latency_ms: 80895
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 1/3
+          - attempt: 2
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:40:02.790492+00:00'
+            latency_ms: 84426
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 2/3
+          - attempt: 3
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:41:38.255451+00:00'
+            latency_ms: 80464
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:38:28.363918+00:00'
+          latency_ms: 80895
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:40:02.790492+00:00'
+          latency_ms: 84426
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:41:38.255451+00:00'
+          latency_ms: 80464
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  - role: prompt-engineer
+    task_id: task-prompt-engineer-3beb6f
+    output:
+      agent: prompt-engineer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 277223
+      reliability:
+        summary:
+          total_attempts: 3
+          retries_performed: 2
+          fallbacks_used: []
+          models_tried:
+          - ''
+          - ''
+          - ''
+          final_status: failed
+          total_latency_ms: 277223
+          classification: real_agent_failure
+          terminated_early: true
+          termination_reason: Max retries (3) reached
+          failures:
+          - attempt: 1
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:43:03.733871+00:00'
+            latency_ms: 85478
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 1/3
+          - attempt: 2
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:44:35.859404+00:00'
+            latency_ms: 82125
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: retry 2/3
+          - attempt: 3
+            failure_type: model_failure
+            category: real_agent_failure
+            timestamp: '2026-09-03T01:46:15.479279+00:00'
+            latency_ms: 84619
+            error_message: 'opencode exit code 1: '
+            provider: opencode
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:43:03.733871+00:00'
+          latency_ms: 85478
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 1/3
+        - attempt: 2
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:44:35.859404+00:00'
+          latency_ms: 82125
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: retry 2/3
+        - attempt: 3
+          failure_type: model_failure
+          category: real_agent_failure
+          timestamp: '2026-09-03T01:46:15.479279+00:00'
+          latency_ms: 84619
+          error_message: 'opencode exit code 1: '
+          provider: opencode
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  conflicts: []
+  summary: Lead agent (database-engineer) completed primary work. Support agents (security-engineer,
+    code-reviewer, backend-architect, llm-engineer, rag-engineer, prompt-engineer)
+    contributed
+  agent_count: 7
+  completed_count: 7
+  failed_count: 0
+task_cards:
+- task_id: task-database-engineer-7589c4
+  role: database-engineer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 266432
+- task_id: task-security-engineer-18c61d
+  role: security-engineer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 274349
+- task_id: task-code-reviewer-a9f2d0
+  role: code-reviewer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 266605
+- task_id: task-backend-architect-1a507e
+  role: backend-architect
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 273053
+- task_id: task-llm-engineer-308f27
+  role: llm-engineer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 266951
+- task_id: task-rag-engineer-bce84e
+  role: rag-engineer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 270787
+- task_id: task-prompt-engineer-3beb6f
+  role: prompt-engineer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 277223
+execution_order:
+- task-backend-architect-1a507e
+- task-llm-engineer-308f27
+- task-database-engineer-7589c4
+- task-security-engineer-18c61d
+- task-rag-engineer-bce84e
+- task-prompt-engineer-3beb6f
+- task-code-reviewer-a9f2d0
+completed_count: 7
+failed_count: 0

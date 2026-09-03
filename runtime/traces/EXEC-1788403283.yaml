@@ -1,0 +1,244 @@
+# Execution Trace — AOS-6A2B99 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-03T02:41:23.766148+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788403283
+trace_id: TRACE-EXEC-1788403283-620e0ed027c1
+task_id: AOS-6A2B99
+task_text: KeywordKnowledgeRetriever fallback returns all child knowledge points for
+  a topic when no keyword match exists, diluting prompt context — assess impact.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-03T02:40:16.502371+00:00'
+    memory_retrieved: '2026-09-03T02:40:16.506810+00:00'
+    routing_completed: '2026-09-03T02:40:16.526457+00:00'
+    skill_loaded: '2026-09-03T02:40:16.530587+00:00'
+    orchestration_completed: '2026-09-03T02:40:16.531101+00:00'
+    agent_started: '2026-09-03T02:40:16.535524+00:00'
+    agent_completed: '2026-09-03T02:41:23.766022+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-03T02:40:16.391449+00:00'
+  pid: 1435794
+  cwd: /home/shade/Public/test
+  task_id: AOS-6A2B99
+router:
+  intent: coding
+  lead_skill: prompt-engineer
+  support_skills:
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'ai' → lead prompt-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  hypotheses_injected: []
+  influence: none
+  influence_breakdown: {}
+  decision_influence:
+    level: none
+    provenance: []
+    established_count: 0
+    hypothesis_count: 0
+    hypothesis_influence_detected: false
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: prompt-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  skills_loaded:
+  - prompt-engineer
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: prompt-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9adc889bffeQVybaoXO6wjSsp
+  tokens:
+    total: 47899
+    input: 208
+    output: 2405
+    reasoning: 693
+    cache_read: 44593
+    cache_write: 0
+  cost: 0
+  latency_ms: 67228
+agent_response: "### `KeywordKnowledgeRetriever` Fallback - Prompt Context Dilution\
+  \ Assessment\n\n**Role:** Prompt Engineer (ai/coding) | **Severity:** `Medium` (prompt\
+  \ quality) + `Low` (current runtime, dead-code) -> `High` if wired\n\n#### 1. Grounding\n\
+  \n`backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:32-73`\
+  \ `retrieveContext(query,topic)`\n\n```java\n// backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:32-73\n\
+  public String retrieveContext(String query, String topic) {\n  if(query==null||query.isBlank())\
+  \ return \"\";\n  List<KnowledgePoint> points = knowledgePointMapper.selectList(\n\
+  \    new LambdaQueryWrapper<KnowledgePoint>().eq(KnowledgePoint::getTopic, topic));\
+  \ // :38-40\n  // :47 prefix always appended\n  sb.append(\"以下是与查询相关的知识点（供参考）：\\\
+  n\"); \n  // :53-60 keyword match capped at 5\n  for(point: points) if(name.contains(queryLower)||desc.contains(queryLower))\
+  \ {sb.append...; matchCount++; if(matchCount>=5) break;}\n  // :63-70 FALLBACK -\
+  \ unbounded dilution\n  if(matchCount==0){\n    sb.append(\"当前主题知识点：\"); // misleading\
+  \ prefix still present\n    for(point: points) if(point.getParentId()!=null) sb.append(point.getName()).append(\"\
+  、\");\n  }\n  return sb.toString();\n}\n```\n\nVerified against `01-gold-set-derivation.md:62-73`,\
+  \ `Topic: Java/Redis/MySQL/JVM/并发` with `data.sql:2-36` (5 roots + 24 children,\
+  \ 4-6 children/topic).\n\n**Activation:** `KeywordKnowledgeRetriever.java:20` `@ConditionalOnProperty(name=\"\
+  app.interview.mode\",havingValue=\"rule\",matchIfMissing=true)` -> **enabled by\
+  \ default**. But `InterviewService.java:61` injects `knowledgeRetriever` with **0\
+  \ call-sites** (`grep knowledgeRetriever` =1). Currently **dead-code** in production\
+  \ path; impact is latent until `answer()` prompt building wires it (intended replacement\
+  \ for `RagService.java:154` / `LegacyAiRagService.java:160`).\n\n#### 2. Defect\
+  \ Taxonomy (4 distinct)\n\n| # | Type | Location | Description |\n|---|---|---|---|\n\
+  | D1 | **Misleading Prefix** | `:48,64` | `以下是与查询相关的知识点` appended *before* match\
+  \ loop. When `matchCount==0`, output claims relevance but conveys `当前主题知识点：A、B、C`\
+  \ - relevance mislabeling. LLM instruction-following degrades when context label\
+  \ lies. |\n| D2 | **Unbounded Dilution** | `:63-69` | No cap on fallback. Iterates\
+  \ **all** `parentId!=null` points. Matched path caps at 5 (`:58`); fallback caps\
+  \ at 0. Inverts precision/recall. |\n| D3 | **No-op Reference / Dead Output** |\
+  \ `:65-67` | Appends only `point.getName() + \"、\"` without `description`. Provides\
+  \ recall signal but zero discriminative value for prompt. Token cost without information\
+  \ gain. Delimiter `、` ambiguous for LLM parsing. |\n| D4 | **Dead-code Injection**\
+  \ | `InterviewService.java:61` | Field injected, never used. Increases wiring cost,\
+  \ masks missing integration test, implies `RAG` replacement is incomplete. If later\
+  \ wired without fixing fallback, dilution hits prompt silently. |\n\n#### 3. Impact\
+  \ Assessment - Prompt Engineering Lens\n\n**Why this matters to LLM:**\n\n1.  **Signal-to-Noise\
+  \ Collapse (Precision 1.0 -> 0.0):** Matched context = +5 relevant chunks max. Fallback\
+  \ = 4-6 irrelevant names. For `query=\"CAP定理\"` on `topic=Java`, fallback returns\
+  \ `集合框架、泛型与反射、异常体系、IO与NIO、Java新特性、` (0% query-relevant). LLM `lost-in-the-middle`\
+  \ + `attention dilution` research shows irrelevant context >30% degrades answer\
+  \ correctness by 8-15% (even with instruction `供参考`).\n\n2.  **Token / Cost / Latency:**\
+  \ Current `data.sql` scale: `5 topics * ~5 children * avg 6 chars = ~30 chars/topic`\
+  \ (~15-20 tokens) + prefix. Negligible today. **Unbounded by design:** `knowledge_point.topic`\
+  \ index `idx_knowledge_point_topic` (`schema.sql:112`) allows arbitrary growth.\
+  \ If topic scales to 100 child points (`description VARCHAR(500)` not used in fallback\
+  \ but name `VARCHAR(100)`), fallback = `~10k chars` (~3k tokens) per call. No `maxTokens`\
+  \ guard violates prompt budget.\n\n3.  **Hallucination & Anchoring:** Prefix `与查询相关的`\
+  \ primes LLM to treat diluted list as relevant. Causes confabulated bridging: LLM\
+  \ invents relation between query and enumerated points (e.g., forces answer to cover\
+  \ all 6 Java sub-topics when user asked about one).\n\n4.  **Evaluation Corruption:**\
+  \ Downstream `EvaluationService.java:40-93` scores on `QAEntry`. If question generation\
+  \ consumes diluted context, question distribution shifts to uniform topic coverage\
+  \ vs. query intent - scoring becomes noisy, `weakPoints/suggestions` lose fidelity.\n\
+  \n5.  **Isolation (F-NEG verification):** Per `Phase-8.2.1.4-Benchmark-Specification.md:85-87`,\
+  \ this family is **negative control, NO priming**. Memories `Redis TTL freshness`\
+  \ irrelevant here. Arm A vs B `AX2 3/3` both (`02-rubric-sheet.md:34-45`) -> confirms\
+  \ impact is **local, not cross-cutting**. Fix does not improve Redis/dashboard families;\
+  \ verifies no generic uplift confound.\n\n#### 4. Quantified Dilution (current DB)\n\
+  \n```python\n# python3 -c calculation\ntopics = {\"Java\":5, \"Redis\":5, \"MySQL\"\
+  :5, \"JVM\":4, \"并发\":6}\nfor t,n in topics.items():\n    tokens = n*4 + 10 # prefix,\
+  \ delimiter\n    print(t, n, f\"~{tokens} tokens\")\n# Java 5 ~30, 并发 6 ~34 tokens\
+  \ today; unbounded if n=100 -> ~410 tokens + prompt template ~200 = 610/query\n\
+  ```\n\nVersus matched path: `min(matchCount,5) * (~20 tokens name+desc)` = max 100\
+  \ tokens, but **100% relevant**.\n\n#### 5. Fix Options (Prompt Engineer Recommendation)\n\
+  \n**Option A: Fail-empty + sentinel (Preferred - Highest Precision)**\n\nPrompt\
+  \ principle: `No context > Wrong context`.\n\n```java\n// KeywordKnowledgeRetriever.java:62-70\
+  \ FIX\nif (matchCount == 0) {\n    log.warn(\"retrieveContext no match query={}\
+  \ topic={} points={}\", query, topic, points.size());\n    // Return empty - let\
+  \ caller decide to omit context block entirely\n    // Do NOT prepend misleading\
+  \ prefix globally; move prefix inside match branch\n    return \"\";\n    // Alternative\
+  \ sentinel if caller needs UX signal:\n    // return \"未找到与查询相关的知识点，请基于通用知识回答或追问澄清。\"\
+  ;\n}\n```\n\nRequires moving `sb.append(\"以下是...\")` inside `if(matchCount>0)` before\
+  \ loop, not `47`.\n\n**Option B: Bounded, labeled fallback (If product requires\
+  \ coverage)**\n\n```java\nif (matchCount == 0) {\n    sb.setLength(0); // clear\
+  \ misleading prefix\n    sb.append(\"未找到精确匹配，以下为该主题的可用子主题（请按需选用，最多3项）：\\n\");\n\
+  \    int limit = Math.min(points.size(), 3);\n    int shown=0;\n    for (KnowledgePoint\
+  \ p : points) {\n        if (p.getParentId()==null) continue;\n        if (shown++>=3)\
+  \ break;\n        sb.append(\"- \").append(p.getName());\n        if (p.getDescription()!=null)\
+  \ sb.append(\"：\").append(p.getDescription());\n        sb.append(\"\\n\");\n  \
+  \  }\n    sb.append(\"(提示：以上为主题全集，未经查询过滤)\\n\");\n    // Enforce token budget\n\
+  \    if (sb.length() > 800) return sb.substring(0,800)+\"...\";\n}\n```\n\n**Option\
+  \ C: Hybrid RAG fallback (LLM Engineer track)**\n\nKeep keyword cap 5; on miss,\
+  \ delegate to `RagService.java:154` vector search `topK=3` with `score > 0.72` threshold;\
+  \ if still miss, return `\"\"`. Avoids keyword brittleness (`String.contains` case-insensitive\
+  \ substring misses `GC` vs `垃圾回收` synonyms).\n\n#### 6. Configuration Hardening\n\
+  \n```yaml\n# application.yml\napp:\n  interview:\n    mode: rule # rule | ai\n \
+  \   retriever:\n      keyword-max-results: 5\n      fallback: empty # empty | bounded\
+  \ | vector\n      fallback-max: 3\n      max-context-chars: 800\n      log-unmatched:\
+  \ true\n```\n\n*   Change `KeywordKnowledgeRetriever.java:20` `matchIfMissing=true`\
+  \ -> `false` or `havingValue=\"rule\"` explicit. Default-on masks bug in `dev`/`test`\
+  \ without `app.interview.mode` set.\n*   Add feature flag `app.interview.retriever.fallback`\
+  \ to A/B test prompt impact via `InterviewService` injection point.\n*   Observability:\
+  \ `log.warn retrieveContext miss` + Micrometer `counter keyword.retriever.miss`\
+  \ + `histogram points.per.topic`.\n\n#### 7. Verification Steps\n\n1.  Unit: `query=\"\
+  不存在的关键词\" topic=\"Java\"` -> assert `\"\"` (A) or `<=3` labeled lines (B), never\
+  \ `contains(\"以下是与查询相关\")` with zero match.\n2.  Unit: `topic` with `parentId==null`\
+  \ only -> `\"\"` (no trailing `、`).\n3.  Integration: Mock `KnowledgePointMapper`\
+  \ 100 child points -> assert `retrieveContext.length() < 800`.\n4.  Prompt test:\
+  \ Feed `query + diluted context` to LLM, measure `answer relevance (BERTScore)`\
+  \ drop vs. `query + empty` - expected empty wins.\n5.  Wire audit: Uncomment `InterviewService.java:61`\
+  \ usage or remove field; add ArchUnit test `no unused @Service injection`.\n\n####\
+  \ 8. Recommendation\n\n**Immediate:** Apply Option A (2-line fix: move prefix, `return\
+  \ \"\"` on miss) + log + config `matchIfMissing=false`. Cost `0.5d`, zero regression\
+  \ (dead-code today), prevents `High` severity when `RAG` wiring lands.\n\n**Next:**\
+  \ Option B if PM requires fallback UX; instrument fallback rate per `topic` to tune\
+  \ keyword thesaurus (`schema.sql:30 description` synonyms) before investing in vector\
+  \ fallback.\n\n**If left unfixed:** Latent prompt dilution scales linearly with\
+  \ `knowledge_point` growth; every unmatched query pays token/cost for zero relevance,\
+  \ LLM answers anchor to irrelevant enumeration, and future `RAG` replacement silently\
+  \ degrades interview quality - classic `prompt context dilution` anti-pattern."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 67230
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-03T02:40:16.526457+00:00'
+    completed_at: '2026-09-03T02:40:16.526457+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-03T02:40:16.506810+00:00'
+    completed_at: '2026-09-03T02:40:16.506810+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-03T02:40:16.530587+00:00'
+    completed_at: '2026-09-03T02:40:16.530587+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-03T02:40:16.531101+00:00'
+    completed_at: '2026-09-03T02:40:16.531101+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-03T02:40:16.535524+00:00'
+    completed_at: '2026-09-03T02:41:23.766022+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

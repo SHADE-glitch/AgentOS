@@ -1,0 +1,180 @@
+# Execution Trace — AOS-841B42 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T09:55:00.503365+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788342900
+trace_id: TRACE-EXEC-1788342900-d97c59acccb9
+task_id: AOS-841B42
+task_text: KeywordKnowledgeRetriever fallback returns all child knowledge points for
+  a topic when no keyword match exists, diluting prompt context — assess impact.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T09:53:24.112871+00:00'
+    memory_retrieved: '2026-09-02T09:53:24.120240+00:00'
+    routing_completed: '2026-09-02T09:53:24.142625+00:00'
+    skill_loaded: '2026-09-02T09:53:24.147448+00:00'
+    orchestration_completed: '2026-09-02T09:53:24.148076+00:00'
+    agent_started: '2026-09-02T09:53:24.153296+00:00'
+    agent_completed: '2026-09-02T09:55:00.503257+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T09:53:23.982362+00:00'
+  pid: 872685
+  cwd: /home/shade/Public/test
+  task_id: AOS-841B42
+router:
+  intent: coding
+  lead_skill: prompt-engineer
+  support_skills:
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'ai' → lead prompt-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  influence: none
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: prompt-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  skills_loaded:
+  - prompt-engineer
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: prompt-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9e765a79ffef1OXJOMIWAUfEy
+  tokens:
+    total: 31862
+    input: 1462
+    output: 1850
+    reasoning: 902
+    cache_read: 27648
+    cache_write: 0
+  cost: 0
+  latency_ms: 96348
+agent_response: "## 目标\n- 业务目标: 评估 `KeywordKnowledgeRetriever` 无关键字匹配时回退为「返回主题下全部子知识点」对\
+  \ prompt 上下文的稀释影响。\n- 当前约束: 代码库为规则模式面试评分（`app.interview.mode=rule`），无向量检索，`retrieveContext`\
+  \ 是唯一的了 ground-truth 注入点候选。\n- 成功标准: 明确该行为在**当前**是否真的进入 prompt、造成多大稀释；并给出可落地的修复与验证。\n\
+  \n## 问题判断（先看证据，再下结论）\n\n关键发现（已核实源码）：\n\n1. **当前运行时影响为 0 —— 整个方法是死代码。**\n   - `KeywordKnowledgeRetriever.java:21`\
+  \ 是 `@Service` Bean；`InterviewService.java:61` 注入了 `knowledgeRetriever` 字段，但全仓库检索（`.retrieveContext(`、`knowledgeRetriever.`）除定义外**无任何调用点**。\n\
+  \   - 因此 `63-70` 的 fallback 分支在任何真实面试流程中都**不会执行**，prompt 上下文当前并未被稀释。任何「它正在稀释 prompt」的说法都是推断而非观测。（这正是\
+  \ gold-set `01-gold-set-derivation.md:62` 的 `dead-code hit`。）\n\n2. **一旦接线，fallback\
+  \ 会带来三类实质缺陷（潜在 SEV-1）：**\n\n   - **误导性前缀 / relevance 误标** `KeywordKnowledgeRetriever.java:48`\
+  \ 硬编码 `\"以下是与查询相关的知识点（供参考）：\"`，而 fallback 将所有子点不限量倾倒。LLM 收到一段被声明为「**与查询相关**」实则无关的列表\
+  \ → 评审/打分 prompt 的依据被污染，降低判定质量（不只浪费 token）。\n   - **无界上下文增长 / 稀释** `63-70` 对 `parentId\
+  \ != null` 的每个子点以 `\"、\"` 拼接，**无数量上限**；对照命中分支在 `58` 行以 `matchCount >= 5` 截断。主题子点越多，prompt\
+  \ 线性变大 → token/成本、延迟、注意力稀释，若与系统级评分指令叠加在单次调用中，还可能把评分 rubric 挤出上下文窗口。\n   - **信号密度更低\
+  \ + 分支行为不连续** fallback 只拼名称、丢 description（对比 `56` 命中路径含描述）；且「近命中」有界(5)、「零命中」无界，行为突变、难测试。\n\
+  \n3. **激活语义**: `@ConditionalOnProperty(mode=rule, matchIfMissing=true)` — 未配置 `app.interview.mode`\
+  \ 时默认启用，规则模式下它就是 RAG 的替代入口（见 `LegacyAiRagService.java:26`），所以一旦有人接线，规则评分全量暴露在该回退风险下。\n\
+  \n### 影响评分\n- 现版本: **SEV-2 / 影响≈0**（死代码，无实际路径）。\n- 接线后: **SEV-1**（无界 + relevance\
+  \ 误标直接作用评分 prompt）。\n\n## 方案设计（Decision Framework）\n\n**Option A — 硬化 fallback（保留但加界\
+  \ + 修正前缀）**\n- Strengths: 保持「无匹配也给出主题概览」的产品意图；改动小；上下文有上限。\n- Weaknesses: 仍可能把整主题无关点标为相关；仍需处理前缀语义；复杂度上升。\n\
+  - Best for: 产品确实要求无命中时也能拿到基础概览。\n\n**Option B — 删除 fallback，无匹配返回空串 ⭐推荐**\n- Strengths:\
+  \ 「诚实空上下文」严格优于「大而误标」；零稀释、零成本、行为与命中分支一致(有界)、最可测；彻底移除 relevance 误标。\n- Weaknesses:\
+  \ 无命中时给 LLM 的基础信息变少（可能影响提问/打分依据）。\n- Best for: 现状（死代码）+ 评分场景——评分依据宁可缺失也不该被误导性冗余污染。\n\
+  \n**Option C — 非关键字的相关度分层**（如按 topic 聚合、带置信标记+cap）\n- Strengths: 可解释、更准。\n- Weaknesses:\
+  \ 规则模式下过度设计，超出本期范围。\n- Best for: 后续若引入向量/打分排序的需求。\n\n### 决策\n- **Recommended: Option\
+  \ B（删除 misleading fallback）+ 顺带硬化命中分支。**\n- Why fits: 当前是死代码，不存在「下线后立刻损失功能」的迁移成本；规则模式评分的第一性原则是「注入的必须诚实且相关」。空上下文远优于\
+  \ 50+ 个无关知识点。\n- Risks & mitigations: 若产品担心「空上下文导致提问太泛」，可采用 Option A 的加界版并**将前缀改为显式「当前主题概览（未按相关性排序）」**，同时保留\
+  \ cap（如 5–8 个）+ 至少拼入 description。\n\n## 实施方案（针对推荐方案的代码示例）\n\n`KeywordKnowledgeRetriever.retrieveContext`（Option\
+  \ B 清理版）：\n\n```java\npublic String retrieveContext(String query, String topic)\
+  \ {\n    if (query == null || query.isBlank()) {\n        return \"\";\n    }\n\
+  \    List<KnowledgePoint> points = knowledgePointMapper.selectList(\n          \
+  \  new LambdaQueryWrapper<KnowledgePoint>()\n                    .eq(KnowledgePoint::getTopic,\
+  \ topic));\n    if (points.isEmpty()) {\n        return \"\";\n    }\n\n    String\
+  \ queryLower = query.toLowerCase();\n    List<KnowledgePoint> matched = points.stream()\n\
+  \            .filter(p -> containsIgnoreCase(p.getName(), queryLower)\n        \
+  \            || containsIgnoreCase(p.getDescription(), queryLower))\n          \
+  \  .limit(5)\n            .toList();\n\n    if (matched.isEmpty()) {\n        //\
+  \ 无命中：不返回主题全量子点，避免无界稀释与 relevance 误标\n        return \"\";\n    }\n\n    StringBuilder\
+  \ sb = new StringBuilder(\"以下是与查询相关的知识点（供参考）：\\n\");\n    for (KnowledgePoint p\
+  \ : matched) {\n        sb.append(\"- \").append(p.getName()).append(\"：\").append(p.getDescription()).append(\"\
+  \\n\");\n    }\n    return sb.toString();\n}\n\nprivate static boolean containsIgnoreCase(String\
+  \ s, String q) {\n    return s != null && s.toLowerCase().contains(q);\n}\n```\n\
+  \n若必须保留「无命中给概览」，最小化变体（Option A 加界 + 诚实前缀）：\n\n```java\nif (matched.isEmpty()) {\n\
+  \    if (points.isEmpty()) return \"\";\n    StringBuilder sb = new StringBuilder(\"\
+  当前主题知识点概述（未按查询相关性排序，仅供背景参考）：\\n\");\n    points.stream()\n          .filter(p ->\
+  \ p.getParentId() != null)\n          .limit(8)                                \
+  \   // 有界\n          .forEach(p -> sb.append(\"- \").append(p.getName()).append(\"\
+  \\n\"));\n    return sb.toString();\n}\n```\n\n- 修改位置: `KeywordKnowledgeRetriever.java:47-70`（前缀+fallback）；如需接线，在\
+  \ `InterviewService` 评分/提问 prompt 组装处调用并用其结果来源注明。\n- 风险点与处理: `retrieveContext` 仍无调用点——修复为死代码本身不产生运行时行为变化，但仍建议保留（它是规则模式吞吐/打分的注入依据）；确保\
+  \ `InterviewService` 若后续接线时先落地本修复。\n\n## 验证方式\n- 单元测试（`KnowledgePointMapper` 可用\
+  \ stub）：构造含 >5 子点、且关键字不命中任意名称/描述的主题，断言 `retrieveContext` 返回 `\"\"`（Option B）或 ≤8\
+  \ 行且不含「与查询相关」字样（Option A 加界变体）；命中场景断言 ≤5 条、含描述、带原前缀。\n- 集成冒烟：`app.interview.mode=rule`\
+  \ + 未命中查询，观察注入文本长度不随主题子点增长、打分输出描述与命中分支无差异回归。\n- 预期结果: fallback 不再产生无界、误标内容；上下文长度有明确上界；评分\
+  \ prompt 完整性不因主题规模降低。\n- 复盘建议: F-NEG 判别 —— 本缺陷若无修复，Agent 应正确识别「dead-code + 误导前缀\
+  \ + 无界」三要素；修复后 rerun 确认打分稳定性（此任务与记忆/缓存无关，故不应观察到 Arm B 显著提升，详见 `01-gold-set-derivation.md:74`）。"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 96349
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T09:53:24.142625+00:00'
+    completed_at: '2026-09-02T09:53:24.142625+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-02T09:53:24.120240+00:00'
+    completed_at: '2026-09-02T09:53:24.120240+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T09:53:24.147448+00:00'
+    completed_at: '2026-09-02T09:53:24.147448+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T09:53:24.148076+00:00'
+    completed_at: '2026-09-02T09:53:24.148076+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T09:53:24.153296+00:00'
+    completed_at: '2026-09-02T09:55:00.503257+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

@@ -50,6 +50,30 @@ def find_memory_file(memory_id):
     return None
 
 
+def _update_index_entry(memory_id, updates):
+    """
+    Phase 8.2.1.3: Sync promoted metadata back to retrieval-index.yaml.
+    Finds the entry for memory_id and updates its fields in place.
+    Returns True if the entry was found and updated, False otherwise.
+    """
+    index = load_memory_index()
+    found = False
+    for m in index.get("memories", []):
+        if m["memory_id"] == memory_id:
+            for key, value in updates.items():
+                m[key] = value
+            found = True
+            break
+
+    if not found:
+        return False
+
+    with open(MEMORY_INDEX_FILE, "w") as f:
+        yaml.dump(index, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+    return True
+
+
 def load_conflict_candidates():
     """Load conflict candidates for Trust Gate check."""
     if not os.path.exists(CONFLICT_FILE):
@@ -200,7 +224,8 @@ def promote_validated(validated_result):
     old_conf = fm.get("confidence", "low")
 
     # Calculate new values
-    new_obs = old_obs + validation_runs
+    # Phase 8.2.1.3: Use max to avoid double-counting bootstrap placeholder
+    new_obs = max(old_obs, validation_runs)
 
     # Evidence level progression
     # Phase 8.2.1.1: Hypothesis lifecycle — "hypothesis" → "runtime_validated"
@@ -257,6 +282,14 @@ def promote_validated(validated_result):
             "rejection_reason": "Failed to update memory file frontmatter",
             "promoted_at": datetime.now(timezone.utc).isoformat(),
         }
+
+    # Phase 8.2.1.3: Sync promoted metadata to retrieval-index.yaml
+    _update_index_entry(memory_id, {
+        "evidence_level": new_el,
+        "observation_count": new_obs,
+        "confidence": new_conf,
+        "status": new_status,
+    })
 
     return {
         "memory_id": memory_id,

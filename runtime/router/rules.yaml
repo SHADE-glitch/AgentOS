@@ -117,6 +117,9 @@ difficulty_rules:
 
 # ── Keyword Mapping ───────────────────────────────────────────────
 # Direct keyword → keyword_id mapping (for retrieval adapter compatibility).
+# Phase 8.2.1.5: Expanded with common engineering terms for better
+# task-aware retrieval relevance. These are generic patterns — not
+# task-specific or benchmark-specific.
 keyword_rules:
   - name: mysql
     pattern: "MySQL|mysql"
@@ -162,6 +165,31 @@ keyword_rules:
     pattern: "Docker|docker|容器|container"
   - name: deploy
     pattern: "部署|deploy|CI/CD"
+  # Phase 8.2.1.5: Generic engineering keywords for task-aware retrieval
+  - name: redis
+    pattern: "Redis|redis"
+  - name: cache
+    pattern: "\\bcache\\b|缓存|caching"
+  - name: ttl
+    pattern: "\\bTTL\\b|\\bttl\\b|expir|过期|time.to.live"
+  - name: session
+    pattern: "\\bsession\\b|会话"
+  - name: invalidation
+    pattern: "invalidat|失效|invalidate"
+  - name: eviction
+    pattern: "evict|eviction|驱逐"
+  - name: mutation
+    pattern: "mutation|mutate|变更|mutating"
+  - name: freshness
+    pattern: "freshness|drift|stale|陈旧|不一致"
+  - name: dual-write
+    pattern: "dual.write|双写|dual write"
+  - name: projection
+    pattern: "projection|投影"
+  - name: source-of-truth
+    pattern: "source.of.truth|真实来源|single source"
+  - name: dashboard
+    pattern: "dashboard|仪表盘|仪表板"
 
 # ── Role Mapping (for retrieval adapter compatibility) ────────────
 role_rules:

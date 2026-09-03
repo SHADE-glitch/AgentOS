@@ -25,6 +25,8 @@ QUALITY_THRESHOLD = 3.0
 MIN_OBSERVATIONS = 2  # M4: medium confidence requires >= 2
 HYPOTHESIS_MIN_OBSERVATIONS = 1  # Phase 8.2.1.1: H-xxx hypotheses only need 1 observation
 MAX_OBSERVATIONS_FOR_FULL_CONFIDENCE = 5
+OBSERVATION_LOG_FILE = os.path.join(BASE, "memory-observation-log.yaml")
+OBSERVATION_LOG_MIN_OBSERVATIONS = 2  # Phase 8.2.1.3: min observations to synthesize a group
 
 
 def load_candidates():
@@ -155,7 +157,7 @@ def validate_memory_group(memory_id, group):
         has_provenance = bool(
             meta.get("source_task") or 
             meta.get("source_tasks") or 
-            meta.get("source", {}).get("task_id") if isinstance(meta.get("source"), dict) else False
+            (meta.get("source", {}).get("task_id") if isinstance(meta.get("source"), dict) else False)
         )
         gate_results["M1_provenance"] = "pass" if has_provenance else "fail"
         el = meta.get("evidence_level", "hypothesis")
@@ -195,7 +197,141 @@ def validate_memory_group(memory_id, group):
         "checks": checks,
         "rejection_reason": rejection_reason,
         "validated_at": datetime.now(timezone.utc).isoformat(),
+        **({"cross_loop": {
+            "prior_observations": group["cross_loop_observations"],
+            "sources": group.get("cross_loop_sources", []),
+        }} if group.get("cross_loop_observations") else {}),
     }
+
+
+def load_observation_log():
+    """Load the memory observation log."""
+    if not os.path.exists(OBSERVATION_LOG_FILE):
+        return []
+    with open(OBSERVATION_LOG_FILE) as f:
+        data = yaml.safe_load(f)
+    return data.get("observations", [])
+
+
+def enrich_groups_with_observation_log(groups):
+    """
+    Phase 8.2.1.3: Enrich existing candidate groups with cross-loop observations
+    from the observation log. Only applies to H-xxx memories.
+
+    For each H-xxx group, reads the observation log and adds historical
+    observations to the group's executions, session_ids, output_hashes,
+    and quality_scores. Updates best_quality to max of all.
+
+    Returns: enriched groups dict (same structure, with added fields)
+    """
+    observations = load_observation_log()
+    if not observations:
+        return groups
+
+    for memory_id, group in list(groups.items()):
+        if not memory_id.upper().startswith("H-"):
+            continue
+
+        # Collect observations for this memory from the log
+        log_obs = [o for o in observations if o.get("memory_id") == memory_id]
+        if not log_obs:
+            continue
+
+        cross_loop_sources = []
+        for obs in log_obs:
+            source_loop = obs.get("source_loop")
+            if source_loop and source_loop not in group["executions"]:
+                group["executions"].add(source_loop)
+                cross_loop_sources.append(source_loop)
+
+            qs = obs.get("quality_score", 0)
+            if qs > group["best_quality"]:
+                group["best_quality"] = qs
+            group["all_quality_scores"].append(qs)
+
+            sid = obs.get("session_id")
+            if sid:
+                group["all_session_ids"].add(sid)
+            oh = obs.get("output_hash")
+            if oh:
+                group["all_output_hashes"].add(oh)
+
+        group["cross_loop_observations"] = len(log_obs)
+        group["cross_loop_sources"] = cross_loop_sources
+
+    return groups
+
+
+def synthesize_groups_from_observation_log(groups):
+    """
+    Phase 8.2.1.3: Create candidate groups for H-xxx memories that have
+    observations in the observation log but no candidate group in the
+    current groups dict.
+
+    This handles the case where a hypothesis has 2+ observations across
+    multiple loops but no candidate was generated in the current loop.
+
+    Returns: groups dict with synthesized entries added
+    """
+    observations = load_observation_log()
+    if not observations:
+        return groups
+
+    # Group observations by memory_id
+    obs_by_memory = defaultdict(list)
+    for obs in observations:
+        mid = obs.get("memory_id", "")
+        if mid.upper().startswith("H-"):
+            obs_by_memory[mid].append(obs)
+
+    for memory_id, mem_obs in obs_by_memory.items():
+        # Skip if already has a candidate group
+        if memory_id in groups:
+            continue
+
+        # Skip if insufficient observations
+        if len(mem_obs) < OBSERVATION_LOG_MIN_OBSERVATIONS:
+            continue
+
+        # Synthesize a group from observation log entries
+        executions = set()
+        best_quality = 0
+        all_quality_scores = []
+        all_session_ids = set()
+        all_output_hashes = set()
+
+        for obs in mem_obs:
+            sl = obs.get("source_loop")
+            if sl:
+                executions.add(sl)
+
+            qs = obs.get("quality_score", 0)
+            all_quality_scores.append(qs)
+            if qs > best_quality:
+                best_quality = qs
+
+            sid = obs.get("session_id")
+            if sid:
+                all_session_ids.add(sid)
+            oh = obs.get("output_hash")
+            if oh:
+                all_output_hashes.add(oh)
+
+        groups[memory_id] = {
+            "memory_id": memory_id,
+            "candidates": [],
+            "executions": executions,
+            "best_quality": best_quality,
+            "best_candidate_id": "",
+            "all_quality_scores": all_quality_scores,
+            "all_session_ids": all_session_ids,
+            "all_output_hashes": all_output_hashes,
+            "cross_loop_observations": len(mem_obs),
+            "cross_loop_sources": sorted(executions),
+            "synthesized": True,
+        }
+
+    return groups
 
 
 def validate_candidates(candidates, quiet=False):
@@ -212,12 +348,25 @@ def validate_candidates(candidates, quiet=False):
     """
     if not candidates:
         if not quiet:
-            print("No candidates to validate.")
-        return []
+            print("No candidates from memory-candidates.yaml.")
 
     groups = group_candidates_by_memory(candidates)
+    if not quiet and candidates:
+        print(f"Grouped {len(candidates)} candidates → {len(groups)} memory groups")
+
+    # Phase 8.2.1.3: Cross-loop enrichment from observation log
+    groups = enrich_groups_with_observation_log(groups)
+
+    # Phase 8.2.1.3: Synthesize groups for H-xxx from observation log only
+    groups = synthesize_groups_from_observation_log(groups)
+
+    if not groups:
+        if not quiet:
+            print("No memory groups to validate.")
+        return []
+
     if not quiet:
-        print(f"Validating {len(candidates)} candidates → {len(groups)} memory groups")
+        print(f"Validating {len(groups)} memory groups (after enrichment)")
 
     results = []
     for memory_id, group in sorted(groups.items()):

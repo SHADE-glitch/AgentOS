@@ -2074,3 +2074,1894 @@ memory_ids:
 hypothesis_count: 0
 timestamp: '2026-09-02T01:07:19.117892+00:00'
 ```
+
+## Memory Event — 2026-09-02T01:50:48.391304+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788313847
+task_id: BENCH8-2-1-2-RUN1
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-010
+- T-005
+- S-002
+- T-009
+- P-001
+hypothesis_count: 0
+timestamp: '2026-09-02T01:50:48.391304+00:00'
+```
+
+## Memory Event — 2026-09-02T01:58:21.496799+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788314300
+task_id: BENCH8-2-1-2-RUN2
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T01:58:21.496799+00:00'
+```
+
+## Memory Event — 2026-09-02T02:10:34.487237+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788315032
+task_id: BENCH8-2-1-2-1-RUN1
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T02:10:34.487237+00:00'
+```
+
+## Memory Event — 2026-09-02T02:17:05.228991+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788315423
+task_id: BENCH8-2-1-2-1-RUN2
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T02:17:05.228991+00:00'
+```
+
+## Memory Event — 2026-09-02T07:05:25.993168+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788332725
+task_id: AOS-9B051B
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:05:25.993168+00:00'
+```
+
+## Memory Event — 2026-09-02T07:16:07.173592+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788333367
+task_id: AOS-80D743
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:16:07.173592+00:00'
+```
+
+## Memory Event — 2026-09-02T07:26:53.792444+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788334013
+task_id: AOS-989525
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:26:53.792444+00:00'
+```
+
+## Memory Event — 2026-09-02T07:39:34.359942+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788334774
+task_id: AOS-17A0CC
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:39:34.359942+00:00'
+```
+
+## Memory Event — 2026-09-02T07:41:45.141424+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788334905
+task_id: AOS-A17D74
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:41:45.141424+00:00'
+```
+
+## Memory Event — 2026-09-02T07:44:01.989417+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788335041
+task_id: AOS-2AA13E
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:44:01.989417+00:00'
+```
+
+## Memory Event — 2026-09-02T07:46:39.949629+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788335199
+task_id: AOS-FA988E
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:46:39.949629+00:00'
+```
+
+## Memory Event — 2026-09-02T07:47:57.519985+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788335277
+task_id: AOS-F9B650
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:47:57.519985+00:00'
+```
+
+## Memory Event — 2026-09-02T07:50:16.542962+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788335416
+task_id: AOS-CEFB35
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T07:50:16.542962+00:00'
+```
+
+## Memory Event — 2026-09-02T07:53:28.061495+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788335606
+task_id: AOS-C9D787
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T07:53:28.061495+00:00'
+```
+
+## Memory Event — 2026-09-02T07:58:26.902634+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788335904
+task_id: AOS-E2EC9B
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T07:58:26.902634+00:00'
+```
+
+## Memory Event — 2026-09-02T08:00:13.503018+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788336011
+task_id: AOS-A4578B
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T08:00:13.503018+00:00'
+```
+
+## Memory Event — 2026-09-02T08:07:10.787432+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788336428
+task_id: AOS-390668
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T08:07:10.787432+00:00'
+```
+
+## Memory Event — 2026-09-02T08:14:16.108861+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788336853
+task_id: AOS-68E737
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T08:14:16.108861+00:00'
+```
+
+## Memory Event — 2026-09-02T08:22:08.356967+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788337326
+task_id: AOS-9AEDA9
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T08:22:08.356967+00:00'
+```
+
+## Memory Event — 2026-09-02T08:23:41.499542+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788337419
+task_id: AOS-E3ABCD
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T08:23:41.499542+00:00'
+```
+
+## Memory Event — 2026-09-02T08:25:13.073259+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788337510
+task_id: AOS-2BD83F
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T08:25:13.073259+00:00'
+```
+
+## Memory Event — 2026-09-02T08:26:22.923366+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788337580
+task_id: AOS-D81876
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- S-001
+- P-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T08:26:22.923366+00:00'
+```
+
+## Memory Event — 2026-09-02T08:29:28.267840+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788337766
+task_id: AOS-A907BF
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- S-002
+- P-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T08:29:28.267840+00:00'
+```
+
+## Memory Event — 2026-09-02T08:30:56.746446+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788337854
+task_id: AOS-24E28B
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- S-002
+- P-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T08:30:56.746446+00:00'
+```
+
+## Memory Event — 2026-09-02T08:58:30.243895+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788339510
+task_id: AOS-63FAF9
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T08:58:30.243895+00:00'
+```
+
+## Memory Event — 2026-09-02T09:12:26.076227+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788340346
+task_id: AOS-E1A5E3
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:12:26.076227+00:00'
+```
+
+## Memory Event — 2026-09-02T09:26:49.448271+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788341209
+task_id: AOS-72D2F9
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:26:49.448271+00:00'
+```
+
+## Memory Event — 2026-09-02T09:43:34.947835+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788342214
+task_id: AOS-797E44
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:43:34.947835+00:00'
+```
+
+## Memory Event — 2026-09-02T09:46:52.930661+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788342412
+task_id: AOS-8E400F
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:46:52.930661+00:00'
+```
+
+## Memory Event — 2026-09-02T09:49:04.121629+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788342544
+task_id: AOS-1E5150
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:49:04.121629+00:00'
+```
+
+## Memory Event — 2026-09-02T09:50:56.118676+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788342656
+task_id: AOS-BAB99C
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:50:56.118676+00:00'
+```
+
+## Memory Event — 2026-09-02T09:52:16.138262+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788342736
+task_id: AOS-2807D5
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:52:16.138262+00:00'
+```
+
+## Memory Event — 2026-09-02T09:53:24.120245+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788342804
+task_id: AOS-841B42
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T09:53:24.120245+00:00'
+```
+
+## Memory Event — 2026-09-02T09:55:14.253070+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788342911
+task_id: AOS-E6191C
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T09:55:14.253070+00:00'
+```
+
+## Memory Event — 2026-09-02T10:04:15.043917+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788343452
+task_id: AOS-712955
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T10:04:15.043917+00:00'
+```
+
+## Memory Event — 2026-09-02T10:15:05.173903+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788344102
+task_id: AOS-D1423F
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T10:15:05.173903+00:00'
+```
+
+## Memory Event — 2026-09-02T10:27:34.516928+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788344852
+task_id: AOS-11DB59
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T10:27:34.516928+00:00'
+```
+
+## Memory Event — 2026-09-02T10:29:03.239757+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788344940
+task_id: AOS-48272C
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T10:29:03.239757+00:00'
+```
+
+## Memory Event — 2026-09-02T10:31:20.848619+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788345078
+task_id: AOS-B6BCB4
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-002
+- P-001
+- T-010
+- P-002
+hypothesis_count: 0
+timestamp: '2026-09-02T10:31:20.848619+00:00'
+```
+
+## Memory Event — 2026-09-02T10:33:29.718804+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788345207
+task_id: AOS-3BF7A7
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- S-002
+- P-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T10:33:29.718804+00:00'
+```
+
+## Memory Event — 2026-09-02T10:35:03.367505+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788345300
+task_id: AOS-9C756F
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T10:35:03.367505+00:00'
+```
+
+## Memory Event — 2026-09-02T10:36:48.328666+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788345405
+task_id: AOS-BA57B8
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T10:36:48.328666+00:00'
+```
+
+## Memory Event — 2026-09-02T11:04:25.228876+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788347065
+task_id: AOS-2EA468
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:04:25.228876+00:00'
+```
+
+## Memory Event — 2026-09-02T11:15:08.933992+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788347708
+task_id: AOS-2040DC
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:15:08.933992+00:00'
+```
+
+## Memory Event — 2026-09-02T11:24:28.047407+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788348268
+task_id: AOS-F0DBBB
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:24:28.047407+00:00'
+```
+
+## Memory Event — 2026-09-02T11:36:12.384175+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788348972
+task_id: AOS-70F135
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:36:12.384175+00:00'
+```
+
+## Memory Event — 2026-09-02T11:37:56.407872+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788349076
+task_id: AOS-29063C
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:37:56.407872+00:00'
+```
+
+## Memory Event — 2026-09-02T11:43:49.379769+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788349429
+task_id: AOS-5A3C40
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:43:49.379769+00:00'
+```
+
+## Memory Event — 2026-09-02T11:48:27.428694+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788349707
+task_id: AOS-1AB94C
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:48:27.428694+00:00'
+```
+
+## Memory Event — 2026-09-02T11:53:01.655674+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788349981
+task_id: AOS-AB012E
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:53:01.655674+00:00'
+```
+
+## Memory Event — 2026-09-02T11:57:41.135547+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788350261
+task_id: AOS-68FFAB
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T11:57:41.135547+00:00'
+```
+
+## Memory Event — 2026-09-02T12:09:51.097856+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788350988
+task_id: AOS-94CD0D
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T12:09:51.097856+00:00'
+```
+
+## Memory Event — 2026-09-02T12:18:44.955122+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788351522
+task_id: AOS-8FF4AB
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T12:18:44.955122+00:00'
+```
+
+## Memory Event — 2026-09-02T12:26:20.837168+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788351977
+task_id: AOS-259685
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- S-001
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T12:26:20.837168+00:00'
+```
+
+## Memory Event — 2026-09-02T12:36:51.137860+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788352608
+task_id: AOS-F27499
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T12:36:51.137860+00:00'
+```
+
+## Memory Event — 2026-09-02T12:38:25.701855+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788352702
+task_id: AOS-7AFCFC
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T12:38:25.701855+00:00'
+```
+
+## Memory Event — 2026-09-02T12:40:07.921935+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788352805
+task_id: AOS-E1675D
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T12:40:07.921935+00:00'
+```
+
+## Memory Event — 2026-09-02T12:41:34.163112+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788352891
+task_id: AOS-2E89DB
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T12:41:34.163112+00:00'
+```
+
+## Memory Event — 2026-09-02T12:42:33.762385+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788352950
+task_id: AOS-6CEA38
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T12:42:33.762385+00:00'
+```
+
+## Memory Event — 2026-09-02T12:44:01.795436+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788353038
+task_id: AOS-7BDBAD
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T12:44:01.795436+00:00'
+```
+
+## Memory Event — 2026-09-02T12:48:52.305830+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788353332
+task_id: AOS-6268FE
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T12:48:52.305830+00:00'
+```
+
+## Memory Event — 2026-09-02T12:50:10.953143+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788353410
+task_id: AOS-F5AC39
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T12:50:10.953143+00:00'
+```
+
+## Memory Event — 2026-09-02T12:51:33.163369+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788353493
+task_id: AOS-0F3DDC
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T12:51:33.163369+00:00'
+```
+
+## Memory Event — 2026-09-02T13:15:35.870079+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788354935
+task_id: AOS-F87AEE
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:15:35.870079+00:00'
+```
+
+## Memory Event — 2026-09-02T13:29:21.671421+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788355761
+task_id: AOS-E7A698
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:29:21.671421+00:00'
+```
+
+## Memory Event — 2026-09-02T13:42:30.683593+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788356550
+task_id: AOS-CCD5EE
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:42:30.683593+00:00'
+```
+
+## Memory Event — 2026-09-02T13:53:29.438183+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788357209
+task_id: AOS-D3707B
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:53:29.438183+00:00'
+```
+
+## Memory Event — 2026-09-02T13:55:16.551698+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788357316
+task_id: AOS-30725D
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:55:16.551698+00:00'
+```
+
+## Memory Event — 2026-09-02T13:57:21.309635+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788357441
+task_id: AOS-3BB430
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:57:21.309635+00:00'
+```
+
+## Memory Event — 2026-09-02T13:58:40.168925+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788357520
+task_id: AOS-AA92FB
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:58:40.168925+00:00'
+```
+
+## Memory Event — 2026-09-02T13:59:54.714941+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788357594
+task_id: AOS-F86FAA
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T13:59:54.714941+00:00'
+```
+
+## Memory Event — 2026-09-02T14:01:01.582990+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788357661
+task_id: AOS-87494F
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T14:01:01.582990+00:00'
+```
+
+## Memory Event — 2026-09-02T14:03:45.074865+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788357821
+task_id: AOS-A93CC8
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T14:03:45.074865+00:00'
+```
+
+## Memory Event — 2026-09-02T14:13:39.584040+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788358416
+task_id: AOS-CD27D0
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T14:13:39.584040+00:00'
+```
+
+## Memory Event — 2026-09-02T14:23:14.431846+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788358991
+task_id: AOS-23A8CB
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- P-001
+- S-002
+- T-010
+hypothesis_count: 0
+timestamp: '2026-09-02T14:23:14.431846+00:00'
+```
+
+## Memory Event — 2026-09-02T14:32:43.563173+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788359560
+task_id: AOS-3695AD
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T14:32:43.563173+00:00'
+```
+
+## Memory Event — 2026-09-02T14:34:42.751018+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788359679
+task_id: AOS-D293D1
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T14:34:42.751018+00:00'
+```
+
+## Memory Event — 2026-09-02T14:36:22.728599+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788359779
+task_id: AOS-167119
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- P-001
+- S-002
+- T-010
+- S-001
+hypothesis_count: 0
+timestamp: '2026-09-02T14:36:22.728599+00:00'
+```
+
+## Memory Event — 2026-09-02T14:38:19.195475+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788359896
+task_id: AOS-A538C0
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- E-005
+- P-001
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-02T14:38:19.195475+00:00'
+```
+
+## Memory Event — 2026-09-02T14:39:46.677359+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788359983
+task_id: AOS-A23AAE
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- E-005
+- P-001
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-02T14:39:46.677359+00:00'
+```
+
+## Memory Event — 2026-09-02T14:40:56.901914+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788360053
+task_id: AOS-AC1EE0
+mode: enabled
+retrieved: 5
+memory_ids:
+- T-005
+- S-001
+- E-005
+- P-001
+- E-004
+hypothesis_count: 0
+timestamp: '2026-09-02T14:40:56.901914+00:00'
+```
+
+## Memory Event — 2026-09-02T22:21:50.643901+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788387710
+task_id: AOS-75C0AE
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:21:50.643901+00:00'
+```
+
+## Memory Event — 2026-09-02T22:31:36.629979+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788388296
+task_id: AOS-206D03
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:31:36.629979+00:00'
+```
+
+## Memory Event — 2026-09-02T22:41:28.438067+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788388888
+task_id: AOS-919D10
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:41:28.438067+00:00'
+```
+
+## Memory Event — 2026-09-02T22:49:46.958797+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788389386
+task_id: AOS-B80C60
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:49:46.958797+00:00'
+```
+
+## Memory Event — 2026-09-02T22:51:11.218637+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788389471
+task_id: AOS-5A4984
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:51:11.218637+00:00'
+```
+
+## Memory Event — 2026-09-02T22:52:30.221862+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788389550
+task_id: AOS-6F5805
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:52:30.221862+00:00'
+```
+
+## Memory Event — 2026-09-02T22:53:48.038899+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788389628
+task_id: AOS-62F68E
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:53:48.038899+00:00'
+```
+
+## Memory Event — 2026-09-02T22:55:12.469277+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788389712
+task_id: AOS-144BFC
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:55:12.469277+00:00'
+```
+
+## Memory Event — 2026-09-02T22:57:06.244369+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788389826
+task_id: AOS-470484
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-02T22:57:06.244369+00:00'
+```
+
+## Memory Event — 2026-09-02T22:59:19.707519+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788389956
+task_id: AOS-91C30D
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-02T22:59:19.707519+00:00'
+```
+
+## Memory Event — 2026-09-02T23:14:39.618373+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788390876
+task_id: AOS-378CE3
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-02T23:14:39.618373+00:00'
+```
+
+## Memory Event — 2026-09-02T23:26:02.418998+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788391558
+task_id: AOS-DCD90B
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-02T23:26:02.418998+00:00'
+```
+
+## Memory Event — 2026-09-02T23:36:38.274846+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788392194
+task_id: AOS-C8F15E
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-02T23:36:38.274846+00:00'
+```
+
+## Memory Event — 2026-09-02T23:38:37.017962+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788392313
+task_id: AOS-5EF157
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-02T23:38:37.017962+00:00'
+```
+
+## Memory Event — 2026-09-02T23:40:10.513260+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788392406
+task_id: AOS-C63ADB
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-02T23:40:10.513260+00:00'
+```
+
+## Memory Event — 2026-09-02T23:41:36.913285+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788392493
+task_id: AOS-2D3D7A
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- E-005
+- T-006
+- E-010
+hypothesis_count: 0
+timestamp: '2026-09-02T23:41:36.913285+00:00'
+```
+
+## Memory Event — 2026-09-02T23:42:44.078641+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788392560
+task_id: AOS-21ED69
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- T-006
+- E-005
+- E-010
+hypothesis_count: 0
+timestamp: '2026-09-02T23:42:44.078641+00:00'
+```
+
+## Memory Event — 2026-09-02T23:43:50.363785+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788392626
+task_id: AOS-F34B74
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- T-006
+- E-005
+- E-010
+hypothesis_count: 0
+timestamp: '2026-09-02T23:43:50.363785+00:00'
+```
+
+## Memory Event — 2026-09-03T00:08:49.491586+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788394129
+task_id: AOS-D35380
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:08:49.491586+00:00'
+```
+
+## Memory Event — 2026-09-03T00:20:13.931188+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788394813
+task_id: AOS-76DC94
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:20:13.931188+00:00'
+```
+
+## Memory Event — 2026-09-03T00:33:24.745555+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788395604
+task_id: AOS-DC8330
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:33:24.745555+00:00'
+```
+
+## Memory Event — 2026-09-03T00:51:15.960168+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788396675
+task_id: AOS-D933F2
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:51:15.960168+00:00'
+```
+
+## Memory Event — 2026-09-03T00:52:13.312729+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788396733
+task_id: AOS-BC621C
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:52:13.312729+00:00'
+```
+
+## Memory Event — 2026-09-03T00:53:10.655588+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788396790
+task_id: AOS-0A40D6
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:53:10.655588+00:00'
+```
+
+## Memory Event — 2026-09-03T00:55:22.079397+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788396922
+task_id: AOS-F7B8EB
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:55:22.079397+00:00'
+```
+
+## Memory Event — 2026-09-03T00:59:51.652619+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788397191
+task_id: AOS-014064
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T00:59:51.652619+00:00'
+```
+
+## Memory Event — 2026-09-03T01:04:29.128371+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788397469
+task_id: AOS-1E1EE6
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T01:04:29.128371+00:00'
+```
+
+## Memory Event — 2026-09-03T01:08:44.808937+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788397720
+task_id: AOS-8BC360
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T01:08:44.808937+00:00'
+```
+
+## Memory Event — 2026-09-03T01:19:06.672203+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788398343
+task_id: AOS-5ADB1D
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T01:19:06.672203+00:00'
+```
+
+## Memory Event — 2026-09-03T01:50:48.395945+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788400244
+task_id: AOS-F07526
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T01:50:48.395945+00:00'
+```
+
+## Memory Event — 2026-09-03T02:18:09.246481+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788401885
+task_id: AOS-1A6E14
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T02:18:09.246481+00:00'
+```
+
+## Memory Event — 2026-09-03T02:19:00.332277+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788401936
+task_id: AOS-3927C1
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T02:19:00.332277+00:00'
+```
+
+## Memory Event — 2026-09-03T02:21:09.020508+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788402065
+task_id: AOS-DFC377
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T02:21:09.020508+00:00'
+```
+
+## Memory Event — 2026-09-03T02:22:01.350402+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788402117
+task_id: AOS-1F3AEF
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- E-005
+- T-006
+- E-010
+hypothesis_count: 0
+timestamp: '2026-09-03T02:22:01.350402+00:00'
+```
+
+## Memory Event — 2026-09-03T02:23:25.139853+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788402201
+task_id: AOS-0B2A9C
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- E-005
+- T-006
+- E-010
+hypothesis_count: 0
+timestamp: '2026-09-03T02:23:25.139853+00:00'
+```
+
+## Memory Event — 2026-09-03T02:24:33.350545+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788402269
+task_id: AOS-848EFC
+mode: enabled
+retrieved: 5
+memory_ids:
+- S-001
+- T-005
+- E-005
+- T-006
+- E-010
+hypothesis_count: 0
+timestamp: '2026-09-03T02:24:33.350545+00:00'
+```
+
+## Memory Event — 2026-09-03T02:28:11.409790+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788402491
+task_id: AOS-53181E
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T02:28:11.409790+00:00'
+```
+
+## Memory Event — 2026-09-03T02:37:13.075985+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403033
+task_id: AOS-DF339C
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T02:37:13.075985+00:00'
+```
+
+## Memory Event — 2026-09-03T02:38:19.686724+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403099
+task_id: AOS-56F015
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T02:38:19.686724+00:00'
+```
+
+## Memory Event — 2026-09-03T02:39:16.609431+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403156
+task_id: AOS-A7E663
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T02:39:16.609431+00:00'
+```
+
+## Memory Event — 2026-09-03T02:40:16.506813+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403216
+task_id: AOS-6A2B99
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T02:40:16.506813+00:00'
+```
+
+## Memory Event — 2026-09-03T02:41:26.920816+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403286
+task_id: AOS-D596D4
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T02:41:26.920816+00:00'
+```
+
+## Memory Event — 2026-09-03T02:42:13.060612+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403333
+task_id: AOS-31F564
+mode: disabled
+retrieved: 0
+memory_ids: []
+hypothesis_count: 0
+timestamp: '2026-09-03T02:42:13.060612+00:00'
+```
+
+## Memory Event — 2026-09-03T02:44:19.568329+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403455
+task_id: AOS-BDFCA6
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T02:44:19.568329+00:00'
+```
+
+## Memory Event — 2026-09-03T02:51:17.679778+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788403873
+task_id: AOS-FB564E
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T02:51:17.679778+00:00'
+```
+
+## Memory Event — 2026-09-03T02:59:01.016567+00:00
+
+```yaml
+event_type: memory
+execution_id: EXEC-1788404337
+task_id: AOS-A90571
+mode: enabled
+retrieved: 5
+memory_ids: []
+hypothesis_count: 5
+timestamp: '2026-09-03T02:59:01.016567+00:00'
+```

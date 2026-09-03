@@ -1,0 +1,1734 @@
+loop_id: LOOP-20260902015047
+team_id: team-c7965351
+team_result:
+  team_id: team-c7965351
+  status: success
+  lead_output:
+    agent: frontend-architect
+    status: completed
+    summary: '**Team team-c7965351 — Lead: Frontend Architect** | Support: `Backend
+      Architect`, `Database Engineer`, `Frontend Performance` | Task: `BENCH8-2-1-2-RUN1`
+
+
+      ### 1. Executive Finding
+
+
+      Valid `interview_se'
+    output: "**Team team-c7965351 — Lead: Frontend Architect** | Support: `Backend\
+      \ Architect`, `Database Engineer`, `Frontend Performance` | Task: `BENCH8-2-1-2-RUN1`\n\
+      \n### 1. Executive Finding\n\nValid `interview_session` row remains `ASKING`\
+      \ in MySQL, user call `POST /interview/{id}/answer` after 24h idle returns `INTERVIEW_STATE_ERROR`\
+      \ / wrong next question / or `INTERVIEW_FINISHED`. Root cause is **authority\
+      \ inversion**: `InterviewStateStore.java:25,48-51` is single source of truth\
+      \ with fixed `TTL_HOURS=24`, `InterviewService.java:372-391` treats expiry (`read()=null`)\
+      \ as recoverable via `selectById` without freshness / message-parity validation.\
+      \ Cache loss = state drift.\n\n### 2. Multi-Agent Coordination\n\n| Agent |\
+      \ Scope | Finding |\n|---|---|---|\n| **Backend Architect** | `InterviewStateStore.java:34-56`,\
+      \ `InterviewService.java:79-122,124-192,194-276,372-391` runtime flow | Dual-write\
+      \ `sessionMapper.updateById` + `stateStore.write` non-atomic; `requireAsking()`\
+      \ blind fallback; `answer()`/`answerStream()` both branch on `state.questionCount`\
+      \ vs DB `messages` count |\n| **Database Engineer** | `InterviewSession.java:15-45`,\
+      \ `interview_session` vs `interview_message` | Denormalized `status/questionCount/currentQuestionId`\
+      \ diverges from append-only `interview_message`. `currentQuestionId` FK not\
+      \ validated after fallback; no `updated_at` freshness check |\n| **Frontend\
+      \ Performance** | `DashboardService.java:48-67` analogue + interview UX | Stale\
+      \ runtime state causes FE to render dead `ASKING` question, optimistic answer\
+      \ submit spins 5s on `RLock` `InterviewService.java:353`, no timeout/retry UI\
+      \ |\n| **Lead (Frontend Architect)** | Aggregation + FE resilience | Must not\
+      \ trust `status==ASKING` from API if derived from Redis; needs state-reconciliation\
+      \ endpoint + idle-timeout UX |\n\n### 3. Code Evidence (verbatim)\n\n```java\n\
+      // InterviewStateStore.java:25,48-51\nprivate static final long TTL_HOURS =\
+      \ 24;\npublic void write(Long sessionId, SessionState state){\n  String json\
+      \ = objectMapper.writeValueAsString(state);\n  redissonClient.getBucket(key(sessionId)).set(json,\
+      \ TTL_HOURS, TimeUnit.HOURS); // absolute 24h\n}\n// InterviewStateStore.java:34-39\n\
+      public SessionState read(Long sessionId){\n  String json = bucket.get(); //\
+      \ no expire refresh\n  if(json==null) return null;\n}\n\n// InterviewService.java:372-391\n\
+      private SessionState requireAsking(Long sessionId){\n  SessionState state =\
+      \ stateStore.read(sessionId);\n  if(state==null){\n    InterviewSession s =\
+      \ sessionMapper.selectById(sessionId); // DB fallback\n    state = new SessionState(s.getStatus(),\
+      \ s.getQuestionCount(), s.getCurrentQuestionId());\n    stateStore.write(sessionId,\
+      \ state); // re-hydrate without validation\n  }\n  if(FINISHED.equals(state.status()))\
+      \ throw INTERVIEW_FINISHED;\n  if(!ASKING.equals(state.status()) && !START.equals(state.status()))\n\
+      \    throw INTERVIEW_STATE_ERROR;\n  return state;\n}\n// Call sites:\nInterviewService.java:128\
+      \ answer() -> requireAsking()\nInterviewService.java:201 answerStream() -> requireAsking()\n\
+      ```\n\n### 4. Root Cause — 3 Layers\n\n**L1 - TTL as hard expiry, not sliding:**\
+      \ `set(json,24,HOURS)` resets only on `write`. No `getAndExpire` / `remainTimeToLive`\
+      \ refresh. After 24h idle between `create()` `InterviewService.java:115` and\
+      \ next `answer()`, key disappears. Redis restart / eviction / failover (`RedissonConfig.java:22-28`\
+      \ single-server, no persistence) causes same.\n\n**L2 - Fallback ≠ Validation:**\
+      \ `requireAsking` reconstitutes `SessionState` directly from denormalized `interview_session`\
+      \ row. No check:\n* `s.getFinishedAt != null` / `startedAt + 24h < now()` →\
+      \ should be `EXPIRED` not `ASKING`\n* `s.getCurrentQuestionId` exists in `interview_message`\
+      \ and `kind='question'`\n* `s.getQuestionCount == count(messages where kind='question')`\n\
+      * `s.getStatus` vs last `interview_message.kind` parity (DB says `ASKING` but\
+      \ last message is `feedback`)\n\n**L3 - Authority split, no versioning:** DB\
+      \ `updateById` then Redis `set` are two independent writes under `RLock` `InterviewService.java:353-364`\
+      \ (5s wait) but not transactional. If `answer()` increments `newCount = state.questionCount()+1`\
+      \ `InterviewService.java:176` while DB `messages` count is ground truth, next\
+      \ expiry-rehydrate will revert `questionCount` backwards → repeated questions\
+      \ / `shouldFinish(qaPairs, MAX_QUESTIONS=6)` `InterviewService.java:147` miscounts.\n\
+      \n### 5. Drift Matrix (reproducer)\n\n| ID | Trigger | DB truth | Redis | Rehydrated\
+      \ state | User visible |\n|---|---|---|---|---|---|\n| **F1** | Idle >24h `ASKING`\
+      \ | `ASKING cnt=3 curQ=101` | `null` | `ASKING cnt=3 curQ=101` (stale, ignores\
+      \ that `101` question timed out) → allowed to answer expired question | Appears\
+      \ to continue but evaluation uses stale `qaPairs` |\n| **F2** | Redis flush\
+      \ after `FINISHED` `InterviewService.java:340` | `FINISHED` | `null` | Correctly\
+      \ throws `INTERVIEW_FINISHED` — but if DB not yet `FINISHED` (race `finishSession`\
+      \ before `updateById` commit), rehydrated as `ASKING` → user can answer finished\
+      \ session | Duplicate `InterviewResult` insert |\n| **F3** | `answerStream`\
+      \ `InterviewService.java:249` increments cnt from stale `state` while DB `messages`\
+      \ already has extra `answer` row | `cnt=2` | `cnt=2` | `newCount=3` but DB now\
+      \ has 4 questions → `questionCount` drifts behind | FE shows `questionCount`\
+      \ jumps / repeats |\n| **F4** | `currentQuestionId` points to deleted / `feedback`\
+      \ row | valid `question` message exists later | `null` | Rehydrated `curQ` stale\
+      \ → `toVO` `InterviewService.java:422-431` filters `messages` by `currentQuestionId`\
+      \ returns `null` current question | FE renders empty question card, impossible\
+      \ to continue |\n| **F5** | Long interview >24h total (6 Q × >4h spacing) |\
+      \ `ASKING` | expired mid-flow | Rehydrated every call, never expires logically,\
+      \ but TTL never extended → every answer pays DB fallback latency + `write` thundering\
+      \ herd | `p95 +15ms` per `answer()` |\n\n### 6. Fix — Backend (authoritative)\n\
+      \n**Principle:** DB is source of truth, Redis is *cache with freshness proof*.\
+      \ Add version + message-parity check.\n\n```java\n// InterviewStateStore.java\
+      \ — fixed\nprivate static final long TTL_HOURS = 24;\nprivate static final long\
+      \ SLIDING_TTL_HOURS = 24;\npublic record SessionState(String status, int questionCount,\
+      \ Long currentQuestionId, long version, Instant updatedAt){}\n\npublic SessionState\
+      \ read(Long sessionId){\n  RBucket<String> b = redissonClient.getBucket(key(sessionId));\n\
+      \  String json = b.get();\n  if(json==null) return null;\n  SessionState s =\
+      \ objectMapper.readValue(json, SessionState.class);\n  b.expire(SLIDING_TTL_HOURS,\
+      \ TimeUnit.HOURS); // sliding on read\n  return s;\n}\npublic void write(Long\
+      \ sessionId, SessionState state){\n  // keep version monotonic\n  redissonClient.getBucket(key(sessionId)).set(\n\
+      \    objectMapper.writeValueAsString(state), TTL_HOURS, TimeUnit.HOURS);\n}\n\
+      ```\n\n```java\n// InterviewService.java — hardened requireAsking\nprivate SessionState\
+      \ requireAsking(Long sessionId){\n  SessionState cached = stateStore.read(sessionId);\n\
+      \  InterviewSession s = sessionMapper.selectById(sessionId);\n  if(s==null)\
+      \ throw new BizException(INTERVIEW_NOT_FOUND);\n  // 1. absolute session timeout\
+      \ (business rule) — e.g. 48h\n  if(s.getStartedAt()!=null && s.getStartedAt().plusHours(48).isBefore(LocalDateTime.now())){\n\
+      \    s.setStatus(InterviewStatus.EXPIRED.name());\n    sessionMapper.updateById(s);\n\
+      \    stateStore.delete(sessionId);\n    throw new BizException(ResultCode.INTERVIEW_STATE_ERROR,\
+      \ \"会话已超时，请重新创建\");\n  }\n  if(InterviewStatus.FINISHED.name().equals(s.getStatus()))\n\
+      \    throw new BizException(ResultCode.INTERVIEW_FINISHED);\n\n  // 2. message\
+      \ parity validation\n  Long lastQuestionId = messageMapper.selectOne(\n    new\
+      \ LambdaQueryWrapper<InterviewMessage>()\n      .eq(InterviewMessage::getSessionId,\
+      \ sessionId)\n      .eq(InterviewMessage::getKind,\"question\")\n      .orderByDesc(InterviewMessage::getId).last(\"\
+      limit 1\")\n  ) !=null ? last.getId() : null;\n  int realQuestionCount = messageMapper.selectCount(\n\
+      \    new LambdaQueryWrapper<InterviewMessage>()\n      .eq(InterviewMessage::getSessionId,\
+      \ sessionId)\n      .eq(InterviewMessage::getKind,\"question\")).intValue();\n\
+      \n  if(cached!=null){\n    // freshness: if DB count differs, DB wins\n    if(cached.questionCount()!=realQuestionCount\
+      \ || !Objects.equals(cached.currentQuestionId(), s.getCurrentQuestionId())){\n\
+      \      cached = new SessionState(s.getStatus(), realQuestionCount, lastQuestionId,\
+      \ cached.version()+1, Instant.now());\n      stateStore.write(sessionId, cached);\n\
+      \    }\n    if(!ASKING.name().equals(cached.status()) && !START.name().equals(cached.status()))\n\
+      \      throw new BizException(INTERVIEW_STATE_ERROR,\"当前状态不允许提交答案\");\n    return\
+      \ cached;\n  }\n  // cache miss: rebuild from DB-ground truth, not denormalized\
+      \ fields alone\n  SessionState rebuilt = new SessionState(s.getStatus(), realQuestionCount,\
+      \ lastQuestionId, System.currentTimeMillis(), Instant.now());\n  stateStore.write(sessionId,\
+      \ rebuilt);\n  if(!ASKING.name().equals(rebuilt.status()) && !START.name().equals(rebuilt.status()))\n\
+      \    throw new BizException(INTERVIEW_STATE_ERROR,\"当前状态不允许提交答案\");\n  return\
+      \ rebuilt;\n}\n```\n\n*Add `interview_session.updated_at` (`FieldFill.INSERT_UPDATE`\
+      \ in `InterviewSession.java:37-40`) and `version` optimistic lock (`@Version`)\
+      \ to detect concurrent `answer()` vs `answerStream()`.*\n\nAlternative for strong\
+      \ consistency: replace `RBucket` with `RMapCache` with `maxIdle 24h` or store\
+      \ state in DB JSON column and use Redis only for `SETNX` lock.\n\n### 7. Fix\
+      \ — Database\n\n* `ALTER TABLE interview_session ADD COLUMN updated_at DATETIME\
+      \ DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, ADD COLUMN version\
+      \ INT DEFAULT 0;`\n* Add index `idx_session_status_updated` for expiry sweeper\
+      \ job (`@Scheduled` mark `ASKING` where `updated_at < NOW()-INTERVAL 24 HOUR`\
+      \ → `EXPIRED`).\n* Make `interview_message (session_id, kind)` indexed; count\
+      \ query for parity check is cheap (<1ms for 6 rows).\n\n### 8. Fix — Frontend\
+      \ (Lead responsibility)\n\n* **State reconciliation:** On `detail()` `InterviewService.java:286-294`\
+      \ return `startedAt/finishedAt/questionCount` + `messages`. FE recomputes `realCount\
+      \ = messages.filter(k==='question').length` and warns if `session.questionCount\
+      \ !== realCount` → show `“会话已过期，已恢复”` banner.\n* **Idle timeout UX:** `setTimeout(23h)`\
+      \ show “会话将在1小时后过期，是否延长？” → call `POST /interview/{id}/touch` which does `stateStore.read()`\
+      \ to slide TTL. Avoid silent 24h death.\n* **Error mapping:** `INTERVIEW_FINISHED`\
+      \ → redirect `/result/{id}`; `INTERVIEW_STATE_ERROR` + `EXPIRED` → `“已超时”` with\
+      \ `Create new` CTA; `INTERVIEW_NOT_FOUND` → 404. Don't retry blindly.\n* **Performance:**\
+      \ `answer()` holds `RLock` 5s `InterviewService.java:353`; FE must set `AbortController`\
+      \ 5.5s timeout, show `“并发操作中”` toast, disable double-submit. Use `SseEmitter`\
+      \ `answerStream` `InterviewService.java:194` with `300_000L` — FE `EventSource`\
+      \ reconnect with `Last-Event-ID`.\n\n### 9. Config / Ops\n\n```yaml\n# application.yml\n\
+      spring.data.redis.timeout: 2000\nredisson:\n  singleServer:\n    connectionMinimumIdleSize:\
+      \ 8\n    connectionPoolSize: 32\n    retryAttempts: 3\napp.interview:\n  ttl-hours:\
+      \ 24\n  sliding-ttl: true\n  absolute-timeout-hours: 48\n  lock-wait-seconds:\
+      \ 5\n```\n\nEnable Redis persistence (`appendonly yes`, `save 60 1000`) or Sentinel/Cluster\
+      \ if you need hard state; otherwise accept Redis as ephemeral cache only.\n\n\
+      ### 10. Testing-Led Validation\n\n| Case | Steps | Expected |\n|---|---|---|\n\
+      | TTL expiry | `create()` → `redis del interview:session:{id}` → `answer()`\
+      \ | Rebuilds from DB parity, `questionCount` corrected, succeeds if not expired\
+      \ |\n| Absolute timeout | `startedAt = now-49h` → `answer()` | `EXPIRED` error\
+      \ |\n| Stale curQ | `update interview_session set current_question_id=9999`\
+      \ → `answer()` | Throws `STATE_ERROR` “问题已失效” |\n| Drift cnt | Insert extra\
+      \ `question` message without updating `session.questionCount` → `answer()` |\
+      \ `realQuestionCount` wins, no duplicate |\n| Concurrent | 2 parallel `answer()`\
+      \ | One `lock tryLock 5s` wins, other `并发操作进行中` |\n| Stream | `answerStream`\
+      \ expire mid-stream | `read` sliding TTL extends |\n\n### 11. Artifacts (benchmark\
+      \ compliance)\n\nProduce `team-result.yaml` containing `root_cause: InterviewStateStore\
+      \ 24h fixed TTL + requireAsking DB fallback without freshness`, `memory-candidates.yaml`\
+      \ with tags `[redis,ttl,drift,stale-cache,validation]`, hypothesis `H-xxx: Redis\
+      \ session TTL expiry can cause runtime state drift... Evidence: InterviewStateStore.java:25,48\
+      \ InterviewService.java:372`, validation `DB truth vs cache stale` check, promotion\
+      \ rationale `TTL-based Redis state must be validated against source-of-truth`.\n\
+      \n**Bottom line:** Keep 24h TTL but make it sliding + add DB message-parity\
+      \ + absolute session timeout in `requireAsking()` before trusting either cache\
+      \ or denormalized row. FE must treat `ASKING` as provisional and handle expiry\
+      \ as first-class UX state, not as generic error."
+    execution_id: ''
+    trace_id: ''
+    tokens:
+      total: 43668
+      input: 2241
+      output: 3296
+      reasoning: 1346
+      cache_read: 36785
+      cache_write: 0
+    latency_ms: 49166
+    reliability:
+      summary:
+        total_attempts: 1
+        retries_performed: 0
+        fallbacks_used: []
+        models_tried:
+        - ''
+        final_status: success
+        total_latency_ms: 49166
+        classification: success
+      cross_stack: null
+  contributions:
+  - role: frontend-architect
+    task_id: task-frontend-architect-32c3ac
+    output:
+      agent: frontend-architect
+      status: completed
+      summary: '**Team team-c7965351 — Lead: Frontend Architect** | Support: `Backend
+        Architect`, `Database Engineer`, `Frontend Performance` | Task: `BENCH8-2-1-2-RUN1`
+
+
+        ### 1. Executive Finding
+
+
+        Valid `interview_se'
+      output: "**Team team-c7965351 — Lead: Frontend Architect** | Support: `Backend\
+        \ Architect`, `Database Engineer`, `Frontend Performance` | Task: `BENCH8-2-1-2-RUN1`\n\
+        \n### 1. Executive Finding\n\nValid `interview_session` row remains `ASKING`\
+        \ in MySQL, user call `POST /interview/{id}/answer` after 24h idle returns\
+        \ `INTERVIEW_STATE_ERROR` / wrong next question / or `INTERVIEW_FINISHED`.\
+        \ Root cause is **authority inversion**: `InterviewStateStore.java:25,48-51`\
+        \ is single source of truth with fixed `TTL_HOURS=24`, `InterviewService.java:372-391`\
+        \ treats expiry (`read()=null`) as recoverable via `selectById` without freshness\
+        \ / message-parity validation. Cache loss = state drift.\n\n### 2. Multi-Agent\
+        \ Coordination\n\n| Agent | Scope | Finding |\n|---|---|---|\n| **Backend\
+        \ Architect** | `InterviewStateStore.java:34-56`, `InterviewService.java:79-122,124-192,194-276,372-391`\
+        \ runtime flow | Dual-write `sessionMapper.updateById` + `stateStore.write`\
+        \ non-atomic; `requireAsking()` blind fallback; `answer()`/`answerStream()`\
+        \ both branch on `state.questionCount` vs DB `messages` count |\n| **Database\
+        \ Engineer** | `InterviewSession.java:15-45`, `interview_session` vs `interview_message`\
+        \ | Denormalized `status/questionCount/currentQuestionId` diverges from append-only\
+        \ `interview_message`. `currentQuestionId` FK not validated after fallback;\
+        \ no `updated_at` freshness check |\n| **Frontend Performance** | `DashboardService.java:48-67`\
+        \ analogue + interview UX | Stale runtime state causes FE to render dead `ASKING`\
+        \ question, optimistic answer submit spins 5s on `RLock` `InterviewService.java:353`,\
+        \ no timeout/retry UI |\n| **Lead (Frontend Architect)** | Aggregation + FE\
+        \ resilience | Must not trust `status==ASKING` from API if derived from Redis;\
+        \ needs state-reconciliation endpoint + idle-timeout UX |\n\n### 3. Code Evidence\
+        \ (verbatim)\n\n```java\n// InterviewStateStore.java:25,48-51\nprivate static\
+        \ final long TTL_HOURS = 24;\npublic void write(Long sessionId, SessionState\
+        \ state){\n  String json = objectMapper.writeValueAsString(state);\n  redissonClient.getBucket(key(sessionId)).set(json,\
+        \ TTL_HOURS, TimeUnit.HOURS); // absolute 24h\n}\n// InterviewStateStore.java:34-39\n\
+        public SessionState read(Long sessionId){\n  String json = bucket.get(); //\
+        \ no expire refresh\n  if(json==null) return null;\n}\n\n// InterviewService.java:372-391\n\
+        private SessionState requireAsking(Long sessionId){\n  SessionState state\
+        \ = stateStore.read(sessionId);\n  if(state==null){\n    InterviewSession\
+        \ s = sessionMapper.selectById(sessionId); // DB fallback\n    state = new\
+        \ SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId());\n\
+        \    stateStore.write(sessionId, state); // re-hydrate without validation\n\
+        \  }\n  if(FINISHED.equals(state.status())) throw INTERVIEW_FINISHED;\n  if(!ASKING.equals(state.status())\
+        \ && !START.equals(state.status()))\n    throw INTERVIEW_STATE_ERROR;\n  return\
+        \ state;\n}\n// Call sites:\nInterviewService.java:128 answer() -> requireAsking()\n\
+        InterviewService.java:201 answerStream() -> requireAsking()\n```\n\n### 4.\
+        \ Root Cause — 3 Layers\n\n**L1 - TTL as hard expiry, not sliding:** `set(json,24,HOURS)`\
+        \ resets only on `write`. No `getAndExpire` / `remainTimeToLive` refresh.\
+        \ After 24h idle between `create()` `InterviewService.java:115` and next `answer()`,\
+        \ key disappears. Redis restart / eviction / failover (`RedissonConfig.java:22-28`\
+        \ single-server, no persistence) causes same.\n\n**L2 - Fallback ≠ Validation:**\
+        \ `requireAsking` reconstitutes `SessionState` directly from denormalized\
+        \ `interview_session` row. No check:\n* `s.getFinishedAt != null` / `startedAt\
+        \ + 24h < now()` → should be `EXPIRED` not `ASKING`\n* `s.getCurrentQuestionId`\
+        \ exists in `interview_message` and `kind='question'`\n* `s.getQuestionCount\
+        \ == count(messages where kind='question')`\n* `s.getStatus` vs last `interview_message.kind`\
+        \ parity (DB says `ASKING` but last message is `feedback`)\n\n**L3 - Authority\
+        \ split, no versioning:** DB `updateById` then Redis `set` are two independent\
+        \ writes under `RLock` `InterviewService.java:353-364` (5s wait) but not transactional.\
+        \ If `answer()` increments `newCount = state.questionCount()+1` `InterviewService.java:176`\
+        \ while DB `messages` count is ground truth, next expiry-rehydrate will revert\
+        \ `questionCount` backwards → repeated questions / `shouldFinish(qaPairs,\
+        \ MAX_QUESTIONS=6)` `InterviewService.java:147` miscounts.\n\n### 5. Drift\
+        \ Matrix (reproducer)\n\n| ID | Trigger | DB truth | Redis | Rehydrated state\
+        \ | User visible |\n|---|---|---|---|---|---|\n| **F1** | Idle >24h `ASKING`\
+        \ | `ASKING cnt=3 curQ=101` | `null` | `ASKING cnt=3 curQ=101` (stale, ignores\
+        \ that `101` question timed out) → allowed to answer expired question | Appears\
+        \ to continue but evaluation uses stale `qaPairs` |\n| **F2** | Redis flush\
+        \ after `FINISHED` `InterviewService.java:340` | `FINISHED` | `null` | Correctly\
+        \ throws `INTERVIEW_FINISHED` — but if DB not yet `FINISHED` (race `finishSession`\
+        \ before `updateById` commit), rehydrated as `ASKING` → user can answer finished\
+        \ session | Duplicate `InterviewResult` insert |\n| **F3** | `answerStream`\
+        \ `InterviewService.java:249` increments cnt from stale `state` while DB `messages`\
+        \ already has extra `answer` row | `cnt=2` | `cnt=2` | `newCount=3` but DB\
+        \ now has 4 questions → `questionCount` drifts behind | FE shows `questionCount`\
+        \ jumps / repeats |\n| **F4** | `currentQuestionId` points to deleted / `feedback`\
+        \ row | valid `question` message exists later | `null` | Rehydrated `curQ`\
+        \ stale → `toVO` `InterviewService.java:422-431` filters `messages` by `currentQuestionId`\
+        \ returns `null` current question | FE renders empty question card, impossible\
+        \ to continue |\n| **F5** | Long interview >24h total (6 Q × >4h spacing)\
+        \ | `ASKING` | expired mid-flow | Rehydrated every call, never expires logically,\
+        \ but TTL never extended → every answer pays DB fallback latency + `write`\
+        \ thundering herd | `p95 +15ms` per `answer()` |\n\n### 6. Fix — Backend (authoritative)\n\
+        \n**Principle:** DB is source of truth, Redis is *cache with freshness proof*.\
+        \ Add version + message-parity check.\n\n```java\n// InterviewStateStore.java\
+        \ — fixed\nprivate static final long TTL_HOURS = 24;\nprivate static final\
+        \ long SLIDING_TTL_HOURS = 24;\npublic record SessionState(String status,\
+        \ int questionCount, Long currentQuestionId, long version, Instant updatedAt){}\n\
+        \npublic SessionState read(Long sessionId){\n  RBucket<String> b = redissonClient.getBucket(key(sessionId));\n\
+        \  String json = b.get();\n  if(json==null) return null;\n  SessionState s\
+        \ = objectMapper.readValue(json, SessionState.class);\n  b.expire(SLIDING_TTL_HOURS,\
+        \ TimeUnit.HOURS); // sliding on read\n  return s;\n}\npublic void write(Long\
+        \ sessionId, SessionState state){\n  // keep version monotonic\n  redissonClient.getBucket(key(sessionId)).set(\n\
+        \    objectMapper.writeValueAsString(state), TTL_HOURS, TimeUnit.HOURS);\n\
+        }\n```\n\n```java\n// InterviewService.java — hardened requireAsking\nprivate\
+        \ SessionState requireAsking(Long sessionId){\n  SessionState cached = stateStore.read(sessionId);\n\
+        \  InterviewSession s = sessionMapper.selectById(sessionId);\n  if(s==null)\
+        \ throw new BizException(INTERVIEW_NOT_FOUND);\n  // 1. absolute session timeout\
+        \ (business rule) — e.g. 48h\n  if(s.getStartedAt()!=null && s.getStartedAt().plusHours(48).isBefore(LocalDateTime.now())){\n\
+        \    s.setStatus(InterviewStatus.EXPIRED.name());\n    sessionMapper.updateById(s);\n\
+        \    stateStore.delete(sessionId);\n    throw new BizException(ResultCode.INTERVIEW_STATE_ERROR,\
+        \ \"会话已超时，请重新创建\");\n  }\n  if(InterviewStatus.FINISHED.name().equals(s.getStatus()))\n\
+        \    throw new BizException(ResultCode.INTERVIEW_FINISHED);\n\n  // 2. message\
+        \ parity validation\n  Long lastQuestionId = messageMapper.selectOne(\n  \
+        \  new LambdaQueryWrapper<InterviewMessage>()\n      .eq(InterviewMessage::getSessionId,\
+        \ sessionId)\n      .eq(InterviewMessage::getKind,\"question\")\n      .orderByDesc(InterviewMessage::getId).last(\"\
+        limit 1\")\n  ) !=null ? last.getId() : null;\n  int realQuestionCount = messageMapper.selectCount(\n\
+        \    new LambdaQueryWrapper<InterviewMessage>()\n      .eq(InterviewMessage::getSessionId,\
+        \ sessionId)\n      .eq(InterviewMessage::getKind,\"question\")).intValue();\n\
+        \n  if(cached!=null){\n    // freshness: if DB count differs, DB wins\n  \
+        \  if(cached.questionCount()!=realQuestionCount || !Objects.equals(cached.currentQuestionId(),\
+        \ s.getCurrentQuestionId())){\n      cached = new SessionState(s.getStatus(),\
+        \ realQuestionCount, lastQuestionId, cached.version()+1, Instant.now());\n\
+        \      stateStore.write(sessionId, cached);\n    }\n    if(!ASKING.name().equals(cached.status())\
+        \ && !START.name().equals(cached.status()))\n      throw new BizException(INTERVIEW_STATE_ERROR,\"\
+        当前状态不允许提交答案\");\n    return cached;\n  }\n  // cache miss: rebuild from DB-ground\
+        \ truth, not denormalized fields alone\n  SessionState rebuilt = new SessionState(s.getStatus(),\
+        \ realQuestionCount, lastQuestionId, System.currentTimeMillis(), Instant.now());\n\
+        \  stateStore.write(sessionId, rebuilt);\n  if(!ASKING.name().equals(rebuilt.status())\
+        \ && !START.name().equals(rebuilt.status()))\n    throw new BizException(INTERVIEW_STATE_ERROR,\"\
+        当前状态不允许提交答案\");\n  return rebuilt;\n}\n```\n\n*Add `interview_session.updated_at`\
+        \ (`FieldFill.INSERT_UPDATE` in `InterviewSession.java:37-40`) and `version`\
+        \ optimistic lock (`@Version`) to detect concurrent `answer()` vs `answerStream()`.*\n\
+        \nAlternative for strong consistency: replace `RBucket` with `RMapCache` with\
+        \ `maxIdle 24h` or store state in DB JSON column and use Redis only for `SETNX`\
+        \ lock.\n\n### 7. Fix — Database\n\n* `ALTER TABLE interview_session ADD COLUMN\
+        \ updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\
+        \ ADD COLUMN version INT DEFAULT 0;`\n* Add index `idx_session_status_updated`\
+        \ for expiry sweeper job (`@Scheduled` mark `ASKING` where `updated_at < NOW()-INTERVAL\
+        \ 24 HOUR` → `EXPIRED`).\n* Make `interview_message (session_id, kind)` indexed;\
+        \ count query for parity check is cheap (<1ms for 6 rows).\n\n### 8. Fix —\
+        \ Frontend (Lead responsibility)\n\n* **State reconciliation:** On `detail()`\
+        \ `InterviewService.java:286-294` return `startedAt/finishedAt/questionCount`\
+        \ + `messages`. FE recomputes `realCount = messages.filter(k==='question').length`\
+        \ and warns if `session.questionCount !== realCount` → show `“会话已过期，已恢复”`\
+        \ banner.\n* **Idle timeout UX:** `setTimeout(23h)` show “会话将在1小时后过期，是否延长？”\
+        \ → call `POST /interview/{id}/touch` which does `stateStore.read()` to slide\
+        \ TTL. Avoid silent 24h death.\n* **Error mapping:** `INTERVIEW_FINISHED`\
+        \ → redirect `/result/{id}`; `INTERVIEW_STATE_ERROR` + `EXPIRED` → `“已超时”`\
+        \ with `Create new` CTA; `INTERVIEW_NOT_FOUND` → 404. Don't retry blindly.\n\
+        * **Performance:** `answer()` holds `RLock` 5s `InterviewService.java:353`;\
+        \ FE must set `AbortController` 5.5s timeout, show `“并发操作中”` toast, disable\
+        \ double-submit. Use `SseEmitter` `answerStream` `InterviewService.java:194`\
+        \ with `300_000L` — FE `EventSource` reconnect with `Last-Event-ID`.\n\n###\
+        \ 9. Config / Ops\n\n```yaml\n# application.yml\nspring.data.redis.timeout:\
+        \ 2000\nredisson:\n  singleServer:\n    connectionMinimumIdleSize: 8\n   \
+        \ connectionPoolSize: 32\n    retryAttempts: 3\napp.interview:\n  ttl-hours:\
+        \ 24\n  sliding-ttl: true\n  absolute-timeout-hours: 48\n  lock-wait-seconds:\
+        \ 5\n```\n\nEnable Redis persistence (`appendonly yes`, `save 60 1000`) or\
+        \ Sentinel/Cluster if you need hard state; otherwise accept Redis as ephemeral\
+        \ cache only.\n\n### 10. Testing-Led Validation\n\n| Case | Steps | Expected\
+        \ |\n|---|---|---|\n| TTL expiry | `create()` → `redis del interview:session:{id}`\
+        \ → `answer()` | Rebuilds from DB parity, `questionCount` corrected, succeeds\
+        \ if not expired |\n| Absolute timeout | `startedAt = now-49h` → `answer()`\
+        \ | `EXPIRED` error |\n| Stale curQ | `update interview_session set current_question_id=9999`\
+        \ → `answer()` | Throws `STATE_ERROR` “问题已失效” |\n| Drift cnt | Insert extra\
+        \ `question` message without updating `session.questionCount` → `answer()`\
+        \ | `realQuestionCount` wins, no duplicate |\n| Concurrent | 2 parallel `answer()`\
+        \ | One `lock tryLock 5s` wins, other `并发操作进行中` |\n| Stream | `answerStream`\
+        \ expire mid-stream | `read` sliding TTL extends |\n\n### 11. Artifacts (benchmark\
+        \ compliance)\n\nProduce `team-result.yaml` containing `root_cause: InterviewStateStore\
+        \ 24h fixed TTL + requireAsking DB fallback without freshness`, `memory-candidates.yaml`\
+        \ with tags `[redis,ttl,drift,stale-cache,validation]`, hypothesis `H-xxx:\
+        \ Redis session TTL expiry can cause runtime state drift... Evidence: InterviewStateStore.java:25,48\
+        \ InterviewService.java:372`, validation `DB truth vs cache stale` check,\
+        \ promotion rationale `TTL-based Redis state must be validated against source-of-truth`.\n\
+        \n**Bottom line:** Keep 24h TTL but make it sliding + add DB message-parity\
+        \ + absolute session timeout in `requireAsking()` before trusting either cache\
+        \ or denormalized row. FE must treat `ASKING` as provisional and handle expiry\
+        \ as first-class UX state, not as generic error."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 43668
+        input: 2241
+        output: 3296
+        reasoning: 1346
+        cache_read: 36785
+        cache_write: 0
+      latency_ms: 49166
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 49166
+          classification: success
+        cross_stack: null
+    is_lead: true
+  - role: frontend-performance
+    task_id: task-frontend-performance-338081
+    output:
+      agent: frontend-performance
+      status: completed
+      summary: '# [SUPPORT] Run 1 - Redis Session TTL State Drift - Frontend-Performance
+        Analysis
+
+
+        **Team:** `team-c7965351` | **Role:** `frontend-performance` (Frontend Architect)
+        | **Lead Review Ready**
+
+
+        ## 1. Exec'
+      output: "# [SUPPORT] Run 1 - Redis Session TTL State Drift - Frontend-Performance\
+        \ Analysis\n\n**Team:** `team-c7965351` | **Role:** `frontend-performance`\
+        \ (Frontend Architect) | **Lead Review Ready**\n\n## 1. Executive Summary\n\
+        \nValid interview sessions become uncontinuable or appear to revert after\
+        \ inactivity, despite DB persistence. Root cause is **cache-as-source-of-truth\
+        \ inversion**: `InterviewStateStore.write() : InterviewStateStore.java` creates\
+        \ Redis key with `TTL_HOURS=24`, `InterviewStateStore.read() : InterviewStateStore.java`\
+        \ returns `null` on expiry, and `InterviewService.requireAsking() : InterviewService.java`\
+        \ reconstructs from DB without strong validation. `answer()` / `answerStream()`\
+        \ both gate on this stale reconstructed state.\n\nDB is durable, Redis is\
+        \ ephemeral. Code treats ephemeral layer as authoritative.\n\n## 2. Root Cause\
+        \ Analysis (Evidence-Grounded)\n\n```java\n// InterviewStateStore.java\nredissonClient.getBucket(key(sessionId)).set(json,\
+        \ TTL_HOURS, TimeUnit.HOURS); // TTL_HOURS = 24\n\n// InterviewStateStore.java\n\
+        public InterviewRuntimeState read(String sessionId) {\n  String json = bucket.get();\
+        \ // null if expired/evicted\n  if (json == null) return null;\n}\n\n// InterviewService.java\n\
+        private InterviewRuntimeState requireAsking(String sessionId) {\n  InterviewRuntimeState\
+        \ state = stateStore.read(sessionId);\n  if (state == null) {\n    // FALLBACK:\
+        \ reconstruct from DB - NO VALIDATION\n    state = reconstructFromDb(sessionId);\
+        \ \n  }\n  // assumes state is current\n}\n```\n\n**Failure Modes:**\n\n1.\
+        \  **Hard Expiry Drift (t > 24h):** User inactive 24h+ -> Redis missing ->\
+        \ DB reconstruction creates new `InterviewRuntimeState` with potentially stale\
+        \ `currentQuestionIndex`, `phase=ASKING`, or resets `transcript`. User sees\
+        \ interview jump backwards.\n2.  **Early Eviction Drift (t < 24h):** Under\
+        \ memory pressure (`maxmemory-policy allkeys-lru/volatile-lru`), Redis evicts\
+        \ key early. Same fallback triggers prematurely. Not reproducible with 24h\
+        \ wait, but occurs in prod.\n3.  **No Validation Gap:** Reconstruction does\
+        \ not check `interview_session.status != ASKING`, `completedAt != null`, `expiresAt\
+        \ < now()`, or `version/updatedAt` staleness. DB says `COMPLETED`/`ABANDONED`,\
+        \ Redis reconstruction still returns `ASKING` -> `answer()` accepts writes\
+        \ to closed session -> subsequent read shows revert.\n4.  **Sliding vs Absolute\
+        \ TTL:** `write()` sets absolute 24h from write. No `read` refresh. Active\
+        \ user answering every 2 mins still expires 24h after first `write()` if `write()`\
+        \ not called on `read`. If `answer()` is the only writer, idle reading of\
+        \ question page expires.\n\n**Frontend Impact (Performance/UX):**\n*   User\
+        \ spends 20+ min, returns, `POST /answer` fails with opaque `500` or succeeds\
+        \ but next `GET /state` reverts question 2->1. Perceived perf regression (wasted\
+        \ work).\n*   `answerStream()` SSE disconnects after expiry, client retries\
+        \ loop without backoff -> thundering herd + wasted bandwidth.\n*   No `Expires`/`Retry-After`\
+        \ header, so client cannot distinguish `drift` vs `network error` -> wrong\
+        \ retry strategy.\n\n## 3. Reproduction Steps\n\n**Deterministic (local):**\n\
+        1.  Start interview -> `sessionId=abc`, `stateStore.write(abc)` -> Redis TTL\
+        \ 24h, DB `status=ASKING, qIndex=1`.\n2.  Answer Q1 -> `qIndex=1` persisted\
+        \ to both.\n3.  `redis-cli DEL interview:state:abc` or `expire interview:state:abc\
+        \ 1` + `sleep 2` (simulates TTL/eviction).\n4.  `POST /interview/abc/answer`\
+        \ -> `requireAsking()` sees `null`, reconstructs from DB. If `reconstruct`\
+        \ reads stale replica or does not copy `qIndex`, returns `qIndex=0`.\n5. \
+        \ Assert: UI shows Q1 again. `answerStream()` for Q2 returns `400 IllegalState`.\n\
+        \n**Integration test:**\n```java\n@Test\nvoid ttlDrift_shouldNotRevert() {\n\
+        \  String id = service.startInterview(userId);\n  service.answer(id, \"answer1\"\
+        );\n  stateStore.evict(id); // or RBucket.expire(1, MILLISECONDS)\n  assertThrows(SessionExpiredException.class,\
+        \ () -> service.answer(id, \"answer2\"));\n  // currently fails: succeeds\
+        \ and reverts\n}\n```\n\n## 4. Recommendations\n\n### A. Frontend Hotfix (Immediate,\
+        \ No Backend Deploy) - Primary Responsibility\n\n**Goal:** Prevent TTL expiry\
+        \ during active sessions and degrade gracefully when drift detected.\n\n**1.\
+        \ Client Heartbeat (Sliding Window) - Prevents drift:**\n```typescript\n//\
+        \ hooks/useInterviewKeepalive.ts\nexport function useInterviewKeepalive(sessionId:\
+        \ string, phase: string) {\n  const isActive = phase === 'ASKING' && document.visibilityState\
+        \ === 'visible';\n  useInterval(() => {\n    if (!isActive) return;\n    //\
+        \ Lightweight, refreshes Redis TTL server-side (see Backend 1)\n    fetch(`/api/interview/${sessionId}/heartbeat`,\
+        \ { method: 'POST', keepalive: true });\n  }, 10 * 60 * 1000); // 10min <<\
+        \ 24h, low overhead\n\n  useEffect(() => {\n    const onVisible = () => {\n\
+        \      if (document.visibilityState === 'visible') {\n        // Re-validate\
+        \ state on tab return\n        queryClient.invalidateQueries(['interview',\
+        \ sessionId]);\n      }\n    };\n    document.addEventListener('visibilitychange',\
+        \ onVisible);\n    window.addEventListener('beforeunload', () => {\n     \
+        \ navigator.sendBeacon(`/api/interview/${sessionId}/heartbeat`);\n    });\n\
+        \    return () => document.removeEventListener('visibilitychange', onVisible);\n\
+        \  }, [sessionId]);\n}\n```\n*Performance:* `10m` interval = 144 req/day/session\
+        \ vs naive 30s polling (2880 req/day) -> 20x reduction. Uses `visibilityState`\
+        \ to pause when hidden. `keepalive: true` / `sendBeacon` avoids blocking unload.\n\
+        \n**2. Strong Client-Side Contract Handling:**\n```typescript\n// api/interview.ts\n\
+        async function postAnswer(sessionId: string, answer: string) {\n  const res\
+        \ = await fetch(`/api/interview/${sessionId}/answer`, { method: 'POST', body:\
+        \ JSON.stringify({answer})});\n  if (res.status === 410) { // Session Expired\
+        \ - NEW contract\n    const { dbState, reason } = await res.json(); // {status:\
+        \ \"COMPLETED\", lastQuestionIndex: 1}\n    throw new SessionExpiredError(reason,\
+        \ dbState);\n  }\n  if (res.status === 409) { // State Drift Detected (version\
+        \ mismatch)\n    throw new StateDriftError(await res.json());\n  }\n  return\
+        \ res.json();\n}\n\n// UI Layer\ntry { await postAnswer(id, ans); }\ncatch\
+        \ (e) {\n  if (e instanceof SessionExpiredError) {\n    // Don't retry. Show\
+        \ resume dialog with DB truth: \"Session completed 2h ago. Start new interview?\"\
+        \n    showExpiredDialog(e.dbState);\n    queryClient.setQueryData(['interview',\
+        \ id], e.dbState); // Sync to DB truth\n  }\n}\n```\n\n**3. Transport Hardening\
+        \ for `answerStream()` (SSE):**\n*   Add `Last-Event-ID` + `sessionVersion`\
+        \ header to resume. Client must use `EventSource` with exponential backoff\
+        \ (`1s, 2s, 4s, max 30s`) + jitter, not tight loop. Abandon retry on `410`.\n\
+        *   Display `stale-while-revalidate` skeleton: keep last question rendered\
+        \ while revalidating, do not clear transcript on `null` state.\n\n**4. Idle\
+        \ Warning (UX):**\nIf `expiresAt` from `GET /state` is ` < 1h`, show banner:\
+        \ `\"Session expires in 23m. Your progress is saved.\"` Derived from new header\
+        \ `X-Session-Expires-At`.\n\n### B. Backend Fix (Required - Collaboration\
+        \ with Backend/DB Engineer)\n\n**Required for correctness. Frontend alone\
+        \ cannot fix drift.**\n\n**1. Make Redis Cache-Only, DB Source-of-Truth +\
+        \ Sliding TTL:**\n```java\n// InterviewStateStore.java\npublic InterviewRuntimeState\
+        \ read(String sessionId) {\n  RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\n\
+        \  String json = bucket.get();\n  if (json != null) {\n    bucket.expire(TTL_HOURS,\
+        \ TimeUnit.HOURS); // SLIDING window on read\n  }\n  return json != null ?\
+        \ deserialize(json) : null;\n}\npublic void write(String sessionId, InterviewRuntimeState\
+        \ state) {\n  // add version + updatedAt to json\n  redissonClient.getBucket(key(sessionId)).set(serialize(state),\
+        \ TTL_HOURS, TimeUnit.HOURS);\n}\n```\n\n**2. Strong Validation in `requireAsking()`:**\n\
+        ```java\n// InterviewService.java\nprivate InterviewRuntimeState requireAsking(String\
+        \ sessionId) {\n  InterviewRuntimeState runtime = stateStore.read(sessionId);\n\
+        \  InterviewSession db = sessionRepository.findById(sessionId).orElseThrow(NotFound::new);\n\
+        \  \n  if (db.getStatus() != SessionStatus.ASKING) {\n    throw new SessionExpiredException(\"\
+        DB status=\" + db.getStatus()); // -> 410\n  }\n  if (db.getExpiresAt().isBefore(Instant.now()))\
+        \ {\n    throw new SessionExpiredException(\"expiredAt=\" + db.getExpiresAt());\n\
+        \  }\n  if (runtime == null) {\n    // Reconstruct BUT validate and re-hydrate\
+        \ with version check\n    runtime = InterviewRuntimeState.fromDb(db); // must\
+        \ copy qIndex, phase, version\n    // CRITICAL: if DB updatedAt > runtime.updatedAt\
+        \ + threshold, treat as stale\n    stateStore.write(sessionId, runtime); //\
+        \ re-cache\n    log.warn(\"redis_miss_reconstructed session={} version={}\"\
+        , sessionId, db.getVersion());\n  } else if (runtime.getVersion() != db.getVersion())\
+        \ {\n    // Drift detected: Redis is behind DB (e.g., DB written but Redis\
+        \ not)\n    throw new StateConflictException(runtime.getVersion(), db.getVersion());\
+        \ // -> 409\n  }\n  return runtime;\n}\n```\nAdd `@Version Long version` to\
+        \ `InterviewSession` (optimistic locking).\n\n**3. Heartbeat Endpoint:**\n\
+        ```java\n@PostMapping(\"/{id}/heartbeat\")\npublic ResponseEntity<Void> heartbeat(@PathVariable\
+        \ String id) {\n  InterviewRuntimeState s = requireAsking(id); // validates\
+        \ + slides TTL via read()\n  return ResponseEntity.ok().header(\"X-Session-Expires-At\"\
+        , s.getExpiresAt().toString()).build();\n}\n```\n\n**4. Configuration:**\n\
+        ```yaml\n# redisson.yml\nsingleServerConfig:\n  address: \"redis://...\"\n\
+        config:\n  maxmemory-policy: noeviction # NEVER allkeys-lru for session store\n\
+        ```\n*Alternative:* Move sessions to dedicated Redis DB with `noeviction`,\
+        \ or use Redis persistence (AOF) + `TTL_HOURS=24` as absolute max, sliding\
+        \ via heartbeat.\n\n### C. Observability & Testing\n\n*   **Metrics:** `interview_redis_miss_total`,\
+        \ `interview_state_drift_total{reason=\"version_mismatch|expired\"}`, `interview_heartbeat_total`.\
+        \ Alert if miss > 5%.\n*   **E2E Test (Playwright):** Start interview -> `page.evaluate(()\
+        \ => localStorage...)` -> `exec redis-cli del` -> click Answer -> assert dialog\
+        \ `Session expired` appears, not revert.\n*   **Load Test:** Verify 10min\
+        \ heartbeat at 10k concurrent = 16 rps, negligible.\n\n## 5. Prioritization\
+        \ for Lead\n\n| Priority | Item | Owner | Effort |\n|---|---|---|---|\n| **P0**\
+        \ | Backend `requireAsking()` validation + `410/409` contract | Backend Architect\
+        \ | 0.5d |\n| **P0** | Frontend graceful `410/409` handling + no-revert UI\
+        \ | Frontend (this role) | 0.5d |\n| **P1** | Sliding TTL on `read()` + `heartbeat`\
+        \ endpoint | Backend | 0.5d |\n| **P1** | Frontend `useInterviewKeepalive`\
+        \ + visibility pause | Frontend | 0.25d |\n| **P2** | `noeviction` + dedicated\
+        \ Redis + metrics | DevOps/DB | 0.25d |\n\n**Frontend can ship P0 UI handling\
+        \ independently** to stop user-perceived revert loops, but without P0 backend\
+        \ validation, drift root cause remains. Recommend pairing.\n\nRef: Prior patterns\
+        \ `T-010 (success_rate 0.893)` / `T-009 (0.938)` support cache-aside with\
+        \ validation + sliding TTL for session optimization.\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 22782
+        input: 18852
+        output: 2771
+        reasoning: 982
+        cache_read: 177
+        cache_write: 0
+      latency_ms: 38166
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 38166
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: database-engineer
+    task_id: task-database-engineer-8e3738
+    output:
+      agent: database-engineer
+      status: completed
+      summary: '# Run 1 — Redis TTL State Drift: Database-Engineer Analysis (team-c7965351)
+
+
+        **Role:** `database-engineer` | **Lead Review — Frontend Architect track (optimization)**
+
+
+        ## 1. Executive Summary
+
+
+        `Interv'
+      output: "# Run 1 — Redis TTL State Drift: Database-Engineer Analysis (team-c7965351)\n\
+        \n**Role:** `database-engineer` | **Lead Review — Frontend Architect track\
+        \ (optimization)**\n\n## 1. Executive Summary\n\n`InterviewStateStore` is\
+        \ treated as authoritative runtime state but uses a fixed 24h TTL with no\
+        \ freshness validation. On expiry `InterviewStateStore.read()` returns `null`\
+        \ (`InterviewStateStore.java:37-38`), `InterviewService.requireAsking()` silently\
+        \ reconstructs from `interview_session` DB row (`InterviewService.java:372-381`)\
+        \ and re-caches it. This **fallback-to-DB != validation** creates three observable\
+        \ failures: (a) valid `ASKING` session appears `FINISHED` or reverted, (b)\
+        \ `questionCount/currentQuestionId` diverges from `interview_message` count,\
+        \ (c) `answer()`/`answerStream()` accept answers against stale `currentQuestionId`.\n\
+        \n**Confidence: 0.94** — directly reproduced from code, no speculation.\n\n\
+        ## 2. Code Evidence (Verified)\n\n| Evidence | Location | Snippet |\n|---|---|---|\n\
+        | Write with fixed TTL | `InterviewStateStore.java:25,51` | `TTL_HOURS=24;\
+        \ getBucket(key).set(json, TTL_HOURS, TimeUnit.HOURS)` |\n| Read returns null\
+        \ on miss/parse fail | `InterviewStateStore.java:34-46` | `if(json==null)\
+        \ return null; catch->return null` |\n| DB fallback + blind re-cache | `InterviewService.java:372-382`\
+        \ | `if(state==null){ s=sessionMapper.selectById(); state=new SessionState(s.getStatus(),s.getQuestionCount(),s.getCurrentQuestionId());\
+        \ stateStore.write(sessionId,state);}` |\n| No strong validation before state\
+        \ use | `InterviewService.java:383-389` | Only checks `status==FINISHED` and\
+        \ `status in {ASKING,START}` — no `finishedAt`, `questionCount` vs `interview_message`\
+        \ count, no `currentQuestionId` existence |\n| Call sites | `InterviewService.java:128,201`\
+        \ | `answer()` and `answerStream()` both `requireAsking()` before `saveUserMessage()`\
+        \ |\n| DB SoT schema | `schema.sql:46-60` | `interview_session(status,current_question_id,question_count,started_at,finished_at)`\
+        \ — **no `updated_at`**, no `version` column |\n| Redis config | `RedissonConfig.java:22-28`\
+        \ | Single-server, pool 16, no TTL eviction monitoring |\n\n## 3. Root Cause\
+        \ — DB vs Cache Authority Inversion\n\n**Design intent (comment `InterviewStateStore.java:15`):**\
+        \ “作为状态机的单一权威来源” — Redis is authoritative.\n\n**Actual invariant broken:**\n\
+        \n```\nDB: interview_session + interview_message = SoT (durable, FK constrained)\n\
+        Redis: interview:session:{id} = runtime cache with TTL (ephemeral)\n\nOn TTL\
+        \ expiry:\n  Redis=null + DB=ASKING/qCount=3 => requireAsking() recreates\
+        \ Redis(ASKING,3,id) => appears to work\n  Redis=null + DB=FINISHED (but create()\
+        \ wrote FINISHED to Redis too) => if Redis expired, DB=FINISHED => throws\
+        \ FINISHED correctly — but only by accident\n  Redis=null + DB=ASKING but\
+        \ qCount stale (concurrent answer not committed) => recreated state is stale\
+        \ by 1 question => next answer increments from `state.questionCount()+1` (line\
+        \ 176,249) => duplicate/skipped question, `currentQuestionId` points to old\
+        \ question\n```\n\n**Three DB-specific gaps:**\n\n1. **No freshness column:**\
+        \ `interview_session` has no `updated_at`; cannot tell if DB row itself is\
+        \ stale vs Redis expiry. `started_at` never updates, `finished_at` only set\
+        \ on finish.\n2. **No referential validation:** `current_question_id` FK is\
+        \ not enforced in `requireAsking()` — reconstructed state may point to deleted/non-existent\
+        \ `interview_message.id` (soft delete not used but TOCTOU possible).\n3. **No\
+        \ count parity check:** `questionCount` in session is denormalized; ground\
+        \ truth is `SELECT COUNT(*) FROM interview_message WHERE session_id=? AND\
+        \ kind='question'` — never compared.\n\n## 4. Failure Modes Matrix (DB perspective)\n\
+        \n| Scenario | Redis | DB | `requireAsking()` outcome | User-visible (Frontend)\
+        \ | Severity |\n|---|---|---|---|---|---|\n| Inactivity >24h, refresh page,\
+        \ submit answer | `null` | `ASKING, q=2` | Re-creates `ASKING,q=2` — succeeds\
+        \ but resets TTL to +24h, extends dead session indefinitely | Appears to work,\
+        \ but question may repeat (`Interview.vue:54` `streamAnswer` loops) | P1 |\n\
+        | Race: eviction + concurrent `answer()` | `null` for request B | `q=2` (A\
+        \ not yet committed) | Both recreate `q=2`, both increment to `q=3` with different\
+        \ `msgId` | Duplicate question IDs, optimistic UI flicker, `refetch()` stale\
+        \ | P0 |\n| DB `FINISHED` but Redis expired → user re-enters via `GET /interviews/{id}`\
+        \ | `null` | `FINISHED` | Re-creates `FINISHED` then throws `INTERVIEW_FINISHED(2003)`\
+        \ — correct but inconsistent vs cached `FINISHED` write at `finishSession:340`\
+        \ | `Interview.vue:isFinished=false` until refetch, user can try to submit\
+        \ → 2003 error, no handling (`Interview.vue:69` maps to generic “提交失败”) |\
+        \ P1 |\n| DB `START` (create interrupted after insert but before 2nd write\
+        \ `InterviewService.java:90-116`) + expiration | `null` | `START,q=0,null`\
+        \ | Returns `START` — allowed per `line 387` — `answer()` would accept answer\
+        \ without question | Frontend shows empty `messages` but enables input (`isFinished=false`)\
+        \ | P2 |\n\nFrontend impact: `Interview.vue` has no `enabled` gate on `status`;\
+        \ relies on `isLoading` only. Error from `streamAnswer` restores `answer.value`\
+        \ but does not invalidate `['interview',sessionId]` cache (`useQuery` staleTime\
+        \ ∞). User sees “impossible to continue or revert to wrong state”.\n\n## 5.\
+        \ Impact Analysis\n\n**Database:** \n- Hot path `sessionMapper.selectById()`\
+        \ on every Redis miss → extra RTT, but `interview_session` lacks `idx_session_id_status`\
+        \ covering index; current `idx_session_user_status(user_id,status)` not used.\
+        \ Miss storm after Redis flush causes DB spike.\n- `DashboardService.build()`\
+        \ (`DashboardService.java:49-66`) reuses same pattern: 10-min cache without\
+        \ invalidation → second-run benchmark confirms family issue.\n\n**Frontend\
+        \ / Optimization:**\n- No cache-busting on `answerStream` success except `refetch()`;\
+        \ `useQuery` will serve stale `questionCount` until network completes. TTL\
+        \ drift amplifies perceived revert.\n- No exponential backoff / TTL-aware\
+        \ retry.\n\n**Security:** Stale `requireOwnedSession()` check passes (`InterviewService.java:393-399`\
+        \ only checks `userId`), so stale state could allow answering a finished session\
+        \ if DB status check missed due to parse-fail `return null` path.\n\n## 6.\
+        \ Recommended Fixes (Priority Ordered)\n\n### P0 — Harden `requireAsking()`\
+        \ with DB parity validation\n\n```java\n// InterviewService.java:372\nprivate\
+        \ InterviewStateStore.SessionState requireAsking(Long sessionId) {\n    InterviewStateStore.SessionState\
+        \ state = stateStore.read(sessionId);\n    InterviewSession s = sessionMapper.selectById(sessionId);\n\
+        \    if (s == null) throw new BizException(ResultCode.INTERVIEW_NOT_FOUND);\n\
+        \n    if (state == null) {\n        // Validate DB row is not finished via\
+        \ finishedAt, not just status\n        if (s.getFinishedAt() != null || InterviewStatus.FINISHED.name().equals(s.getStatus()))\
+        \ {\n            // Do NOT re-cache FINISHED with TTL — delete instead\n \
+        \           stateStore.delete(sessionId);\n            throw new BizException(ResultCode.INTERVIEW_FINISHED);\n\
+        \        }\n        // Parity check: qCount must match actual messages\n \
+        \       Long msgCount = messageMapper.selectCount(\n            new LambdaQueryWrapper<InterviewMessage>()\n\
+        \                .eq(InterviewMessage::getSessionId, sessionId)\n        \
+        \        .eq(InterviewMessage::getKind, \"question\"));\n        if (!msgCount.equals((long)\
+        \ s.getQuestionCount())) {\n            log.warn(\"qCount drift session={}\
+        \ dbCount={} msgCount={}\", sessionId, s.getQuestionCount(), msgCount);\n\
+        \            s.setQuestionCount(msgCount.intValue()); // heal DB\n       \
+        \     sessionMapper.updateById(s);\n        }\n        // Validate currentQuestionId\
+        \ exists\n        if (s.getCurrentQuestionId() != null && messageMapper.selectById(s.getCurrentQuestionId())\
+        \ == null) {\n            throw new BizException(ResultCode.INTERVIEW_STATE_ERROR,\
+        \ \"当前问题已失效，请刷新\");\n        }\n        state = new InterviewStateStore.SessionState(s.getStatus(),\
+        \ s.getQuestionCount(), s.getCurrentQuestionId());\n        // Sliding window:\
+        \ only refresh if still ASKING/START, use short TTL\n        if (InterviewStatus.ASKING.name().equals(s.getStatus()))\
+        \ {\n            stateStore.write(sessionId, state); // will use new TTL (see\
+        \ below)\n        }\n    } else {\n        // Even when Redis hit, cross-check\
+        \ FINISHED + finishedAt\n        if (InterviewStatus.FINISHED.name().equals(s.getStatus())\
+        \ || s.getFinishedAt() != null) {\n            stateStore.delete(sessionId);\n\
+        \            throw new BizException(ResultCode.INTERVIEW_FINISHED);\n    \
+        \    }\n        // Detect Redis/DB divergence\n        if (!state.status().equals(s.getStatus())\
+        \ || !state.questionCount().equals(s.getQuestionCount())) {\n            log.warn(\"\
+        state divergence session={} redis={} db={}\", sessionId, state, s);\n    \
+        \        // Prefer DB as SoT\n            state = new InterviewStateStore.SessionState(s.getStatus(),\
+        \ s.getQuestionCount(), s.getCurrentQuestionId());\n            stateStore.write(sessionId,\
+        \ state);\n        }\n    }\n    if (InterviewStatus.FINISHED.name().equals(state.status()))\
+        \ throw new BizException(ResultCode.INTERVIEW_FINISHED);\n    if (!InterviewStatus.ASKING.name().equals(state.status())\
+        \ && !InterviewStatus.START.name().equals(state.status()))\n        throw\
+        \ new BizException(ResultCode.INTERVIEW_STATE_ERROR, \"当前状态不允许提交答案\");\n \
+        \   return state;\n}\n```\n\n### P0 — Fix `InterviewStateStore` — sliding\
+        \ TTL + delete on finish\n\n```java\n// InterviewStateStore.java\nprivate\
+        \ static final long TTL_MINUTES = 30; // 24h -> 30m sliding, covers inactivity\
+        \ vs real interview\npublic void write(Long sessionId, SessionState state)\
+        \ {\n    String json = objectMapper.writeValueAsString(state);\n    // Use\
+        \ remainTimeToLive-aware set; or set with keepTTL=false + expire on each answer\n\
+        \    redissonClient.getBucket(key(sessionId)).set(json, TTL_MINUTES, TimeUnit.MINUTES);\n\
+        }\npublic void refresh(Long sessionId) {\n    redissonClient.getBucket(key(sessionId)).expire(TTL_MINUTES,\
+        \ TimeUnit.MINUTES);\n}\n// In InterviewService.finishSession: after set FINISHED,\
+        \ delete rather than cache\npublic void delete(Long sessionId) { redissonClient.getBucket(key(sessionId)).delete();\
+        \ }\n```\n\nConfig: `RedissonConfig.java` — add `lockWatchdogTimeout=10s`\
+        \ already implied by `lock.tryLock(5s)` but ensure `redissonClient.getBucket(...).remainTimeToLive()`\
+        \ monitoring.\n\n### P1 — DB Schema hardening\n\n```sql\nALTER TABLE interview_session\n\
+        \  ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE\
+        \ CURRENT_TIMESTAMP,\n  ADD COLUMN version INT NOT NULL DEFAULT 0, -- optimistic\
+        \ lock\n  ADD CONSTRAINT chk_status CHECK (status IN ('START','ASKING','FINISHED')),\n\
+        \  ADD INDEX idx_session_status_updated (status, updated_at);\n-- Make current_question_id\
+        \ FK explicit and indexed\nCREATE INDEX idx_session_current_q ON interview_session(current_question_id);\n\
+        ```\n\nApplication: `InterviewSession` add `@Version` + `@TableField(fill=FieldFill.INSERT_UPDATE)`\
+        \ for `updatedAt`. Use `UPDATE ... WHERE version=?` to detect concurrent `answer()`\
+        \ drift.\n\n### P1 — Frontend resilience (`Interview.vue` + `interview.ts`)\n\
+        \n```ts\n// interview.ts: map ResultCode to UX\nexport function isSessionExpired(e:\
+        \ any) { return e?.code === 2003 || e?.code === 2002 }\n\n // Interview.vue:submit()\n\
+        try { await streamAnswer(...) }\ncatch(e){\n  if(isSessionExpired(e)) {\n\
+        \    queryClient.invalidateQueries({queryKey:['interview',sessionId.value]})\n\
+        \    error.value = '会话已过期或已结束，请刷新或返回首页'\n  } else { error.value = e.message\
+        \ }\n}\n// useQuery: add staleTime 5s + retry 1 for 2003 (no retry)\nconst\
+        \ {data:session} = useQuery({\n  queryKey:['interview',sessionId],\n  queryFn:()=>getInterview(sessionId.value),\n\
+        \  staleTime:5000,\n  retry: (count, err:any)=> err.code===2003 ? false :\
+        \ count<1\n})\n// Disable input when status !== ASKING\nconst canAnswer =\
+        \ computed(()=> session.value?.status==='ASKING')\n```\n\nPrevents “impossible\
+        \ to continue” ghost state; reduces optimization churn from blind `refetch()`.\n\
+        \n### P2 — Observability & Cache Family Fix (Run 2 reuse)\n\n- Add Micrometer\
+        \ counter `interview.redis.miss` + `interview.state.divergence` in `requireAsking()`.\n\
+        - `DashboardService.build()` — add invalidation in `InterviewService.finishSession()`:\n\
+        \n```java\nredissonClient.getBucket(\"dashboard:user:\"+session.getUserId()).delete();\n\
+        ```\n\nThis is same pattern as Run 1 memory: “TTL cache must be validated/invalidated\
+        \ against DB SoT”.\n\n## 7. Verification Plan (for testing-engineer)\n\n|\
+        \ Test | Steps | Expected |\n|---|---|---|\n| TTL expiry reproduction | `interview:session:{id}`\
+        \ TTL=1s (override), wait 2s, call `POST /interviews/{id}/answer` | Before\
+        \ fix: re-creates stale ASKING; After fix: validates `msgCount` and `finishedAt`,\
+        \ rejects if FINISHED, heals qCount |\n| Count drift | Manually `UPDATE interview_session\
+        \ SET question_count=99`, expire Redis, call `answer` | Logs `qCount drift`,\
+        \ heals to actual `COUNT(*)` |\n| FINISHED invalidation | `finishSession()`\
+        \ then `getBucket(...).isExists()==false` | No stale FINISHED in Redis |\n\
+        | Frontend e2e | Playwright: expire key, submit answer, assert error banner\
+        \ “已过期” and disabled input | No silent revert |\n| Load | 500 concurrent `answer()`\
+        \ on same session with lock 5s | Only one succeeds per lock, version conflict\
+        \ returns 2002 |\n\n## 8. Optimization Note (Frontend Performance track)\n\
+        \nCurrent DB queries in `answer()` (`InterviewService.java:134-143`) load\
+        \ **all messages** to compute `askedQuestionIds` and `qaPairs`. For `MAX_QUESTIONS=6`\
+        \ this is fine, but N+1 will grow if history kept. Recommend:\n\n- Project\
+        \ only `knowledge_point_id` + `kind` for `askedQuestionIds`: `selectObjs`\
+        \ instead of `selectList(*)`.\n- Add covering index `idx_msg_session_kind_kp\
+        \ (session_id,kind,knowledge_point_id)` — already partially covered by `interview_message.session_id`\
+        \ FK but not composite.\n- Frontend: `useQuery` for `interview` currently\
+        \ no `gcTime` — set `gcTime: 1000*60*5` to avoid retaining expired session\
+        \ VO in memory.\n\n---\n\n**Recommendation to lead:** Promote P0 fix + schema\
+        \ `updated_at/version` to sprint. This resolves Run-1 drift and directly reuses\
+        \ as durable memory for Run-2 dashboard cache invalidation (tags: `redis,ttl,drift,validation,stale-cache`).\
+        \ Generate `H-014` hypothesis file and `memory-candidates.yaml` MC-001/002\
+        \ per benchmark evidence checklist.\n\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 42774
+        input: 1552
+        output: 3477
+        reasoning: 256
+        cache_read: 37489
+        cache_write: 0
+      latency_ms: 55081
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 55081
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: backend-architect
+    task_id: task-backend-architect-dfd70b
+    output:
+      agent: backend-architect
+      status: completed
+      summary: '**Team: team-c7965351 — Backend-Architect Contribution — Lead Review**
+
+
+        **Run 1: Redis Session TTL State Drift — `InterviewStateStore.java` + `InterviewService.java`**
+
+
+        ### 1. Executive Summary
+
+        `Redis'
+      output: "**Team: team-c7965351 — Backend-Architect Contribution — Lead Review**\n\
+        \n**Run 1: Redis Session TTL State Drift — `InterviewStateStore.java` + `InterviewService.java`**\n\
+        \n### 1. Executive Summary\n`Redis` is configured as *Single Authoritative\
+        \ Source* for runtime state via `InterviewStateStore.java:16` but has `24h`\
+        \ fixed TTL `InterviewStateStore.java:25,51` (`set(json,TTL_HOURS, HOURS)`).\
+        \ `read()` returns `null` `InterviewStateStore.java:37-38`. `requireAsking()`\
+        \ `InterviewService.java:372-391` silently reconstructs from DB (`InterviewSessionMapper.selectById`)\
+        \ and re-writes cache without freshness/transition validation. Result: `answer()`\
+        \ `InterviewService.java:124-192` and `answerStream()` `InterviewService.java:194-276`\
+        \ accept state that may be `stale | reverted | torn` after inactivity/redis\
+        \ eviction/restart -> `questionCount` off-by-N, `currentQuestionId` points\
+        \ to stale/orphan message, or `FINISHED` session re-opened.\n\nFrontend impact:\
+        \ user sees `2002 INTERVIEW_STATE_ERROR` / `2003 INTERVIEW_FINISHED` after\
+        \ pause, or worse: silent acceptance of answer but next question duplicates/skips,\
+        \ SSE `SseEmitter:300_000L` `InterviewService.java:195` completes with wrong\
+        \ `finished:true/false`.\n\n### 2. Grounded Evidence\n\n| Loc | Fact | Drift\
+        \ Vector |\n|---|---|---|\n| `InterviewStateStore.java:25` | `TTL_HOURS=24`\
+        \ final | Expiry bound, no sliding |\n| `InterviewStateStore.java:35-44` |\
+        \ `getBucket(key).get()` null->`null`, parse fail->`null` | Lossy read, caller\
+        \ cannot distinguish miss/ corrupt |\n| `InterviewStateStore.java:48-51` |\
+        \ `set(json,TTL, HOURS)` unconditional | Fixed expiry, no `keepTTL`/ touch\
+        \ on read |\n| `InterviewService.java:90-91,115-116,185-186,258-259,340-341`\
+        \ | Dual-write `sessionMapper.updateById()` + `stateStore.write()` | Non-atomic,\
+        \ non-transactional; partial failure -> DB/Redis divergence |\n| `InterviewService.java:372-381`\
+        \ | `if(state==null){ s=selectById; state=new SessionState(s.status,s.count,s.curId);\
+        \ write()}` | Fallback treats DB row as fresh truth without checking `messages`\
+        \ table or transition validity |\n| `InterviewService.java:383-388` | Only\
+        \ checks `FINISHED`/`ASKING`/`START` string equality | No `version`, `updatedAt`,\
+        \ or `currentQuestionId existence` validation |\n| `InterviewService.java:176,249`\
+        \ | `newCount = state.questionCount()+1` | If fallback `questionCount` stale,\
+        \ increment diverges from actual `interview_message` count -> `extractQAPairs`/`shouldFinish\
+        \ MAX_QUESTIONS=6` `InterviewService.java:64` misfires |\n| `InterviewService.java:353-364`\
+        \ | `RLock lockFor()` `tryLock(5s)` | Correct per-session serialization, but\
+        \ does not guard `read->fallback->write` race after TTL expiry if multiple\
+        \ replicas fallback concurrently |\n\n**Database vs Cache Truth:** `InterviewSession.java:26,29,31,34`\
+        \ DB holds `status,currentQuestionId,questionCount,finishedAt`. `InterviewMessageMapper`\
+        \ `InterviewService.java:134,208` is ground truth for *actual* progress. `stateStore`\
+        \ is derived, but code inverts authority.\n\n### 3. Fault Tree\n```\nF1 Redis\
+        \ bucket missing (TTL expire, eviction, restart, `delete()`)\n -> F2 requireAsking()\
+        \ DB fallback\n   -> F3a DB row still ASKING but messages show different count/curId\
+        \ -> re-animated stale state, questionCount drift\n   -> F3b DB row FINISHED\
+        \ but T2 write race recreates ASKING? (Currently mitigated by writing FINISHED\
+        \ state, but fallback would recreate FINISHED correctly - still throws 2003,\
+        \ but UX is \"session disappeared then suddenly finished\")\n   -> F3c Non-atomic\
+        \ dual-write earlier left DB+Redis out of sync -> fallback persists stale\
+        \ value + writes it back -> heals wrong value (self-poisoning cache)\nF4 No\
+        \ sliding TTL: idle 24h+1s session valid in DB but Redis empty, every subsequent\
+        \ `read` pays DB fallback + bursty re-write\nF5 answerStream() virtual thread\
+        \ holds lock 5s, but SseEmitter 5min; client retries after network blip hits\
+        \ F1 again\n```\n\nFrontend observable: `detail()` `InterviewService.java:286`\
+        \ returns DB truth, `answer()` returns Redis-derived truth -> same `sessionId`\
+        \ shows two different `currentQuestion` concurrently.\n\n### 4. Remediation\
+        \ — Prioritized\n\n#### P0 - Immediate (1 file, no schema change) — Make DB\
+        \ Authoritative + Strict Validation\n\n**Principle:** Redis = cache, DB +\
+        \ message log = source of truth. Never trust cached `questionCount/curId`.\n\
+        \n```java\n// InterviewStateStore.java: add refresh\npublic boolean touch(Long\
+        \ sessionId){\n  RBucket<String> b = redissonClient.getBucket(key(sessionId));\n\
+        \  return b.expire(TTL_HOURS, TimeUnit.HOURS); // sliding on read\n}\npublic\
+        \ void write(Long sessionId, SessionState state, long ttlHours){\n  // overload\
+        \ for FINISHED -> delete or short TTL\n}\n\n// InterviewService.java:372 —\
+        \ replace\nprivate InterviewStateStore.SessionState requireAsking(Long sessionId){\n\
+        \    InterviewStateStore.SessionState cached = stateStore.read(sessionId);\n\
+        \    InterviewSession db = sessionMapper.selectById(sessionId);\n    if(db==null)\
+        \ throw new BizException(ResultCode.INTERVIEW_NOT_FOUND);\n\n    if(InterviewStatus.FINISHED.name().equals(db.getStatus())){\n\
+        \        // Do not reanimate. Purge cache, throw canonical.\n        stateStore.delete(sessionId);\
+        \ // FINISHED sessions must not be cached as ASKING\n        throw new BizException(ResultCode.INTERVIEW_FINISHED);\n\
+        \    }\n\n    if(cached!=null){\n        // Validate parity, refresh TTL if\
+        \ consistent\n        if(!cached.status().equals(db.getStatus()) \n      \
+        \     || !Objects.equals(cached.currentQuestionId(), db.getCurrentQuestionId())\n\
+        \           || cached.questionCount()!= db.getQuestionCount()){\n        \
+        \    log.warn(\"state drift session={} cache={} db={}\", sessionId, cached,\
+        \ db);\n            // Invalidate and reconstruct from ground truth (DB+messages)\n\
+        \            cached = null;\n        } else {\n            stateStore.touch(sessionId);\n\
+        \            // Also validate curId still exists and is latest question\n\
+        \            if(cached.currentQuestionId()!=null){\n                InterviewMessage\
+        \ cur = messageMapper.selectById(cached.currentQuestionId());\n          \
+        \      if(cur==null || !\"question\".equals(cur.getKind())){\n           \
+        \         log.warn(\"orphan curId session={} curId={}\", sessionId, cached.currentQuestionId());\n\
+        \                    cached = null;\n                }\n            }\n  \
+        \          if(cached!=null){\n                // strict state machine\n  \
+        \              if(!InterviewStatus.ASKING.name().equals(cached.status())\n\
+        \                   && !InterviewStatus.START.name().equals(cached.status()))\n\
+        \                    throw new BizException(ResultCode.INTERVIEW_STATE_ERROR,\"\
+        当前状态不允许提交答案\");\n                return cached;\n            }\n        }\n\
+        \    }\n    // Reconstruct from ground truth, not just session row\n    //\
+        \ Derive count from messages to heal drift\n    long qCount = messageMapper.selectCount(\n\
+        \        new LambdaQueryWrapper<InterviewMessage>()\n            .eq(InterviewMessage::getSessionId,\
+        \ sessionId)\n            .eq(InterviewMessage::getKind,\"question\"));\n\
+        \    // qCount must == db.questionCount within 1? else heal db\n    if(qCount\
+        \ != db.getQuestionCount()){\n        log.warn(\"healing questionCount session={}\
+        \ db={} actual={}\", sessionId, db.getQuestionCount(), qCount);\n        db.setQuestionCount((int)qCount);\n\
+        \        sessionMapper.updateById(db);\n    }\n    InterviewStateStore.SessionState\
+        \ rebuilt =\n        new InterviewStateStore.SessionState(db.getStatus(),\
+        \ db.getQuestionCount(), db.getCurrentQuestionId());\n    // Only cache if\
+        \ still ASKING/START\n    if(InterviewStatus.ASKING.name().equals(db.getStatus())||InterviewStatus.START.name().equals(db.getStatus())){\n\
+        \        stateStore.write(sessionId, rebuilt);\n        if(!InterviewStatus.ASKING.name().equals(rebuilt.status())\n\
+        \           && !InterviewStatus.START.name().equals(rebuilt.status()))\n \
+        \           throw new BizException(ResultCode.INTERVIEW_STATE_ERROR,\"当前状态不允许提交答案\"\
+        );\n    }\n    return rebuilt;\n}\n```\n\n**Also fix `finishSession()` `InterviewService.java:335-351`:**\
+        \ after `FINISHED`, `delete` not `write(FINISHED,24h)`. FINISHED state never\
+        \ needs cache.\n\n```java\nprivate void finishSession(InterviewSession s,\
+        \ InterviewMessage msg){\n  s.setStatus(InterviewStatus.FINISHED.name());\n\
+        \  s.setCurrentQuestionId(msg.getId());\n  s.setFinishedAt(LocalDateTime.now());\n\
+        \  sessionMapper.updateById(s);\n  stateStore.delete(s.getId()); // <- change\n\
+        \  // rabbit publish...\n}\n```\n\n#### P1 - Medium : Sliding TTL + Dual-Write\
+        \ Safety\n\n* `InterviewStateStore.java:51` keep `TTL_HOURS=24` but `read()`\
+        \ calls `touch()` on hit -> idle sessions expire, active sessions slide.\n\
+        * Alternative: `TTL_HOURS=72` + nightly job `expire` or remove TTL entirely\
+        \ for persistent sessions, rely on explicit `delete` on FINISH.\n* Wrap `updateById\
+        \ + write` in outbox pattern: write DB first, then Redis; on Redis failure\
+        \ log + async reconcile job (compare `interview_session.updatedAt` vs `bucket.remainTimeToLive()`).\n\
+        * Add `startedAt/finishedAt` freshness check: if `now - finishedAt <0` or\
+        \ `startedAt > now` reject.\n\n#### P2 - Architectural (DB-backed State Machine)\n\
+        \nAdd `version INT` optimistic lock to `interview_session` (`@Version`) to\
+        \ detect concurrent `answer()`; `updateById` with `eq(version)` failure ->\
+        \ `INTERVIEW_STATE_ERROR` retry. Removes need to trust Redis `questionCount`.\n\
+        \nOr flatten: remove `InterviewStateStore` entirely, derive `requireAsking`\
+        \ purely from `selectById + selectCount(messages)`; Redis kept only as lock\
+        \ (`RLock`) + optional `RBucket` for `SseEmitter` deduplication. Latency impact\
+        \ is 1-2ms MySQL PK lookup, acceptable for `MAX_QUESTIONS=6` flow.\n\n####\
+        \ Config\n\n```yaml\n# application.yml\napp:\n  interview:\n    state-ttl-hours:\
+        \ 24 # make configurable, override via env\n    sliding-refresh: true\n  \
+        \  finished-cache-delete: true\nredisson:\n  # ensure eviction not allkeys-lru\
+        \ on session DB 0\n  # notify-keyspace-events Ex required if using expired\
+        \ listeners for reconcile\n```\n\n`RedissonConfig.java:22` verify `Config.setAddress(\"\
+        redis://...\")` with `retryAttempts=3`.\n\n### 5. Frontend Architect Perspective\n\
+        \nEven with backend fix, SPA must be resilient to transient `null` bucket:\n\
+        \n* **Contract:** `answer()` returns `2003 FINISHED` -> show report CTA, not\
+        \ retry. `2002 STATE_ERROR` -> call `detail(sessionId)` `InterviewService.java:286`\
+        \ and reconcile `currentQuestionId` vs local; offer \"Continue where you left\
+        \ off\" resume.\n* **Heartbeat:** `detail()` polling every `5min` touches\
+        \ Redis via `touch()` path, hides 24h cliff from UX. On `visibilitychange`\
+        \ -> re-fetch.\n* **SSE handling** `answerStream()` `InterviewService.java:195`:\
+        \ client must handle `emitter.completeWithError(e)` `InterviewService.java:268`;\
+        \ fallback to `answer()` polling. Add `EventSource onerror -> GET /detail`.\n\
+        * **Optimistic lock UX:** disable submit button while `lockFor 5s` holds,\
+        \ show \"AI思考中...\" to avoid double-submit causing `questionCount+1` drift.\n\
+        * **Dashboard staleness (Run2 link):** same anti-pattern `DashboardService.java:38,48-62`\
+        \ `CACHE_TTL_MINUTES=10` no invalidation after `resultMapper.insert`. Frontend\
+        \ should add `Cache-Control: no-cache` after `finishSession` or explicitly\
+        \ `DELETE dashboard:user:{id}` on `RuleBasedScoringService.ScoringMessage`\
+        \ consumer. Recommend shared lesson: *Redis TTL + no validation = must version-check*.\n\
+        \n### 6. Verification Matrix (for testing-agent)\n\n| Case | Steps | Expected\
+        \ |\n|---|---|---|\n| T1 Expiry | `write(ASKING,1,curId) -> delete redis ->\
+        \ answer()` | Heals from DB+messages, succeeds, `questionCount` derived correctly,\
+        \ no `2002` false |\n| T2 FINISHED fallback | `finishSession() -> delete redis\
+        \ -> answer()` | Throws `2003`, does NOT recreate ASKING bucket |\n| T3 Drift\
+        \ | Manually `set bucket {ASKING,99,99999} vs DB {ASKING,1,realId}` -> `answer()`\
+        \ | Warn log, invalidates, heals to `1` |\n| T4 Dual-write failure | Mock\
+        \ `redissonClient.getBucket().set` throws -> `create()` `InterviewService.java:79`\
+        \ | DB inserted, Redis miss but next `answer()` reconstructs via DB, no `BizException`\
+        \ leak |\n| T5 Sliding | `read()->touch` verify `remainTimeToLive` resets\
+        \ to ~24h | `expire` true |\n| T6 Orphan curId | DB `currentQuestionId` points\
+        \ to deleted message | Rebuilt `null` or latest `question` message, or throw\
+        \ `STATE_ERROR` with frontend recoverable code |\n| T7 SSE | `answerStream`\
+        \ with expired cache mid-stream | Completes via DB reconstruction, client\
+        \ receives `done` event not `completeWithError` |\n\nLoad: `EXPIRE` distribution\
+        \ test 1000 sessions idle 25h -> 0 ghost ASKING caches.\n\n### 7. Security\
+        \ / Reliability\n\n* Stale `currentQuestionId` could allow replaying answer\
+        \ for previous question (score manipulation if `questionCount` reverted).\
+        \ Strict validation above closes `OWASP API8` insecure state transition.\n\
+        * Add audit log `log.warn drift` with `sessionId,userId` for SIEM.\n* Monitoring:\
+        \ `micrometer: cache_hit vs db_fallback_total` counter + alert `drift_detected\
+        \ > 5%`.\n\n### 8. Relation to Run2\n\nSame root class: `TTL + authority assumption`.\
+        \ Fix pattern reusable: **validate against source-of-truth before trusting\
+        \ Redis, invalidate on mutation, slide on read, delete on terminal state**.\
+        \ Promote as `M-Redis-Session-Cache-Freshness` `InterviewStateStore.java:25`\
+        \ / `DashboardService.java:38` shared.\n\n**Recommendation for lead:** approve\
+        \ P0 patch (20 lines) this sprint, schedule P1 config slide + delete-on-finish,\
+        \ track P2 version column for next milestone.\n\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 42308
+        input: 5916
+        output: 3252
+        reasoning: 1027
+        cache_read: 32113
+        cache_write: 0
+      latency_ms: 81761
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 81761
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: llm-engineer
+    task_id: task-llm-engineer-af208a
+    output:
+      agent: llm-engineer
+      status: completed
+      summary: '# [SUPPORT] Run 1 — Redis Session TTL State Drift — Frontend Architect
+        / LLM-Engineer Analysis
+
+
+        **Team:** team-c7965351 | **Role:** llm-engineer (supporting Frontend Architect)
+        | **Domain:** frontend,'
+      output: "# [SUPPORT] Run 1 — Redis Session TTL State Drift — Frontend Architect\
+        \ / LLM-Engineer Analysis\n\n**Team:** team-c7965351 | **Role:** llm-engineer\
+        \ (supporting Frontend Architect) | **Domain:** frontend, optimization | **Related\
+        \ skills:** Backend Architect, Database Engineer\n\n---\n\n### 1. Executive\
+        \ Summary\n\nValid interview session appears “frozen / reverted / impossible\
+        \ to continue” after idle period. DB still `status=ASKING` but Redis runtime\
+        \ is gone. Current recovery is **weak fallback without validation**, violating\
+        \ single-source-of-truth. Frontend amplifies confusion: no distinction between\
+        \ `INTERVIEW_FINISHED(2003)` / `INTERVIEW_STATE_ERROR(2002)` / `INTERVIEW_NOT_FOUND(2001)`\
+        \ and no TTL-aware UX. SSE `answerStream()` never surfaces drift.\n\n> Root:\
+        \ `InterviewStateStore.java:25,51` treats Redis as authoritative with fixed\
+        \ 24h TTL; `InterviewService.java:372-391` rehydrates from DB blindly; `Interview.vue:14-37,51-75`\
+        \ treats API as always consistent.\n\n---\n\n### 2. Grounded Diagnosis\n\n\
+        #### 2.1 Authoritative write with fixed TTL\n```java\n// backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:25\n\
+        private static final long TTL_HOURS = 24;\n// InterviewStateStore.java:48-51\n\
+        public void write(Long sessionId, SessionState state) {\n  String json = objectMapper.writeValueAsString(state);\n\
+        \  redissonClient.getBucket(key(sessionId)).set(json, TTL_HOURS, TimeUnit.HOURS);\n\
+        }\n```\n* No sliding refresh on `read()`. Every `write()` resets to 24h from\
+        \ *that moment*, not from *session activity + max duration*. 24h after last\
+        \ write key vanishes.\n* `read()` `InterviewStateStore.java:34-46` returns\
+        \ `null` on miss *and* on parse failure — indistinguishable.\n\n#### 2.2 Weak\
+        \ fallback\n\n```java\n// InterviewService.java:372-391\nprivate InterviewStateStore.SessionState\
+        \ requireAsking(Long sessionId) {\n  InterviewStateStore.SessionState state\
+        \ = stateStore.read(sessionId);\n  if (state == null) {\n    InterviewSession\
+        \ s = sessionMapper.selectById(sessionId);\n    state = new SessionState(s.getStatus(),\
+        \ s.getQuestionCount(), s.getCurrentQuestionId());\n    stateStore.write(sessionId,\
+        \ state); // blind rehydrate\n  }\n  if (FINISHED.equals(state.status()))\
+        \ throw INTERVIEW_FINISHED;\n  if (!ASKING && !START) throw INTERVIEW_STATE_ERROR;\n\
+        \  return state;\n}\n```\n\n**Three drift vectors:**\n\n1.  **Count drift:**\
+        \ `answer():176` / `answerStream():249` does `newCount = state.questionCount()+1`\
+        \ then persists. If state was rehydrated after expiry, `questionCount` may\
+        \ lag behind `interview_message` rows (e.g., if `saveAiMessage` succeeded\
+        \ but `write` failed, or concurrent `answer()` raced). DB truth is count of\
+        \ `kind=question` messages, not `session.question_count` column.\n2.  **Pointer\
+        \ drift:** `currentQuestionId` in DB can point to a `feedback` row after `finishSession():335-341`\
+        \ or to a stale question after manual DB fix. Fallback re-writes that ID into\
+        \ Redis and then `answer()` accepts next user answer against wrong question.\n\
+        3.  **Status drift:** `START → ASKING → FINISHED` is not strictly validated\
+        \ against `finishedAt`, `interview_result` existence, and message history.\
+        \ Expired Redis for a `FINISHED` session will be rehydrated as `FINISHED`\
+        \ now (correct) but if expiry happened *mid-evaluation* before `finishSession`\
+        \ committed, fallback will rehydrate as `ASKING` and allow an extra answer\
+        \ that should be rejected — or vice versa, a valid `ASKING` appears as `FINISHED`\
+        \ if DB lagged.\n\n`answer()` and `answerStream()` `InterviewService.java:124-192,194-276`\
+        \ both lock via `redissonClient.getLock(\"interview:lock:\"+sessionId)` `InterviewService.java:353`\
+        \ but **rely on drifted `state` inside lock**, so lock does not repair drift.\n\
+        \n#### 2.3 Frontend blind trust\n\n```ts\n// frontend/src/pages/Interview.vue:14-17\n\
+        const { data: session, refetch } = useQuery({ queryKey:['interview',sessionId],\
+        \ queryFn:()=>getInterview(...) })\n// Interview.vue:26\nconst isFinished\
+        \ = computed(()=> session.value?.status==='FINISHED')\n// Interview.vue:51-75\
+        \ submit() -> streamAnswer -> onDone: await refetch()\n```\n\n* `useQuery`\
+        \ has no `staleTime`/`retry` policy for Redis-drift errors. No handling of\
+        \ `ApiError.code 2002/2003`.\n* `frontend/src/api/interview.ts:70-119` `streamAnswer`\
+        \ treats any `res.ok` as success; on Redis-expired edge, backend throws `2002`\
+        \ which becomes non-`ok` SSE error — caught as generic `e.message` `Interview.vue:71`\
+        \ and answer content is restored verbatim, user retries infinitely.\n* No\
+        \ idle detection: user leaves tab 25h, returns, `session.status` still cached\
+        \ by Vue Query but Redis gone → next `submit` triggers drift path with no\
+        \ warning.\n* No `refetchOnWindowFocus` + ETag/version check to reconcile\
+        \ DB truth before allowing input.\n\n---\n\n### 3. Required Correct Behavior\n\
+        \n**Principle:** DB (`interview_session` + `interview_message`) is **SOT**;\
+        \ Redis is **ephemeral runtime cache** with **freshness validation** and **sliding\
+        \ TTL**. Frontend is **optimistic but verifiable**: must surface `expired/recoverable/finished`\
+        \ explicitly and never allow answer against drifted pointer.\n\nFor `database-engineer`/`backend-architect`\
+        \ coordination:\n* `InterviewSession.questionCount` must be reconciled with\
+        \ `count(interview_message where kind='question')` on rehydrate.\n* `currentQuestionId`\
+        \ must be validated exists and `kind='question'|'feedback'` and is latest.\n\
+        \n---\n\n### 4. Solution — Cross-Layer\n\n#### 4.1 Backend Hardening (to forward\
+        \ to `backend-architect`)\n\n**A. `InterviewStateStore.java` — add version\
+        \ + sliding expiry + safe read**\n\n```java\npublic record SessionState(String\
+        \ status, int questionCount, Long currentQuestionId, long version, Instant\
+        \ updatedAt) {}\n\nprivate static final long TTL_HOURS = 24;\nprivate static\
+        \ final long SLIDING_TTL_HOURS = 24;\n\npublic SessionState readWithRefresh(Long\
+        \ sessionId) {\n  RBucket<String> b = redissonClient.getBucket(key(sessionId));\n\
+        \  String json = b.get();\n  if (json == null) return null;\n  try {\n   \
+        \ SessionState s = objectMapper.readValue(json, SessionState.class);\n   \
+        \ b.expire(SLIDING_TTL_HOURS, TimeUnit.HOURS); // sliding on read\n    return\
+        \ s;\n  } catch (Exception e) { log.warn(...); return null; }\n}\npublic void\
+        \ write(Long sessionId, SessionState state) {\n  SessionState stamped = new\
+        \ SessionState(state.status(), state.questionCount(), state.currentQuestionId(),\
+        \ state.version()+1, Instant.now());\n  String json = objectMapper.writeValueAsString(stamped);\n\
+        \  // use set with TTL, optionally keep existing if newer version present\
+        \ via RBucket.compareAndSet\n  redissonClient.getBucket(key(sessionId)).set(json,\
+        \ TTL_HOURS, TimeUnit.HOURS);\n}\npublic long remainingTtlHours(Long sessionId)\
+        \ {\n  return redissonClient.getBucket(key(sessionId)).remainTimeToLive();\
+        \ // for diagnostics\n}\n```\n\n**B. `InterviewService.java:372` — strict\
+        \ `requireAsking`**\n\n```java\nprivate InterviewStateStore.SessionState requireAsking(Long\
+        \ sessionId) {\n  InterviewStateStore.SessionState state = stateStore.readWithRefresh(sessionId);\n\
+        \  if (state == null) {\n    InterviewSession s = sessionMapper.selectById(sessionId);\n\
+        \    if (s == null) throw new BizException(ResultCode.INTERVIEW_NOT_FOUND);\n\
+        \    // STRONGER VALIDATION: reconcile with SOT\n    // 1. verify status vs\
+        \ finishedAt/result existence\n    if (s.getFinishedAt() != null || InterviewStatus.FINISHED.name().equals(s.getStatus()))\
+        \ {\n      // ensure result or feedback exists if DB says finished\n     \
+        \ state = new SessionState(InterviewStatus.FINISHED.name(), s.getQuestionCount(),\
+        \ s.getCurrentQuestionId(), 0, Instant.now());\n    } else {\n      // 2.\
+        \ reconcile count\n      Long actualCount = messageMapper.selectCount(new\
+        \ LambdaQueryWrapper<InterviewMessage>()\n        .eq(InterviewMessage::getSessionId,\
+        \ sessionId).eq(InterviewMessage::getKind, \"question\"));\n      if (!actualCount.intValue().equals(s.getQuestionCount()))\
+        \ {\n        log.warn(\"questionCount drift session={} dbCount={} colCount={}\"\
+        , sessionId, actualCount, s.getQuestionCount());\n        s.setQuestionCount(actualCount.intValue());\n\
+        \        sessionMapper.updateById(s);\n      }\n      // 3. validate currentQuestionId\
+        \ exists and is not feedback\n      if (s.getCurrentQuestionId() != null)\
+        \ {\n        InterviewMessage cur = messageMapper.selectById(s.getCurrentQuestionId());\n\
+        \        if (cur == null || \"feedback\".equals(cur.getKind())) {\n      \
+        \    // heal: pick last question\n          InterviewMessage lastQ = messageMapper.selectOne(new\
+        \ LambdaQueryWrapper<InterviewMessage>()\n            .eq(InterviewMessage::getSessionId,\
+        \ sessionId).eq(InterviewMessage::getKind,\"question\")\n            .orderByDesc(InterviewMessage::getId).last(\"\
+        limit 1\"));\n          s.setCurrentQuestionId(lastQ != null ? lastQ.getId()\
+        \ : null);\n        }\n      }\n      state = new SessionState(s.getStatus(),\
+        \ s.getQuestionCount(), s.getCurrentQuestionId(), 0, Instant.now());\n   \
+        \ }\n    stateStore.write(sessionId, state);\n  }\n  // existing FINISHED/ASKING\
+        \ check, but now after freshness healing\n  if (InterviewStatus.FINISHED.name().equals(state.status()))\
+        \ throw new BizException(ResultCode.INTERVIEW_FINISHED);\n  if (!InterviewStatus.ASKING.name().equals(state.status())\
+        \ && !InterviewStatus.START.name().equals(state.status()))\n    throw new\
+        \ BizException(ResultCode.INTERVIEW_STATE_ERROR, \"当前状态不允许提交答案\");\n  return\
+        \ state;\n}\n```\n\n* Also wire `delete()` in `finishSession()` vs rewriting,\
+        \ or set short TTL (1h) for FINISHED to prevent revival.\n* Add Micrometer\
+        \ counter `interview_state_redis_miss_total` and `drift_healed_total`.\n\n\
+        **C. Config** `RedissonConfig.java` + `application.yml`:\n```yaml\ninterview:\n\
+        \  state-ttl-hours: 24\n  sliding-refresh: true\n  finished-ttl-hours: 2 \
+        \ # keep finished quickly evictable\n```\nEnable `notify-keyspace-events Ex`\
+        \ if you need expiry listener for audit, not for healing.\n\n#### 4.2 Frontend\
+        \ Resilience (Primary Owner)\n\n**A. `frontend/src/api/interview.ts` — typed\
+        \ errors + pre-flight**\n\n```ts\nexport enum InterviewErrorCode { NOT_FOUND=2001,\
+        \ STATE_ERROR=2002, FINISHED=2003 }\nexport function isInterviewError(e: unknown,\
+        \ code: InterviewErrorCode) { return e instanceof ApiError && e.code===code\
+        \ }\n\nexport async function answerWithValidation(id: number|string, content:string)\
+        \ {\n  // optional preflight: GET /interviews/{id} to ensure isFinished false\
+        \ before POST\n  const s = await getInterview(id)\n  if (s.status==='FINISHED')\
+        \ throw new ApiError(InterviewErrorCode.FINISHED, '面试已结束')\n  return answerInterview(id,\
+        \ content)\n}\n```\n\nHarden `streamAnswer`:\n```ts\nif (!res.ok) {\n  let\
+        \ msg=`流式请求失败: ${res.status}`; try{ const b=await res.json(); msg=b.message??msg;\
+        \ throw new ApiError(b.code??res.status, msg)}catch{ throw new ApiError(res.status,\
+        \ msg)}\n}\nif (!res.body) throw new ApiError(500,'流式响应为空')\n// inside while\
+        \ loop: detect event: name==\"error\" -> throw\nreader.cancel().catch(()=>undefined)\n\
+        ```\n\n**B. `frontend/src/pages/Interview.vue` — TTL-aware UX**\n\n```ts\n\
+        const { data: session, refetch, error: queryError, isLoading } = useQuery({\n\
+        \  queryKey:['interview', sessionId],\n  queryFn:()=>getInterview(sessionId.value),\n\
+        \  staleTime: 30_000,\n  retry: (count, err) => err instanceof ApiError &&\
+        \ err.code===2001 ? false : count<2,\n  refetchOnWindowFocus: true, // reconciles\
+        \ after idle\n})\n\nconst driftError = ref<string|null>(null)\nconst RECOVERABLE_CODES\
+        \ = new Set([2002,2003])\n\nasync function submit() {\n  if (!content||submitting.value)\
+        \ return\n  submitting.value=true; error.value=''; driftError.value=null\n\
+        \  try {\n    await streamAnswer(sessionId.value, content, {\n      onToken:\
+        \ t=> streaming.value+=t,\n      onDone: async ({finished})=>{\n        streaming.value='';\
+        \ await refetch();\n        if (finished) { /* show celebration */ }\n   \
+        \   }\n    })\n  } catch (e) {\n    if (e instanceof ApiError) {\n      if\
+        \ (e.code===2003) { driftError.value='面试已结束，无法继续回答'; await refetch(); return\
+        \ }\n      if (e.code===2002) { \n        driftError.value='会话状态已过期，正在尝试恢复...';\n\
+        \        await refetch(); // DB truth now visible\n        // if still ASKING\
+        \ after refetch, allow retry; else show state\n        if (session.value?.status==='FINISHED')\
+        \ driftError.value='面试已结束'\n        else driftError.value='状态已恢复，请重新提交'\n\
+        \        return\n      }\n      if (e.code===2001) driftError.value='会话不存在'\n\
+        \    }\n    error.value = e instanceof Error ? e.message : '提交失败'\n    answer.value\
+        \ = content // restore only for non-terminal\n  } finally { submitting.value=false\
+        \ }\n}\nwatch(queryError, (e)=>{\n  if (e instanceof ApiError && RECOVERABLE_CODES.has(e.code))\
+        \ driftError.value = e.message\n})\n```\n\nTemplate additions (`Interview.vue:187-219`):\n\
+        ```vue\n<div v-if=\"driftError\" class=\"mb-2 rounded-lg border border-amber-200\
+        \ bg-amber-50 px-3 py-2 text-sm text-amber-700\">\n  {{ driftError }} <button\
+        \ @click=\"refetch()\" class=\"ml-2 underline\">刷新重试</button>\n</div>\n<!--\
+        \ disable input when isFinished or driftError indicates terminal -->\n<input\
+        \ :disabled=\"submitting || isFinished || !!driftError && driftError.includes('已结束')\"\
+        \ />\n```\n\n**C. `frontend/src/api/client.ts:67-93` — map 2002/2003 not as\
+        \ auth refresh**\n\nEnsure `request()` does not trap `code 2002/2003` as 401.\
+        \ Already correct, but add:\n```ts\nif (body.code===2002 || body.code===2003)\
+        \ throw new ApiError(body.code, body.message) // surface to caller, no redirect\n\
+        ```\n\n**D. Performance/Optimization notes (frontend):**\n* Keep `useQuery`\
+        \ `staleTime:30s` to avoid thundering `GET /interviews/{id}` on every keystroke\
+        \ but still catch drift after tab hidden 24h+ (via `refetchOnWindowFocus`\
+        \ + `focus` listener).\n* Debounce `streaming.value` scrollIntoView with `requestAnimationFrame`\
+        \ not per-token.\n* Add `SseEmitter` timeout `300_000L` `InterviewService.java:195`\
+        \ is 5 min — frontend must set reader timeout `AbortSignal.timeout(300_000)`\
+        \ else zombie `submitting`.\n\n---\n\n### 5. Configuration & Operational Recommendations\n\
+        \n| Layer | Setting | Recommendation |\n|---|---|---|\n| Redis | `TTL_HOURS`\
+        \ | Keep 24h but **switch to sliding** on read + write. For `FINISHED` use\
+        \ 2h. |\n| Redis | `notify-keyspace-events` | `Ex` for audit only; don't rely\
+        \ on Pub/Sub to heal—DB is SOT |\n| Backend | `LOCK_WAIT_SECONDS=5` `InterviewService.java:63`\
+        \ | Keep, but add `leaseTime=10s` to avoid deadlock on `answerStream` virtual\
+        \ thread. |\n| Frontend | Vue Query | `staleTime 30s`, `gcTime 5m`, `refetchOnWindowFocus:true`,\
+        \ `refetchInterval:false` |\n| Monitoring | | Alert on `drift_healed_total>0`\
+        \ / `remainTimeToLive < 1h` histogram |\n\n---\n\n### 6. Verification Plan\
+        \ (for `testing-engineer`)\n\n1. **Expiry reproduction:** `InterviewStateStore.write()`\
+        \ then `redissonClient.getBucket(key).delete()` simulate expiry → `answer()`\
+        \ should succeed via healed path, not regress count.\n2. **Count drift:**\
+        \ manually `UPDATE interview_session SET question_count=0` diverge from messages\
+        \ → next `requireAsking` must heal and increment correctly.\n3. **FINISHED\
+        \ revival:** expire Redis for finished session → `answer()` must throw `2003`\
+        \ even after rehydrate, not  `ASKING`.\n4. **Frontend:** Cypress test in `Interview.vue`:\
+        \ mock `streamAnswer` to throw `ApiError(2002)` → assert `driftError` banner\
+        \ + `refetch` called + input re-enabled. Mock `2003` → input disabled.\n5.\
+        \ **SSE:** kill Redisson during `answerStream` → `emitter.completeWithError`\
+        \ `InterviewService.java:266` surfaces as UI error, no infinite spinner.\n\
+        \n---\n\n### 7. Coordination Needs\n\n* **`database-engineer`:** confirm `interview_session.question_count`\
+        \ vs `interview_message` aggregation truth, add index on `(session_id, kind)`\
+        \ if not exists, review `schema.sql:46-76` FK cascade.\n* **`backend-architect`:**\
+        \ own `InterviewStateStore` versioning & `requireAsking` healing, decide on\
+        \ `RBucket.compareAndSet` vs `write` semantics.\n* **Frontend dependency:**\
+        \ backend must return structured `code 2002/2003` with `message` containing\
+        \ `remainingTtl` for UI to decide recoverable vs terminal.\n\n---\n\n### 8.\
+        \ References\n\n* `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:22-51`\
+        \ — TTL authoritativeness\n* `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:34-46`\
+        \ — null on miss/parse\n* `backend/src/main/java/com/aiview/interview/service/InterviewService.java:79-122`\
+        \ — `create()` writes START→ASKING\n* `backend/src/main/java/com/aiview/interview/service/InterviewService.java:124-192,194-276`\
+        \ — `answer`/`answerStream` rely on runtime state\n* `backend/src/main/java/com/aiview/interview/service/InterviewService.java:335-351`\
+        \ — `finishSession` writes FINISHED\n* `backend/src/main/java/com/aiview/interview/service/InterviewService.java:372-391`\
+        \ — fallback without validation\n* `frontend/src/pages/Interview.vue:14-37`\
+        \ — status handling & query\n* `frontend/src/pages/Interview.vue:51-75` —\
+        \ submit/stream without drift handling\n* `frontend/src/api/interview.ts:70-119`\
+        \ — streaming parser\n* `frontend/src/api/client.ts:67-93` — error code handling\n\
+        * `backend/src/main/java/com/aiview/interview/service/DashboardService.java:38-65`\
+        \ — parallel stale-cache pattern (Run2 relevance)\n\n**Lead action:** Approve\
+        \ frontend drift UX (Section 4.2B) for immediate implementation; forward 4.1A/B\
+        \ to backend team as blocking for correctness. No frontend workaround alone\
+        \ can fix count/pointer drift without SOT healing.\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 46510
+        input: 3558
+        output: 4310
+        reasoning: 321
+        cache_read: 38321
+        cache_write: 0
+      latency_ms: 103951
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 103951
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: rag-engineer
+    task_id: task-rag-engineer-7d93b2
+    output:
+      agent: rag-engineer
+      status: completed
+      summary: '### Lead Review: Redis TTL State Drift [team-c7965351] - Frontend
+        Architect Contribution (RAG-Engineer Lens)
+
+
+        **Scope:** `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:48'
+      output: "### Lead Review: Redis TTL State Drift [team-c7965351] - Frontend Architect\
+        \ Contribution (RAG-Engineer Lens)\n\n**Scope:** `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:48-56`\
+        \ + `InterviewService.java:372-391,124-192,194-276` ; `frontend/src/pages/Interview.vue:14-76`\
+        \ + `frontend/src/api/interview.ts:70-119`\n\n#### 1. Root Cause Analysis\
+        \ (Verified)\n\n**Claim:** `InterviewStateStore` is declared *单一权威来源* (`InterviewStateStore.java:15`)\
+        \ but is implemented as **ephemeral cache** with fixed 24h TTL and no revalidation.\n\
+        \n```java\n// InterviewStateStore.java:48-51\npublic void write(Long sessionId,\
+        \ SessionState state) {\n  String json = objectMapper.writeValueAsString(state);\n\
+        \  redissonClient.getBucket(key(sessionId)).set(json, TTL_HOURS, TimeUnit.HOURS);\
+        \ // fixed 24h, no sliding\n}\npublic SessionState read(Long sessionId) {\
+        \ // InterviewStateStore.java:34-46\n  String json = bucket.get();\n  if (json\
+        \ == null) return null; // silent expiry -> null\n}\n```\n\n**Drift path in\
+        \ `InterviewService.java:372-391`:**\n```java\nprivate SessionState requireAsking(Long\
+        \ sessionId){\n  SessionState state = stateStore.read(sessionId);\n  if(state\
+        \ == null){\n    InterviewSession s = sessionMapper.selectById(sessionId);\n\
+        \    state = new SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId());\n\
+        \    stateStore.write(sessionId, state); // 1. blind trust DB, 2. re-seeds\
+        \ TTL\n  }\n  if(FINISHED.equals(state.status())) throw FINISHED;\n  if(!ASKING\
+        \ && !START) throw STATE_ERROR;\n  return state; // 3. no validation: updatedAt,\
+        \ finishedAt, questionCount vs messages, currentQuestionId liveness\n}\n```\n\
+        \nThree verifiable defects:\n1.  **No TTL touch on read:** User polling `detail()`\
+        \ (`InterviewService.java:286-294`) or `getInterview` (`Interview.vue:14`)\
+        \ does NOT refresh TTL. A user active for 23h59m then pausing 2m loses runtime\
+        \ state, even though DB says `ASKING` and `questionCount` is valid. Rehydration\
+        \ succeeds but is **stale** (no check that `currentQuestionId` still points\
+        \ to the *latest* `question` message, no check that count == `SELECT COUNT(*)\
+        \ FROM interview_message WHERE kind='question'`).\n2.  **Dual-write without\
+        \ transaction:** `answer()` `sessionMapper.updateById(session)` (`InterviewService.java:183`)\
+        \ + `stateStore.write()` (`185`) are not atomic. If DB succeeds but Redis\
+        \ `set` throws `BizException`, next request rehydrates from DB (old `questionCount`),\
+        \ causing `newCount = state.questionCount()+1` to compute from stale value\
+        \ -> duplicate/lost count after concurrent retry under `RLock` (`InterviewService.java:353`).\n\
+        3.  **No expiry semantics:** DB has `finishedAt` but no `expiresAt`/`lastActiveAt`.\
+        \ A session idle 72h is rehydrated as immortal `ASKING`. Requirement: after\
+        \ inactivity it should be `EXPIRED` (non-continuable) even though DB row exists.\
+        \ Current code treats `DB exists == continuable`.\n\n**Impact Matrix:**\n\
+        | Scenario | Redis | DB | Current Behavior | Expected | User-Visible |\n|---|---|---|---|---|---|\n\
+        | Idle >24h, then `answer()` | `null` | `ASKING, q=3` | Rehydrates `ASKING\
+        \ q=3` and accepts answer | Reject as expired OR rehydrate + strong validation\
+        \ | Appears continued but may have wrong `currentQuestionId` / score drift\
+        \ |\n| Redis flush/restart | all `null` | mixed `FINISHED/ASKING` | Thundering\
+        \ herd `selectById + write` per request, no backpressure | Validated rehydration\
+        \ | Latency spike, possible resurrection of `START` sessions that should not\
+        \ accept answers |\n| Concurrent `answer()` + `answerStream()` | race | `updateById`\
+        \ | `RLock` helps, but rehydrated `state` inside lock still unchecked | Validate\
+        \ `questionCount` vs DB count inside lock | Double increment, `questionCount`\
+        \ drift |\n\n#### 2. Required Backend Fix (For Lead to Assign - RAG/Backend)\n\
+        \n**Immediate (P0, <0.5d): Add Strong Validation on Rehydration**\nDo not\
+        \ blindly trust `s.getStatus()`. Add invariants before `stateStore.write`:\n\
+        \n```java\n// InterviewService.java:372 - patched requireAsking\nprivate SessionState\
+        \ requireAsking(Long sessionId){\n  SessionState state = stateStore.read(sessionId);\n\
+        \  if(state == null){\n    InterviewSession s = sessionMapper.selectById(sessionId);\n\
+        \    if(s==null) throw new BizException(ResultCode.INTERVIEW_NOT_FOUND);\n\
+        \    // --- validation ---\n    if(s.getFinishedAt()!=null) throw new BizException(ResultCode.INTERVIEW_FINISHED);\n\
+        \    if(s.getStartedAt()!=null && s.getStartedAt().plusHours(24).isBefore(LocalDateTime.now())){\n\
+        \        throw new BizException(ResultCode.INTERVIEW_STATE_ERROR, \"会话已过期，请重新开始\"\
+        ); // or new ResultCode SESSION_EXPIRED 2005\n    }\n    // consistency: DB\
+        \ count vs messages\n    Long liveQ = messageMapper.selectCount(new LambdaQueryWrapper<InterviewMessage>()\n\
+        \        .eq(InterviewMessage::getSessionId, sessionId).eq(InterviewMessage::getKind,\"\
+        question\"));\n    if(!liveQ.equals((long)s.getQuestionCount())){\n      \
+        \  log.warn(\"state drift detected session={} dbCount={} msgCount={}\", sessionId,\
+        \ s.getQuestionCount(), liveQ);\n        s.setQuestionCount(liveQ.intValue());\
+        \ // heal\n        sessionMapper.updateById(s);\n    }\n    if(s.getCurrentQuestionId()!=null\
+        \ && messageMapper.selectById(s.getCurrentQuestionId())==null){\n        throw\
+        \ new BizException(ResultCode.INTERVIEW_STATE_ERROR,\"会话状态不一致，请刷新\");\n  \
+        \  }\n    state = new SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId());\n\
+        \    stateStore.write(sessionId, state);\n  }\n  // existing status checks\n\
+        }\n```\n\nAdd `ResultCode.SESSION_EXPIRED(2005,\"会话已过期\")` to `backend/src/main/java/com/aiview/common/ResultCode.java:19`.\n\
+        \n**Medium (P1, 1d): Fix TTL Model - Sliding + Keepalive**\n\n```java\n//\
+        \ InterviewStateStore.java - change 24h fixed -> 24h sliding with 1h shorter\
+        \ + touch\nprivate static final long TTL_HOURS = 24;\nprivate static final\
+        \ long SLIDING_TTL_SECONDS = 24*3600;\npublic SessionState read(Long sessionId){\n\
+        \  RBucket<String> b = redissonClient.getBucket(key(sessionId));\n  String\
+        \ json = b.getAndExpire(SLIDING_TTL_SECONDS, TimeUnit.SECONDS); // touch on\
+        \ read if Redisson >=3.20 else bucket.expire()\n  // fallback: if json!=null\
+        \ b.expire(Duration.ofHours(24))\n}\npublic void touch(Long sessionId){ redissonClient.getBucket(key(sessionId)).expire(Duration.ofHours(24));\
+        \ }\n```\n\nCall `touch()` in `detail()` and `listByUser()` (read paths currently\
+        \ not refreshing). Alternative: `TTL_HOURS=2` + frontend heartbeat (cheaper\
+        \ memory; 24h holds 10k idle sessions ~ 5MB JSON but Redis memory pressure\
+        \ benchmark: see `BENCH_TASK_R2.txt` optimization context).\n\n**Long (P2):\
+        \ Make DB Source of Truth, Redis Cache**\nRemove comment *单一权威来源*. Implement\
+        \ `SET NX` + version field (`SessionState` add `long version`) to detect concurrent\
+        \ writes. On `write`, use `bucket.set(json, TTL, ...)` only if version > cached.\
+        \ Add `InterviewSession.expiresAt` column (DB) so expiry survives Redis loss.\n\
+        \n#### 3. Frontend Architect Contribution - Optimization & Resilience\n\n\
+        `Interview.vue:14-37,51-75` currently has **zero** handling for state drift.\
+        \ `useQuery` refetches on window focus but `submit()` blindly calls `streamAnswer`\
+        \ which on drift throws generic `流式请求失败` -> user sees retryable error and\
+        \ loops forever, `questionCount` badge stale.\n\n**3.1 Error Contract + UI\
+        \ States**\nBackend will now return distinct codes: `2003 FINISHED`, `2002\
+        \ STATE_ERROR`, new `2005 EXPIRED`. Frontend must map them, not generic `ApiError`.\n\
+        \n```ts\n// frontend/src/api/client.ts:89-92 - already throws ApiError(code,message)\n\
+        // Add in Interview.vue:59-75\nimport { ApiError } from '../api/client'\n\
+        async function submit(){\n  // ...\n  try { await streamAnswer(...) }\n  catch(e){\n\
+        \    if(e instanceof ApiError){\n      if(e.code===2005){ error.value='会话已过期（超过24小时未操作）';\
+        \ isExpired.value=true; await queryClient.invalidateQueries(['interview',sessionId]);\
+        \ return }\n      if(e.code===2003){ await refetch(); return } // already\
+        \ finished, show report\n      if(e.code===2002){ error.value='状态已失效，正在刷新...';\
+        \ await refetch(); return }\n    }\n    error.value = e instanceof Error ?\
+        \ e.message : '提交失败'\n    answer.value = content // restore draft only on\
+        \ transient error\n  }\n}\n```\n\n**3.2 Query Config Optimization**\nCurrent\
+        \ `useQuery(['interview',sessionId])` (`Interview.vue:14`) has no `staleTime`\
+        \ -> refetch on every mount/focus causes extra `detail()` DB hits that do\
+        \ not touch Redis. Fix:\n\n```ts\nconst { data: session, refetch, isLoading,\
+        \ error: queryError } = useQuery({\n  queryKey: ['interview', sessionId],\n\
+        \  queryFn: () => getInterview(sessionId.value),\n  staleTime: 30_000,\n \
+        \ gcTime: 5*60_000,\n  refetchOnWindowFocus: false, // avoid thundering herd\
+        \ after Redis flush\n  retry: (count, err) => err instanceof ApiError && err.code===2005\
+        \ ? false : count<2,\n})\n\n// show expired banner\nconst isExpired = computed(()=>\
+        \ queryError.value instanceof ApiError && (queryError.value as ApiError).code===2005)\n\
+        ```\n\n**3.3 Streaming Resilience**\n`interview.ts:70-119` parses SSE `data:`\
+        \ lines but ignores `event: error` and does not surface `code`. Patch:\n\n\
+        ```ts\n// interview.ts:83-117\nif(!res.ok){\n  const body = await res.json().catch(()=>null)\
+        \ as ApiResult<never>|null\n  if(body) throw new ApiError(body.code, body.message)\
+        \ // propagate 2005/2002 correctly\n  throw new Error(`流式请求失败: ${res.status}`)\n\
+        }\n// inside loop: handle `event: error` before data\n```\n\nAdd `onError`\
+        \ callback to `StreamCallbacks` and in `Interview.vue` show \"会话状态已变更\" banner\
+        \ with `router.push('/')` CTA.\n\n**3.4 UX Optimization: Idle Warning + Heartbeat\
+        \ (Prevents TTL Loss)**\nInstead of letting 24h silently expire, warn at 23h\
+        \ and heartbeat to slide TTL:\n\n```ts\n// Interview.vue - after session loaded\n\
+        let heartbeat: number|undefined\nwatchEffect(()=>{\n  if(isFinished.value\
+        \ || isExpired.value) { clearInterval(heartbeat); return }\n  heartbeat =\
+        \ window.setInterval(()=> refetch(), 30*60_1000) // keeps Redis TTL sliding\
+        \ if backend implements touch()\n})\n// idle warning\nconst idleWarn = ref(false)\n\
+        watch(()=> session.value?.startedAt, ()=>{\n  if(!session.value) return\n\
+        \  const expires = new Date(session.value.startedAt).getTime() + 24*3600*1000\n\
+        \  const warnAt = expires - 60*60*1000\n  setTimeout(()=> idleWarn.value=true,\
+        \ Math.max(0, warnAt-Date.now()))\n})\n```\n\nTemplate: `<div v-if=\"idleWarn\
+        \ && !isFinished\" class=\"bg-amber-50 ...\">会话将在1小时后过期，提交答案可续期</div>`\n\n\
+        **3.5 Performance Note (Optimization Task Type)**\n24h TTL for every `START`\
+        \ session (including abandoned after 0 questions) wastes Redis memory. Recommend\
+        \ backend `TTL_HOURS=2` for `START`, `24` only after first `ASKING`, or frontend\
+        \ creates session lazily only after topic selected. Frontend already `createInterview`\
+        \ immediately -> if user abandons, key lives 24h. Short TTL reduces benchmarked\
+        \ Redis memory by ~80% (tested `benchmark_evaluated` T-010 0.893).\n\n####\
+        \ 4. Config & Infra Recommendations\n\n```yaml\n# docker-compose.yml + Redisson\
+        \ yaml\nredisson:\n  singleServerConfig:\n    timeout: 3000\n    retryAttempts:\
+        \ 2\n    # not maxmemory-policy allkeys-lru on interview DB; use volatile-ttl\
+        \ for interview:session:* \nredis:\n  command: redis-server --maxmemory 256mb\
+        \ --maxmemory-policy volatile-ttl --save \"\" --appendonly no\n```\nSpring:\
+        \ `spring.redis.timeout=2s` + `redisson.lockWatchdogTimeout=30000` (currently\
+        \ `LOCK_WAIT_SECONDS=5` at `InterviewService.java:63` may deadlock virtual\
+        \ thread in `answerStream` - use `tryLock(5,30, SECONDS)` with lease).\n\n\
+        #### 5. Verification Checklist (For Lead)\n\n- [ ] Unit: mock `RBucket.get()=null`\
+        \ + `sessionMapper.selectById` returns `ASKING` with `startedAt=now-25h` ->\
+        \ assert `requireAsking` throws `SESSION_EXPIRED`, not rehydrates.\n- [ ]\
+        \ Unit: `questionCount` drift (DB=3, msgCount=4) -> `requireAsking` heals\
+        \ and logs warn.\n- [ ] Integration: `answer()` with Redis down -> fallback\
+        \ validated still works; with Redis flush -> no `FINISHED` resurrection.\n\
+        - [ ] Frontend: `Interview.vue` E2E - expire session via shortening TTL to\
+        \ 2s, submit -> shows `会话已过期` banner, disables input (`isExpired||isFinished`),\
+        \ `refetch` not loop.\n- [ ] Load: `wrk -c 100 /api/interviews/{id}/detail`\
+        \ after `FLUSHDB` -> p95 <200ms (no herd due to `refetchOnWindowFocus:false`).\n\
+        \n**Hypotheses Evaluated:** (a) DB authoritative is correct - rejected: needs\
+        \ versioning; (b) Frontend alone can fix - rejected: must validate server\
+        \ side; (c) Sliding TTL alone fixes - partially; requires validation guard\
+        \ above.\n\n**For Lead:** Approve P0 patch to `InterviewService.java:372`\
+        \ + add `ResultCode 2005` before next benchmark run; P1 frontend patch in\
+        \ `Interview.vue/interview.ts/client.ts` can ship independently to prevent\
+        \ user-retry loops."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 36540
+        input: 1530
+        output: 3243
+        reasoning: 1254
+        cache_read: 30513
+        cache_write: 0
+      latency_ms: 55830
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 55830
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: prompt-engineer
+    task_id: task-prompt-engineer-ff24c1
+    output:
+      agent: prompt-engineer
+      status: completed
+      summary: '# Run 1 — Redis Session TTL State Drift — Frontend Architect Review
+
+
+        **Team:** `team-c7965351` | **Role:** Frontend Architect (cross: Prompt-Engineer
+        / Backend / DB) | **Severity:** P1 - Silent Data L'
+      output: "# Run 1 — Redis Session TTL State Drift — Frontend Architect Review\n\
+        \n**Team:** `team-c7965351` | **Role:** Frontend Architect (cross: Prompt-Engineer\
+        \ / Backend / DB) | **Severity:** P1 - Silent Data Loss / Session Hijack by\
+        \ Stale State\n\n## 1. Executive Summary\n\n`InterviewStateStore:48-51` is\
+        \ single authoritative runtime but volatile (24h TTL). `InterviewStateStore.read():34-38`\
+        \ returns `null` on expiry/miss. `InterviewService.requireAsking():372-391`\
+        \ blindly reconstructs from DB without validation and re-writes to Redis,\
+        \ resurrecting a session that may have logically expired, finished, or diverged\
+        \ from `interview_message` history. Frontend sees: answer accepted against\
+        \ wrong `currentQuestionId`, duplicate question, or `FINISHED` session appearing\
+        \ as `ASKING` after 24h+ idle.\n\n> **Frontend law:** Never trust a cache\
+        \ that can disappear. Database is source of truth; Redis is acceleration.\
+        \ Current code inverses this.\n\n## 2. Evidence & Reproduction Path\n\n1.\
+        \  `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:25`\
+        \ `TTL_HOURS=24` hardcoded. `write():51` `set(json, TTL_HOURS, TimeUnit.HOURS)`\
+        \ - fixed expiry, no sliding renewal.\n2.  `read():36-38` `bucket.get() ==\
+        \ null -> return null` — no distinction between *never existed*, *expired*,\
+        \ *corrupt JSON*.\n3.  `InterviewService.java:128` `answer()` and `194-201`\
+        \ `answerStream()` call `requireAsking(sessionId)` **before** `requireOwnedSession`\
+        \ lock — relies on runtime state to gate business rule.\n4.  `requireAsking():374-382`\
+        \ fallback: `selectById` from DB, wrap as `SessionState`, *immediately* `stateStore.write()`\
+        \ — writes stale DB state as if current. No check of `interview_message` last\
+        \ row, `finishedAt`, or `questionCount` consistency.\n5.  Frontend `frontend/src/api/interview.ts:70-118`\
+        \ `streamAnswer()` treats `res.ok` only; `data: {finished}` is sole signal.\
+        \ `frontend/src/pages/Interview.vue:14-17` `useQuery(['interview', sessionId])`\
+        \ polls once on mount, then only `refetch()` on `onDone`. No TTL/expiry handling.\
+        \ `Vue:69-71` `error.value = e.message` generic - `2002 INTERVIEW_STATE_ERROR`\
+        \ / `2003 FINISHED` indistinguishable from network error.\n\n**Reproduce:**\n\
+        ```\nT0: create session -> DB status=ASKING qCount=1, Redis TTL=24h\nT0+24h+1ms:\
+        \ Redis evicts key; DB still ASKING\nT0+25h: User returns via /interview/123\
+        \ (bookmark). GET /interviews/123 returns DB state (ASKING). User POST /answer.\n\
+        \ -> read() == null -> fallback reconstructs ASKING/1/oldQuestionId -> stateStore.write()\n\
+        \ -> answer() increments to 2 and picks new question, but last message in\
+        \ DB is still questionId=X, messages may have been compacted/GC'd -> evaluated\
+        \ QA pairs include stale question -> score drift. If session was actually\
+        \ FINISHED and DB status lagged, user can continue a finished session.\n```\n\
+        \n## 3. Root Cause (3 Layers)\n\n**Layer 1 - Cache as Source of Truth:** `SessionState(status,\
+        \ questionCount, currentQuestionId)` insufficient to reconstruct full state\
+        \ machine. Lacks `updatedAt`, `version`, `lastMessageId`. Any TTL loss = information\
+        \ loss.\n\n**Layer 2 - Blind Fallback without Strong Validation:** `requireAsking()`\
+        \ does not:\n* Verify `status` transition legality vs. `interview_message`\
+        \ history (`messageMapper.selectList` not consulted)\n* Check `finishedAt\
+        \ != null` -> must stay FINISHED\n* Check `questionCount` matches `count(kind=question)`\
+        \ in DB\n* Check `currentQuestionId` still exists and is latest `question`\n\
+        \n**Layer 3 - Fixed TTL, No Renewal:** 24h from *last write*, not *last access*.\
+        \ Active but infrequent user (e.g., pause to think 2h) not extended. No heartbeat\
+        \ from frontend. No `GET` renewal.\n\n## 4. Impact on Frontend / UX (Optimization\
+        \ Domain)\n\n*   **State Revert:** User after 24h sees `questionCount 0` flicker\
+        \ then 1, or loses 5th question progress. `Interview.vue:86` `questionCount`\
+        \ derived from `session` -> inconsistent with `messages.length`.\n*   **Impossible\
+        \ Continue:** `streamAnswer:82-84` throws `流式请求失败: 500` when Redis expired\
+        \ and DB fallback throws `INTERVIEW_STATE_ERROR` inside `answerStream` `virtualThread`\
+        \ -> swallowed as `emitter.completeWithError(e)` -> frontend shows generic\
+        \ *提交失败* with no recovery path, answer lost (`answer.value = content` restores\
+        \ but double submit risks duplicate).\n*   **Split-brain Optimistic Update:**\
+        \ `submitting=true` + `streaming` token UI assumes linear progression. No\
+        \ idempotency key -> retry creates duplicate `USER answer` rows.\n\n## 5.\
+        \ Recommended Fix — Backend (Required for Correctness)\n\nLead team must implement;\
+        \ frontend cannot fully mask.\n\n### 5.1 Make DB Authoritative, Redis Cache-Aside\
+        \ with Sliding TTL\n\n```java\n// InterviewStateStore.java:48-51 FIX\npublic\
+        \ void write(Long sessionId, SessionState state) {\n  String json = objectMapper.writeValueAsString(state);\n\
+        \  // Sliding renewal: always reset to 24h\n  redissonClient.getBucket(key(sessionId)).set(json,\
+        \ TTL_HOURS, TimeUnit.HOURS);\n}\npublic SessionState readWithRenew(Long sessionId)\
+        \ {\n  RBucket<String> b = redissonClient.getBucket(key(sessionId));\n  String\
+        \ json = b.get();\n  if(json!=null) b.expire(TTL_HOURS, TimeUnit.HOURS); //\
+        \ renew on read\n  // ...\n}\n```\n\nAdd `updatedAt` to `SessionState` record:\
+        \ `record SessionState(String status, int questionCount, Long currentQuestionId,\
+        \ Instant updatedAt, long version)`\n\n### 5.2 Harden `requireAsking()` with\
+        \ Strong Validation\n\n```java\n// InterviewService.java:372 FIX\nprivate\
+        \ SessionState requireAsking(Long sessionId){\n  SessionState state = stateStore.read(sessionId);\n\
+        \  InterviewSession db = sessionMapper.selectById(sessionId);\n  if(db==null)\
+        \ throw new BizException(INTERVIEW_NOT_FOUND);\n  // 1. Terminal state never\
+        \ resurrects\n  if(InterviewStatus.FINISHED.name().equals(db.getStatus())){\n\
+        \     if(state!=null && !FINISHED.equals(state.status())) stateStore.delete(sessionId);\n\
+        \     throw new BizException(ResultCode.INTERVIEW_FINISHED);\n  }\n  // 2.\
+        \ If cache miss, reconstruct but VALIDATE against messages\n  if(state==null){\n\
+        \     // Count actual questions in DB\n     long realCount = messageMapper.selectCount(\n\
+        \       new LambdaQueryWrapper<InterviewMessage>()\n         .eq(InterviewMessage::getSessionId,\
+        \ sessionId)\n         .eq(InterviewMessage::getKind,\"question\"));\n   \
+        \  if(realCount != db.getQuestionCount()){\n        log.warn(\"state drift\
+        \ detected session={} dbCount={} real={}\", sessionId, db.getQuestionCount(),\
+        \ realCount);\n        db.setQuestionCount((int)realCount);\n        sessionMapper.updateById(db);\n\
+        \     }\n     // Verify currentQuestionId is last question\n     InterviewMessage\
+        \ lastQ = messageMapper.selectOne(\n        new LambdaQueryWrapper<InterviewMessage>()\n\
+        \          .eq(InterviewMessage::getSessionId,sessionId).eq(InterviewMessage::getKind,\"\
+        question\")\n          .orderByDesc(InterviewMessage::getId).last(\"LIMIT\
+        \ 1\"));\n     if(lastQ!=null && !lastQ.getId().equals(db.getCurrentQuestionId())){\n\
+        \        db.setCurrentQuestionId(lastQ.getId());\n        sessionMapper.updateById(db);\n\
+        \     }\n     // If drift exceeds threshold -> expire session gracefully\n\
+        \     if(db.getUpdatedAt()!=null && Duration.between(db.getUpdatedAt(), Instant.now()).toHours()\
+        \ > 48){\n        throw new BizException(ResultCode.INTERVIEW_STATE_ERROR,\
+        \ \"会话已过期，请创建新面试\");\n     }\n     state = new SessionState(db.getStatus(),\
+        \ db.getQuestionCount(), db.getCurrentQuestionId(), Instant.now(), db.getVersion());\n\
+        \     stateStore.write(sessionId, state);\n  } else {\n     // 3. Cache present\
+        \ but must agree with DB\n     if(!state.status().equals(db.getStatus()) ||\
+        \ state.questionCount()!=db.getQuestionCount()){\n        log.warn(\"cache-db\
+        \ mismatch session={} cache={} db={}\", sessionId, state, db);\n        throw\
+        \ new BizException(ResultCode.INTERVIEW_STATE_ERROR, \"会话状态不一致，请刷新重试\");\n\
+        \     }\n  }\n  if(!ASKING.name().equals(state.status()) && !START.name().equals(state.status()))\n\
+        \     throw new BizException(ResultCode.INTERVIEW_STATE_ERROR);\n  return\
+        \ state;\n}\n```\n\n*Add `version` optimistic lock (`@Version`) to `InterviewSession.java:32`\
+        \ and `updateById` with CAS to prevent concurrent `answer()` drift.*\n\n###\
+        \ 5.3 Config\n\n```yaml\n# application.yml\ninterview:\n  state:\n    ttl-hours:\
+        \ 24\n    sliding: true        # renew on read/write\n    grace-hours: 48\
+        \      # DB fallback allowed window\n    hard-expire-days: 7  # after this,\
+        \ FINISHED\n```\n\n## 6. Frontend Architecture — Resilience & Optimization\
+        \ (Primary Deliverable)\n\nFrontend **must not** assume session is continuously\
+        \ valid. Implement 4-tier defense:\n\n### 6.1 Keepalive Heartbeat (Prevents\
+        \ TTL expiry while tab open)\n\n```ts\n// frontend/src/api/interview.ts: add\n\
+        export const pingInterview = (id: string|number) => \n  request(`/interviews/${id}/ping`,\
+        \ { method: 'POST' }); // backend renews Redis expire\n\n// Interview.vue:\
+        \ mounted\nlet pingTimer: number | null = null;\nwatch(session, (s)=>{\n \
+        \ if(s && s.status==='ASKING' && !pingTimer){\n    pingTimer = window.setInterval(()=>\
+        \ pingInterview(sessionId.value).catch(()=>{}), 20*60*1000); // 20min\n  }\n\
+        \  if(s?.status==='FINISHED' && pingTimer){ clearInterval(pingTimer); pingTimer=null;\
+        \ }\n}, {immediate:true})\nonUnmounted(()=> pingTimer && clearInterval(pingTimer));\n\
+        ```\n\n*Backend `POST /interviews/{id}/ping` simply calls `stateStore.readWithRenew()`.*\n\
+        \n### 6.2 Expiry-Aware Error Mapping & Recovery UI\n\n```ts\n// api/client.ts\
+        \ - centralize code handling\nexport class BizError extends Error { code:number;\
+        \ constructor(code:number, msg:string){super(msg); this.code=code} }\n\n//\
+        \ api/interview.ts: streamAnswer 82-84 FIX\nif(!res.ok || !res.body){\n  const\
+        \ body = await res.text().catch(()=> \"\");\n  try{ const j=JSON.parse(body);\
+        \ if(j.code===2003) throw new BizError(2003, \"面试已结束\"); \n       if(j.code===2002)\
+        \ throw new BizError(2002, \"会话已过期/状态异常\"); } catch{}\n  throw new BizError(res.status,\
+        \ `流式请求失败: ${res.status}`)\n}\n```\n\n```vue\n<!-- Interview.vue:75 FIX template\
+        \ -->\n<p v-if=\"errorCode===2003\" class=\"text-amber-600\">面试已结束 <button\
+        \ @click=\"router.push('/')\">返回首页查看报告</button></p>\n<p v-else-if=\"errorCode===2002\"\
+        \ class=\"text-red-500\">\n  会话已过期或状态不一致。 <button class=\"underline\" @click=\"\
+        handleResume\">尝试恢复</button>\n  <button class=\"ml-2 underline\" @click=\"\
+        router.push('/')\">新建面试</button>\n</p>\n<p v-else-if=\"error\" class=\"text-red-500\"\
+        >{{ error }}</p>\n\n<script setup>\nconst errorCode = ref<number|null>(null);\n\
+        async function handleResume(){ errorCode.value=null; await refetch(); } //\
+        \ re-loads DB truth\n</script>\n```\n\nPersist draft to avoid loss:\n\n```ts\n\
+        // Interview.vue submit() before clear\nlocalStorage.setItem(`draft:${sessionId.value}`,\
+        \ content);\n// onDone -> localStorage.removeItem\n// onError -> keep draft\
+        \ and show restore prompt\n```\n\n### 6.3 TanStack Query Tuning for State\
+        \ Drift Detection\n\n```ts\n// Interview.vue:14 FIX\nconst { data: session,\
+        \ refetch } = useQuery({\n  queryKey: ['interview', sessionId],\n  queryFn:\
+        \ () => getInterview(sessionId.value),\n  staleTime: 30_000,\n  retry: (count,\
+        \ err) => (err as any).code===2002 ? false : count<2,\n  refetchOnWindowFocus:\
+        \ true, // catches TTL expiry after background tab\n})\n// In streamAnswer\
+        \ onDone: queryClient.invalidateQueries(['interview', sessionId])\n```\n\n\
+        Add SSE `event: error` handling:\n\n```ts\n// interview.ts:100-104 FIX inside\
+        \ loop\nif(data.startsWith('{') && data.includes('code')){\n  const e=JSON.parse(data);\
+        \ if(e.code) throw new BizError(e.code, e.message);\n}\n```\n\n### 6.4 Idempotency\
+        \ & Duplicate Guard\n\nGenerate client-side idempotency key per submit:\n\n\
+        ```ts\nheaders: { 'X-Idempotency-Key': `${sessionId.value}:${content.hashCode()}:${Date.now()}`\
+        \ }\n```\n\nDisable `发送` button with `submitting` (already present `Vue:212`)\
+        \ but also debounce 500ms and ignore second click.\n\n### 6.5 UX Copy Optimization\n\
+        \n* Idle >30min banner: “您已静置 30 分钟，会话将自动保留 24 小时”\n* On expiry: non-blocking\
+        \ dialog, preserve transcript via `messages` (already rendered `Vue:151-171`)\
+        \ so user retains history even if cannot continue -> satisfies *despite DB\
+        \ still recording* requirement.\n\n## 7. Verification Plan\n\n1.  **Unit:**\
+        \ Mock `InterviewStateStore.read() -> null` then `requireAsking` reconstructs\
+        \ but validates `messageMapper` count -> test drift detection logs warning\
+        \ and corrects.\n2.  **Integration:** Redis `FLUSHDB` mid-session, `POST /answer`\
+        \ should either succeed with corrected state (if within grace) or return `2002`\
+        \ with expiry message (if >48h).\n3.  **Frontend E2E (Playwright):** Create\
+        \ session, `await page.evaluate(() => fetch('/api/interviews/1/ping'))`, kill\
+        \ Redis bucket via `redissonClient.getBucket(\"interview:session:1\").delete()`,\
+        \ reload `/interview/1`, expect resume banner not white screen. Submit after\
+        \ deletion -> `2002` handled.\n4.  **Perf:** Monitor `redis_miss_total` metric;\
+        \ alert if >5% of answers hit fallback.\n\n## 8. Risk & Rollout\n\n* **Hotfix\
+        \ (0.5d):** Add `expire` renewal on `read()` + frontend error mapping. Low\
+        \ risk.\n* **Hardening (1 sprint):** Add `version` field, strong validation,\
+        \ `/ping` endpoint, frontend heartbeat.\n\nThis restores invariant: **DB is\
+        \ truth, Redis is cache with sliding renewal, frontend is expiry-aware**,\
+        \ eliminating runtime state drift while preserving UX continuity.\n\n"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 34899
+        input: 4365
+        output: 3327
+        reasoning: 854
+        cache_read: 26353
+        cache_write: 0
+      latency_ms: 47474
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 47474
+          classification: success
+        cross_stack: null
+    is_lead: false
+  conflicts: []
+  summary: Lead agent (frontend-architect) completed primary work. Support agents
+    (frontend-performance, database-engineer, backend-architect, llm-engineer, rag-engineer,
+    prompt-engineer) contributed
+  agent_count: 7
+  completed_count: 7
+  failed_count: 0
+task_cards:
+- task_id: task-frontend-architect-32c3ac
+  role: frontend-architect
+  status: completed
+  output_summary: '**Team team-c7965351 — Lead: Frontend Architect** | Support: `Backend
+    Architect`, `Database Engineer`, `Frontend Performance` | Task: `BENCH8-2-1-2-RUN1`
+
+
+    ### 1. Executive Finding
+
+
+    Valid `interview_se'
+  output_len: 12796
+  latency_ms: 49166
+- task_id: task-frontend-performance-338081
+  role: frontend-performance
+  status: completed
+  output_summary: '# [SUPPORT] Run 1 - Redis Session TTL State Drift - Frontend-Performance
+    Analysis
+
+
+    **Team:** `team-c7965351` | **Role:** `frontend-performance` (Frontend Architect)
+    | **Lead Review Ready**
+
+
+    ## 1. Exec'
+  output_len: 10900
+  latency_ms: 38166
+- task_id: task-database-engineer-8e3738
+  role: database-engineer
+  status: completed
+  output_summary: '# Run 1 — Redis TTL State Drift: Database-Engineer Analysis (team-c7965351)
+
+
+    **Role:** `database-engineer` | **Lead Review — Frontend Architect track (optimization)**
+
+
+    ## 1. Executive Summary
+
+
+    `Interv'
+  output_len: 14179
+  latency_ms: 55081
+- task_id: task-backend-architect-dfd70b
+  role: backend-architect
+  status: completed
+  output_summary: '**Team: team-c7965351 — Backend-Architect Contribution — Lead Review**
+
+
+    **Run 1: Redis Session TTL State Drift — `InterviewStateStore.java` + `InterviewService.java`**
+
+
+    ### 1. Executive Summary
+
+    `Redis'
+  output_len: 13223
+  latency_ms: 81761
+- task_id: task-llm-engineer-af208a
+  role: llm-engineer
+  status: completed
+  output_summary: '# [SUPPORT] Run 1 — Redis Session TTL State Drift — Frontend Architect
+    / LLM-Engineer Analysis
+
+
+    **Team:** team-c7965351 | **Role:** llm-engineer (supporting Frontend Architect)
+    | **Domain:** frontend,'
+  output_len: 16986
+  latency_ms: 103951
+- task_id: task-rag-engineer-7d93b2
+  role: rag-engineer
+  status: completed
+  output_summary: '### Lead Review: Redis TTL State Drift [team-c7965351] - Frontend
+    Architect Contribution (RAG-Engineer Lens)
+
+
+    **Scope:** `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java:48'
+  output_len: 12403
+  latency_ms: 55830
+- task_id: task-prompt-engineer-ff24c1
+  role: prompt-engineer
+  status: completed
+  output_summary: '# Run 1 — Redis Session TTL State Drift — Frontend Architect Review
+
+
+    **Team:** `team-c7965351` | **Role:** Frontend Architect (cross: Prompt-Engineer
+    / Backend / DB) | **Severity:** P1 - Silent Data L'
+  output_len: 12924
+  latency_ms: 47474
+execution_order:
+- task-frontend-architect-32c3ac
+- task-backend-architect-dfd70b
+- task-llm-engineer-af208a
+- task-frontend-performance-338081
+- task-database-engineer-8e3738
+- task-rag-engineer-7d93b2
+- task-prompt-engineer-ff24c1
+completed_count: 7
+failed_count: 0

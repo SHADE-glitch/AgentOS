@@ -1,0 +1,255 @@
+# Execution Trace — AOS-A7E663 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-03T02:40:13.340221+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788403213
+trace_id: TRACE-EXEC-1788403213-eac62b5940e7
+task_id: AOS-A7E663
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-03T02:39:16.604993+00:00'
+    memory_retrieved: '2026-09-03T02:39:16.609427+00:00'
+    routing_completed: '2026-09-03T02:39:16.628216+00:00'
+    skill_loaded: '2026-09-03T02:39:16.630769+00:00'
+    orchestration_completed: '2026-09-03T02:39:16.631281+00:00'
+    agent_started: '2026-09-03T02:39:16.635560+00:00'
+    agent_completed: '2026-09-03T02:40:13.340111+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-03T02:39:16.482873+00:00'
+  pid: 1435342
+  cwd: /home/shade/Public/test
+  task_id: AOS-A7E663
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  hypotheses_injected: []
+  influence: none
+  influence_breakdown: {}
+  decision_influence:
+    level: none
+    provenance: []
+    established_count: 0
+    hypothesis_count: 0
+    hypothesis_influence_detected: false
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9add7247ffeTeFHZly48Jl7xk
+  tokens:
+    total: 21858
+    input: 17117
+    output: 2511
+    reasoning: 837
+    cache_read: 1393
+    cache_write: 0
+  cost: 0
+  latency_ms: 56704
+agent_response: "### Assessment: Redis TTL-Cached Dashboard Aggregates — Staleness\
+  \ & Mutation Safety\n\n#### 1. Staleness Model for TTL Cache\n\nWith TTL-only caching,\
+  \ `stale window = TTL` by design. The cached view diverges from ground truth immediately\
+  \ after any committed write until `TTL` expires or invalidation fires.\n\n```\n\
+  DB (Source of Truth) --write--> Redis (Derived) --TTL--> Expire --> DB Re-query\n\
+  \                    |--- staleness window: 0 < t < TTL ---|\n```\n\nDefine staleness\
+  \ formally:\n\n*   `t_last_refresh`: `EXPIRETIME` / `PTTL` of key\n*   `t_last_mutation`:\
+  \ `MAX(updated_at)` of source tables or CDC LSN\n*   **Stale if:** `t_last_mutation\
+  \ > t_last_refresh` AND `key exists`\n\nWith pure TTL, you have **no detection**\
+  \ of `t_last_mutation` unless you track it. You accept `bounded eventual consistency`.\n\
+  \n**Default TTL Risk Matrix:**\n\n| Aggregate Type | Example Query | Volatility\
+  \ | Safe TTL | Current Risk if TTL > 5m |\n|---|---|---|---|---|\n| `COUNT(*)` /\
+  \ `SUM(revenue)` | `SELECT sum(amount) FROM orders WHERE date=today()` | High (every\
+  \ order) | 30-60s + active invalidation | Users see phantom revenue |\n| Daily Rollup\
+  \ | `SELECT ... GROUP BY day` for last 30d | Medium | 5-15m acceptable | Low financial\
+  \ risk, high UX risk |\n| Distinct / percentile | `approx_count_distinct(user_id)`\
+  \ | Low | 15-60m | Acceptable |\n| Historical immutable | `WHERE date < yesterday`\
+  \ | None | 1-24h | No risk, never stale |\n\n**Conclusion:** If any dashboard aggregates\
+  \ financial/operational state (today's revenue, open tickets, inventory), pure TTL\
+  \ is **unsafe** beyond 30-60s.\n\n#### 2. How to Assess If Cached View Is Stale\n\
+  \nDo not rely on `TTL > 0` means fresh. Implement a verifiable freshness contract.\n\
+  \n**Step 1: Versioned Cache Key + Metadata**\n\nStop caching opaque values. Cache\
+  \ value + metadata:\n\n```python\n# cache_wrapper.py:42\nimport time, json, redis\n\
+  \nr = redis.Redis()\n\nCACHE_META_KEY = \"dashboard:meta:{agg_name}\"  # stores\
+  \ last_mutation watermark\n\ndef get_dashboard_agg(agg_name: str, sql_fn, ttl: int\
+  \ = 60):\n    cache_key = f\"dashboard:agg:{agg_name}\"\n    cached = r.get(cache_key)\n\
+  \    if cached:\n        data = json.loads(cached)\n        # Expose to frontend\n\
+  \        data['_stale'] = is_stale(agg_name, data['_cached_at'])\n        data['_ttl_remaining']\
+  \ = r.pttl(cache_key)\n        return data\n\n    # Cache miss: stampede protection\
+  \ via SET NX\n    lock_key = f\"lock:{cache_key}\"\n    if r.set(lock_key, \"1\"\
+  , nx=True, ex=5):\n        try:\n            value = sql_fn() # DB query: SELECT\
+  \ ...\n            payload = json.dumps({\"value\": value, \"_cached_at\": int(time.time())})\n\
+  \            r.set(cache_key, payload, ex=ttl)\n            r.delete(lock_key)\n\
+  \            return json.loads(payload)\n        except Exception:\n           \
+  \ r.delete(lock_key)\n            raise\n    else:\n        # Wait 50ms and retry,\
+  \ else serve stale or directly query DB (fallback)\n        time.sleep(0.05)\n \
+  \       return get_dashboard_agg(agg_name, sql_fn, ttl)\n\ndef is_stale(agg_name:\
+  \ str, cached_at: int) -> bool:\n    last_mut = r.get(f\"dashboard:meta:{agg_name}\"\
+  ) # set on mutation\n    if not last_mut: return False # no mutation tracked\n \
+  \   return int(last_mut) > cached_at\n```\n\n**Step 2: Expose Freshness to Consumer**\n\
+  Frontend should not guess. Return headers:\n\n```json\n{\n  \"value\": 14250,\n\
+  \  \"_cached_at\": 1715001234,\n  \"_ttl_remaining_ms\": 12400,\n  \"_stale\": true,\n\
+  \  \"_source\": \"cache\"\n}\n```\n\n**Step 3: DB-Side Watermark Check (Authoritative)**\n\
+  \n```sql\n-- db/watermark.sql:10\nSELECT MAX(updated_at) as last_mutation\nFROM\
+  \ orders WHERE created_at >= CURRENT_DATE;\n\n-- compare against cached_at in application\
+  \ layer\n-- If last_mutation > cached_at => force refresh: DEL dashboard:agg:revenue_today\n\
+  ```\n\nFor high-throughput, use a `aggregate_watermark` table updated by triggers:\n\
+  \n```sql\n-- migration/V4__watermark.sql:5\nCREATE TABLE aggregate_watermark (\n\
+  \  agg_name TEXT PRIMARY KEY,\n  last_mutation TIMESTAMPTZ NOT NULL DEFAULT now()\n\
+  );\nCREATE OR REPLACE FUNCTION bump_watermark() RETURNS trigger AS $$\nBEGIN\n \
+  \ INSERT INTO aggregate_watermark(agg_name, last_mutation)\n  VALUES (TG_ARGV[0],\
+  \ now())\n  ON CONFLICT (agg_name) DO UPDATE SET last_mutation = now();\n  RETURN\
+  \ NEW;\nEND; $$ LANGUAGE plpgsql;\n\nCREATE TRIGGER trg_orders_watermark\nAFTER\
+  \ INSERT OR UPDATE OR DELETE ON orders\nFOR EACH STATEMENT EXECUTE FUNCTION bump_watermark('revenue_today');\n\
+  ```\n\n#### 3. Mutation Path Safety Audit\n\nAudit every write path that touches\
+  \ source tables of the aggregates. Classification:\n\n| Mutation Path | Example\
+  \ | Safe with TTL-only? | Why | Required Fix |\n|---|---|---|---|---|\n| **A. App\
+  \ Service via Cache-Aware Repository** | `OrderService.createOrder()` -> writes\
+  \ DB + `DEL`/`publish` | **SAFE** | Single egress, transactional invalidation |\
+  \ Keep. Use transaction outbox. |\n| **B. App Service via Direct DB Write (bypass)**\
+  \ | Ad-hoc `db.query(\"UPDATE orders...\")` in cron/job | **UNSAFE** | TTL window\
+  \ stale | Route through repository or add watermark bump |\n| **C. Bulk ETL / Backfill**\
+  \ | `COPY` / `INSERT ... SELECT` 100k rows | **UNSAFE / DANGEROUS** | Stampede on\
+  \ TTL expiry + long stale period | Disable TTL refresh during bulk, then `UNLINK\
+  \ dashboard:agg:*` + pre-warm |\n| **D. Direct DB Console / Admin Tool** | `psql`\
+  \ manual fix | **UNSAFE** | Invisible to Redis | Add DB trigger -> watermark ->\
+  \ CDC invalidation |\n| **E. CDC / Replication Consumer** | Debezium -> downstream\
+  \ aggregator | **SAFE IF** CDC does invalidation | Eventual but deterministic |\
+  \ Preferred for paths B-D |\n| **F. Multi-service writes without coordination**\
+  \ | `payment-service` and `order-service` both write `orders` | **UNSAFE** | Race,\
+  \ double invalidation | Centralize invalidation via Redis Pub/Sub or Stream |\n\n\
+  **Rule:** Any mutation path that does not execute `DEL` / `UNLINK` / `PUBLISH invalidate`\
+  \ or bump the watermark is **unsafe**.\n\n#### 4. Safe Architecture Patterns (Pick\
+  \ One)\n\n**Option 1: Cache-Aside + Write-Invalidate (Recommended, Minimal Change)**\n\
+  \nFor 90% of dashboards this is sufficient. TTL remains as circuit breaker, not\
+  \ primary consistency.\n\n```python\n# repository.py:88\ndef create_order(db, r,\
+  \ order):\n    with db.transaction():\n        db.execute(\"INSERT INTO orders ...\"\
+  , order)\n        db.execute(\"INSERT INTO aggregate_watermark ... ON CONFLICT DO\
+  \ UPDATE ...\")\n    # After commit, invalidate - best effort, TTL covers failure\n\
+  \    pipe = r.pipeline()\n    pipe.unlink(\"dashboard:agg:revenue_today\", \"dashboard:agg:orders_today\"\
+  )\n    pipe.set(\"dashboard:meta:revenue_today\", int(time.time()))\n    pipe.publish(\"\
+  invalidate:dashboard\", \"revenue_today\")\n    pipe.execute()\n```\n\nAdd jittered\
+  \ TTL to avoid thundering herd:\n\n```python\n# config/redis.py:15\nimport random\n\
+  BASE_TTL = 60\nJITTER = 10\nr.set(key, payload, ex=BASE_TTL + random.randint(-JITTER,\
+  \ JITTER))\n```\n\n**Option 2: Write-Through with Stale-While-Revalidate (SWR) for\
+  \ UX**\n\nIf dashboards cannot show loading on miss, serve stale + async refresh:\n\
+  \n```lua\n-- redis_swr.lua:1 - atomic get + check stale\nlocal val = redis.call('GET',\
+  \ KEYS[1])\nlocal pttl = redis.call('PTTL', KEYS[1])\nif val and pttl < 10000 then\
+  \ -- <10s left = background refresh trigger\n  redis.call('PUBLISH', 'swr:refresh',\
+  \ KEYS[1])\nend\nreturn val\n```\n\nApplication subscribes to `swr:refresh` and\
+  \ pre-warms.\n\n**Option 3: CDC-Driven Invalidation (For Untrusted / Polyglot Writers)**\n\
+  \nWhen you cannot control all writers (paths B,D,F): Debezium -> Kafka -> Invalidation\
+  \ Consumer.\n\n```\norders (Postgres WAL) -> Debezium -> Kafka topic db.orders ->\
+  \ consumer -> r.del(\"dashboard:agg:*\")\n```\n\nGuarantees eventual consistency\
+  \ even for `psql` manual fixes, without app changes.\n\n#### 5. Redis & DB Configuration\
+  \ Recommendations\n\n**Redis (`redis.conf` / `CONFIG SET`):**\n\n```conf\nmaxmemory-policy\
+  \ allkeys-lru  # never evict watermarks? use volatile-lru if watermarks non-volatile\n\
+  lazyfree-lazy-expire yes\nlazyfree-lazy-eviction yes\nactive-expire-effort 10  \
+  \     # more aggressive expiry for tight TTLs\n# Use UNLINK not DEL for large aggregates\
+  \ (non-blocking)\n```\n\nKey naming convention: `dashboard:agg:{name}:{yyyy-mm-dd}:{version}`\
+  \ allows blue/green rollover and `SCAN 0 MATCH dashboard:agg:* COUNT 500` for bulk\
+  \ invalidate.\n\n**Postgres:**\n\n*   Add `updated_at TIMESTAMPTZ DEFAULT now()`\
+  \ + BRIN index on `created_at` for watermark query.\n*   Materialized View + `REFRESH\
+  \ CONCURRENTLY` for heavy aggregates; Redis caches MV, not raw table.\n*   `statement_timeout`\
+  \ for dashboard queries: `SET statement_timeout = '2s'` to prevent cache-miss dogpile\
+  \ DB overload.\n\n**TTL Tuning:**\n\n*   `revenue_today`, `active_orders`: `TTL\
+  \ 30s` + active invalidate (stale bound = max replication lag ~1s)\n*   `30d_trend`:\
+  \ `TTL 300s` + SWR\n*   Immutable history: `TTL 3600s`, no invalidation\n\n####\
+  \ 6. Operational Checklist\n\n1.  **Inventory:** `grep -r \"INSERT INTO orders\\\
+  |UPDATE orders\" --include=\"*.py\" --include=\"*.sql\"` + list all DB users from\
+  \ `pg_stat_activity` -> map to table 3.\n2.  **Instrument:** Emit `cache_hit`, `cache_miss`,\
+  \ `stale_serve_total` (Prometheus). Alert if `stale_serve_total > 5%` or `pttl ==\
+  \ -1` (no TTL leak).\n3.  **Verify:** Load test: `k6 run --vus 50` while mutating;\
+  \ assert `GET dashboard` returns `stale:false` within 2s of write (after invalidate).\n\
+  4.  **Fail-safe:** On Redis failure, fallback to DB with circuit breaker (`if redis\
+  \ down: query DB directly + set local LRU 5s`), don't fail dashboard.\n\n**Final\
+  \ stance:** Pure TTL is safe only for immutable/low-volatility aggregates. For any\
+  \ aggregate derived from mutable OLTP tables, TTL must be a backstop; authoritative\
+  \ freshness must come from **write-time invalidation + watermark comparison**. Enforce\
+  \ that all mutation paths go through Option 1 or close the gap with Option 3 (CDC)."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 56704
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-03T02:39:16.628216+00:00'
+    completed_at: '2026-09-03T02:39:16.628216+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-03T02:39:16.609427+00:00'
+    completed_at: '2026-09-03T02:39:16.609427+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-03T02:39:16.630769+00:00'
+    completed_at: '2026-09-03T02:39:16.630769+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-03T02:39:16.631281+00:00'
+    completed_at: '2026-09-03T02:39:16.631281+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-03T02:39:16.635560+00:00'
+    completed_at: '2026-09-03T02:40:13.340111+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

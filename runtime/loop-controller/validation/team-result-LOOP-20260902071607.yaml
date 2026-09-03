@@ -1,0 +1,1036 @@
+loop_id: LOOP-20260902071607
+team_id: team-18087af2
+team_result:
+  team_id: team-18087af2
+  status: success
+  lead_output:
+    agent: database-engineer
+    status: completed
+    summary: '## Lead Report — Redis Session State TTL: When & Why Continuation Breaks
+
+
+      **Team** `team-18087af2` · Domains: database, ai · Task: debug.
+
+      **System under test:** Phase-5 面试状态机 (`INTERVIEW_STATE_MACHINE'
+    output: "## Lead Report — Redis Session State TTL: When & Why Continuation Breaks\n\
+      \n**Team** `team-18087af2` · Domains: database, ai · Task: debug.\n**System\
+      \ under test:** Phase-5 面试状态机 (`INTERVIEW_STATE_MACHINE`). Runtime state `SessionState(status,\
+      \ questionCount, currentQuestionId)` lives in Redis (`InterviewStateStore.java:27`),\
+      \ written with a **fixed 24h TTL**, reset on every write (`InterviewStateStore.java:51`).\
+      \ The persisted DB (`InterviewSession` + `InterviewMessage`) is never amended\
+      \ on expiry.\n\n---\n\n### 1. The failure mechanism\n\nThe killer is not \"\
+      the key disappears\" — it's that **expiry is a silent, DB-invisible event in\
+      \ a store the code labels the single authority**.\n\n- On every transition the\
+      \ code writes **DB-then-Redis** (`InterviewService.java:114→116, 186→188, 261→263,\
+      \ 344→345`).\n- The DB is durable and has **no TTL**. Redis, by configuration,\
+      \ drops the row after a fixed 24h window.\n- The state machine's guard path\
+      \ `requireAsking()` (`:380-399`) treats Redis as authoritative **and only consults\
+      \ the DB when Redis returns `null`** (`:381-382`).\n\nA \"fixed TTL reset on\
+      \ each write\" is a **sliding/gorge TTL**: the key dies after 24h **of no writes**.\
+      \ So the canonical trigger is:\n\n> A `START`/`ASKING` interview that the user\
+      \ **pauses and abandons for 24h+**. Redis evicts the key silently. The DB still\
+      \ holds a valid, owned, `ASKING` session with the full message history. From\
+      \ the DB's perspective the interview is live and resumable; from Redis the state\
+      \ is gone.\n\n**Why continuation breaks (the classic / intended answer):** if\
+      \ Redis is the *only* authority and there is **no fallback**, the next `answer()`\
+      \ `read()`s `null` and either throws a state error (\"会话已过期 / 状态不允许\") or, worse,\
+      \ treats the session as new. The user's in-progress interview — still fully\
+      \ recoverable from the DB — is frozen/invalidated. The DB was \"valid\" all\
+      \ along; only the runtime layer silently forgot it. Detail pages (`detail`,\
+      \ `listByUser`, `result`) read DB-only and keep working, which makes the failure\
+      \ feel even more random: **the session looks fine until you try to continue\
+      \ it.**\n\n---\n\n### 2. Codebase-specific nuance (important)\n\nOur support\
+      \ code-review confirmed: in **this** codebase the pure-expiry case is **mostly\
+      \ masked** because `requireAsking()` falls back to the DB and reconstructs field-equivalent\
+      \ state (`:383-389`). The DB fallback is correct **only when Redis is `null`.**\n\
+      \nThe real leak here is a *different, worse* divergence — **stale-but-present\
+      \ Redis overriding newer DB**:\n\n- Writes are DB→Redis, sequenced. If `stateStore.write()`\
+      \ throws after the DB advanced (`InterviewStateStore.java:54`, **no retry /\
+      \ compensation / `@Transactional`**), Redis holds an **old** `questionCount`/`currentQuestionId`.\
+      \ Because Redis is non-null, the fallback at `:382` does **not** trigger.\n\
+      - Next `answer()` computes `newCount = staleCount + 1` from stale Redis → duplicated\
+      \ question counts / wrong `currentQuestionId` (`:179,254`).\n- `finishSession()`\
+      \ (`:340-359`): a Redis write failure (**after** the DB marked FINISHED) aborts\
+      \ before RabbitMQ scoring and dashboard eviction → a logically-finished session\
+      \ that never gets scored if the code path swallowed the error (SSE variant swallows,\
+      \ `answer()` throws).\n\nSo: expiry alone is recoverable here, but it's **fragile**\
+      \ — it relies on Redis being exactly `null`. Any non-null stale/evicted/parse-failed\
+      \ state (`read()` returns `null` on JSON corruption too, `:42-45`) escapes the\
+      \ fallback and silently corrupts continuation.\n\n---\n\n### 3. Trigger conditions\
+      \ / when it bites\n\n1. **Idle-then-resume** (>24h pause in an active session)\
+      \ — the designed TTL scenario; breaks if no fallback exists.\n2. **Redis restart\
+      \ / `FLUSHALL` / maxmemory eviction** — `docker-compose.yml` uses `redis:7-alpine`\
+      \ with **no `maxmemory-policy`** (default `noeviction`), no keyspace notifications.\
+      \ Any deployed policy such as `allkeys-lru`/`volatile-ttl` silently drops these\
+      \ keys → same \"null\" miss, DB unaffected.\n3. **Write-failure divergence**\
+      \ (above) — Redis present-but-stale; unhandled by the `null`-only fallback.\
+      \ Highest risk in this codebase.\n4. **Keyspace-notification absence** — nothing\
+      \ in the app subscribes to `EXPIRE` events, so expiry is invisible and uncorrected\
+      \ at runtime.\n\n---\n\n### 4. Recommended fix (decision)\n\n**Option A — DB\
+      \ = single truth; Redis = pure hot cache, rebuild-on-miss (recommended)**\n\
+      - Fixes a) TTL, b) restart/eviction, c) atomicity gap, d) correctness. `InterviewStateStore`\
+      \ comment \"单一权威来源\" is architecturally wrong for this data shape and should\
+      \ be corrected.\n- Trade-offs: +1 DB read per transition (negligible at interview\
+      \ QPS); requires removing any Redis-authority logic.\n\n**Option B — Absolute\
+      \ (non-sliding) TTL ≈ session lifetime**\n- Predictable expiry; trade-off: silently\
+      \ abandons legitimately-long sessions.\n\n**Option C — No TTL + DB `updated_at`\
+      \ sweep for cleanup**\n- Removes Redis-side expiry entirely, kills the problem\
+      \ at the root; trade-off: must run/trust a background sweep.\n\n**Recommended\
+      \ decision:** **A**, plus a bounded absolute TTL purely to cap Redis memory,\
+      \ plus:\n- **Harden the fallback to trigger on stale, not just null** — e.g.\
+      \ rehydrate from DB whenever Redis state is empty OR older than the DB (compare\
+      \ `updated_at`, not just presence).\n- **Add atomicity**: wrap the DB+Redis\
+      \ transition in `@Transactional` (or an outbox) so a failed Redis write can't\
+      \ strand `FINISHED`/scoring.\n- **Keep the FINISHED guard as a hard invariant**;\
+      \ move it to the service layer (not just `requireAsking`) so the forward path\
+      \ and the SSE path share the same protection.\n\n#### Illustrative hardening\
+      \ (pattern, not a drop-in patch)\n```java\n// InterviewStateStore / requireAsking\n\
+      // Trigger rehydrate on stale, not just null\nString json = bucket.get();\n\
+      if (json == null) {\n    return rebuildFromDb(sessionId);          // existing\
+      \ fallback\n}\nSessionState cached = parse(json);\nInterviewSession row = sessionMapper.selectById(sessionId);\n\
+      if (row != null && cached.questionCount() < row.getQuestionCount()) {\n    return\
+      \ rebuildFromDb(sessionId);          // stale Redis must not win\n}\nreturn\
+      \ cached;\n```\n```yaml\n# config — bounded cap instead of unbounded allkeys\n\
+      maxmemory-policy: volatile-ttl\nnotify-keyspace-events: Ex      # subscribe\
+      \ to detect/mitigate expiry\n```\n\n---\n\n### 5. Validation plan\n- Unit-test\
+      \ `requireAsking` for: Redis null + DB ASKING (recovers), Redis stale `count\
+      \ < DB count` (recovers — new assertion), Redis stale `== DB` (no rehydrate),\
+      \ DB FINISHED (throws).\n- Fault-inject `stateStore.write` failure → assert\
+      \ no duplicated question increments, and that `finishSession` still delivers\
+      \ scoring/evict.\n- Ops test: run a real session 1min, `FLUSHALL`, resume —\
+      \ must continue seamlessly.\n\n**Support inputs incorporated:** code-review\
+      \ (write-divergence leak, fallback-vs-null gap, SSE/async paths) and architecture/security\
+      \ (eviction-policy risk, FINISHED-guard invariant, trade-off table). No user-data\
+      \ exposure risk — ownership is enforced via DB (`requireOwnedSession`), so expiry\
+      \ is a **continuity** bug, not a security/privacy bug."
+    execution_id: ''
+    trace_id: ''
+    tokens:
+      total: 34633
+      input: 5067
+      output: 1805
+      reasoning: 113
+      cache_read: 27648
+      cache_write: 0
+    latency_ms: 135926
+    reliability:
+      summary:
+        total_attempts: 1
+        retries_performed: 0
+        fallbacks_used: []
+        models_tried:
+        - ''
+        final_status: success
+        total_latency_ms: 135926
+        classification: success
+      cross_stack: null
+  contributions:
+  - role: database-engineer
+    task_id: task-database-engineer-7589c4
+    output:
+      agent: database-engineer
+      status: completed
+      summary: '## Lead Report — Redis Session State TTL: When & Why Continuation
+        Breaks
+
+
+        **Team** `team-18087af2` · Domains: database, ai · Task: debug.
+
+        **System under test:** Phase-5 面试状态机 (`INTERVIEW_STATE_MACHINE'
+      output: "## Lead Report — Redis Session State TTL: When & Why Continuation Breaks\n\
+        \n**Team** `team-18087af2` · Domains: database, ai · Task: debug.\n**System\
+        \ under test:** Phase-5 面试状态机 (`INTERVIEW_STATE_MACHINE`). Runtime state `SessionState(status,\
+        \ questionCount, currentQuestionId)` lives in Redis (`InterviewStateStore.java:27`),\
+        \ written with a **fixed 24h TTL**, reset on every write (`InterviewStateStore.java:51`).\
+        \ The persisted DB (`InterviewSession` + `InterviewMessage`) is never amended\
+        \ on expiry.\n\n---\n\n### 1. The failure mechanism\n\nThe killer is not \"\
+        the key disappears\" — it's that **expiry is a silent, DB-invisible event\
+        \ in a store the code labels the single authority**.\n\n- On every transition\
+        \ the code writes **DB-then-Redis** (`InterviewService.java:114→116, 186→188,\
+        \ 261→263, 344→345`).\n- The DB is durable and has **no TTL**. Redis, by configuration,\
+        \ drops the row after a fixed 24h window.\n- The state machine's guard path\
+        \ `requireAsking()` (`:380-399`) treats Redis as authoritative **and only\
+        \ consults the DB when Redis returns `null`** (`:381-382`).\n\nA \"fixed TTL\
+        \ reset on each write\" is a **sliding/gorge TTL**: the key dies after 24h\
+        \ **of no writes**. So the canonical trigger is:\n\n> A `START`/`ASKING` interview\
+        \ that the user **pauses and abandons for 24h+**. Redis evicts the key silently.\
+        \ The DB still holds a valid, owned, `ASKING` session with the full message\
+        \ history. From the DB's perspective the interview is live and resumable;\
+        \ from Redis the state is gone.\n\n**Why continuation breaks (the classic\
+        \ / intended answer):** if Redis is the *only* authority and there is **no\
+        \ fallback**, the next `answer()` `read()`s `null` and either throws a state\
+        \ error (\"会话已过期 / 状态不允许\") or, worse, treats the session as new. The user's\
+        \ in-progress interview — still fully recoverable from the DB — is frozen/invalidated.\
+        \ The DB was \"valid\" all along; only the runtime layer silently forgot it.\
+        \ Detail pages (`detail`, `listByUser`, `result`) read DB-only and keep working,\
+        \ which makes the failure feel even more random: **the session looks fine\
+        \ until you try to continue it.**\n\n---\n\n### 2. Codebase-specific nuance\
+        \ (important)\n\nOur support code-review confirmed: in **this** codebase the\
+        \ pure-expiry case is **mostly masked** because `requireAsking()` falls back\
+        \ to the DB and reconstructs field-equivalent state (`:383-389`). The DB fallback\
+        \ is correct **only when Redis is `null`.**\n\nThe real leak here is a *different,\
+        \ worse* divergence — **stale-but-present Redis overriding newer DB**:\n\n\
+        - Writes are DB→Redis, sequenced. If `stateStore.write()` throws after the\
+        \ DB advanced (`InterviewStateStore.java:54`, **no retry / compensation /\
+        \ `@Transactional`**), Redis holds an **old** `questionCount`/`currentQuestionId`.\
+        \ Because Redis is non-null, the fallback at `:382` does **not** trigger.\n\
+        - Next `answer()` computes `newCount = staleCount + 1` from stale Redis →\
+        \ duplicated question counts / wrong `currentQuestionId` (`:179,254`).\n-\
+        \ `finishSession()` (`:340-359`): a Redis write failure (**after** the DB\
+        \ marked FINISHED) aborts before RabbitMQ scoring and dashboard eviction →\
+        \ a logically-finished session that never gets scored if the code path swallowed\
+        \ the error (SSE variant swallows, `answer()` throws).\n\nSo: expiry alone\
+        \ is recoverable here, but it's **fragile** — it relies on Redis being exactly\
+        \ `null`. Any non-null stale/evicted/parse-failed state (`read()` returns\
+        \ `null` on JSON corruption too, `:42-45`) escapes the fallback and silently\
+        \ corrupts continuation.\n\n---\n\n### 3. Trigger conditions / when it bites\n\
+        \n1. **Idle-then-resume** (>24h pause in an active session) — the designed\
+        \ TTL scenario; breaks if no fallback exists.\n2. **Redis restart / `FLUSHALL`\
+        \ / maxmemory eviction** — `docker-compose.yml` uses `redis:7-alpine` with\
+        \ **no `maxmemory-policy`** (default `noeviction`), no keyspace notifications.\
+        \ Any deployed policy such as `allkeys-lru`/`volatile-ttl` silently drops\
+        \ these keys → same \"null\" miss, DB unaffected.\n3. **Write-failure divergence**\
+        \ (above) — Redis present-but-stale; unhandled by the `null`-only fallback.\
+        \ Highest risk in this codebase.\n4. **Keyspace-notification absence** — nothing\
+        \ in the app subscribes to `EXPIRE` events, so expiry is invisible and uncorrected\
+        \ at runtime.\n\n---\n\n### 4. Recommended fix (decision)\n\n**Option A —\
+        \ DB = single truth; Redis = pure hot cache, rebuild-on-miss (recommended)**\n\
+        - Fixes a) TTL, b) restart/eviction, c) atomicity gap, d) correctness. `InterviewStateStore`\
+        \ comment \"单一权威来源\" is architecturally wrong for this data shape and should\
+        \ be corrected.\n- Trade-offs: +1 DB read per transition (negligible at interview\
+        \ QPS); requires removing any Redis-authority logic.\n\n**Option B — Absolute\
+        \ (non-sliding) TTL ≈ session lifetime**\n- Predictable expiry; trade-off:\
+        \ silently abandons legitimately-long sessions.\n\n**Option C — No TTL + DB\
+        \ `updated_at` sweep for cleanup**\n- Removes Redis-side expiry entirely,\
+        \ kills the problem at the root; trade-off: must run/trust a background sweep.\n\
+        \n**Recommended decision:** **A**, plus a bounded absolute TTL purely to cap\
+        \ Redis memory, plus:\n- **Harden the fallback to trigger on stale, not just\
+        \ null** — e.g. rehydrate from DB whenever Redis state is empty OR older than\
+        \ the DB (compare `updated_at`, not just presence).\n- **Add atomicity**:\
+        \ wrap the DB+Redis transition in `@Transactional` (or an outbox) so a failed\
+        \ Redis write can't strand `FINISHED`/scoring.\n- **Keep the FINISHED guard\
+        \ as a hard invariant**; move it to the service layer (not just `requireAsking`)\
+        \ so the forward path and the SSE path share the same protection.\n\n####\
+        \ Illustrative hardening (pattern, not a drop-in patch)\n```java\n// InterviewStateStore\
+        \ / requireAsking\n// Trigger rehydrate on stale, not just null\nString json\
+        \ = bucket.get();\nif (json == null) {\n    return rebuildFromDb(sessionId);\
+        \          // existing fallback\n}\nSessionState cached = parse(json);\nInterviewSession\
+        \ row = sessionMapper.selectById(sessionId);\nif (row != null && cached.questionCount()\
+        \ < row.getQuestionCount()) {\n    return rebuildFromDb(sessionId);      \
+        \    // stale Redis must not win\n}\nreturn cached;\n```\n```yaml\n# config\
+        \ — bounded cap instead of unbounded allkeys\nmaxmemory-policy: volatile-ttl\n\
+        notify-keyspace-events: Ex      # subscribe to detect/mitigate expiry\n```\n\
+        \n---\n\n### 5. Validation plan\n- Unit-test `requireAsking` for: Redis null\
+        \ + DB ASKING (recovers), Redis stale `count < DB count` (recovers — new assertion),\
+        \ Redis stale `== DB` (no rehydrate), DB FINISHED (throws).\n- Fault-inject\
+        \ `stateStore.write` failure → assert no duplicated question increments, and\
+        \ that `finishSession` still delivers scoring/evict.\n- Ops test: run a real\
+        \ session 1min, `FLUSHALL`, resume — must continue seamlessly.\n\n**Support\
+        \ inputs incorporated:** code-review (write-divergence leak, fallback-vs-null\
+        \ gap, SSE/async paths) and architecture/security (eviction-policy risk, FINISHED-guard\
+        \ invariant, trade-off table). No user-data exposure risk — ownership is enforced\
+        \ via DB (`requireOwnedSession`), so expiry is a **continuity** bug, not a\
+        \ security/privacy bug."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 34633
+        input: 5067
+        output: 1805
+        reasoning: 113
+        cache_read: 27648
+        cache_write: 0
+      latency_ms: 135926
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 135926
+          classification: success
+        cross_stack: null
+    is_lead: true
+  - role: security-engineer
+    task_id: task-security-engineer-18c61d
+    output:
+      agent: security-engineer
+      status: completed
+      summary: '## Diagnosis
+
+
+        `InterviewStateStore` applies a **fixed (absolute) 24h TTL on every write**
+        (`InterviewStateStore.java:51` → `bucket.set(json, TTL_HOURS, HOURS)`). Redis
+        keeps the DB-backed session vali'
+      output: "## Diagnosis\n\n`InterviewStateStore` applies a **fixed (absolute)\
+        \ 24h TTL on every write** (`InterviewStateStore.java:51` → `bucket.set(json,\
+        \ TTL_HOURS, HOURS)`). Redis keeps the DB-backed session valid forever; Redis\
+        \ drops the runtime state purely on a wall-clock timer. Continuation only\
+        \ *appears* to survive because `requireAsking()` (`InterviewService.java:380-399`)\
+        \ silently self-heals from the DB on a read miss — but that self-heal is partial\
+        \ and unlogged, so the expiry is invisible and can corrupt continuation in\
+        \ specific states.\n\n### Evidence mapping\n| Concern | Location |\n|---|---|\n\
+        | Absolute TTL re-armed on every write | `InterviewStateStore.write` L48-56\
+        \ (`set` = SET with absolute EX, **not sliding**) |\n| Redis claimed as \"\
+        唯一权威来源\" (sole authority) | `InterviewStateStore` class javadoc L15 |\n| Self-heal\
+        \ fallback DB→Redis on miss | `requireAsking` L380-399 (reads DB, rewrites\
+        \ Redis, logs nothing) |\n| Runtime-only statuses that Redis may carry but\
+        \ DB never will | `InterviewStatus` — `WAITING_ANSWER`, `EVALUATING`, `FOLLOW_UP`\
+        \ all marked 预留 (reserved) |\n| Redis default no-eviction | `docker-compose.yml`\
+        \ redis:7, default `maxmemory-policy noeviction` |\n\n## When continuation\
+        \ breaks\n\n**Case A — resumed live interview, mostly OK but not guaranteed.**\
+        \ User starts, status=ASKING, Redis TTL = now+24h. User returns >24h later\
+        \ → key expired → `requireAsking` reconstructs from the `interview_session`\
+        \ row it *can* recover: `status`, `questionCount`, `currentQuestionId`, and\
+        \ reconstructs the asked-set from the message log (`askedQuestionIds`, L141-144).\
+        \ This recovers *everything the DB row currently happens to back*, so today\
+        \ it usually resumes correctly — **this is why the bug is \"silent.\"**\n\n\
+        **Case B — genuine continuation break (the real risk).** The moment any **transient\
+        \ runtime state exists only in Redis** — precisely the three reserved statuses\
+        \ `WAITING_ANSWER` / `EVALUATING` / `FOLLOW_UP` — the DB row still holds the\
+        \ *last durable* status (`ASKING`). A 24h gap between requests (user idle,\
+        \ or an async evaluation/agent step >24h) with no write re-arming the TTL\
+        \ expires the true machine node. Self-heal then reconstructs from the stale\
+        \ DB status and **resumes at the wrong node** → a question is re-asked, an\
+        \ answer lands twice, or scoring is re-triggered. The DB is \"valid\" but\
+        \ is a *coarser*, different truth than the Redis state it replaced.\n\n**Case\
+        \ C — the sub-24h silent window hiding corruption.** Because `write()` always\
+        \ re-arms a full 24h, expiry is never observed in fast happy-path interviews.\
+        \ It is triggered precisely by **wall-clock idleness anywhere in the state\
+        \ machine > 24h** (abandoned mid-ASKING session, a paused SSE round, a long-running\
+        \ async scoring step that doesn't touch the state bucket). And it leaves a\
+        \ permanent DB row in `ASKING` — no DB-side expiry/closure — so an abandoned\
+        \ session can be re-entered indefinitely, defeating any intended liveness/closure\
+        \ semantics.\n\n**Case D — operational eviction (latent).** TTL is the only\
+        \ controller today, but if an operator later sets `maxmemory` with a volatile/global\
+        \ LRU policy, the state buckets can be evicted *earlier* than 24h under pressure\
+        \ — same silent-expiry class, now with no deterministic schedule.\n\n## Why\
+        \ it breaks (root cause)\n\n1. **Design contradiction**: the javadoc declares\
+        \ Redis authoritative (\"单一权威来源\"), but `requireAsking` makes the *DB* authoritative\
+        \ on every miss. Both cannot be authoritative, and the chosen mechanism —\
+        \ fixed-TTL cache plus DB fallback — forces the system onto whichever is *stale*,\
+        \ not whichever is *right*. When Redis holds runtime facts the DB never persisted,\
+        \ Redis is the only correct source, and its fixed TTL destroys it.\n2. **Fixed\
+        \ (not sliding) TTL**: liveness is measured on a calendar, not on activity.\
+        \ An interactive session is a *recency*-based context; a fixed TTL is the\
+        \ wrong expiry model.\n3. **No recovery audit**: `requireAsking` fires, reconstructs,\
+        \ rewrites, and returns — with **zero logging and no distinguishing \"recovered-from-expiry\"\
+        \ signal**. In production no one can tell when expiry happened or what was\
+        \ lost, which is precisely the \"silent\" failure.\n\n## Security implications\
+        \ (assigned lens)\n\n- **Silent state-reset = replay/desync vector**: after\
+        \ expiry, self-heal re-materializes the machine from DB. Any runtime nonce/anti-duplication/generation\
+        \ marker only held in the Redis bucket is lost, so a client can re-drive a\
+        \ request that the machine already consumed — re-answering, double-scoring,\
+        \ or re-dispatching the RabbitMQ scoring task (`finishSession` L352-358).\n\
+        - **No bound on session liveness**: abandoned `ASKING` rows persist in DB\
+        \ forever (no cleanup/expiry). Combined with self-heal, a session continues\
+        \ past any intended window; an owner who knows the sessionId can resume from\
+        \ a long-dead transcript.\n- **Silent recovery defeats integrity monitoring**:\
+        \ since recovery is unlogged, response-injection/replay from a \"restored\"\
+        \ state is indistinguishable from a normal continuation (L380-399, no audit\
+        \ trail).\n\n## Recommendations (code)\n\n**1. Convert fixed TTL to activity-based\
+        \ (sliding) — minimal fix.** Refresh TTL on each read that legitimately marks\
+        \ \"in use,\" so idle time, not wall-clock, drives expiry:\n\n```java\npublic\
+        \ SessionState read(Long sessionId) {\n    RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\n\
+        \    String json = bucket.getAndExpire(Duration.ofHours(TTL_HOURS)); // Redisson:\
+        \ RSETEX-like, sliding\n    return json == null ? null : parse(json);\n}\n\
+        ```\nKeep `write` at the same 24h, but now any active interaction keeps the\
+        \ node alive; only genuinely abandoned sessions expire.\n\n**2. Log and label\
+        \ every recovery** so expiry stops being silent:\n\n```java\n// requireAsking()\n\
+        SessionState state = stateStore.read(sessionId);\nif (state == null) {\n \
+        \   // distinguish \"expired/evicted\" from \"never written\" -> surface instead\
+        \ of swallowing\n    log.warn(\"session state MISS, recovering from DB: sessionId={}\"\
+        , sessionId);\n    Metric.counter(\"interview.state.redis_miss\").inc(); \
+        \      // or micrometer counter\n    // existing reconstruction...\n}\n```\n\
+        \n**3. Persist any runtime-only fact to the DB before it can be lost.** Never\
+        \ let a machine node live solely in a TTL'd bucket. Either persist transient\
+        \ status into the session row, or carry it in the message log; a bounded async\
+        \ task should re-arm TTL on a cadence less than its own runtime.\n\n**4. Enforce\
+        \ DB-side liveness** so abandoned sessions can't live forever and re-open\
+        \ indefinitely:\n\n```sql\n-- migrate: track last touch on the authoritative\
+        \ row\nALTER TABLE interview_session ADD COLUMN last_activity_at DATETIME\
+        \ NULL;\n-- policy/job: close sessions idle > N (align idle timeout to the\
+        \ Redis TTL)\nUPDATE interview_session\n   SET status = 'FINISHED', finished_at\
+        \ = COALESCE(finished_at, NOW())\n WHERE status = 'ASKING' AND last_activity_at\
+        \ < NOW() - INTERVAL 24 HOUR;\n```\n\n**5. Operationally**, confirm Redis\
+        \ policy stays `noeviction` (or if you enable `maxmemory`, use `volatile-ttl`/`allkeys-lru`\
+        \ consciously and set the session TTL low enough that eviction is not relied\
+        \ on for correctness).\n\n### Decision summary\n- **Recommended:** sliding\
+        \ TTL on read + recovery logging (fixes the silent class cheaply) and persist\
+        \ every runtime-only fact to DB (fixes the true breakage in *reserved* states).\n\
+        - **Accepted trade-off:** sliding TTL keeps idle-but-open sessions slightly\
+        \ longer than the current absolute model.\n- **Residual risk:** even with\
+        \ sliding TTL, eviction/time-skew on a shared Redis can still drop the node;\
+        \ hence (3)/(4) are the correctness backstop, TTL is only a hygiene knob.\n\
+        \nNet: with current code the *common* resume path self-heals, so the bug surfaces\
+        \ as a silent, unlogged state-loss that becomes a hard continuation break\
+        \ in any transient-only state and an unbounded re-open/replay vector for abandoned\
+        \ sessions."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 35411
+        input: 569
+        output: 1885
+        reasoning: 189
+        cache_read: 32768
+        cache_write: 0
+      latency_ms: 115029
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 115029
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: code-reviewer
+    task_id: task-code-reviewer-a9f2d0
+    output:
+      agent: code-reviewer
+      status: completed
+      summary: '## Code Review: Redis 会话状态固定 TTL 与 DB 有效性问题
+
+
+        ### 1. 关键结论（先说结论）
+
+
+        这条代码已经有了一层"回复兜底"，但**只覆盖了 `read() == null` 的过期场景，没有覆盖 `read()` 返回*陈旧值*的场景**——后者才是"DB
+        仍有效但续答被静默破坏"的真正根因。此外，注释声称 Redis 是"单一权威来源"（`Interview'
+      output: "## Code Review: Redis 会话状态固定 TTL 与 DB 有效性问题\n\n### 1. 关键结论（先说结论）\n\n\
+        这条代码已经有了一层\"回复兜底\"，但**只覆盖了 `read() == null` 的过期场景，没有覆盖 `read()` 返回*陈旧值*的场景**——后者才是\"\
+        DB 仍有效但续答被静默破坏\"的真正根因。此外，注释声称 Redis 是\"单一权威来源\"（`InterviewStateStore.java:14-15`），但实际代码把\
+        \ Redis 当成缓存并在 miss 时回退 DB，这是\"两个权威来源，冲突时无版本仲裁\"，必然产生静默漂移。\n\n相关证据链：\n- 固定\
+        \ TTL：`InterviewStateStore.java:25` `TTL_HOURS = 24`，`write()` 每次 `set(...,\
+        \ 24h)`（:51）。\n- 兜底重建：`InterviewService.java:380-399` `requireAsking()` 在\
+        \ Redis miss 时从 DB 重建。\n- **写序缺陷**：`answer()` 先写 DB（:186）后写 Redis（:188）；`answerStream()`\
+        \ 先 DB（:261）后 Redis（:263）。Redis 写一旦失败/丢失，Redis 保持的是**旧的、非 null 的状态**。\n\n\
+        ### 2. 何时、为何\"静默过期而 DB 仍然有效、续答被破坏\"\n\n#### 场景 A：过期/驱逐后 Redis 为 null（在多数路径上已被兜底，但语义有缺口）\n\
+        \n- 每次 `write()` 会重置 24h TTL，所以**活跃会话不会过期**。\n- 会话停更超过 24h → Redis key 消失，DB\
+        \ 仍 `ASKING`。`requireAsking()` 会从 DB 重建状态并续答（:383-389）。\n- **缺口**：兜底只重建 `status/questionCount/currentQuestionId`\
+        \ 三个字段。如果运行期上下文（本题项目里消息在 DB，尚可；但凡后续把打分中间态、已问问题集合等移入 Redis 而不入 DB）只有 Redis\
+        \ 持有，重建后会静默丢上下文。当前版本影响低，但\"单一权威\"注释与实现矛盾。\n\n#### 场景 B：Redis 为*陈旧值*（非 null）——真正的静默破坏\n\
+        \n这是核心问题，由\"先 DB 后 Redis\"的写序 + 固定 TTL 共同造成：\n\n1. 请求 N：DB 更新为 `questionCount=2,\
+        \ currentQuestionId=q2`（:186），随后 Redis 写失败（网络抖动、OOM、`maxmemory-policy` 触发、或写入瞬间节点故障）。\n\
+        2. 此刻 **Redis 仍是 `count=1, currentQuestionId=q1`**（非 null）。\n3. 请求 N+1 续答：`requireAsking()`\
+        \ 读 Redis → **非 null → 直接信任陈旧态**（:391-397 只靠状态枚举判断，不比对 DB）。兜底不触发。\n4. 代码据此\
+        \ `newCount = state.questionCount()+1 = 2`（:179），把同一个 `q2` 及计数重复落库（:186-189），导致计数/ID\
+        \ 漂移或重复消息 → 评分偏差。**整个过程无异常、无告警**，正是\"DB 有效但续答被静默破坏\"。\n\n> 关键点：兜底逻辑用\"null\
+        \ 判定\"来区分\"过期 vs 正常\"，但**过期与陈旧是两个不同的失败模式**——null 处理了，陈旧没处理。\n\n#### 场景 C：固定\
+        \ TTL 与业务会话生命周期的错配\n\n固定 24h 隐含\"会话最多存活 24h\"。而 DB 行与业务语义（如多主题/多天的能力追踪）允许会话远超\
+        \ 24h。固定 TTL 是\"绝对截止\"，用在\"应可随时恢复\"的会话上是把 Redis 当成了生命周期限制器；正确做法是把权威的 `expires_at`/`updated_at`\
+        \ 放 DB，Redis TTL 仅作缓存。\n\n### 3. 方案设计（决策框架）\n\n```\nOption A: DB 为唯一权威，Redis\
+        \ 仅作 read-through 缓存（推荐）\n- Strengths: 消除双权威；过期/陈旧统一从 DB 重建；一致性最强\n- Weaknesses:\
+        \ 每次读走 DB（本项目消息/会话已在 DB，成本可控）\n- Best for: 本代码库现状（DB 已有完整会话+消息+结果）\n\nOption\
+        \ B: 保留 Redis 运行时状态，但改为版本号 + 比较并交换（CAS/Lua）写\n- Strengths: 保留高速读；杜绝陈旧写覆盖新状态\n\
+        - Weaknesses: 需引入版本字段与 Lua 脚本；复杂度上升\n- Best for: 高频读、状态机热点、需要 Redis 性能的路径\n\
+        \nOption C: 固定 24h → 滑动 TTL + 值内带 updatedAt 服务端时间戳\n- Strengths: 修复\"活跃会话被绝对\
+        \ TTL 误杀\"；实现简单\n- Weaknesses: 只解决过期，不解决写序导致的陈旧漂移影\n- Best for: 作为 A/B 的补充，而非独立方案\n\
+        \nDecision\n- 推荐：A（主）+ C（TTL 语义修正）。最短路径、最符合\"DB 有效但 Redis 闪失\"的语义。\n- 若短期不能改架构：至少做\
+        \ B 的版本号 + 认真对待写序。\n```\n\n### 4. 具体修改建议\n\n#### (1) 修正写序 + 陈旧值判定\n\n`read()`\
+        \ 无法区分\"key 不存在(过期)\"和\"值陈旧\"，应让 value 自带服务端时间戳，读侧与 DB 比对或在枚举转换时做 **stale\
+        \ 校验**。最小改动示例——返回值里带版本/时间，读到旧值走重建而非信任：\n\n```java\npublic record SessionState(String\
+        \ status, int questionCount, Long currentQuestionId, long version) {\n   \
+        \ public static SessionState from(InterviewSession s) {\n        return new\
+        \ SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId(),\n\
+        \                s.getUpdatedAt() == null ? 0L : s.getUpdatedAt().toEpochSecond(ZoneOffset.UTC));\n\
+        \    }\n}\n```\n\n`requireAsking` 改为\"陈旧即重建\"，不只看 null：\n\n```java\nprivate\
+        \ InterviewStateStore.SessionState requireAsking(Long sessionId) {\n    InterviewStateStore.SessionState\
+        \ state = stateStore.read(sessionId);\n    InterviewSession s = sessionMapper.selectById(sessionId);\n\
+        \    if (s == null) {\n        throw new BizException(ResultCode.INTERVIEW_NOT_FOUND);\n\
+        \    }\n    // Redis miss 或版本落后于 DB（陈旧）都从 DB 重建\n    InterviewStateStore.SessionState\
+        \ dbState = InterviewStateStore.SessionState.from(s);\n    if (state == null\
+        \ || state.version() < dbState.version()) {\n        state = dbState;\n  \
+        \      stateStore.write(sessionId, state);\n    }\n    // ...下方 FINISHED /\
+        \ ASKING 判定不变\n}\n```\n\n> 关键 span：把重建条件从 `null` 扩展到 `version 落后`，陈旧问题即被读到与修复。\n\
+        \n#### (2) 避免\"先 DB 后 Redis\"的丢失窗口（Option B 的轻量版）\n\n保证 Redis 写入先于或与 DB 原子提交，最稳妥是顺序反过来并捕获写失败告警：\n\
+        \n```java\n// 先写 Redis 运行时状态，再落 DB；Redis 写失败时记告警而非静默吞掉\nstateStore.write(sessionId,\
+        \ newState);          // 失败会抛 BizException -> 请求失败，不产生半更新\nsessionMapper.updateById(session);\
+        \              // 若这里失败，Redis 领先一格，由(1)的版本比对在下一次请求收敛\n```\n\n同时为 `write()`\
+        \ 增加告警与可观测：当前 `InterviewStateStore.write` 只 `log.error`（:53）但把异常包装后抛出，OK；但调用方（`:188`/`:263`）没有针对写失败的降级分支，仍需靠版本收敛。\n\
+        \n#### (3) 若保留固定 TTL，至少改成滑动 TTL（Option C）\n\n```java\n// 服务端时钟 + 比对 DB updatedAt；TTL\
+        \ 每次访问刷新（滑动）\nbucket.set(json, ...);           // 保持\n// 配合每次 requireAsking\
+        \ 读取时若 DB 较新则重写，实现\"越活跃越不过期\"的语义\n```\n\n> 注意：滑动 TTL 只修\"绝对截止误杀\"，必须与 (1)/(2)\
+        \ 一起做，否则陈旧漂移依旧。\n\n#### (4) 明确运维边界\n\n- 确认 Redis `maxmemory-policy` 不会静默逐出关键\
+        \ key（若不期望 LRU，用 `noeviction` 并为这些 key 设显式 TTL）。\n- 说明文档/注释更新：删掉 `InterviewStateStore.java:14-15`\
+        \ 的\"单一权威来源\"，改为\"DB 是权威，Redis 是可重建的 read-through 缓存\"。\n\n### 5. 验证方式\n\n\
+        | 检查项 | 方法 | 期望 |\n|---|---|---|\n| 陈旧值收敛 | 模拟 Redis 写失败后再次续答 | 续答从 DB 重建，计数不变异\
+        \ |\n| TTL 过期恢复 | `TTL 1`，DEL key 后续答 | 走重建路径，状态正确 |\n| 写序半更新 | 注入 DB 更新后\
+        \ Redis 写抛错 | 下一次请求版本比对收敛，无重复消息 |\n| 回归 | 现有面试/评分/报告用例 | 全绿，无重复计分 |\n\n###\
+        \ 6. 复盘建议\n\n- 本缺陷本质是**\"缓存\"被当成\"事实源\"**。若短期只做一项，我建议做第 (1) 项的版本化重建——它是覆盖\"\
+        陈旧而非 null\"这一真正静默破坏点的最小改动，且与现有兜底逻辑同构、改动面小、可测试。\n- 后续可引入 Lua CAS（`EVAL` + 版本号）彻底消除并发陈旧写，作为演进项。"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 37213
+        input: 2680
+        output: 2239
+        reasoning: 1574
+        cache_read: 30720
+        cache_write: 0
+      latency_ms: 121535
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 121535
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: backend-architect
+    task_id: task-backend-architect-1a507e
+    output:
+      agent: backend-architect
+      status: completed
+      summary: '# 面试会话运行态 Redis 固定 TTL 静默过期分析 — 贡献给 Lead 评审
+
+
+        ## 目标
+
+        - 业务目标: 面试会话可在中断后**续接（continuation）**，运行态不丢失、不与持久态脱节。
+
+        - 当前约束: 运行态(Runtime State)存 Redis，带固定 TTL；持久态(Session/Transcript)存 DB，长期有效。
+
+        - 成功标准: 明确"何时/为何续接失'
+      output: "# 面试会话运行态 Redis 固定 TTL 静默过期分析 — 贡献给 Lead 评审\n\n## 目标\n- 业务目标: 面试会话可在中断后**续接（continuation）**，运行态不丢失、不与持久态脱节。\n\
+        - 当前约束: 运行态(Runtime State)存 Redis，带固定 TTL；持久态(Session/Transcript)存 DB，长期有效。\n\
+        - 成功标准: 明确\"何时/为何续接失败\"，给出可落地的状态生命周期与恢复策略，可观测、可回放。\n\n## 问题判断\n### 核心问题（一句话）\n\
+        Redis key 过期是**时间驱动的数据判死**，DB 里那条会话记录却仍在——两者生命周期不一致，续接逻辑读取不到运行态 → 表现为\"会话还在但续接失败/数据错乱\"\
+        。\n\n### 关键假设（需与 Lead 确认）\n1. Redis 里存的是**不可从 DB 重建的增量状态**（如当前问题指针、已命中的分支、回答草稿、计时基线、多轮上下文窗口、打分中间值）。\n\
+        2. TTL 是**写入时设定的固定值**（`SET key val EX ttl` / 设置后不刷新），而非续接时刷新的滑动 TTL。\n3. 续接操作**假设运行态必然存在**（读\
+        \ Redis 直接反序列化，未做 missing 分支/降级）。\n4. DB 里的 session 状态字段不记录\"运行态已过期\"的事实，也无版本/心跳信息来探测它。\n\
+        \n### 主要风险\n- **静默性**: 过期不是显式失败，续接点可能读到旧快照、空态或直接 NPE，比显式报错更难排查。\n- **固定 TTL\
+        \ 的“活埋”**: 长会话（面试可 >1h）在 TTL 前未续接即过期，恰逢用户回来续接时触发。\n- **Overflow 反向问题**: TTL\
+        \ 过小 → 正常慢操作被误杀；TTL 过大 → 僵尸 key 占内存且恢复时读到陈旧数据。\n- **与 DB 事务并发**: 写 Redis 成功但\
+        \ DB commit 延迟/失败时，Redis 里存在无主 FSM 的孤儿状态。\n\n## 何时续接会断裂（W: When）\n按触发条件归纳，请\
+        \ Lead 在评审时勾选适用的几个:\n\n| 场景 | 触发条件 | 后果 | 是否可规避(现设计) |\n|---|---|---|---|\n\
+        | 慢速超时 | 会话停留 > TTL 后回来点“继续” | Redis missing → 续接失败/重置 | 否 |\n| 跨节点续接 | 换浏览器/设备，忙碌期超过\
+        \ TTL | 无法从 DB 重建运行态 | 否 |\n| 主动状态设定后立即读 | 写 key 后 DB 写慢提交，先读 Redis | 读到 DB\
+        \ 未确认的中间态 | 部分 |\n| 长会话中途无操作 | 用户思考久，计时器在 Redis 未续期 | 剩余时间/指针丢 | 否 |\n| 恢复刚过期窗口\
+        \ | 与驱逐(内存淘汰/keyspace)竞态 | 偶发 missing | 否 |\n\n## 为何断裂（W: Why — 根因）\n1. **存的是“运行时派生状态”却被当“二级持久化”**：把本可重建的\
+        \ FSM/上下文放 Redis，等价于把 ephemeral 当 durable 用。\n2. **固定 TTL ≠ 业务会话生命周期**：TTL\
+        \ 按墙钟计时，业务生命周期按“活跃度”计时；二者错位即出现\"DB 活着、Redis 已死\"的窗口。\n3. **缺少续期的触达点**：所有读/写续接动作都应\
+        \ Refresh，若只有写时 SET，则\"只读不做任何写入\"的续接不会续命。\n4. **缺少缺失时的降级/重建协议**：读方没有\"miss\
+        \ → 回源 DB → 重建运行态\"的兜底路径。\n5. **过期事件被忽略**：未订阅 `keyspace@*__:expired`，未把\"\
+        运行态过期\"登记回 DB 的 `runtime_expired_at`。\n\n## 架构建议（对比后给出推荐）\n\n### 方案 A — 滑动\
+        \ TTL（续接即续命）\n- 每次有效读时 `EXPIRE key ttl`（用 LUA 原子化\"存在才续期\"，防误延长孤儿 key）。\n\
+        - 优势: 实现小、保住运行态存活于真实活跃期。\n- 劣势: 仍不解决\"遗失数据可重建\"；极端活跃用户 key 永不回收需兜底上限。\n\n\
+        ### 方案 B — DB 为准 + 运行态可重建（推荐）\n- 把 FSM 等**必须跨重启的状态持久化到 DB**；Redis 只存**易失协∋（计时/临时缓存）**。\n\
+        - 续接协议: 读 Redis → miss 时回源 DB → 重建运行态 → 回写 Redis。\n- 用 `runtime_rev` 版本号做乐观并发校验，防止重建后覆盖更新中的数据。\n\
+        - 优势: 根治\"DB 有效但续接失败\"；符合\"持久态存的必须是可重建/权威\"原则。\n- 劣势: 需实现重建函数与版本校验，复杂度高于 A。\n\
+        \n### 方案 C — 固定 TTL + 显式过期标记 + 事件通知\n- 订阅过期事件，把 `runtime_expired` 写回 DB；续接时读到该标记\
+        \ → 走重建或清晰提示。\n- 优势: 消除\"静默\"；劣势: 事件订阅有竞态/丢失窗口，仅作为补强。\n\n### 最终推荐\n**组合: B\
+        \ 为主 + A 的续期 + C 的显式标记**。分两级:\n1. 权威状态(须续接) → DB, 带 `runtime_rev`。\n2. 纯易失(计时/提示)\
+        \ → Redis 滑动 TTL。\n3. Redis miss 或 DB 标记 expired → 触发重建路径，绝不静默失败。\n\n## 实施要点\n\
+        \n### 关键模块（建议改动位置）\n- 会话服务: 统一 `ResumeSession(sessionId)` 入口，替代多头读 Redis。\n\
+        - 状态仓库: 新增 `RuntimeSnapshot`(DB 列: `runtime_rev, runtime_ttl_until, runtime_expired_at`)。\n\
+        - 缓存层: 封装 `readRuntime & miss→reconstruct & write` 的单一方法。\n\n### 服务边界 / 数据流\n\
+        ```\nClient ──Resume──> SessionSvc\n   │ 读Redis(miss?)──>miss──> 回源DB(校验rev)\n\
+        \   │                                    └─reconstruct runtime──>写Redis(续期)\n\
+        \   │ 命中──>滑动续期(EXPIRE, LUA存在才续)\n   └─更新状态/回答──>事务: 写DB(rev+1) → 写Redis\n\
+        ```\n\n### 失败处理\n- Redis miss: 不抛异常，走重建分支；无 DB 记录则视为会话真的不存在(显式 404)。\n- DB\
+        \ 写成功但 Redis 写失败: 不阻塞主流程，视 Redis 为可降级缓存。\n- 并发续接: 用 `runtime_rev` 做 CAS，旧\
+        \ rev 写入被拒，防覆盖。\n\n### 重建函数示例（伪代码 + Redis 续期 LUA）\n```lua\n-- redis/refresh_if_exists.lua\n\
+        if redis.call('EXISTS', KEYS[1]) == 1 then\n    redis.call('EXPIRE', KEYS[1],\
+        \ ARGV[1])\n    return 1\nend\nreturn 0\n```\n```java\nRuntimeSnapshot snapshot\
+        \ = cache.get(Integer.toString(sessionId));\nif (snapshot == null) {\n   \
+        \ SessionEntity e = db.findById(sessionId);            // 回源\n    if (e ==\
+        \ null) throw new NotFoundException(sessionId); // 显式生效\n    if (e.isRuntimeExpired())\
+        \ log.warn(\"runtime expired, rebuilding sid={}\", sessionId);\n    snapshot\
+        \ = reconstructFromSession(e);                 // 重建\n    cache.set(sessionId,\
+        \ snapshot, ttl);                  // 回写\n}\nrefreshTtlIfExists(sessionId,\
+        \ TTL);                       // 滑动续期\n// 写路径\ndbTx(() -> { e.setRuntimeJson(snapshot);\
+        \ e.bumpRev(); });\n```\n\n## 验证方式\n- **单元**: 重建函数幂等；rev 冲突拒绝验证。\n- **集成**:\
+        \ 模拟\"Redis miss 但 DB 有\"→ 断言续接成功且状态一致(旧值不回退)。\n- **时钟/驱逐模拟**: fake TTL 过期、Redis\
+        \ maxmemory 驱逐，验证走重建而非报错。\n- **并发**: 双线程续接，断言只有一版 winner。\n- **可观测**: 打点 `runtime_rebuild`,\
+        \ `runtime_miss`, `runtime_expired_event`；断言 miss 率不随 TTL 波动劣化。\n\n## 复盘建议（交付给\
+        \ Lead 评审的关注点）\n1. 拍板\"哪些状态是权威必须落 DB、哪些可纯易失\"——这是最小必要改动。\n2. 若短期只能做低风险改动，先上**方案\
+        \ A 滑动续期 + 方案 C 过期标记**，把\"静默失败\"变成\"显式可观测\"，随后再演进到方案 B 的 DB 为准重建。\n3. 补充:\
+        \ 把运行态 schema 与重建函数纳入接口契约，避免后续前端期望变化时重建逻辑失配。\n\n---\n已按 backend-architect\
+        \ 视角输出，同时覆盖 database 强相关(Redis TTL、Redis 驱逐/过期事件、DB 持久态一致性)。请 Lead 仲裁 TTL\
+        \ 口径与重建范围的取舍后再实施。"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 24491
+        input: 2776
+        output: 2178
+        reasoning: 81
+        cache_read: 19456
+        cache_write: 0
+      latency_ms: 48144
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 48144
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: llm-engineer
+    task_id: task-llm-engineer-308f27
+    output:
+      agent: llm-engineer
+      status: completed
+      summary: '# Database Engineer — Design Review
+
+
+        ## MEMO: Interview Session Continuation vs Redis Fixed-TTL Expiry
+
+
+        ### 1. The architectural pattern in question
+
+
+        A typical interview-session stack splits state acr'
+      output: "# Database Engineer — Design Review\n\n## MEMO: Interview Session Continuation\
+        \ vs Redis Fixed-TTL Expiry\n\n### 1. The architectural pattern in question\n\
+        \nA typical interview-session stack splits state across two stores with different\
+        \ lifetime semantics:\n\n| Layer | Store | What it holds | Lifetime model\
+        \ |\n|-------|-------|---------------|----------------|\n| Runtime/hot state\
+        \ | Redis | current question index, live LLM conversation context, accumulated\
+        \ partial answers, timer, ephemeral flags | TTL-capped (ephemeral) |\n| Durable/authoritative\
+        \ | Primary DB | session row (`status=in_progress`), user, interview config,\
+        \ final/committed answers | Persistent (valid until explicitly closed) |\n\
+        \nThe contract is: **DB says \"this session is still open\", Redis says \"\
+        this session is live right now\".** Continuation works only while both agree.\
+        \ The bug is that they can silently diverge.\n\n---\n\n### 2. The failure\
+        \ mode\n\nA fixed TTL is applied to the Redis key (commonly at session creation,\
+        \ or on each write with `EXPIRE` resetting to the same constant). When the\
+        \ TTL elapses, Redis **auto-deletes the key** — no error, no event, no DB\
+        \ write. The DB row is untouched and still `in_progress`.\n\nNothing tells\
+        \ the application the cache died. So the next resume attempt (page refresh,\
+        \ retry, client reconnect, re-hydration mid-interview) hits a **cache miss**\
+        \ for a session the DB still considers valid.\n\n```\nrequest: resume session\
+        \ S\n  1. Redis GETSESS S            → (nil)  ← silently expired\n  2. DB\
+        \ SELECT session S        → status=in_progress  (+1 valid)\n  3. runtime state\
+        \ unavailable → KeyNotFound\n```\nResult: throw/500, dropped conversation\
+        \ context, or a fresh-empty session wrapper — i.e. **continuation breaks**\
+        \ even though the durable record is fine.\n\n---\n\n### 3. When it breaks\
+        \ (specific trigger conditions)\n\n- **Fixed TTL < actual session length.**\
+        \ A fixed TTL is set at creation (say 20 min) but the interview genuinely\
+        \ runs longer — user thinks for extended periods, multi-stage interview, slow\
+        \ human typing. It expires mid-session.\n- **No sliding renewal.** If the\
+        \ TTL is only set once (not refreshed on each activity), a *still-active*\
+        \ user can expire simply because no write happened in the last window (e.g.\
+        \ the candidate paused while composing a long answer).\n- **Session `in_progress`\
+        \ but client idle > TTL.** The DB keeps the session open by policy, but the\
+        \ runtime copy already vanished during the idle window.\n- **Time-triggered\
+        \ eviction / worker cleanup.** Redis `maxmemory`/`volatile-lru` eviction or\
+        \ a sweeper can remove hot keys under memory pressure — again silent.\n- **Clock/context\
+        \ mismatch between fix and reality** — a \"renew on write\" that only renews\
+        \ when answers are committed, but conversation context lives in the same key\
+        \ and the user only reads between steps.\n\nSo it is *specifically* the combination\
+        \ of **fixed absolute TTL** and **no reliable cache-miss recovery path** that\
+        \ turns a normal cache discipline gap into a hard continuation failure.\n\n\
+        ---\n\n### 4. Why continuation breaks (root-cause reasoning)\n\n1. **Elasticity\
+        \ ≠ durability.** The DB row is authoritative about *session state*, but the\
+        \ *in-flight conversation* is not stored there. Losing Redis loses the conversational\
+        \ runtime — and it is not reconstructible from a `status` column.\n2. **Silent\
+        \ eviction is indistinguishable from \"does not exist\".** No signal travels\
+        \ to the application → developers code for a key that \"always exists\" →\
+        \ every read assumes present (no `if missing` branch).\n3. **A two-source-of-truth\
+        \ belief.** The application implicitly trusts Redis for *continuity* and the\
+        \ DB only for *existence*; when the two disagree, there is no reconciliation\
+        \ because the code never modeled divergence.\n4. **Errors surface at consume\
+        \ time, not expire time.** The expiry happens in the background; the exception\
+        \ surfaces on the next user action — the hardest moment to recover gracefully.\n\
+        \n---\n\n### 5. Recommendations\n\n#### A. Prefer a **sliding** TTL (renew\
+        \ on activity) over a fixed TTL\n```python\n# on every meaningful interaction\
+        \ (answer, step advance, heartbeat)\nREDIS.setex(sess_key, serialized_state,\
+        \ ttl=REFRESH_SECONDS)  # resets expiry\n```\nWith sliding expiry the still-active\
+        \ interviewer never expires. Make `REFRESH_SECONDS` comfortably larger than\
+        \ the longest inter-action gap (e.g. 30–60 min), and still run a session-level\
+        \ max to force eventual cleanup of truly abandoned sessions.\n\n#### B. Make\
+        \ Redis strictly a cache, not a source of truth — rehydrate on miss\n```python\n\
+        def load_session(session_id):\n    data = REDIS.get(session_id)\n    if data\
+        \ is not None:\n        return deserialize(data)\n    # --- cache miss: reconstruct\
+        \ from DB, then warm the cache ---\n    db = DB.get_session(session_id)\n\
+        \    if not db or db.status == \"closed\":\n        raise SessionClosed(...)\n\
+        \    runtime = rebuild_runtime_from_db(db, replay_log(db, session_id))  #\
+        \ see C\n    REDIS.setex(session_id, serialize(runtime), REFRESH_SECONDS)\n\
+        \    return runtime\n```\nThe key property: **continuation must not depend\
+        \ on Redis having the key.** A miss becomes a *recovery path*, not a crash.\n\
+        \n#### C. Persist a commit log / state snapshot so state is rebuildable\n\
+        If the DB only holds `status`, it cannot rebuild the in-flight LLM conversation.\
+        \ Either:\n- Persist **idempotent ordered snapshots** of the interview (every\
+        \ step → `session_step` table row), and replay on miss to rebuild live context;\
+        \ and/or\n- Persist the serialized runtime once (≥ every step) to the DB so\
+        \ a miss is a single-row read, not a replay.\n\n#### D. Guard the \"open\"\
+        \ contract with explicit reconciliation\n```python\n# validation step on resume\n\
+        if redis_missing(session_id) and DB_status_in_progress(session_id):\n    metrics.incr(\"\
+        session.cache_expiry_recovery\")\n    log.warn(\"runtime state expired beneath\
+        \ open session\")  # observability\n```\nThis converts a silent event into\
+        \ an alertable signal.\n\n#### E. End-to-end hygiene\n- **Fixed max absolute\
+        \ TTL** for abandoned-session garbage collection (upper bound), refreshed\
+        \ on activity — combine sliding refresh with a hard stale cap.\n- **Memory/eviction\
+        \ policy**: set `maxmemory-policy noeviction` for session keyspace (or an\
+        \ LRU that only touches non-session keys), so `volatile-*` doesn't evict live\
+        \ sessions.\n- **Monitoring/alerting**: TTL distribution, cache-miss rate,\
+        \ session duration percentiles, and \"open-in-DB but missing-in-Redis\" counter.\n\
+        - **Idempotent resume endpoint**: refreshes must tolerate repeat/subsequent\
+        \ calls without double-advancing.\n\n---\n\n### 6. Summary\n\nContinuation\
+        \ breaks **when an open session's runtime key in Redis expires under a fixed\
+        \ TTL (or idle window) while the durable DB row remains valid, and the code\
+        \ lacks a cache-miss recovery path.** The DB \"opened\" signal and the runtime\
+        \ \"live\" signal are inconsistent, silently. Fix the semantics (sliding TTL),\
+        \ and — more fundamentally — stop treating Redis as a source of truth for\
+        \ continuation by making misses reconstruct from the DB (persist snapshots/commit\
+        \ log) and logging every recovery so expiry is observable.\n\n- Design-prepared\
+        \ for **Code Reviewer / Security Engineer** follow-ups: Yours to own next\
+        \ are (a) hardening the rebuild path against replay/latency and (b) validating\
+        \ eviction policy under memory pressure."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 21989
+        input: 1060
+        output: 1672
+        reasoning: 825
+        cache_read: 18432
+        cache_write: 0
+      latency_ms: 37546
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 37546
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: rag-engineer
+    task_id: task-rag-engineer-bce84e
+    output:
+      agent: rag-engineer
+      status: completed
+      summary: 'Analysis complete. I''ve traced the full state lifecycle in `InterviewService`
+        / `InterviewStateStore` / `RuleBasedScoringService`. Here is my report for
+        lead review.
+
+
+        ---
+
+
+        # 面试会话 Redis 固定 TTL 静默过期 → 会'
+      output: "Analysis complete. I've traced the full state lifecycle in `InterviewService`\
+        \ / `InterviewStateStore` / `RuleBasedScoringService`. Here is my report for\
+        \ lead review.\n\n---\n\n# 面试会话 Redis 固定 TTL 静默过期 → 会话续接失效分析\n\n## 1. 目标 /\
+        \ 现状基线\n\n- 业务目标：面试会话`answer`/`answerStream`（`InterviewService.java:125/197`）能跨请求正确续接，且不因\
+        \ Redis 旧化/过期而中断。\n- 当前多源状态结构（两个“真相”副本，非原子同步）：\n  - **DB 权威态** `interview_session(status,\
+        \ question_count, current_question_id)`，持久、永不过期。所有路径都是**先写 DB，后写 Redis**（`InterviewService.java:114→116`、`183→188`、`258→263`、`342→345`）。\n\
+        \  - **Redis 运行时态** `interview:session:{sessionId}`，`InterviewStateStore.write()`\
+        \ 用 Redisson `bucket.set(json, 24, HOURS)` 写入（`InterviewStateStore.java:51`），**每次写都固定重置为\
+        \ 24h TTL**。\n- 续接收敛逻辑只有一个兜底：`requireAsking()`（`InterviewService.java:380-399`）——**仅在\
+        \ Redis `read()` 返回 `null` 时**才回源 DB 重建并回写。\n- 异步评分消费端 `RuleBasedScoringService.score()`（`RuleBasedScoringService.java:38-73`）**只改\
+        \ DB**（totalScore/report），不碰 Redis state。\n\n## 2. 问题判断\n\n### 关键结论\nRedis\
+        \ 是“状态机的单一权威来源”（`InterviewStateStore.java:15` 注释），但它是一个**可被任意在任意时刻静默驱逐的易失层**；生命周期与\
+        \ DB 控制会话真正生命周期**完全解耦**。续接是否“断裂”，取决于过期/失效发生时**兜底回源是否会被触发**，以及 Redis 里的副本**是「缺失(null)」还是「存在但旧化」**——这两种情况处理方式完全不同，后者才是真正的漏网之鱼。\n\
+        \n### 已知限制 / 设计缺陷\n1. **读不续期**：Redis TTL 只在 `write` 时刷新，`detail`/`listByUser`/dashboard\
+        \ 等纯读接口不刷新 TTL，也不会触碰 Redis state。\n2. **兜底单向且只认 null**：`requireAsking` 只在\
+        \ `state == null` 时回源 DB；对“存在但旧化”的 Redis 副本**不做一致性校验**。\n3. **DB→Redis 更新非原子**：每个\
+        \ write 步骤都存在“DB 已提交、Redis 未写入”的崩溃/异常窗口。\n4. **固定 TTL 等同于“24h 无写入即失效”**，与\
+        \ Redis 自主驱逐（maxmemory 策略）叠加，失效时间其实不可预期。\n\n## 3. 何时、为何续接断裂（WHEN & WHY）\n\n\
+        ### 场景 A：闲置 >24h + 纯读取空转（TTL 静默过期）\n- 触发：用户打开面试页长时间停留（拉 `detail` 看题、等下一题思考超过\
+        \ 24h），期间只有读取。Redis key 的 24h 不被读取刷新，随后过期被 `bucket.get()` 返回 `null`。\n- 结果：**该路径可以被\
+        \ `requireAsking` 兜底救回**（回源 DB 重建）。这是“设计上已被掩盖”的情形，但掩盖本身有代价（见风险 1）。\n\n###\
+        \ 场景 B：Redis 副本「存在但旧化」—— 真正的静默断裂点（最大风险）\n- 触发：在 `answer`/`answerStream`/`create`\
+        \ 内，**DB `updateById`（114/183/258/342）已执行、但后续 `stateStore.write()`（116/188/263/345）因\
+        \ Redis 集群抖动、网络闪断、OOM 驱逐或进程崩溃而失败/丢失**。DB 是**新态**，Redis 里留着**旧态**（`questionCount=2`\
+        \ 而非 `5`，或 `status=FINISHED` 旧值）。\n- 断裂后果（**DB 有效却无法续接**）：\n  - `requireAsking`\
+        \ 读到非 null 旧态 → **不会回源 DB** → 继续用旧 `questionCount`，`newCount = oldState.questionCount()+1`（`InterviewService.java:179`）让计数倒退；\n\
+        \  - 若旧态是 `FINISHED` → 抛 `INTERVIEW_FINISHED`，**直接阻断合法续接**，即使 DB 仍是 `ASKING`；\n\
+        \  - 若旧态 `currentQuestionId` 指向上个问题，前端“当前题”错位。\n- 为什么兜底救不了：**兜底触发条件是 `null`，不是“过旧”**。TTL\
+        \ 未到期时 key 一直存在，旧态会长期生效直至被下一次写覆盖。\n\n### 场景 C：Redis 自主驱逐 / 内存压力提前淘汰\n- 触发：Redis\
+        \ `maxmemory` 且 `allkeys-lru` 等策略下，key 可在 TTL 到期**之前**被 LRU 淘汰；或节点 failover\
+        \ / 手动 `FLUSHDB`。DB 完全无感知。\n- 断裂结果：同场景 A 表现（`null`→可兜底），但**淘汰是批量且瞬时的**，若恰好发生在多会话并发的高峰，多个会话同时进入重放窗口，放大“DB/Redis\
+        \ 双写窗口”的竞态。\n\n### 场景 D：多日/跨周面试（生命周期 > 单次 TTL）\n- 触发：长 N 天面试中两次作答间隔 >24h，但中间无人拉全量写；每次\
+        \ `write` 重置 TTL 掩盖了这一点，用户在“等待续接”的心态下过期。\n- 断裂结果：同 A，靠兜底续接；但兜底只恢复粗粒度 `SessionState`，任何未来**只存放在\
+        \ Redis 的会话内瞬态上下文**（如尚未落库的候选提示、临时打分阶段标记）将丢失——当前 code 恰好只有 SessionState，故未被暴露，属“被实现细节掩盖的隐患”。\n\
+        \n## 4. 方案对比\n\n**方案 A：维持现状 + 兜底**\n- 强度：改动最小；纯过期由 `requireAsking` 自愈。\n-\
+        \ 弱点：只对 `null` 生效；场景 B（旧态）完全漏网；每次请求都要读 Redis 仍可能读到次期数据。\n- 适用：接受“过期即重放 DB、但旧态不可检测”的短期。\n\
+        \n**方案 B：滑动续期（read/每交互 refresh TTL）+ 淘汰策略约束**\n- 将“固定 TTL”改为“**无操作超时**”：读/写都在\
+        \ pipeline 里 `GET + EXPIRE(sessionId, 24h)`，或存 `lastActiveAt` 由后台 reaper 处理。\n\
+        - 配合 `maxmemory-policy volatile-lru` 并保证所有 key 都带 TTL，避免 `allkeys` 提前淘汰。\n\
+        - 弱点：仍需把 DB 当真相，否则只是延长又旧化的时间窗。\n\n**方案 C：DB 为唯一真相，Redis 降级为缓存/锁 + 校验后再续接（推荐）**\n\
+        - 每次 `answer` 进来，用**乐观版本号/字段比对**校验 Redis 副本与 DB 是否一致（而非只判 null）；不一致 → 以 DB\
+        \ 重建覆盖 Redis。\n- 或更彻底：去除“Redis 是权威源”的定位，`SessionState` 每次从 DB 实时构造，Redis 仅用于分布式锁与热缓存；消除双源非原子同步这一整类问题。\n\
+        - 弱点：需要少量重构落库/读写路径。\n\n## 5. 实施方案（最小改动，先堵场景 B）\n\n修改点 `InterviewService.requireAsking()`（`InterviewService.java:380-399`）：**把“仅\
+        \ null 回源”改为“null 或与 DB 不一致都回源”，并做一致性校验**。\n\n```java\nprivate InterviewStateStore.SessionState\
+        \ requireAsking(Long sessionId) {\n    InterviewSession s = sessionMapper.selectById(sessionId);\
+        \   // DB 永远可查，作为真相对照\n    if (s == null) throw new BizException(ResultCode.INTERVIEW_NOT_FOUND);\n\
+        \n    InterviewStateStore.SessionState cache = stateStore.read(sessionId);\n\
+        \    // 直接用 DB 现状兜底/校正 Redis（DB 在全部路径中先于 Redis 更新，故 DB 为更新方）\n    InterviewStateStore.SessionState\
+        \ authoritative = new InterviewStateStore.SessionState(\n            s.getStatus(),\
+        \ s.getQuestionCount(), s.getCurrentQuestionId());\n\n    if (cache == null\
+        \ || !cache.equals(authoritative)) {\n        // Redis 缺失或旧化：以 DB 为准重建，覆盖旧副本\n\
+        \        stateStore.write(sessionId, authoritative);\n    }\n\n    if (InterviewStatus.FINISHED.name().equals(authoritative.status()))\n\
+        \        throw new BizException(ResultCode.INTERVIEW_FINISHED);\n    if (!InterviewStatus.ASKING.name().equals(authoritative.status())\n\
+        \            && !InterviewStatus.START.name().equals(authoritative.status()))\n\
+        \        throw new BizException(ResultCode.INTERVIEW_STATE_ERROR, \"当前状态不允许提交答案\"\
+        );\n    return authoritative;\n}\n```\n\n配套（可选）：\n- `InterviewStateStore`\
+        \ 增加可见性：记录 `lastWriteAt`/`writtenAts`，便于监控“DB 已更新但 Redis 未落”的窗口（告警）。\n- 配置\
+        \ `maxmemory-policy volatile-lru`（见 docker-compose/redis 配置），仅淘汰带 TTL 的 key，保留后续兜底随机性。\n\
+        - 后台 `@Scheduled` 任务周期回源 DB → 重写 Redis，防长期闲置的 key 在指数级饥饿下退化。\n\n风险点与处理：一致性校验会引入每次\
+        \ `answer` 多一次 DB 查询（`selectById` 已有，成本极低）；需保证 `answerStream` 虚拟线程内同样走该校验（`InterviewService.java:204`）。\n\
+        \n## 6. 验证方式\n- 单测/手动用例：构造“Redis 旧态 + DB 新态”，调用 `answer` 应恢复至 DB 计数且不抛 `INTERVIEW_FINISHED`。\n\
+        - TTL 用例：写后 `TTL` 置 1s，等过期后再 `answer`，验证兜底重建 `SessionState` 且 `status` 正确。\n\
+        - 并发用例：DB 先提交、`stateStore.write` 抛错，验证请求返回正确错误而非带旧态继续。\n- 监控复盘：`INFO` 日志中拦截“cache=null/旧化\
+        \ → 重建”次数，印证驱逐频率。\n\n## 7. 复盘建议\n- 长期看采用方案 C：**DB 作为唯一权威源**，Redis 专司锁/缓存，彻底消除“双真相非原子同步”这一根因；固定\
+        \ TTL 只作为内存保护，不应承载完整性语义。\n- “单一权威来源”的命名需更正认知——当前实为**易失缓存 + DB 兜底**，文档与注释（`InterviewStateStore.java:15`）应随之修正，避免误导后续实现。"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 35870
+        input: 1051
+        output: 2545
+        reasoning: 1554
+        cache_read: 30720
+        cache_write: 0
+      latency_ms: 140046
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 140046
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: prompt-engineer
+    task_id: task-prompt-engineer-3beb6f
+    output:
+      agent: prompt-engineer
+      status: completed
+      summary: '# Redis TTL Expiry vs. Persistent DB State — Analysis
+
+
+        ## Problem Statement
+
+
+        Interview session **runtime state** (progress, answers, current question index,
+        timers, per-step votes) lives in Redis with'
+      output: "# Redis TTL Expiry vs. Persistent DB State — Analysis\n\n## Problem\
+        \ Statement\n\nInterview session **runtime state** (progress, answers, current\
+        \ question index, timers, per-step votes) lives in Redis with a fixed TTL.\
+        \ Meanwhile, the **authoritative DB** (submitted steps, final answers, results)\
+        \ does not expire. When Redis evicts the runtime state, **continuation breaks**\
+        \ even though the DB looks perfectly valid to the user's next request.\n\n\
+        ## Root Cause — Two Views of One Session\n\nYou have two stores with **fundamentally\
+        \ different lifecycles**:\n\n| Concern | Store | Lifecycle | What it holds\
+        \ |\n|---|---|---|---|\n| **Entity/domain data** | DB (persistent) | Durable\
+        \ until explicitly deleted | Interview definition, submitted answers, grade\
+        \ results |\n| **Ephemeral runtime** | Redis (TTL) | Volatile, auto-evicted\
+        \ | `current_index`, `elapsed_time`, `visited_steps`, `lock`, `draft` |\n\n\
+        The user perceives one session. The system models it as two views. When the\
+        \ TTL expires, **the runtime view silently vanishes** while the durable view\
+        \ remains.\n\n## When Continuation Breaks (Trigger Scenarios)\n\n1. **Idle\
+        \ gap exceeds TTL** — user opens the interview, reads a long question, or\
+        \ steps away. No write to Redis for >TTL → key evicted on `EXPIRE`-less idle\
+        \ (if using `EXPIRE`/`SETEX` with an absolute TTL, expiry starts at last *write*).\n\
+        2. **TTL started at session *creation*** (not refreshed on each access). A\
+        \ single stale absolute TTL kills the session at a fixed wall-clock time regardless\
+        \ of activity.\n3. **Key-per-fragment TTL drift** — you set TTL on `session:`\
+        \ but not on `session:step:answers`, so a partial set expires while the parent\
+        \ remains, or vice-versa — **partial/ghost state**.\n4. **Cluster eviction\
+        \ on memory pressure** (`allkeys-lru`) — evicts *any* key even if its TTL\
+        \ hasn't hit, unrelated to time.\n5. **Restart / failover** — Redis loses\
+        \ everything; DB survives.\n\n## Why It Breaks — The Failure Path\n\n```\n\
+        User resumes interview ──▶ GET session:{id}\n        ──▶ Redis MISS (TTL expired)\
+        \ ──▶ returns null\n        ──▶ code assumes session is reset/invalid\n  \
+        \      ──▶ redirects to start OR overwrites\n```\n\nTwo downstream failure\
+        \ classes:\n\n- **Lost progress (silent data loss):** the user's in-flight\
+        \ draft/answers in Redis are gone; DB only holds what was already committed.\
+        \ Continuation shows a partially-filled session.\n- **State inconsistency:**\
+        \ DB says interview \"in progress / has partial results\" while Redis has\
+        \ no runtime handle → UI can't render the same session → errors or a forced\
+        \ reset that then **contradicts the DB**.\n\n## Fixes (in order of durability)\n\
+        \n### 1. Refresh TTL on every access (sliding window)\n```python\ndef touch_session(r:\
+        \ redis.Redis, sid: str, ttl: int = 3600):\n    r.expire(f\"session:{sid}\"\
+        , ttl)   # slide TTL forward on each read/interaction\n```\n**Key distinction:**\
+        \ sliding TTL only resets on *activity*, so an idle 1h gap still expires.\
+        \ If the concern is long read-time, extend TTL or use a heartbeat.\n\n###\
+        \ 2. Source of truth = DB, Redis = pure cache / rebuildable\nTreat Redis state\
+        \ as **reconstructable from the DB**. On Redis MISS, rehydrate:\n```python\n\
+        def get_runtime(sid):\n    key = f\"session:{sid}\"\n    data = r.get(key)\n\
+        \    if data is None:\n        data = rebuild_from_db(sid)   # load progress\
+        \ from the authoritative store\n        r.setex(key, TTL, json.dumps(data))\n\
+        \    return data\n```\n`rebuild_from_db` recomputes `current_index`, elapsed\
+        \ time, visited steps from committed rows. Continuation then never depends\
+        \ on Redis being alive — it's an acceleration layer, not a dependency.\n\n\
+        ### 3. Reconcile on write (don't hold the only copy in Redis)\nCommit critical\
+        \ progression to the DB **immediately**, not on session end:\n```python\n\
+        def advance_step(sid, answer):\n    # persist authoritative fact first\n \
+        \   db.insert(\"step_attempt\", sid=sid, step=step, answer=answer)\n    #\
+        \ then update cache\n    r.hset(f\"session:{sid}\", \"current_index\", step\
+        \ + 1)\n    r.expire(f\"session:{sid}\", TTL)\n```\nSo even if Redis dies,\
+        \ \"where the user left off\" is in the DB.\n\n### 4. Bind/orphan timestamps\n\
+        Handle the **dual-state** case explicitly: if Redis expires but DB says session\
+        \ is complete/results submitted, return the completed result rather than a\
+        \ half-initialized resume.\n\n### 5. Cluster eviction protection\nIf using\
+        \ Redis Cluster and storage pressure is a real risk, keep TTL but also set\
+        \ Redis `maxmemory-policy maxmemory-policy noeviction` **or** use a dedicated\
+        \ Redis instance / separate DB number for session state so LRU on other keys\
+        \ can't evict it.\n\n## Configuration Recommendations\n\n- **Graduated TTL**\
+        \ — short TTL (minutes) + sliding refresh; cap at a hard maximum so abandoned\
+        \ sessions still reclaim memory but active users never lose state.\n- **`volatile-lru`/`volatile-ttl`**\
+        \ eviction policy (only evict keys *with* a TTL) — never evict a key that\
+        \ was meant to persist.\n- **Monitor** `info keyspace` + `evicted_keys` +\
+        \ hit-rate alerts so silent expiry is visible.\n\n## Summary\n\nContinuation\
+        \ breaks because the session is modeled as **one logical entity across two\
+        \ stores with mismatched lifecycles** — Redis treats it as transient, the\
+        \ DB as durable. The robust design: **DB is the source of truth**, Redis TTL\
+        \ state is a *rebuildable cache*, slides its TTL on activity, and commits\
+        \ checkpoints to the DB so that an eviction degrades to \"slightly slower\
+        \ resume,\" never \"lost session.\""
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 20939
+        input: 35
+        output: 1346
+        reasoning: 102
+        cache_read: 19456
+        cache_write: 0
+      latency_ms: 34058
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 34058
+          classification: success
+        cross_stack: null
+    is_lead: false
+  conflicts: []
+  summary: Lead agent (database-engineer) completed primary work. Support agents (security-engineer,
+    code-reviewer, backend-architect, llm-engineer, rag-engineer, prompt-engineer)
+    contributed
+  agent_count: 7
+  completed_count: 7
+  failed_count: 0
+task_cards:
+- task_id: task-database-engineer-7589c4
+  role: database-engineer
+  status: completed
+  output_summary: '## Lead Report — Redis Session State TTL: When & Why Continuation
+    Breaks
+
+
+    **Team** `team-18087af2` · Domains: database, ai · Task: debug.
+
+    **System under test:** Phase-5 面试状态机 (`INTERVIEW_STATE_MACHINE'
+  output_len: 7040
+  latency_ms: 135926
+- task_id: task-security-engineer-18c61d
+  role: security-engineer
+  status: completed
+  output_summary: '## Diagnosis
+
+
+    `InterviewStateStore` applies a **fixed (absolute) 24h TTL on every write** (`InterviewStateStore.java:51`
+    → `bucket.set(json, TTL_HOURS, HOURS)`). Redis keeps the DB-backed session vali'
+  output_len: 7808
+  latency_ms: 115029
+- task_id: task-code-reviewer-a9f2d0
+  role: code-reviewer
+  status: completed
+  output_summary: '## Code Review: Redis 会话状态固定 TTL 与 DB 有效性问题
+
+
+    ### 1. 关键结论（先说结论）
+
+
+    这条代码已经有了一层"回复兜底"，但**只覆盖了 `read() == null` 的过期场景，没有覆盖 `read()` 返回*陈旧值*的场景**——后者才是"DB
+    仍有效但续答被静默破坏"的真正根因。此外，注释声称 Redis 是"单一权威来源"（`Interview'
+  output_len: 4845
+  latency_ms: 121535
+- task_id: task-backend-architect-1a507e
+  role: backend-architect
+  status: completed
+  output_summary: '# 面试会话运行态 Redis 固定 TTL 静默过期分析 — 贡献给 Lead 评审
+
+
+    ## 目标
+
+    - 业务目标: 面试会话可在中断后**续接（continuation）**，运行态不丢失、不与持久态脱节。
+
+    - 当前约束: 运行态(Runtime State)存 Redis，带固定 TTL；持久态(Session/Transcript)存 DB，长期有效。
+
+    - 成功标准: 明确"何时/为何续接失'
+  output_len: 4309
+  latency_ms: 48144
+- task_id: task-llm-engineer-308f27
+  role: llm-engineer
+  status: completed
+  output_summary: '# Database Engineer — Design Review
+
+
+    ## MEMO: Interview Session Continuation vs Redis Fixed-TTL Expiry
+
+
+    ### 1. The architectural pattern in question
+
+
+    A typical interview-session stack splits state acr'
+  output_len: 7202
+  latency_ms: 37546
+- task_id: task-rag-engineer-bce84e
+  role: rag-engineer
+  status: completed
+  output_summary: 'Analysis complete. I''ve traced the full state lifecycle in `InterviewService`
+    / `InterviewStateStore` / `RuleBasedScoringService`. Here is my report for lead
+    review.
+
+
+    ---
+
+
+    # 面试会话 Redis 固定 TTL 静默过期 → 会'
+  output_len: 5623
+  latency_ms: 140046
+- task_id: task-prompt-engineer-3beb6f
+  role: prompt-engineer
+  status: completed
+  output_summary: '# Redis TTL Expiry vs. Persistent DB State — Analysis
+
+
+    ## Problem Statement
+
+
+    Interview session **runtime state** (progress, answers, current question index,
+    timers, per-step votes) lives in Redis with'
+  output_len: 5341
+  latency_ms: 34058
+execution_order:
+- task-backend-architect-1a507e
+- task-llm-engineer-308f27
+- task-database-engineer-7589c4
+- task-security-engineer-18c61d
+- task-rag-engineer-bce84e
+- task-prompt-engineer-3beb6f
+- task-code-reviewer-a9f2d0
+completed_count: 7
+failed_count: 0

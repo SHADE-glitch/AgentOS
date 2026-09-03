@@ -28,6 +28,9 @@ from typing import Optional
 MEMORY_INDEX_FILE = "/home/shade/.agents/memory/retrieval-index.yaml"
 MEMORY_DIR = "/home/shade/.agents/memory"
 HYPOTHESIS_DIR = os.path.join(MEMORY_DIR, "hypotheses")
+OBSERVATION_LOG_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "memory-observation-log.yaml"
+)
 
 
 def load_memory_index() -> dict:
@@ -193,7 +196,7 @@ def bootstrap_hypothesis(pattern_name: str, source_loop_id: str,
 
     tags_yaml = "\n".join([f"  - {t}" for t in ["auto-bootstrapped", clean.lower()] + domain_meta["technical_tags"]])
 
-    md_content = f"""---
+    md_content = f"""```yaml
 memory_id: {memory_id}
 type: hypothesis
 category: {domain_meta["category"]}
@@ -207,7 +210,7 @@ observation_count: 1
 created_at: {datetime.now(timezone.utc).isoformat()}
 tags:
 {tags_yaml}
----
+```
 
 # {pattern_name}
 
@@ -251,6 +254,7 @@ observation before it can be elevated to a validated memory.
         "source_loop": source_loop_id,
         "source_team": source_team_id,
         "source_agent": agent_role,
+        "source_task": source_loop_id,
         "evidence_level": "hypothesis",
         "confidence": "low",
         "observation_count": 1,
@@ -323,3 +327,54 @@ def resolve_candidates_targets(candidates: list[dict]) -> list[dict]:
             c["resolved_from"] = original
             c["candidate_id"] = c["candidate_id"].replace(original, resolved)
     return candidates
+
+
+# ── Phase 8.2.1.3: Observation Log Functions ──────────────────────
+
+def load_observation_log() -> dict:
+    """Load the memory observation log."""
+    if not os.path.exists(OBSERVATION_LOG_FILE):
+        return {"version": "1.0", "phase": "8.2.1.3", "observations": []}
+    with open(OBSERVATION_LOG_FILE) as f:
+        return yaml.safe_load(f) or {"version": "1.0", "phase": "8.2.1.3", "observations": []}
+
+
+def save_observation_log(log: dict):
+    """Save the observation log to disk."""
+    os.makedirs(os.path.dirname(OBSERVATION_LOG_FILE), exist_ok=True)
+    with open(OBSERVATION_LOG_FILE, "w") as f:
+        yaml.dump(log, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
+def append_observation(memory_id: str, source_loop: str, source_team: str,
+                       session_id: str, output_hash: str, quality_score: float,
+                       agent_role: str = "backend", origin: str = "reinforce") -> bool:
+    """
+    Append an observation to the observation log.
+    Deduplicates by (memory_id, source_loop).
+    Returns True if appended, False if duplicate.
+    """
+    log = load_observation_log()
+    observations = log.get("observations", [])
+
+    # Dedup check
+    for obs in observations:
+        if obs.get("memory_id") == memory_id and obs.get("source_loop") == source_loop:
+            return False
+
+    observation = {
+        "memory_id": memory_id,
+        "source_loop": source_loop,
+        "source_team": source_team,
+        "session_id": session_id,
+        "output_hash": output_hash,
+        "quality_score": quality_score,
+        "agent_role": agent_role,
+        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "origin": origin,
+    }
+
+    observations.append(observation)
+    log["observations"] = observations
+    save_observation_log(log)
+    return True

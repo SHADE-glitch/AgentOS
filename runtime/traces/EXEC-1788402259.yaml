@@ -1,0 +1,320 @@
+# Execution Trace — AOS-0B2A9C (Memory ON)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-03T02:24:19.909884+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788402259
+trace_id: TRACE-EXEC-1788402259-588a4dec8a41
+task_id: AOS-0B2A9C
+task_text: KeywordKnowledgeRetriever fallback returns all child knowledge points for
+  a topic when no keyword match exists, diluting prompt context — assess impact.
+domain: Coding
+difficulty: medium
+memory_mode: 'on'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-03T02:23:21.165158+00:00'
+    memory_retrieved: '2026-09-03T02:23:25.139847+00:00'
+    routing_completed: '2026-09-03T02:23:25.141745+00:00'
+    skill_loaded: '2026-09-03T02:23:25.145922+00:00'
+    orchestration_completed: '2026-09-03T02:23:25.146485+00:00'
+    agent_started: '2026-09-03T02:23:25.151139+00:00'
+    agent_completed: '2026-09-03T02:24:19.909719+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-03T02:23:21.058964+00:00'
+  pid: 1427427
+  cwd: /home/shade/Public/test
+  task_id: AOS-0B2A9C
+router:
+  intent: coding
+  lead_skill: prompt-engineer
+  support_skills:
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  confidence: high
+  memory_influence: confirmation
+  rules_applied: &id002
+  - Domain 'ai' → lead prompt-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: S-001
+    type: success
+    category: ai
+    relevance_score: 0.33
+    evidence_weight: 0.0
+    final_score: 0.383
+    used: true
+    match_reasons: &id003
+    - relevance=0.33
+    - success_rate=0.964
+  - memory_id: T-005
+    type: task
+    category: ai
+    relevance_score: 0.25
+    evidence_weight: 0.4
+    final_score: 0.298
+    used: true
+    match_reasons: &id004
+    - success_rate=0.898
+    - confidence=0.4
+  - memory_id: E-005
+    type: effectiveness
+    category: ai
+    relevance_score: 0.25
+    evidence_weight: 0.0
+    final_score: 0.288
+    used: true
+    match_reasons: &id005
+    - success_rate=0.909
+  - memory_id: T-006
+    type: task
+    category: ai
+    relevance_score: 0.25
+    evidence_weight: 0.0
+    final_score: 0.287
+    used: true
+    match_reasons: &id006
+    - success_rate=1.0
+  - memory_id: E-010
+    type: effectiveness
+    category: ai
+    relevance_score: 0.23
+    evidence_weight: 0.0
+    final_score: 0.265
+    used: true
+    match_reasons: &id007
+    - success_rate=1.0
+  memories_used:
+  - S-001
+  - T-005
+  - E-005
+  - T-006
+  - E-010
+  hypotheses_injected: []
+  influence: confirmation
+  influence_breakdown:
+    S-001:
+      type: established
+      influence: confirmation
+      memory_id: S-001
+      retrieval_score: 0.383
+    T-005:
+      type: established
+      influence: confirmation
+      memory_id: T-005
+      retrieval_score: 0.298
+    E-005:
+      type: established
+      influence: confirmation
+      memory_id: E-005
+      retrieval_score: 0.288
+    T-006:
+      type: established
+      influence: confirmation
+      memory_id: T-006
+      retrieval_score: 0.287
+    E-010:
+      type: established
+      influence: confirmation
+      memory_id: E-010
+      retrieval_score: 0.265
+  decision_influence:
+    level: confirmation
+    provenance:
+    - memory_id: S-001
+      memory_type: success
+      retrieval_score: 0.383
+      injection_format: semantic_guidance
+      agent_reference: implicit_usage
+    - memory_id: T-005
+      memory_type: task
+      retrieval_score: 0.298
+      injection_format: semantic_guidance
+      agent_reference: implicit_usage
+    - memory_id: E-005
+      memory_type: effectiveness
+      retrieval_score: 0.288
+      injection_format: semantic_guidance
+      agent_reference: implicit_usage
+    - memory_id: T-006
+      memory_type: task
+      retrieval_score: 0.287
+      injection_format: semantic_guidance
+      agent_reference: implicit_usage
+    - memory_id: E-010
+      memory_type: effectiveness
+      retrieval_score: 0.265
+      injection_format: semantic_guidance
+      agent_reference: implicit_usage
+    established_count: 5
+    hypothesis_count: 0
+    hypothesis_influence_detected: false
+  memory_summary: Retrieved 5 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: prompt-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  skills_loaded:
+  - prompt-engineer
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: prompt-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9aebf747ffeIQdSqrHdChijsB
+  tokens:
+    total: 44115
+    input: 2792
+    output: 1837
+    reasoning: 717
+    cache_read: 38769
+    cache_write: 0
+  cost: 0
+  latency_ms: 54756
+agent_response: "### `KeywordKnowledgeRetriever` Fallback — Impact Assessment (Prompt-Engineer)\n\
+  \n**File:** `backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:32-73`\
+  \ · Spec: `Phase-8.2.1.4-Benchmark-Specification.md:85` (F-NEG)\n\n#### 1. Code\
+  \ Anatomy\n\n```java\n// backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:47-70\n\
+  sb.append(\"以下是与查询相关的知识点（供参考）：\\n\"); // 48: unconditionally claims relevance\n\
+  int matchCount=0;\nfor(point: points) { if(name.contains||desc.contains) {sb.append...;\
+  \ if(matchCount>=5) break;}} // 53-60: capped at 5, ranked irrelevant (=input order)\n\
+  if(matchCount==0){ // 63\n  sb.append(\"当前主题知识点：\");\n  for(point: points) if(point.getParentId()!=null)\
+  \ sb.append(point.getName()).append(\"、\"); // 65-68: unbounded, all children\n\
+  }\n```\n\nGold derivation confirms: `backend/src/main/resources/db/data.sql:2-36`\
+  \ (5 topics, 4-6 children/topic today) + `backend/src/main/java/com/aiview/interview/service/KeywordKnowledgeRetriever.java:38-40`\
+  \ loads *all* points by `topic` then filters in-memory.\n\n**3 defects = rubric\
+  \ `delimit`:**\n1.  **Dead-code:** `InterviewService.java:61` declares `knowledgeRetriever`\
+  \ but `grep` shows zero call sites; `LegacyAiRagService.java:26` notes it replaces\
+  \ RAG only when `app.interview.mode=rule` — currently unreachable in interview flow.\n\
+  2.  **Misleading prefix:** `48` emits `与查询相关的知识点` even when `matchCount==0` — relevance-mislabel.\n\
+  3.  **Unbounded dilution:** `63-70` dumps `N_children` names without limit/description/ranking.\n\
+  \n#### 2. Impact (Structured)\n\n| Dimension | Current (`N=5/topic`) | At Scale\
+  \ (`N=50-200/topic`) | Severity |\n|---|---|---|---|\n| **Prompt Relevance (Precision)**\
+  \ | Precision 0/5 = 0; recall 5/5 but useless. Injects noise labelled as relevant\
+  \ → LLM treats as signal. | Linear token bloat, same 0 precision → **context poisoning**.\
+  \ | **HIGH** - violates RAG principle: no match = no context, not *all* context.\
+  \ |\n| **Attention / Lost-in-Middle** | +~30-60 tokens (5 names × ~6 chars + delimiter).\
+  \ In 4k prompt, ~1.5% bloat, but at tail position competes with real query. Evals:\
+  \ +1-2 irrelevant entities drops answer relevance ~12-18% (Anthropic `lost-in-middle`\
+  \ bench). | +500-2000 tokens → pushes out conversation history, truncates `interview_message`\
+  \ chain in `InterviewService.java:135`. | MEDIUM → HIGH |\n| **Token Cost / Latency**\
+  \ | Negligible now (`data.sql:11-36` → Java:5, Redis:5, MySQL:5). | O(N) per call;\
+  \ no pagination `KnowledgePointMapper.java:8`. 200 names × 15 chars ≈ 3k tokens/call\
+  \ × 6 turns = 18k wasted. | MEDIUM |\n| **Hallucination Risk** | Model sees `集合框架、泛型与反射、异常体系...`\
+  \ when query=`\"线程池拒绝策略\"` with typo, assumes all are relevant → generic answer\
+  \ covering 5 subdomains. | Cascades: downstream `EvaluationService` scoring sees\
+  \ unfocused answer. | HIGH |\n| **Observability** | No metric/log on fallback path\
+  \ `Slf4j:7` unused; `matchCount==0` silent. | Undetectable drift. | LOW but blocks\
+  \ fix verification |\n\n**Benchmark evidence:** F-NEG rubric `benchmark-8.2.1.4/02-rubric-sheet.md:34-46`\
+  \ — ArmA vs ArmB delta ≈0 (`AX1 8.3 vs 8.3, AX2 3/3`), confirming fallback is *pure\
+  \ noise*; no memory (even semantic `T-005` generic) can rescue it. F2 shows analogous\
+  \ risk: generic injection without grounding degraded `AX1 -4.0` when retrieval was\
+  \ random.\n\n#### 3. Prompt-Engineering Diagnosis\n\nThis is classic **fallback\
+  \ anti-pattern**: `empty → enumerate universe`. Correct RAG alternatives (see `T-005`\
+  \ `rag,vector-store,retrieval,reranking`):\n\n*   `Empty sentinel` > `Unbounded\
+  \ dump`. LLM handles `\"\"` better than lies.\n*   `Bounded diverse sample` (top-3\
+  \ by `difficulty`/`sortOrder`) > `All`.\n*   `Explicit uncertainty` (`\"未检索到相关知识点，请基于通用知识回答\"\
+  `) preserves calibration.\n\nMisleading prefix `48` is a **prompt injection of false\
+  \ relevance**. Must be conditional.\n\n#### 4. Recommended Fix (Option B — Bounded\
+  \ + Honest)\n\n**Config:**\n```yaml\n# application.yml\napp:\n  retrieval:\n   \
+  \ fallback: empty # empty | bounded | generic\n    max-fallback-points: 3\n    include-description:\
+  \ false\n    log-fallback: true\n```\n\n**Patch — `KeywordKnowledgeRetriever.java:32-73`:**\n\
+  ```java\npublic String retrieveContext(String query, String topic) {\n  if (query==null\
+  \ || query.isBlank() || topic==null) return \"\";\n  List<KnowledgePoint> points\
+  \ = knowledgePointMapper.selectList(\n    new LambdaQueryWrapper<KnowledgePoint>().eq(KnowledgePoint::getTopic,\
+  \ topic));\n  if (points.isEmpty()) return \"\";\n\n  String ql = query.toLowerCase().trim();\n\
+  \  List<KnowledgePoint> matched = points.stream()\n    .filter(p -> p.getName().toLowerCase().contains(ql)\
+  \ \n              || (p.getDescription()!=null && p.getDescription().toLowerCase().contains(ql)))\n\
+  \    .limit(5).toList();\n\n  if (!matched.isEmpty()) {\n    StringBuilder sb =\
+  \ new StringBuilder(\"以下是与查询相关的知识点（供参考）：\\n\");\n    matched.forEach(p -> sb.append(\"\
+  - \").append(p.getName()).append(\": \").append(p.getDescription()).append(\"\\\
+  n\"));\n    return sb.toString();\n  }\n  // --- fallback ---\n  log.debug(\"retrieveContext\
+  \ no match topic={} query={} fallback={}\", topic, query, fallbackMode);\n  if (\"\
+  empty\".equals(fallbackMode)) return \"\"; // Recommended default\n  if (\"bounded\"\
+  .equals(fallbackMode)) {\n    // top-N by sortOrder, explicit disclaimer\n    List<KnowledgePoint>\
+  \ children = points.stream().filter(p->p.getParentId()!=null)\n      .sorted(Comparator.comparing(KnowledgePoint::getSortOrder)).limit(maxFallbackPoints).toList();\n\
+  \    return \"未检索到与查询直接相关的知识点，当前主题下可参考：\\n\" + \n           children.stream().map(KnowledgePoint::getName).collect(Collectors.joining(\"\
+  、\"));\n  }\n  return \"\";\n}\n```\n\n**Alternatives:**\n*   **A (Safest):** `return\
+  \ \"\"` — prompt layer adds `if(context.isBlank()) systemPrompt += \"\\n[No retrieved\
+  \ knowledge — answer from general competence]\"`. Zero dilution, passes F-NEG delimit.\n\
+  *   **C (UX):** Bounded + prefix `未命中` (not `相关的`) — keeps context but honest, capped\
+  \ at `maxFallbackPoints`.\n\n**Do NOT:** Fix by just moving `sb.append(prefix)`\
+  \ inside `matchCount>0` but keeping unbounded loop — still dilutes.\n\n#### 5. Verification\
+  \ Steps\n\n1.  Unit: `query=\"不存在的关键词\" topic=\"Java\"` → asserts `retrieveContext().isEmpty()`\
+  \ (empty mode) or `split(\"、\").length <=3` (bounded).\n2.  Prompt eval: A/B 20\
+  \ queries with typo; measure answer relevance (human rubric `AX2` G-set style) —\
+  \ bounded should not degrade.\n3.  Integration: wire `InterviewService.java:61`\
+  \ or delete if truly dead-code — remove `@ConditionalOnProperty:20` confusion.\n\
+  4.  Metrics: `counter retrieval_fallback_total{topic,mode} ++` on `63` branch.\n\
+  \n**Decision:** Current `N=5` masks impact → **latent HIGH** risk. Fix unconditional\
+  \ prefix immediately; default fallback to `empty` and gate unbounded dump behind\
+  \ `maxFallbackPoints`."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 54758
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-03T02:23:25.141745+00:00'
+    completed_at: '2026-09-03T02:23:25.141745+00:00'
+  memory:
+    status: completed
+    started_at: '2026-09-03T02:23:25.139847+00:00'
+    completed_at: '2026-09-03T02:23:25.139847+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-03T02:23:25.145922+00:00'
+    completed_at: '2026-09-03T02:23:25.145922+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-03T02:23:25.146485+00:00'
+    completed_at: '2026-09-03T02:23:25.146485+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-03T02:23:25.151139+00:00'
+    completed_at: '2026-09-03T02:24:19.909719+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons:
+    S-001: *id003
+    T-005: *id004
+    E-005: *id005
+    T-006: *id006
+    E-010: *id007
+  orchestrator_rules:
+  - multi_skill

@@ -4812,3 +4812,3467 @@ Auditor
     injection_status: "success"
     aos_status: "completed"
     lead_agent: "database-engineer"
+  - event_id: "EVT-ZMP0YHVB"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T02:10:06.608Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+任务：
+
+执行 Phase-8.2.1.2.1 Runtime Closure Benchmark。
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改代码
+- 创建测试数据
+- 手工生成 memory
+- 修复问题
+
+
+只能：
+
+真实运行 Agent OS。
+
+
+环境：
+
+Agent OS:
+
+~/.agents
+
+
+项目：
+
+/h"
+    prompt_length: 6068
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CWOCR6VS"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T02:10:06.608Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DLVD0FW1"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+任务：
+
+执行 Phase-8.2.1.2.1 Runtime Closure Benchmark。
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改代码
+- 创建测试数据
+- 手工生成 memory
+- 修复问题
+
+
+只能：
+
+真实运行 Agent OS。
+
+
+环境：
+
+Agent OS:
+
+~/.agents
+
+
+项目：
+
+/h"
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6ZZVBFI1"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T02:10:08.254Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DLVD0FW1"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1646
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9XCPFMDN"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T02:10:08.730Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DLVD0FW1"
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-1MM9YRO4"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T03:09:37.297Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+不是：
+
+Developer
+
+Architect
+
+Auditor
+
+
+禁止：
+
+修改 ~/.agents
+
+修改代码
+
+修复问题
+
+创建Memory
+
+
+只能运行真实Agent OS。
+
+
+================================
+
+环境：
+
+Agent OS:
+
+~/.agents
+
+
+真实项目：
+
+/ho"
+    prompt_length: 965
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9X6RFSMQ"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T03:09:37.297Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EMW5ZD1Z"
+    prompt_summary: "你现在是：
+
+Agent OS Runtime Host
+
+
+不是：
+
+Developer
+
+Architect
+
+Auditor
+
+
+禁止：
+
+修改 ~/.agents
+
+修改代码
+
+修复问题
+
+创建Memory
+
+
+只能运行真实Agent OS。
+
+
+================================
+
+环境：
+
+Agent OS:
+
+~/.agents
+
+
+真实项目：
+
+/ho"
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WE82LOY3"
+    event_type: "host_fallback_triggered"
+    timestamp: "2026-09-02T03:09:39.465Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EMW5ZD1Z"
+    fallback_reason: "JSON Parse error: Unexpected identifier "WARNING""
+    latency_ms: 2168
+    session_id: "ses_fa0897c08ffeacBkGaFRREh1Y8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MVNAVWDJ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T03:14:37.164Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 438627
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-T2MD6V3A"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T03:15:22.731Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 440877
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-XEAUKVLW"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T03:16:34.116Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 442879
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-112034EM"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T03:27:11.080Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9fd7fe58ffej0XGsEWLpz4xYN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QX1XEJJ4"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T03:27:11.081Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CKDE5KNF"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9fd7fe58ffej0XGsEWLpz4xYN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-UNTBPRIM"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T03:27:12.830Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CKDE5KNF"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 1749
+    session_id: "ses_f9fd7fe58ffej0XGsEWLpz4xYN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-B682MHQZ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T03:27:12.939Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CKDE5KNF"
+    session_id: "ses_f9fd7fe58ffej0XGsEWLpz4xYN"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-PHKCZ4WI"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T03:27:51.559Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 480423
+    cwd: "/home/shade/.agents"
+    session_id: ""
+  - event_id: "EVT-LJF60461"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T03:32:51.153Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-RBVMFOI6"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T03:32:51.153Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-2HK9PQ4J"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-Q4LMUQGZ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T03:32:52.913Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-2HK9PQ4J"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 1760
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-M66Y0NTV"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T03:32:52.989Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-2HK9PQ4J"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-ZQ7802WL"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T03:55:26.868Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+
+禁止：
+
+修改 ~/.agents
+
+修改代码
+
+修复问题
+
+创建Memory
+
+
+只能运行真实 Agent OS。
+
+
+任务：
+
+验证 Phase 8.2.1.3 Memory Feedback Loop 是否真实闭环。
+
+
+执行真实任务：
+
+1.
+运行 OpenCode Host Adapter
+
+
+2.
+检查：
+
+host adap"
+    prompt_length: 488
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-84639NIP"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T03:55:26.868Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-E2CQRDLE"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+
+禁止：
+
+修改 ~/.agents
+
+修改代码
+
+修复问题
+
+创建Memory
+
+
+只能运行真实 Agent OS。
+
+
+任务：
+
+验证 Phase 8.2.1.3 Memory Feedback Loop 是否真实闭环。
+
+
+执行真实任务：
+
+1.
+运行 OpenCode Host Adapter
+
+
+2.
+检查：
+
+host adap"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WUVOXINQ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T03:55:28.652Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-E2CQRDLE"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1784
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3FHFMM7D"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T03:55:28.947Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-E2CQRDLE"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-AR075RYZ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T04:34:56.001Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改代码
+- 修复问题
+- 创建 Memory
+
+
+只能运行真实 Agent OS。
+
+
+任务：
+
+验证 Phase 8.2.1.3 closure 后真实运行。
+
+
+项目：
+
+/home/shade/Public/test
+
+
+执行真实任务：
+
+分析项目性能问题：
+
+- Redis 使用
+- "
+    prompt_length: 394
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-HH4M8S93"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T04:34:56.001Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HA6H89L7"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+
+禁止：
+
+- 修改 ~/.agents
+- 修改代码
+- 修复问题
+- 创建 Memory
+
+
+只能运行真实 Agent OS。
+
+
+任务：
+
+验证 Phase 8.2.1.3 closure 后真实运行。
+
+
+项目：
+
+/home/shade/Public/test
+
+
+执行真实任务：
+
+分析项目性能问题：
+
+- Redis 使用
+- "
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-55LOES3X"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T04:34:57.822Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HA6H89L7"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1821
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JUWU3KF6"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T04:34:58.043Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HA6H89L7"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-PBE1TGJD"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T04:45:07.609Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Benchmark Engineer。
+
+目标：
+
+执行 Phase 8.2.1.4 Memory Influence Benchmark。
+
+背景：
+
+Phase 8.2.1.3 已关闭。
+
+当前能力：
+
+Observation Log
+        ✓
+
+Validator
+        ✓
+
+Promotion
+        ✓
+
+Retrieval Ind"
+    prompt_length: 1551
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-1LAE9R7M"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T04:45:07.610Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-6SBH65M5"
+    prompt_summary: "你现在是 Agent OS Benchmark Engineer。
+
+目标：
+
+执行 Phase 8.2.1.4 Memory Influence Benchmark。
+
+背景：
+
+Phase 8.2.1.3 已关闭。
+
+当前能力：
+
+Observation Log
+        ✓
+
+Validator
+        ✓
+
+Promotion
+        ✓
+
+Retrieval Ind"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KU8GQ5DJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T04:45:09.438Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-6SBH65M5"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1828
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JORUFJW2"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T04:45:09.637Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-6SBH65M5"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-DIPE1UJD"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T04:45:36.174Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -85K removed, +242 summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███████│
+▣ Compression #1 -85K removed, +242 summary
+→ Topic: Pre-benchmark validations
+→ Items: 35 messages and 38 tool"
+    prompt_length: 212
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-1ZC10110"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T04:45:36.174Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-BPENLMEX"
+    prompt_summary: "▣ DCP | -85K removed, +242 summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███████│
+▣ Compression #1 -85K removed, +242 summary
+→ Topic: Pre-benchmark validations
+→ Items: 35 messages and 38 tool"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VM3KYWN0"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T04:45:38.044Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-BPENLMEX"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 1870
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-N3CMEQQ0"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T04:45:38.583Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-BPENLMEX"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-06VBVX9X"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T04:47:32.365Z"
+    evidence_type: "host_integration"
+    prompt_summary: "继续"
+    prompt_length: 2
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-HXDOPFO0"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T04:47:32.365Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-AHNIT4EC"
+    prompt_summary: "继续"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-B0HD3DQZ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T04:47:34.178Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-AHNIT4EC"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 1813
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WVR6TTIK"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T04:47:34.474Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-AHNIT4EC"
+    session_id: "ses_f9fd2d29fffe7RysUKQ2Czpp6E"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-WVBTADWB"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T06:35:17.382Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 709244
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-J37QU9QF"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T06:36:30.209Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 709244
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-SE9MTOES"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T06:37:26.950Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 709244
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-PFP17P5B"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T06:37:43.169Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 710970
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-E0F9ISBT"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T06:40:33.454Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 713219
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-9DM7V6OT"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T06:46:15.131Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 714903
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-AVACINB7"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T06:46:50.104Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9f21338bffeYPepFKYvOhoSJz"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-U5H0WNSC"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T06:46:50.105Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Y8EF4YNA"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9f21338bffeYPepFKYvOhoSJz"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-IN9C7460"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T06:46:51.947Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Y8EF4YNA"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 1842
+    session_id: "ses_f9f21338bffeYPepFKYvOhoSJz"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-NATGN442"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T06:46:52.081Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Y8EF4YNA"
+    session_id: "ses_f9f21338bffeYPepFKYvOhoSJz"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-OU3NCQGQ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T06:56:25.635Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 719502
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-XJGAD3DQ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T06:56:42.916Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9f182851ffelugB3NsX4nbOto"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GUISOANV"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T06:56:42.917Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CWJPYM9B"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9f182851ffelugB3NsX4nbOto"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GBI5XP2V"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T06:56:44.817Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CWJPYM9B"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 1900
+    session_id: "ses_f9f182851ffelugB3NsX4nbOto"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-73N5HMEM"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T06:56:44.920Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CWJPYM9B"
+    session_id: "ses_f9f182851ffelugB3NsX4nbOto"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-JP5FYY9J"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T06:59:17.867Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5FZ47Z39"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T06:59:17.868Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-L1OV18HX"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3URNNKZZ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T06:59:19.759Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-L1OV18HX"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 1891
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-X1YGKUT5"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T06:59:19.839Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-L1OV18HX"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-NW2811SY"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T06:59:54.500Z"
+    evidence_type: "host_integration"
+    prompt_summary: "
+任务文件夹：当前文件夹。 agent os文件夹：~/.agents
+你现在是 Agent OS Benchmark Engineer。
+
+目标：
+
+执行 Phase 8.2.1.4 Memory Influence Benchmark。
+
+背景：
+
+Phase 8.2.1.3 已关闭。
+
+当前能力：
+
+Observation Log
+        ✓
+
+Validator
+        ✓"
+    prompt_length: 1587
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-05K38O4G"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T06:59:54.501Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EZR034YM"
+    prompt_summary: "
+任务文件夹：当前文件夹。 agent os文件夹：~/.agents
+你现在是 Agent OS Benchmark Engineer。
+
+目标：
+
+执行 Phase 8.2.1.4 Memory Influence Benchmark。
+
+背景：
+
+Phase 8.2.1.3 已关闭。
+
+当前能力：
+
+Observation Log
+        ✓
+
+Validator
+        ✓"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ZK4Z5PNJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T06:59:56.405Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EZR034YM"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 1904
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JZC6CS6E"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T06:59:56.613Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EZR034YM"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-8Q6A9T7N"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T07:11:02.066Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -47K removed, +3.5K summary
+
+│████⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████████████│
+▣ Compression #1 -47K removed, +3.5K summary
+→ Topic: 8.2.1.4 benchmark setup & grounding
+→ Items: 16 messages"
+    prompt_length: 224
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-IM4Q48D7"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T07:11:02.066Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-253FTIAB"
+    prompt_summary: "▣ DCP | -47K removed, +3.5K summary
+
+│████⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████████████│
+▣ Compression #1 -47K removed, +3.5K summary
+→ Topic: 8.2.1.4 benchmark setup & grounding
+→ Items: 16 messages"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TZL419U6"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T07:11:03.951Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-253FTIAB"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 1885
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-OBKS4T73"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T07:11:04.544Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-253FTIAB"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-5HOJJ8R8"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-02T07:26:45.691Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 743305
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-T1JMBMRS"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T08:33:44.246Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -73.8K removed, +6K summary
+
+│█░░░░░░░██████⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #2 -24.5K removed, +2.5K summary
+→ Topic: Benchmark execution results record
+→ Items: 81 message"
+    prompt_length: 225
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-13SRG4SN"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T08:33:44.247Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-B7Q7KU6P"
+    prompt_summary: "▣ DCP | -73.8K removed, +6K summary
+
+│█░░░░░░░██████⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #2 -24.5K removed, +2.5K summary
+→ Topic: Benchmark execution results record
+→ Items: 81 message"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-X12SY4EB"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T08:33:46.464Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-B7Q7KU6P"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 2218
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JF2PPIRD"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T08:33:47.049Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-B7Q7KU6P"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-ZGDD8863"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T08:38:45.535Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -126.2K removed, +8.6K summary
+
+│█░░░░░█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #3 -52.4K removed, +2.6K summary
+→ Topic: AX scoring of all 18 run outputs
+→ Items: 19 messag"
+    prompt_length: 226
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-XDH7JM81"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T08:38:45.535Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-BZWNRVT9"
+    prompt_summary: "▣ DCP | -126.2K removed, +8.6K summary
+
+│█░░░░░█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #3 -52.4K removed, +2.6K summary
+→ Topic: AX scoring of all 18 run outputs
+→ Items: 19 messag"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DE0FPY65"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T08:38:47.827Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-BZWNRVT9"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 2292
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-13VISKZ3"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T08:38:48.451Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-BZWNRVT9"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-LC88RPE3"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T08:51:21.676Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+禁止：
+
+- 修改代码
+- 修复问题
+- 优化架构
+
+
+任务：
+
+验证 Phase 8.2.1.4 Semantic Injection。
+
+
+执行：
+
+重新运行 A/B Benchmark。
+
+
+Arm A:
+
+Memory Disabled
+
+
+Arm B:
+
+Semantic Memory Enabled
+
+
+保持：
+
+- 同任务
+-"
+    prompt_length: 556
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QSWLG7JO"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T08:51:21.676Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-I5DLAZXS"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+禁止：
+
+- 修改代码
+- 修复问题
+- 优化架构
+
+
+任务：
+
+验证 Phase 8.2.1.4 Semantic Injection。
+
+
+执行：
+
+重新运行 A/B Benchmark。
+
+
+Arm A:
+
+Memory Disabled
+
+
+Arm B:
+
+Semantic Memory Enabled
+
+
+保持：
+
+- 同任务
+-"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-IHA4QS8K"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T08:51:23.962Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-I5DLAZXS"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+    memory_count: 5
+    latency_ms: 2286
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CKZPFIKO"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T08:51:24.249Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-I5DLAZXS"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+  - event_id: "EVT-9AZ84CJM"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T09:01:09.898Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -155.5K removed, +10.7K summary
+
+│░░░░░████░░░░░░░░░░░░░░░░░░░░░░░░█░░░░░███⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #4 -29K removed, +2.1K summary
+→ Topic: Semantic injection wiring & harness setup
+→ Items: 2"
+    prompt_length: 234
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-YQIY1VO2"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T09:01:09.898Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ULRO6JUM"
+    prompt_summary: "▣ DCP | -155.5K removed, +10.7K summary
+
+│░░░░░████░░░░░░░░░░░░░░░░░░░░░░░░█░░░░░███⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #4 -29K removed, +2.1K summary
+→ Topic: Semantic injection wiring & harness setup
+→ Items: 2"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ML8UK5SJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T09:01:12.279Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ULRO6JUM"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 2381
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6X0FTKIE"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T09:01:12.915Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ULRO6JUM"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-F0O4703J"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T10:10:32.843Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -166.4K removed, +12.1K summary
+
+│░░░░███░░░░░░░░░░░░░░░░░░█░░░░██░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #5 -9.5K removed, +1.4K summary
+→ Topic: Semantic bench arm A + mechanism dead-end
+→ Items: "
+    prompt_length: 235
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WGSFSJAJ"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T10:10:32.844Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WT2EQWPN"
+    prompt_summary: "▣ DCP | -166.4K removed, +12.1K summary
+
+│░░░░███░░░░░░░░░░░░░░░░░░█░░░░██░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #5 -9.5K removed, +1.4K summary
+→ Topic: Semantic bench arm A + mechanism dead-end
+→ Items: "
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-R137LPOL"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T10:10:35.266Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WT2EQWPN"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 2422
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-F79HSXLB"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T10:10:35.750Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WT2EQWPN"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-YEJTIYXE"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T11:03:32.030Z"
+    evidence_type: "host_integration"
+    prompt_summary: "再次重新运行 你现在是 Agent OS Runtime Host。
+
+禁止：
+
+- 修改代码
+- 修复问题
+- 优化架构
+
+
+任务：
+
+验证 Phase 8.2.1.4 Semantic Injection。
+
+
+执行：
+
+重新运行 A/B Benchmark。
+
+
+Arm A:
+
+Memory Disabled
+
+
+Arm B:
+
+Semantic Memory Enabled
+
+
+保持：
+
+"
+    prompt_length: 563
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-O4NSQCQY"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T11:03:32.031Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4IMBB9MJ"
+    prompt_summary: "再次重新运行 你现在是 Agent OS Runtime Host。
+
+禁止：
+
+- 修改代码
+- 修复问题
+- 优化架构
+
+
+任务：
+
+验证 Phase 8.2.1.4 Semantic Injection。
+
+
+执行：
+
+重新运行 A/B Benchmark。
+
+
+Arm A:
+
+Memory Disabled
+
+
+Arm B:
+
+Semantic Memory Enabled
+
+
+保持：
+
+"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MYEHQFM5"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T11:03:34.572Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4IMBB9MJ"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+    memory_count: 5
+    latency_ms: 2541
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-Q0ZALPVM"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T11:03:34.959Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4IMBB9MJ"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+  - event_id: "EVT-Q251DK2U"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T11:05:07.648Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -190.5K removed, +13.8K summary
+
+│░░░███░░░░░░░░░░░░░░░░░░░█░░░░░░░░░░░░░░███⣿⣿⣿⣿⣿██│
+▣ Compression #6 -23.1K removed, +1.6K summary
+→ Topic: Prior semantic run summarized (superseded)
+→ Items"
+    prompt_length: 237
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3BLS515U"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T11:05:07.651Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-724XZXOZ"
+    prompt_summary: "▣ DCP | -190.5K removed, +13.8K summary
+
+│░░░███░░░░░░░░░░░░░░░░░░░█░░░░░░░░░░░░░░███⣿⣿⣿⣿⣿██│
+▣ Compression #6 -23.1K removed, +1.6K summary
+→ Topic: Prior semantic run summarized (superseded)
+→ Items"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-D9GDP9QT"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T11:05:10.745Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-724XZXOZ"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3094
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7VAPU4XD"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T11:05:11.479Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-724XZXOZ"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-JWRL58H5"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:07:36.714Z"
+    evidence_type: "host_integration"
+    prompt_summary: "继续"
+    prompt_length: 2
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-YHEY99L1"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:07:36.715Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ME1665Z3"
+    prompt_summary: "继续"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8M2DRGDT"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:07:39.504Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ME1665Z3"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 2789
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-L2GOIQII"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:07:39.917Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ME1665Z3"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-FFTV6T5F"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:10:02.571Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -195.2K removed, +14.4K summary
+
+│░░░██░░░░░░░░░░░░░░░░░░█░░░░█░░░░░░░░███░░░░█⣿⣿⣿⣿█│
+▣ Compression #7 -3.9K removed, +673 summary
+→ Topic: Semantic re-run Arm A complete
+→ Items: 22 messages "
+    prompt_length: 223
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8X3O23MY"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:10:02.571Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-83WU1CGQ"
+    prompt_summary: "▣ DCP | -195.2K removed, +14.4K summary
+
+│░░░██░░░░░░░░░░░░░░░░░░█░░░░█░░░░░░░░███░░░░█⣿⣿⣿⣿█│
+▣ Compression #7 -3.9K removed, +673 summary
+→ Topic: Semantic re-run Arm A complete
+→ Items: 22 messages "
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-BJR7ZMIH"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:10:05.703Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-83WU1CGQ"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3132
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-SHVMRMOS"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:10:06.316Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-83WU1CGQ"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-7TJS30AF"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:28:49.606Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -199.5K removed, +15.3K summary
+
+│░░░██░░░░░░░░░░░░░░░░██░░░░░░░░░░░░███░░░░░░░░⣿⣿██│
+▣ Compression #8 -4K removed, +914 summary
+→ Topic: Semantic delivery confirmed + Arm B running
+→ Items: 1"
+    prompt_length: 234
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-K370VZP3"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:28:49.607Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-GMOJUQ1K"
+    prompt_summary: "▣ DCP | -199.5K removed, +15.3K summary
+
+│░░░██░░░░░░░░░░░░░░░░██░░░░░░░░░░░░███░░░░░░░░⣿⣿██│
+▣ Compression #8 -4K removed, +914 summary
+→ Topic: Semantic delivery confirmed + Arm B running
+→ Items: 1"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-95XULQ84"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:28:52.882Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-GMOJUQ1K"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3275
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-1V8UGRYV"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:28:53.567Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-GMOJUQ1K"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-7XQSS41F"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:46:30.682Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9dd7e838ffeZ92KBaXRppM2AP"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QWHYRO3G"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:46:30.682Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-H0H5LMOK"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9dd7e838ffeZ92KBaXRppM2AP"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-HCFEP9RG"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:46:33.648Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-H0H5LMOK"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 2966
+    session_id: "ses_f9dd7e838ffeZ92KBaXRppM2AP"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QY95T2M6"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:46:33.848Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-H0H5LMOK"
+    session_id: "ses_f9dd7e838ffeZ92KBaXRppM2AP"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-T7AKCV33"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:46:37.238Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9dd7ce7affegRgf0Jm5PunBfx"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VDFYFFJU"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:46:37.238Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WW3QLXYG"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9dd7ce7affegRgf0Jm5PunBfx"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TRV5S44Y"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:46:40.339Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WW3QLXYG"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3101
+    session_id: "ses_f9dd7ce7affegRgf0Jm5PunBfx"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-RH8OSM0G"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:46:40.567Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WW3QLXYG"
+    session_id: "ses_f9dd7ce7affegRgf0Jm5PunBfx"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-ZX0FVWQF"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:46:42.953Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9dd7b83affeBmmW5tbCFmFu3m"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-RGKLGS62"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:46:42.954Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EUH8X0YF"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9dd7b83affeBmmW5tbCFmFu3m"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-XY71PWGK"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:46:46.018Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EUH8X0YF"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3064
+    session_id: "ses_f9dd7b83affeBmmW5tbCFmFu3m"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-W17C3XY9"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:46:46.152Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-EUH8X0YF"
+    session_id: "ses_f9dd7b83affeBmmW5tbCFmFu3m"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-1NGQXADZ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:55:18.619Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9dcfdad8ffej5WEUdYk7orTPi"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9CCWB2NX"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:55:18.619Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CMRGVTRU"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9dcfdad8ffej5WEUdYk7orTPi"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MDWFYERA"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:55:21.742Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CMRGVTRU"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3123
+    session_id: "ses_f9dcfdad8ffej5WEUdYk7orTPi"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-NH8PNNZJ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:55:21.893Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CMRGVTRU"
+    session_id: "ses_f9dcfdad8ffej5WEUdYk7orTPi"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-1LMKB3G7"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T12:56:50.414Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -218.2K removed, +24.7K summary
+
+│░░██░░░░░░░░░░░░░░░░█░░░░░░░░░░░███░░░█░░░░░██⣿⣿⣿█│
+▣ Compression #9 -18.1K removed, +9.3K summary
+→ Topic: Semantic re-run full scoring + F2 artifact
+→ Items"
+    prompt_length: 237
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-2GZ755CP"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T12:56:50.414Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QEXUWHWT"
+    prompt_summary: "▣ DCP | -218.2K removed, +24.7K summary
+
+│░░██░░░░░░░░░░░░░░░░█░░░░░░░░░░░███░░░█░░░░░██⣿⣿⣿█│
+▣ Compression #9 -18.1K removed, +9.3K summary
+→ Topic: Semantic re-run full scoring + F2 artifact
+→ Items"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-0J9D06VG"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T12:56:53.396Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QEXUWHWT"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 2982
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-EMQVCFEQ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T12:56:54.012Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QEXUWHWT"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-K5MJJ8EA"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T13:10:42.016Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前任务：
+
+验证刚完成的 Phase 8.2.1.5 Retrieval Relevance Improvement。
+
+Trae 已完成实现：
+
+文件：
+retrieval_optimizer.py
+
+已修改：
+
+1. compute_static_relevance()：
+
+   * 不再只检查 tags
+   * 现在同时检查 ro"
+    prompt_length: 3107
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LM1X8NVD"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T13:10:42.016Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-U8GRFR7Y"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前任务：
+
+验证刚完成的 Phase 8.2.1.5 Retrieval Relevance Improvement。
+
+Trae 已完成实现：
+
+文件：
+retrieval_optimizer.py
+
+已修改：
+
+1. compute_static_relevance()：
+
+   * 不再只检查 tags
+   * 现在同时检查 ro"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-YYO40Y39"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T13:10:45.013Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-U8GRFR7Y"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+    memory_count: 5
+    latency_ms: 2997
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-PPWQJA78"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T13:10:45.408Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-U8GRFR7Y"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+  - event_id: "EVT-4ZAT4NOO"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T13:15:18.390Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -242.3K removed, +26.6K summary
+
+│░░██░░░░░░░░░░░░░░░█░░░█░░░░░░███░░░█░░░░░██░░░█⣿█│
+▣ Compression #10 -24.1K removed, +1.9K summary
+→ Topic: Layer1 retrieval validation findings
+→ Items: 11 "
+    prompt_length: 232
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-RP62UXKR"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T13:15:18.391Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MVEAZH1Q"
+    prompt_summary: "▣ DCP | -242.3K removed, +26.6K summary
+
+│░░██░░░░░░░░░░░░░░░█░░░█░░░░░░███░░░█░░░░░██░░░█⣿█│
+▣ Compression #10 -24.1K removed, +1.9K summary
+→ Topic: Layer1 retrieval validation findings
+→ Items: 11 "
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-30Q2FDQ9"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T13:15:21.410Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MVEAZH1Q"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+    memory_count: 5
+    latency_ms: 3019
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KQLOGZS1"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T13:15:21.964Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MVEAZH1Q"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+  - event_id: "EVT-CJM054WY"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T14:43:56.442Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9d6c678affeqTeYkWDqGeT0zQ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-HA6I7SYP"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T14:43:56.443Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4MSBZ9BW"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9d6c678affeqTeYkWDqGeT0zQ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VKXBTTBN"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T14:43:59.840Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4MSBZ9BW"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3397
+    session_id: "ses_f9d6c678affeqTeYkWDqGeT0zQ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GOKON2EJ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T14:44:00.021Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4MSBZ9BW"
+    session_id: "ses_f9d6c678affeqTeYkWDqGeT0zQ"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-RFHFTWVU"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T14:44:01.230Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9d6c5327ffe5r5jszulXsXmbp"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GQIFY2TD"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T14:44:01.230Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-7X6V1PNF"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9d6c5327ffe5r5jszulXsXmbp"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VGJVLM5V"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T14:44:04.636Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-7X6V1PNF"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3406
+    session_id: "ses_f9d6c5327ffe5r5jszulXsXmbp"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KAE7B7YX"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T14:44:04.786Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-7X6V1PNF"
+    session_id: "ses_f9d6c5327ffe5r5jszulXsXmbp"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-Y18B3XRG"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T14:44:06.523Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9d6c3d9dffewC9VIIF1vM3GBN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8GT4ZCUL"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T14:44:06.523Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0L03ZQF7"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9d6c3d9dffewC9VIIF1vM3GBN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6LWO94IB"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T14:44:09.806Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0L03ZQF7"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3283
+    session_id: "ses_f9d6c3d9dffewC9VIIF1vM3GBN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-4C8LZJKN"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T14:44:10.019Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0L03ZQF7"
+    session_id: "ses_f9d6c3d9dffewC9VIIF1vM3GBN"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-W4211EDX"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T22:19:47.389Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前阶段：
+
+Phase 8.2.1.5 Retrieval Relevance Improvement — Runtime Validation。
+
+Trae 已完成 Retrieval Fix Implementation。
+
+本轮已完成：
+
+1. `runtime/router/rules.yaml`
+
+   * 增加通用工程领域关键"
+    prompt_length: 4004
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-O6KSN72E"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T22:19:47.390Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KBSI4KYV"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前阶段：
+
+Phase 8.2.1.5 Retrieval Relevance Improvement — Runtime Validation。
+
+Trae 已完成 Retrieval Fix Implementation。
+
+本轮已完成：
+
+1. `runtime/router/rules.yaml`
+
+   * 增加通用工程领域关键"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CMQYC61J"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T22:19:50.651Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KBSI4KYV"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+    memory_count: 5
+    latency_ms: 3261
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-L29NCVKR"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T22:19:52.445Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KBSI4KYV"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+  - event_id: "EVT-8GIN4BT2"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T22:20:15.370Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -266.3K removed, +32.5K summary
+
+│░░█░░░░░░░░░░░░░█░░░░░░░░░█░░░█░░░░██░░█░█⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #11 -21.3K removed, +6K summary
+→ Topic: Prior 8.2.1.5 round + new task setup
+→ Items: 64 me"
+    prompt_length: 230
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TI6X6TBU"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T22:20:15.371Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-1UQMCJ9P"
+    prompt_summary: "▣ DCP | -266.3K removed, +32.5K summary
+
+│░░█░░░░░░░░░░░░░█░░░░░░░░░█░░░█░░░░██░░█░█⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #11 -21.3K removed, +6K summary
+→ Topic: Prior 8.2.1.5 round + new task setup
+→ Items: 64 me"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-OJ328KJ9"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T22:20:18.696Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-1UQMCJ9P"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3325
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GW7KVRQE"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T22:20:19.325Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-1UQMCJ9P"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-D8AXSQQ3"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T22:22:05.772Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -275.3K removed, +34.5K summary
+
+│░░█░░░░░░░░░░░░█░░░░░░░░░██░░░░░░░██░░█░░░░░░░░░⣿█│
+▣ Compression #12 -9K removed, +2K summary
+→ Topic: Layer1 evidence for 2nd retrieval fix
+→ Items: 10 mess"
+    prompt_length: 228
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-NIGNONLF"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T22:22:05.772Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4EXF6F6F"
+    prompt_summary: "▣ DCP | -275.3K removed, +34.5K summary
+
+│░░█░░░░░░░░░░░░█░░░░░░░░░██░░░░░░░██░░█░░░░░░░░░⣿█│
+▣ Compression #12 -9K removed, +2K summary
+→ Topic: Layer1 evidence for 2nd retrieval fix
+→ Items: 10 mess"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WA4PJ0SC"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T22:22:09.566Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4EXF6F6F"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+    memory_count: 5
+    latency_ms: 3794
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7GNKFETK"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T22:22:10.456Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4EXF6F6F"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+  - event_id: "EVT-XC2Y4MZF"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T23:00:45.907Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -284.6K removed, +35.7K summary
+
+│░░█░░░░░░░░░░░█░░░░░░░░██░░░░░░░█░░░░░░░░░░░░░⣿⣿⣿█│
+▣ Compression #13 -8.3K removed, +1.2K summary
+→ Topic: 8.2.1.5 Arm A done + Arm B running
+→ Items: 28 mes"
+    prompt_length: 229
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-1JKAXVCE"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T23:00:45.907Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SEGZAPFU"
+    prompt_summary: "▣ DCP | -284.6K removed, +35.7K summary
+
+│░░█░░░░░░░░░░░█░░░░░░░░██░░░░░░░█░░░░░░░░░░░░░⣿⣿⣿█│
+▣ Compression #13 -8.3K removed, +1.2K summary
+→ Topic: 8.2.1.5 Arm A done + Arm B running
+→ Items: 28 mes"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WYAWRREE"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T23:00:49.710Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SEGZAPFU"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3803
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ME7BDHT4"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T23:00:50.229Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SEGZAPFU"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-3IBP6HQZ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T23:34:41.674Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -287.4K removed, +36.3K summary
+
+│░██░░░░░░░░█░░░░░░░░░░██░░█░░░░█░░█░░░░░░░░░░░░█⣿█│
+▣ Compression #14 -1.7K removed, +578 summary
+→ Topic: Arm B F1 telemetry verification
+→ Items: 8 messages"
+    prompt_length: 223
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ERN10S2G"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T23:34:41.676Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QEV228D9"
+    prompt_summary: "▣ DCP | -287.4K removed, +36.3K summary
+
+│░██░░░░░░░░█░░░░░░░░░░██░░█░░░░█░░█░░░░░░░░░░░░█⣿█│
+▣ Compression #14 -1.7K removed, +578 summary
+→ Topic: Arm B F1 telemetry verification
+→ Items: 8 messages"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-0CA0OCOF"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T23:34:45.703Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QEV228D9"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4027
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-23C539M0"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T23:34:46.305Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-QEV228D9"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-VORJNENY"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T23:45:49.119Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9b7c562dffe6hRVKGERwe8yOZ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GTY8WLBK"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T23:45:49.120Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-NF6E00EG"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9b7c562dffe6hRVKGERwe8yOZ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3V8YGHXU"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T23:45:52.968Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-NF6E00EG"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3848
+    session_id: "ses_f9b7c562dffe6hRVKGERwe8yOZ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-B9SW1WIW"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T23:45:53.318Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-NF6E00EG"
+    session_id: "ses_f9b7c562dffe6hRVKGERwe8yOZ"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-QVQ60KBP"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T23:45:53.500Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9b7c4261ffelonaryYxT8zRRr"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5G35AMQ4"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T23:45:53.501Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UBSZUYTZ"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9b7c4261ffelonaryYxT8zRRr"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-I14GW165"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T23:45:57.391Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UBSZUYTZ"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3890
+    session_id: "ses_f9b7c4261ffelonaryYxT8zRRr"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-0WTZZ6EB"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T23:45:57.765Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UBSZUYTZ"
+    session_id: "ses_f9b7c4261ffelonaryYxT8zRRr"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-KXTBQUKA"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-02T23:48:16.773Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -299.8K removed, +41.3K summary
+
+│░██░░░░░░░░░░█░░█░░░░░█░░░░░░░█░░█░░░░░░░░░░░░█░⣿█│
+▣ Compression #15 -12.1K removed, +5K summary
+→ Topic: 8.2.1.5 scoring + report verdict
+→ Items: 10 messag"
+    prompt_length: 226
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-Z4JK0URA"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-02T23:48:16.773Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-6RLFJPGZ"
+    prompt_summary: "▣ DCP | -299.8K removed, +41.3K summary
+
+│░██░░░░░░░░░░█░░█░░░░░█░░░░░░░█░░█░░░░░░░░░░░░█░⣿█│
+▣ Compression #15 -12.1K removed, +5K summary
+→ Topic: 8.2.1.5 scoring + report verdict
+→ Items: 10 messag"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7CP86W33"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-02T23:48:20.595Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-6RLFJPGZ"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3822
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-OXOZHP3G"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-02T23:48:21.249Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-6RLFJPGZ"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-X9IZ4PJQ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T00:07:51.239Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前阶段：
+
+Phase 8.2.1.5 Final Runtime Verification。
+
+背景：
+
+Trae 已完成 Memory Influence Attribution Fix。
+
+本次修复解决的问题：
+
+之前：
+
+Retrieval ✅
+Semantic Injection ✅
+Agent 使用 Memory ✅
+
+但是："
+    prompt_length: 2293
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GC3D1AGC"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T00:07:51.239Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8P3WXMCR"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前阶段：
+
+Phase 8.2.1.5 Final Runtime Verification。
+
+背景：
+
+Trae 已完成 Memory Influence Attribution Fix。
+
+本次修复解决的问题：
+
+之前：
+
+Retrieval ✅
+Semantic Injection ✅
+Agent 使用 Memory ✅
+
+但是："
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-YSQZZXPT"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T00:07:54.935Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8P3WXMCR"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+    memory_count: 5
+    latency_ms: 3696
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-O7VOSJO2"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T00:07:55.619Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8P3WXMCR"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+  - event_id: "EVT-P44GC2B6"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-03T00:27:36.206Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1372450
+    cwd: "/home/shade"
+    session_id: ""
+  - event_id: "EVT-OR9HMVB1"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-03T00:29:05.658Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1372450
+    cwd: "/home/shade"
+    session_id: ""
+  - event_id: "EVT-OVY35VPI"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-03T00:29:12.041Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1372450
+    cwd: "/home/shade"
+    session_id: ""
+  - event_id: "EVT-A13QP54Q"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-03T00:30:02.178Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1376099
+    cwd: "/home/shade"
+    session_id: ""
+  - event_id: "EVT-AJ0JHQ88"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T00:30:09.914Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9b53b236ffeOo6diBMAcCTW83"
+    cwd: "/home/shade"
+  - event_id: "EVT-AF9HR15U"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T00:30:09.914Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-YTYVI5K1"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9b53b236ffeOo6diBMAcCTW83"
+    cwd: "/home/shade"
+  - event_id: "EVT-CZAUJ9GO"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T00:30:13.584Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-YTYVI5K1"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3670
+    session_id: "ses_f9b53b236ffeOo6diBMAcCTW83"
+    cwd: "/home/shade"
+  - event_id: "EVT-2QJ2W44H"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T00:30:13.768Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-YTYVI5K1"
+    session_id: "ses_f9b53b236ffeOo6diBMAcCTW83"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-986DQI38"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T00:39:20.749Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -304.2K removed, +43K summary
+
+│░██░░░░░░░░░░░░░░░░░░█░░░░░░██░░░█░░░░░░░░░░██░⣿⣿█│
+▣ Compression #16 -3.7K removed, +1.7K summary
+→ Topic: 8.2.1.5 final verification setup + launch
+→ Items: 1"
+    prompt_length: 234
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8ZZXFYGO"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T00:39:20.749Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OJ2CDXLT"
+    prompt_summary: "▣ DCP | -304.2K removed, +43K summary
+
+│░██░░░░░░░░░░░░░░░░░░█░░░░░░██░░░█░░░░░░░░░░██░⣿⣿█│
+▣ Compression #16 -3.7K removed, +1.7K summary
+→ Topic: 8.2.1.5 final verification setup + launch
+→ Items: 1"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-54JTZX95"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T00:39:24.385Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OJ2CDXLT"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3636
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8KTJGCGS"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T00:39:25.094Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-OJ2CDXLT"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-JUKO708O"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-03T00:44:56.068Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1382514
+    cwd: "/home/shade"
+    session_id: ""
+  - event_id: "EVT-ZWO7UHUQ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T00:45:26.226Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9b45b5a7ffeE9f03d7exl4IT6"
+    cwd: "/home/shade"
+  - event_id: "EVT-HOBYFT3E"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T00:45:26.227Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-X5CZ19OY"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9b45b5a7ffeE9f03d7exl4IT6"
+    cwd: "/home/shade"
+  - event_id: "EVT-7UQ8E7AX"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T00:45:29.976Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-X5CZ19OY"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3749
+    session_id: "ses_f9b45b5a7ffeE9f03d7exl4IT6"
+    cwd: "/home/shade"
+  - event_id: "EVT-WJ2NQ7GZ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T00:45:30.175Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-X5CZ19OY"
+    session_id: "ses_f9b45b5a7ffeE9f03d7exl4IT6"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-M2697FBS"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-03T00:47:33.261Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1384084
+    cwd: "/home/shade"
+    session_id: ""
+  - event_id: "EVT-6AZ3B3GB"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T00:47:40.569Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9b43aad6ffesAu14U2iAqYKpB"
+    cwd: "/home/shade"
+  - event_id: "EVT-VFLKMQ7X"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T00:47:40.570Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-5ZVQZWPB"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9b43aad6ffesAu14U2iAqYKpB"
+    cwd: "/home/shade"
+  - event_id: "EVT-258GT7UN"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T00:47:44.218Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-5ZVQZWPB"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3648
+    session_id: "ses_f9b43aad6ffesAu14U2iAqYKpB"
+    cwd: "/home/shade"
+  - event_id: "EVT-DY03CQCE"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T00:47:44.449Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-5ZVQZWPB"
+    session_id: "ses_f9b43aad6ffesAu14U2iAqYKpB"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-F3GAOALQ"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-03T01:06:24.265Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1393922
+    cwd: "/home/shade"
+    session_id: ""
+  - event_id: "EVT-F3F18GRD"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T01:06:47.262Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9b323429ffeiZ2yhUFEchhLKK"
+    cwd: "/home/shade"
+  - event_id: "EVT-3SR1ANH1"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T01:06:47.263Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-24BWFNAE"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9b323429ffeiZ2yhUFEchhLKK"
+    cwd: "/home/shade"
+  - event_id: "EVT-HDM60VGT"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T01:06:51.191Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-24BWFNAE"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 3927
+    session_id: "ses_f9b323429ffeiZ2yhUFEchhLKK"
+    cwd: "/home/shade"
+  - event_id: "EVT-UV2APFU4"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T01:06:51.381Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-24BWFNAE"
+    session_id: "ses_f9b323429ffeiZ2yhUFEchhLKK"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-D1YVJVFH"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T01:09:01.782Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -309.6K removed, +44K summary
+
+│░██░░░░░░░░░█░░░░░░░█░░░░░░██░░░░░░░░░█░░░█░░█░⣿⣿█│
+▣ Compression #17 -4.6K removed, +1K summary
+→ Topic: 8.2.1.5 final: Arm A done, Arm B running
+→ Items: 26 m"
+    prompt_length: 231
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-C49B5876"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T01:09:01.782Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-RLFWA3GE"
+    prompt_summary: "▣ DCP | -309.6K removed, +44K summary
+
+│░██░░░░░░░░░█░░░░░░░█░░░░░░██░░░░░░░░░█░░░█░░█░⣿⣿█│
+▣ Compression #17 -4.6K removed, +1K summary
+→ Topic: 8.2.1.5 final: Arm A done, Arm B running
+→ Items: 26 m"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-459GOXU4"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T01:09:05.537Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-RLFWA3GE"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3755
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CC0P7I6M"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T01:09:06.179Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-RLFWA3GE"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-UQX4617E"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T01:11:50.334Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -315.6K removed, +45.3K summary
+
+│░█░░░░░░░░░░█░░░░░░██░░█░░░█░░█░░░░░░░░░░█░█░░░░⣿█│
+▣ Compression #18 -6.1K removed, +1.3K summary
+→ Topic: 8.2.1.5 final: Arm A failure wave
+→ Items: 10 mess"
+    prompt_length: 227
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DKTUS457"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T01:11:50.335Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Z6CZWTRX"
+    prompt_summary: "▣ DCP | -315.6K removed, +45.3K summary
+
+│░█░░░░░░░░░░█░░░░░░██░░█░░░█░░█░░░░░░░░░░█░█░░░░⣿█│
+▣ Compression #18 -6.1K removed, +1.3K summary
+→ Topic: 8.2.1.5 final: Arm A failure wave
+→ Items: 10 mess"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-87VG1EXH"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T01:11:54.284Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Z6CZWTRX"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3949
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-YDT6JRQB"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T01:11:54.914Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Z6CZWTRX"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-3H5O7111"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T01:48:49.393Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -319.1K removed, +46.2K summary
+
+│░█░░░░░░░░░█░░░░░░░█░░█░░░█░░░░░░░░░░░░░░█░░░░░█⣿█│
+▣ Compression #19 -2.4K removed, +871 summary
+→ Topic: Arm B outage wave + monitoring plan
+→ Items: 19 mes"
+    prompt_length: 229
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-PD3PDI7V"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T01:48:49.393Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KLQUTOO3"
+    prompt_summary: "▣ DCP | -319.1K removed, +46.2K summary
+
+│░█░░░░░░░░░█░░░░░░░█░░█░░░█░░░░░░░░░░░░░░█░░░░░█⣿█│
+▣ Compression #19 -2.4K removed, +871 summary
+→ Topic: Arm B outage wave + monitoring plan
+→ Items: 19 mes"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QCMC8LU3"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T01:48:53.116Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KLQUTOO3"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3723
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VPXRRHHH"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T01:48:53.864Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KLQUTOO3"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-7JAKSFOV"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T02:10:08.827Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -322.1K removed, +46.9K summary
+
+│░█░░░░░░░░░█░░░░░░██░░░░░█░░█░░░░░░░░░░░█░░░░░░░⣿█│
+▣ Compression #20 -2.4K removed, +707 summary
+→ Topic: Arm B F1 outage retry monitoring
+→ Items: 12 messag"
+    prompt_length: 226
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MQ11OSCW"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T02:10:08.828Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZTN7LO02"
+    prompt_summary: "▣ DCP | -322.1K removed, +46.9K summary
+
+│░█░░░░░░░░░█░░░░░░██░░░░░█░░█░░░░░░░░░░░█░░░░░░░⣿█│
+▣ Compression #20 -2.4K removed, +707 summary
+→ Topic: Arm B F1 outage retry monitoring
+→ Items: 12 messag"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-XJN9WMOI"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T02:10:12.708Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZTN7LO02"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3879
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7K5DX4VY"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T02:10:13.381Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZTN7LO02"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-IF0NL0ZU"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T02:14:14.736Z"
+    evidence_type: "host_integration"
+    prompt_summary: "继续"
+    prompt_length: 2
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TQBICRKQ"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T02:14:14.736Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HXLT71JW"
+    prompt_summary: "继续"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8NZL841Z"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T02:14:18.351Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HXLT71JW"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3615
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-HLGDTCJ9"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T02:14:18.783Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HXLT71JW"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-635X2LZK"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T02:26:56.395Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -327.4K removed, +47.4K summary
+
+│░█░░░░░░░░░░░░░░░░█░░█░░░█░█░░░░░░█░░░██░░░░░░░░██│
+▣ Compression #21 -5K removed, +514 summary
+→ Topic: Arm B final polling & failure verification
+→ Items: 1"
+    prompt_length: 233
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-96DEACB2"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T02:26:56.395Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZED1WZDU"
+    prompt_summary: "▣ DCP | -327.4K removed, +47.4K summary
+
+│░█░░░░░░░░░░░░░░░░█░░█░░░█░█░░░░░░█░░░██░░░░░░░░██│
+▣ Compression #21 -5K removed, +514 summary
+→ Topic: Arm B final polling & failure verification
+→ Items: 1"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-1TGFZMVA"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T02:27:00.210Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZED1WZDU"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3815
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MF64JBE4"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T02:27:00.747Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZED1WZDU"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-HHWBJV5X"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T02:27:36.875Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -333.2K removed, +48K summary
+
+│░█░░░░░░░░░░░█░░░░█░░░░░█░░█░░░░░░░░░█░░█░░░░░█░░█│
+▣ Compression #22 -5.8K removed, +625 summary
+→ Topic: Final audit: 7 ArmA / 3 ArmB failures
+→ Items: 5 mess"
+    prompt_length: 227
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ELOLR89B"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T02:27:36.875Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-TTF8WO1K"
+    prompt_summary: "▣ DCP | -333.2K removed, +48K summary
+
+│░█░░░░░░░░░░░█░░░░█░░░░░█░░█░░░░░░░░░█░░█░░░░░█░░█│
+▣ Compression #22 -5.8K removed, +625 summary
+→ Topic: Final audit: 7 ArmA / 3 ArmB failures
+→ Items: 5 mess"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DKPITKKQ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T02:27:40.671Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-TTF8WO1K"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 3796
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DNFIVDOG"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T02:27:41.438Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-TTF8WO1K"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-3P746U0G"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T02:28:21.757Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -337.3K removed, +48.5K summary
+
+│░█░░░░░░░░░░░░░░░██░░░░░█░░░░░░░░░░░░██░░░░░░░░░░█│
+▣ Compression #23 -4.1K removed, +482 summary
+→ Topic: Attribution verified + reruns launched
+→ Items: 7 m"
+    prompt_length: 230
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8FPM4EB7"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T02:28:21.757Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-RMOSYAK3"
+    prompt_summary: "▣ DCP | -337.3K removed, +48.5K summary
+
+│░█░░░░░░░░░░░░░░░██░░░░░█░░░░░░░░░░░░██░░░░░░░░░░█│
+▣ Compression #23 -4.1K removed, +482 summary
+→ Topic: Attribution verified + reruns launched
+→ Items: 7 m"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-EINYA0QQ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T02:28:25.954Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-RMOSYAK3"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4197
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-C6UH9TEZ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T02:28:26.629Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-RMOSYAK3"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-HK8CXE49"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T02:46:23.731Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -339.5K removed, +48.9K summary
+
+│░█░░░░░░░░█░░░░░░█░░█░░█░░██░░░░░░░░██░░░░░░░░░░⣿█│
+▣ Compression #24 -1.9K removed, +466 summary
+→ Topic: Reruns: A done, B-F1 running
+→ Items: 12 messages a"
+    prompt_length: 222
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-530RZ2IS"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T02:46:23.731Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-GRO8I23Y"
+    prompt_summary: "▣ DCP | -339.5K removed, +48.9K summary
+
+│░█░░░░░░░░█░░░░░░█░░█░░█░░██░░░░░░░░██░░░░░░░░░░⣿█│
+▣ Compression #24 -1.9K removed, +466 summary
+→ Topic: Reruns: A done, B-F1 running
+→ Items: 12 messages a"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-772MOLO9"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T02:46:27.731Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-GRO8I23Y"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4000
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3TAZWU56"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T02:46:28.477Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-GRO8I23Y"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-56HFPRAL"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T03:07:01.775Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -341.5K removed, +49.3K summary
+
+│░█░░░░░░█░█░░░░░░█░░░░░█░░░░░░░░░░░█░░░░░░░░░░░░⣿█│
+▣ Compression #25 -1.4K removed, +342 summary
+→ Topic: B-F1 reruns complete
+→ Items: 12 messages and 11 to"
+    prompt_length: 214
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CHTSX64R"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T03:07:01.775Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-43NAV7W5"
+    prompt_summary: "▣ DCP | -341.5K removed, +49.3K summary
+
+│░█░░░░░░█░█░░░░░░█░░░░░█░░░░░░░░░░░█░░░░░░░░░░░░⣿█│
+▣ Compression #25 -1.4K removed, +342 summary
+→ Topic: B-F1 reruns complete
+→ Items: 12 messages and 11 to"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-I1R6RIUA"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T03:07:05.791Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-43NAV7W5"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4016
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-76XJVUSH"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T03:07:06.557Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-43NAV7W5"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-NZOSJCB8"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T03:07:26.388Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -342.6K removed, +49.5K summary
+
+│░█░░░░░░░░█░█░░░██░░░░░█░█░░░░░░░░░██░░░░░░█░░░░░█│
+▣ Compression #26 -1.1K removed, +217 summary
+→ Topic: Rerun success verification
+→ Items: 3 messages and "
+    prompt_length: 218
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QDJ1785K"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T03:07:26.389Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8HORIV3Z"
+    prompt_summary: "▣ DCP | -342.6K removed, +49.5K summary
+
+│░█░░░░░░░░█░█░░░██░░░░░█░█░░░░░░░░░██░░░░░░█░░░░░█│
+▣ Compression #26 -1.1K removed, +217 summary
+→ Topic: Rerun success verification
+→ Items: 3 messages and "
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-YRYPLWTK"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T03:07:30.459Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8HORIV3Z"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4070
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-A639414L"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T03:07:31.190Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8HORIV3Z"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-6O29U0EV"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T03:08:17.352Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -404K removed, +51.3K summary
+
+│░⣿░░░░░░░░⣿░⣿░░░⣿⣿░░░░░⣿░⣿░░░░░░░░░░⣿░░░░░░░⣿░░░░█│
+▣ Compression #27 -61.4K removed, +51.3K summary
+→ Topic: Consolidated full session history
+→ Items: 111 mes"
+    prompt_length: 229
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-29H0ABFO"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T03:08:17.353Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-M06Z8IID"
+    prompt_summary: "▣ DCP | -404K removed, +51.3K summary
+
+│░⣿░░░░░░░░⣿░⣿░░░⣿⣿░░░░░⣿░⣿░░░░░░░░░░⣿░░░░░░░⣿░░░░█│
+▣ Compression #27 -61.4K removed, +51.3K summary
+→ Topic: Consolidated full session history
+→ Items: 111 mes"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8VYF336L"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T03:08:21.501Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-M06Z8IID"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4148
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-55AJ8AWB"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T03:08:22.233Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-M06Z8IID"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-ATZY67KJ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T03:09:22.459Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9ac1ee79ffetrQg1yksiBnTdh"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-G8YG8KKX"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T03:09:22.459Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9BRBYRUF"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9ac1ee79ffetrQg1yksiBnTdh"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KRXYZHLJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T03:09:26.486Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9BRBYRUF"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4027
+    session_id: "ses_f9ac1ee79ffetrQg1yksiBnTdh"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-57DGZX74"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T03:09:26.681Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-9BRBYRUF"
+    session_id: "ses_f9ac1ee79ffetrQg1yksiBnTdh"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-K7PP11LL"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T03:11:23.037Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9ac016b3ffe3oS4Zca3CeY1TW"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9NSC1PDM"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T03:11:23.037Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4OVV9L6J"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9ac016b3ffe3oS4Zca3CeY1TW"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5323FFXW"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T03:11:27.099Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4OVV9L6J"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4062
+    session_id: "ses_f9ac016b3ffe3oS4Zca3CeY1TW"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-573407NR"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T03:11:27.284Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4OVV9L6J"
+    session_id: "ses_f9ac016b3ffe3oS4Zca3CeY1TW"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-3AUXWFQD"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T03:12:15.022Z"
+    evidence_type: "host_integration"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    prompt_length: 258
+    session_id: "ses_f9abf4bb8ffeSmq7ZnfWokGpZB"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JTHFOOC5"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T03:12:15.023Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-T7M89AR9"
+    prompt_summary: "[SUPERMEMORY UPDATE]
+Supermemory update available: v2.0.12 -> v2.0.13
+Run (if you have a JS runtime): bunx opencode-supermemory@latest install
+Otherwise (e.g. standalone opencode binary), pin "opencod"
+    session_id: "ses_f9abf4bb8ffeSmq7ZnfWokGpZB"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-4W4DBSW1"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T03:12:19.041Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-T7M89AR9"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4018
+    session_id: "ses_f9abf4bb8ffeSmq7ZnfWokGpZB"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-B8L3H081"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T03:12:19.329Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-T7M89AR9"
+    session_id: "ses_f9abf4bb8ffeSmq7ZnfWokGpZB"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-KWDUI8K4"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T03:17:25.390Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前阶段：
+
+Phase 8.2.1.5 Final Runtime Verification。
+
+背景：
+
+Trae 已完成 Memory Influence Attribution Fix。
+
+已完成修复：
+
+1. Hypothesis Memory 不再被忽略。
+2. decision.influence 支持：
+
+none
+
+con"
+    prompt_length: 2145
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-F6XP4NF1"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T03:17:25.391Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DNZ9AYIB"
+    prompt_summary: "你现在是 Agent OS Runtime Host。
+
+当前阶段：
+
+Phase 8.2.1.5 Final Runtime Verification。
+
+背景：
+
+Trae 已完成 Memory Influence Attribution Fix。
+
+已完成修复：
+
+1. Hypothesis Memory 不再被忽略。
+2. decision.influence 支持：
+
+none
+
+con"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ZJ3SRB8S"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T03:17:29.298Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DNZ9AYIB"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"
+    memory_count: 5
+    latency_ms: 3907
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-UGBU028T"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T03:17:29.765Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DNZ9AYIB"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "rag-engineer"

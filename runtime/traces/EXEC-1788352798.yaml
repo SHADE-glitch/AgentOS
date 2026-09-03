@@ -1,0 +1,273 @@
+# Execution Trace — AOS-7AFCFC (Memory ON)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T12:39:58.069126+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788352798
+trace_id: TRACE-EXEC-1788352798-6ca575a6daff
+task_id: AOS-7AFCFC
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'on'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T12:38:22.927406+00:00'
+    memory_retrieved: '2026-09-02T12:38:25.701848+00:00'
+    routing_completed: '2026-09-02T12:38:25.703061+00:00'
+    skill_loaded: '2026-09-02T12:38:25.705699+00:00'
+    orchestration_completed: '2026-09-02T12:38:25.706261+00:00'
+    agent_started: '2026-09-02T12:38:25.711080+00:00'
+    agent_completed: '2026-09-02T12:39:58.068981+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T12:38:22.826965+00:00'
+  pid: 1017787
+  cwd: /home/shade/Public/test
+  task_id: AOS-7AFCFC
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: confirmation
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: T-005
+    type: task
+    category: ai
+    relevance_score: 0.01
+    evidence_weight: 0.4
+    final_score: 0.367
+    used: true
+    match_reasons: &id003
+    - success_rate=0.877
+    - confidence=0.4
+  - memory_id: P-001
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.351
+    used: true
+    match_reasons: &id004
+    - success_rate=0.902
+    - confidence=0.4
+  - memory_id: S-002
+    type: success
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.349
+    used: true
+    match_reasons: &id005
+    - success_rate=0.896
+    - confidence=0.4
+  - memory_id: T-010
+    type: task
+    category: optimization
+    relevance_score: 0.0
+    evidence_weight: 0.0
+    final_score: 0.314
+    used: true
+    match_reasons: &id006
+    - success_rate=0.929
+  - memory_id: S-001
+    type: success
+    category: ai
+    relevance_score: 0.0
+    evidence_weight: 0.0
+    final_score: 0.295
+    used: true
+    match_reasons: &id007
+    - success_rate=0.923
+  memories_used:
+  - T-005
+  - P-001
+  - S-002
+  - T-010
+  - S-001
+  influence: confirmation
+  memory_summary: Retrieved 5 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9ddf44ceffe2kaxzI7lusPkUL
+  tokens:
+    total: 32568
+    input: 2360
+    output: 1805
+    reasoning: 755
+    cache_read: 27648
+    cache_write: 0
+  cost: 0
+  latency_ms: 92356
+agent_response: "Assessment complete. I traced the full aggregate read path and audited\
+  \ every write site. Here is my structured assessment.\n\n## 1. Cache design (read\
+  \ path)\n\n`DashboardService.build()` (`DashboardService.java:52`) is a **write-through\
+  \ cache-on-read** with a single aggregate key per user:\n\n- **Key:** `dashboard:user:{userId}`\
+  \ (`DashboardService.java:48`)\n- **TTL:** 10 minutes absolute (Redis `SET k v PX`\
+  \ via Redisson `bucket.set(v, 10, MINUTES)`)\n- **Value:** full serialized `DashboardVO`\
+  \ (stats + 4-dim radar + trend + weak points + suggestions)\n- **Miss path:** `compute()`\
+  \ rebuilds from DB, then re-puts with a fresh 10-min TTL.\n\nCrucially, `compute()`\
+  \ (`DashboardService.java:93-101`) reads **two DB inputs**:\n1. **ALL** `InterviewResult`\
+  \ rows for the user (any session status) → dimension averages + suggestions.\n2.\
+  \ **FINISHED** `InterviewSession` rows with `totalScore IS NOT NULL` → session count,\
+  \ avg/max score, trend, question count.\n\nSo the cache is stale if **either** of\
+  \ those inputs changes. That is the full mutation surface.\n\n## 2. The mutation\
+  \ surface (what invalidates the view)\n\nAny write that touches:\n- `interview_result`\
+  \ (dimensions / suggestions / totalScore), **or**\n- a FINISHED session's `totalScore`,\
+  \ `finishedAt`, or `questionCount`.\n\nBecause `InterviewResult` is consumed regardless\
+  \ of parent session status, even an **in-progress** session's result insert matters\
+  \ if it would shift dimension averages.\n\n## 3. Mutation-path audit (safe vs. stale)\n\
+  \n| Path | What it writes | Evicts? | Verdict |\n|------|----------------|---------|---------|\n\
+  | `InterviewService.finishSession` (`:340-349`) | session→FINISHED, `finishedAt`,\
+  \ `currentQuestionId` | ✅ `evict(userId)` at `:349` | **Safe** |\n| `InterviewScoringService`\
+  \ (`:105-111`) | insert result, session `totalScore`+report | ✅ evict after each\
+  \ (`:106,111`) | **Safe** |\n| `RuleBasedScoringService` (`:56-66`) | insert result,\
+  \ session `totalScore` | ✅ evict after each (`:57,66`) | **Safe** |\n| `LegacyAiScoringService`\
+  \ (`:112-118`) | insert result, session `totalScore` | ✅ evict after each (`:113,118`)\
+  \ | **Safe** |\n| `InterviewService` mid-session result inserts (`:151,168,226,243`)\
+  \ | `interview_result` rows during ASKING | ✅ evict at each (`:152,169,227,244`)\
+  \ | **Safe** |\n| Status toggles START/ASKING (`:85,111,186,261`) | session status\
+  \ (non-dashboard inputs) | n/a (not aggregate inputs) | **Safe / irrelevant** |\n\
+  \n**All write paths currently evict.** No missing-eviction site was found. The stale\
+  \ risk is therefore not \"a path forgot to call `evict`\" — it's in the **timing\
+  \ and failure semantics** of eviction, below.\n\n## 4. Staleness scenarios and risk\
+  \ windows\n\n**S1 — Async finish→scoring gap (the biggest real window).**\n`finishSession`\
+  \ evicts, then **asynchronously** enqueues scoring via RabbitMQ (`InterviewService.java:351-355`).\
+  \ The consumer inserts the result + `totalScore` some time later. In between:\n\
+  - `compute()` filters sessions by `totalScore IS NOT NULL`, so the just-finished,\
+  \ not-yet-scored session is **silently dropped** from stats/trend, and its result\
+  \ isn't present either.\n- The consumer's later evict self-heals it, but for the\
+  \ entire scoring latency (~seconds to tens of seconds) the dashboard **under-reports**\
+  \ session count/trend. This is Bounded-Buffered-async staleness — visible drift,\
+  \ eventually consistent, but non-transactional.\n\n**S2 — Eviction failure ≠-transactional\
+  \ with DB commit.**\nNo `@Transactional` on scoring services, so each MyBatis statement\
+  \ auto-commits and evictions already run post-commit. But `evict()` swallows exceptions\
+  \ (`DashboardService.java:88`). If Redis is down/timeouts during a commit, the DB\
+  \ truth is updated while the cache survives → **stale up to the 10-min TTL**, with\
+  \ no programmatic recovery other than expiry.\n\n**S3 — Cache stampede (thundering\
+  \ herd).**\nAbsolute uniform 10-min TTL with no jitter: at every expiry boundary,\
+  \ all concurrent `build()` misses recompute simultaneously against the DB. Safe\
+  \ for correctness (each runner rebuilds from truth) but wasteful; that's the classic\
+  \ TTL-only failure mode.\n\n**S4 — Schema drift on cached payload.**\nOld JSON in\
+  \ Redis + new `DashboardVO` shape → Jackson parse fails, caught at `DashboardService.java:59`,\
+  \ falls through to recompute. Self-healing, but logs a warn and re-fetches unnecessarily\
+  \ — a blind spot until TTL expiry.\n\n## 5. Recommendations\n\n**Harden eviction\
+  \ (address S2).** Evict-after-commit is already correct ordering; just make sure\
+  \ eviction is reliable in the scoring consumers and centralize it so discipline\
+  \ can't regress. On evict failure, degrade to a short re-write rather than silent\
+  \ survival:\n\n```java\npublic void evict(Long userId) {\n    if (userId == null)\
+  \ return;\n    try {\n        redissonClient.getBucket(key(userId)).delete();\n\
+  \    } catch (Exception e) {\n        // Guaranteed-consistent fallback: rewrite\
+  \ with a micro-TTL so a stale\n        // aggregate can't live for the full 10 minutes\
+  \ after an evict failure.\n        try {\n            redissonClient.getBucket(key(userId)).set(\n\
+  \                objectMapper.writeValueAsString(compute(userId)),\n           \
+  \     30, TimeUnit.SECONDS);\n        } catch (Exception ex) {\n            log.error(\"\
+  evict+refresh failed, will rely on TTL, userId={}\", userId, ex);\n        }\n \
+  \   }\n}\n```\n\n**Defer/decouple the finish-scoring gap (S1).** Either invoke scoring\
+  \ synchronously before `finishSession` returns, or better, **don't emit a dashboard-visible\
+  \ FINISHED until scoring completes** — e.g., keep session in a `SCORING` state and\
+  \ transition to `FINISHED` only in the consumer, so `compute()`'s `totalScore IS\
+  \ NOT NULL` filter can't expose an empty half-state. The single `evict` then lands\
+  \ exactly once after the score is durable.\n\n**Add soft-TTL / single-flight (S3).**\
+  \ Recommended config: keep hard TTL for eviction fallback but serve a background\
+  \ refresh. Minimal change with Redisson — let one recompute win per expiry via a\
+  \ distributed lock or just add jitter:\n\n```java\nprivate static final long CACHE_TTL_MINUTES\
+  \ = 10;\nprivate static final long JITTER_SECONDS = 30;\n// on miss: bucket.set(json,\
+  \ CACHE_TTL_MINUTES*60 + randomUpTo(JITTER_SECONDS), SECONDS)\n```\n\n**Version\
+  \ the key (S4).** Namespace by schema version so a deploy can't reuse incompatible\
+  \ JSON: `dashboard:user:{userId}:v1`. Cheap and removes the parse-and-refetch blind\
+  \ spot on rollouts.\n\n**Consider key granularity.** Single-key-per-user is coarse\
+  \ — one session mutation recomputes all history. Safe, but if a user has thousands\
+  \ of results, split heavy aggregates (trend) from volatile ones, or note that per-metric\
+  \ keys trade correctness complexity for recompute cost. Given this is a low-frequency,\
+  \ per-user dashboard, keep the single key.\n\n## Bottom line\nCorrectness of the\
+  \ read path is sound and **every mutation path is currently safe** — eviction is\
+  \ applied after each aggregate-affecting write. The remaining risk is **bounded\
+  \ staleness via async scoring (S1)** and **silent staleness on evict failure up\
+  \ to the TTL (S2)**, not a missing mutation hook. Both are mitigated by moving the\
+  \ FINISHED transition into the scorer and hardening `evict()`; versioned keys +\
+  \ TTL jitter handle deployment and stampede concerns."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 92357
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T12:38:25.703061+00:00'
+    completed_at: '2026-09-02T12:38:25.703061+00:00'
+  memory:
+    status: completed
+    started_at: '2026-09-02T12:38:25.701848+00:00'
+    completed_at: '2026-09-02T12:38:25.701848+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T12:38:25.705699+00:00'
+    completed_at: '2026-09-02T12:38:25.705699+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T12:38:25.706261+00:00'
+    completed_at: '2026-09-02T12:38:25.706261+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T12:38:25.711080+00:00'
+    completed_at: '2026-09-02T12:39:58.068981+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons:
+    T-005: *id003
+    P-001: *id004
+    S-002: *id005
+    T-010: *id006
+    S-001: *id007
+  orchestrator_rules:
+  - multi_skill

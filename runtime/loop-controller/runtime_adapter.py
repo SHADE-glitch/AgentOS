@@ -140,16 +140,128 @@ def _serialize_reliability(summary, failures):
     return result
 
 
+# ── Phase 8.2.1.4: Semantic Memory Injection Helpers ────────────────
+# These format memory metadata into actionable decision guidance
+# that the agent can use to influence its reasoning.
+
+_TYPE_GUIDANCE_TEMPLATES = {
+    "task": (
+        "This task pattern was validated: use it as a reference for similar "
+        "engineering tasks. Review the approach and adapt to current context."
+    ),
+    "failure": (
+        "This failure pattern was observed: identify whether the current task "
+        "risks repeating the same mistake. Apply preventive measures."
+    ),
+    "success": (
+        "This approach succeeded in a prior execution: consider adopting "
+        "its strategy, but verify it fits the current problem domain."
+    ),
+    "pattern": (
+        "This design pattern was extracted from successful executions: "
+        "apply it if the current task shares the same architectural context."
+    ),
+    "anti-pattern": (
+        "This anti-pattern was identified from failed executions: "
+        "check whether the current task exhibits the same warning signs."
+    ),
+    "hypothesis": (
+        "[UNVALIDATED] This hypothesis has not been validated through "
+        "runtime execution. Treat it as a suggestion, not an established rule."
+    ),
+}
+
+_TYPE_ACTION_TEMPLATES = {
+    "task": "Reference this pattern when solving similar tasks.",
+    "failure": "Avoid this failure mode. Apply its preventive lesson.",
+    "success": "Consider this successful strategy. Verify domain fit.",
+    "pattern": "Apply this design pattern where applicable.",
+    "anti-pattern": "Check for this anti-pattern. Mitigate if found.",
+    "hypothesis": "Test this hypothesis. Do not rely on it as established truth.",
+}
+
+_MEMORY_INJECTION_LIMIT = 5
+
+
+def _evidence_icon(evidence_level: str) -> str:
+    """Return a visual icon for evidence level."""
+    icons = {
+        "runtime_validated": "✓",
+        "benchmark_evaluated": "◆",
+        "observed": "○",
+        "hypothesis": "⚠",
+        "unknown": "?",
+    }
+    return icons.get(evidence_level, "?")
+
+
+def _evidence_label(evidence_level: str, success_rate: float) -> str:
+    """Return a human-readable credibility label."""
+    if evidence_level == "runtime_validated":
+        return "validated-in-runtime"
+    elif evidence_level == "benchmark_evaluated":
+        return "benchmark-tested"
+    elif evidence_level == "observed":
+        return "observed"
+    elif evidence_level == "hypothesis":
+        return "UNVALIDATED"
+    else:
+        sr = ""
+        if success_rate > 0:
+            sr = f" sr={success_rate:.2f}"
+        return f"unknown{ sr}"
+
+
+def _format_memory_guidance(memory: dict, rank: int) -> str:
+    """Format a single memory as semantic decision guidance.
+
+    Produces a structured guidance line that includes:
+      - memory_id (provenance)
+      - type label and evidence_level (credibility)
+      - success_rate (reliability)
+      - category and tags (domain context)
+      - generated guidance (actionable direction)
+      - recommended action (what to do with this memory)
+    """
+    mid = memory.get("memory_id", "?")
+    mtype = memory.get("type", "memory")
+    evidence = memory.get("evidence_level", "unknown")
+    success_rate = memory.get("success_rate", 0.0)
+    category = memory.get("category", "unknown")
+    tags = memory.get("tags", [])
+    confidence = memory.get("confidence", "low")
+    score = memory.get("final_score", 0.0)
+
+    evidence_icon = _evidence_icon(evidence)
+    credibility = _evidence_label(evidence, success_rate)
+
+    tag_str = ", ".join(tags[:5]) if tags else "none"
+
+    guidance = _TYPE_GUIDANCE_TEMPLATES.get(mtype, _TYPE_GUIDANCE_TEMPLATES["task"])
+    action = _TYPE_ACTION_TEMPLATES.get(mtype, _TYPE_ACTION_TEMPLATES["task"])
+
+    if memory.get("is_hypothesis") or mtype == "hypothesis":
+        evidence_icon = "⚠"
+        credibility = "UNVALIDATED"
+
+    return (
+        f"[{mid}] {evidence_icon} {mtype} | {credibility} | "
+        f"success_rate={success_rate:.2f} | confidence={confidence} | "
+        f"score={score:.2f}\n"
+        f"  Category: {category} | Tags: {tag_str}\n"
+        f"  Guidance: {guidance}\n"
+        f"  Action: {action}"
+    )
+
+
 def build_prompt(task_text, decision_context, project_root=""):
     """
     Construct the prompt for the runtime provider.
-    Memory is included as SUPPORTING context only.
-    Stack context is included (P0-2).
-    Phase 5.7: Skill context is included from real Skill Loader.
 
-    The prompt tells the model to act as the appropriate role based on
-    task classification. Memory is presented as "prior experience" that
-    the model MAY use but MUST NOT blindly follow.
+    Phase 8.2.1.4: Memory is presented as semantic decision guidance
+    with evidence level, success rate, guidance, and recommended action.
+    Stack context is included (P0-2).
+    Skill context is included from real Skill Loader (Phase 5.7).
 
     Args:
         task_text: str, the task to execute
@@ -185,37 +297,34 @@ def build_prompt(task_text, decision_context, project_root=""):
             parts.append(stack_context)
             parts.append("")
 
-    # Memory context (supporting only)
-    if mem or hyp:
-        parts.append("## Prior Experience (use only if relevant)")
-        parts.append("The following is prior experience from similar tasks. ")
-        parts.append("It is supporting information only — do NOT blindly follow it.")
-        parts.append("Apply your own judgment based on the actual task requirements.")
+    # Phase 8.2.1.4: Semantic Memory Injection
+    # Memory is presented as structured decision guidance with
+    # evidence level, success rate, guidance, and recommended action.
+    if mem:
+        parts.append("[RELEVANT MEMORY — Decision Guidance]")
         parts.append("")
-
-        if mem:
-            parts.append("### Established Patterns")
-            for m in mem:
-                mid = m.get("memory_id", "?")
-                mtype = m.get("type", "?")
-                cat = m.get("category", "?")
-                score = m.get("final_score", 0)
-                reasons = m.get("match_reasons", [])
-                evidence = m.get("evidence_level", "?")
-                parts.append(f"- **{mid}** ({mtype}, {cat})")
-                parts.append(f"  Relevance: {score:.2f}, Evidence: {evidence}")
-                if reasons:
-                    parts.append(f"  Matched: {', '.join(reasons)}")
-                if m.get("warning"):
-                    parts.append(f"  Warning: {m['warning']}")
-                parts.append("")
-
-        if hyp:
-            parts.append("### Hypotheses (unvalidated — treat with caution)")
-            for h in hyp:
-                hid = h.get("memory_id", "?")
-                parts.append(f"- **{hid}** — UNVALIDATED. Do not treat as fact.")
-                parts.append("")
+        for i, m in enumerate(mem[:_MEMORY_INJECTION_LIMIT]):
+            parts.append(_format_memory_guidance(m, i + 1))
+            parts.append("")
+        # Track injected memories for telemetry
+        decision_context["injected_ids"] = [m.get("memory_id") for m in mem[:_MEMORY_INJECTION_LIMIT]]
+        decision_context["injected_count"] = len(decision_context["injected_ids"])
+        decision_context["injection_format"] = "semantic_guidance"
+    else:
+        decision_context["injected_ids"] = []
+        decision_context["injected_count"] = 0
+        decision_context["injection_format"] = "none"
+    if hyp:
+        parts.append("[UNVALIDATED HYPOTHESES — Verify before use, do not rely]")
+        parts.append("")
+        for i, h in enumerate(hyp[:_MEMORY_INJECTION_LIMIT]):
+            parts.append(_format_memory_guidance(h, i + 1))
+            parts.append("")
+        decision_context["injected_hypothesis_ids"] = [h.get("memory_id") for h in hyp[:_MEMORY_INJECTION_LIMIT]]
+        decision_context["injected_hypothesis_count"] = len(decision_context["injected_hypothesis_ids"])
+    else:
+        decision_context["injected_hypothesis_ids"] = []
+        decision_context["injected_hypothesis_count"] = 0
 
     # Task
     parts.append("## Task")
@@ -551,6 +660,188 @@ def execute_with_reliability(task_id, task_text, decision_context,
     return failure_result
 
 
+# ── Phase 8.2.1.5: Decision Influence Attribution ─────────────────
+
+# Influence levels ordered by strength (least → most).
+# Lower levels are subsumed by higher levels.
+INFLUENCE_LEVELS = {
+    "none": 0,
+    "confirmation": 1,
+    "hypothesis_used": 2,
+    "hypothesis_confirmed": 3,
+    "hypothesis_changed_decision": 4,
+}
+
+# Keywords that indicate the agent is actively engaging with a hypothesis
+# (testing, validating, or refining it), beyond passive mention.
+_HYPOTHESIS_ENGAGEMENT_PATTERNS = [
+    r"(?:hypothesis|H-\d+|unvalidated|unverified).{0,80}(?:confirmed|validated|verified|supports|aligns)",
+    r"(?:test|validate|verify|check).{0,40}(?:hypothesis|H-\d+|assumption)",
+    r"(?:hypothesis|H-\d+).{0,40}(?:holds|correct|accurate|should be)",
+    r"(?:based on|following|according to).{0,40}(?:hypothesis|H-\d+)",
+    r"(?:suggest|recommend|propose).{0,80}(?:hypothesis|H-\d+)",
+    r"(?:aligns with|consistent with|matches).{0,40}(?:hypothesis|H-\d+)",
+    r"H-\d{3,4}",
+    r"(?:⚠|UNVALIDATED).{0,60}(?:applies|relevant|useful|helpful)",
+]
+
+# Keywords that indicate a hypothesis changed the agent's decision.
+_HYPOTHESIS_DECISION_CHANGE_PATTERNS = [
+    r"(?:changed|reversed|revised|updated|adjusted|shifted).{0,40}(?:decision|conclusion|approach|recommendation)",
+    r"(?:hypothesis|H-\d+|unvalidated).{0,60}(?:changed|altered|transformed|redirected)",
+    r"(?:without|absent).{0,20}(?:hypothesis|H-\d+).{0,40}(?:would have|might have|could have)",
+    r"(?:contrary to|despite|even though).{0,40}(?:initial|original|prior).{0,20}(?:assumption|belief|approach)",
+    r"(?:before|prior to).{0,20}(?:hypothesis|H-\d+).{0,60}(?:after|now|currently)",
+]
+
+
+# Patterns that indicate negation — if matched, term mentions are discounted.
+_NEGATION_PATTERNS = [
+    r"(?:unrelated to|not about|not relevant to|irrelevant to|nothing to do with)\s.{0,40}",
+    r"(?:does not|doesn't|is not|isn't|not).{0,30}(?:apply|relate|relevant|involve|concern|needed|required|necessary)",
+    r"(?:no|not)\s.{0,40}(?:needed|required|necessary|relevant|applicable)",
+]
+
+
+def _detect_hypothesis_engagement(agent_response: str, hypotheses: list) -> dict:
+    """Detect if and how the agent engaged with each hypothesis.
+
+    Returns a dict mapping hypothesis_id → engagement_info.
+    """
+    import re
+    engagement = {}
+
+    # Pre-compute negation context
+    has_negation = any(re.search(p, agent_response, re.IGNORECASE) for p in _NEGATION_PATTERNS)
+
+    for hyp in hypotheses:
+        hid = hyp.get("memory_id", "")
+        if not hid:
+            continue
+
+        # Check if the hypothesis ID appears in the response
+        id_mentioned = hid in agent_response
+
+        # Check if key terms from the hypothesis appear in the response
+        tags = hyp.get("tags", [])
+        guidance = hyp.get("guidance", "")
+        key_terms = list(tags) + [w for w in guidance.split() if len(w) > 4]
+        term_matches = sum(1 for t in key_terms if t in agent_response)
+
+        # Check engagement patterns
+        engaged = False
+        changed_decision = False
+        for pattern in _HYPOTHESIS_ENGAGEMENT_PATTERNS:
+            if re.search(pattern, agent_response, re.IGNORECASE):
+                engaged = True
+                break
+        for pattern in _HYPOTHESIS_DECISION_CHANGE_PATTERNS:
+            if re.search(pattern, agent_response, re.IGNORECASE):
+                changed_decision = True
+                break
+
+        # Fallback: if ID is mentioned or terms match significantly, consider engaged
+        # BUT discount if the overall response has negation context and no explicit ID mention
+        if not engaged and (id_mentioned or (term_matches >= 2 and not has_negation)):
+            engaged = True
+
+        level = "none"
+        if changed_decision:
+            level = "hypothesis_changed_decision"
+        elif engaged:
+            level = "hypothesis_confirmed" if term_matches >= 3 else "hypothesis_used"
+
+        engagement[hid] = {
+            "referenced": id_mentioned or (term_matches > 0 and not has_negation),
+            "engagement_level": level,
+            "id_mentioned": id_mentioned,
+            "term_matches": term_matches,
+            "changed_decision": changed_decision,
+        }
+
+    return engagement
+
+
+def _determine_influence(memories_used: list, hyp_list: list,
+                         agent_response: str = "") -> dict:
+    """Determine the decision influence with hypothesis-aware attribution.
+
+    Returns a dict with:
+      - influence: str (primary influence level)
+      - influence_breakdown: dict (per-memory/hypothesis attribution)
+      - provenance: list (per-contributor provenance records)
+    """
+    provenance = []
+    influence_breakdown = {}
+    max_influence_level = 0
+    primary_influence = "none"
+
+    # 1. Established memory influence (existing behavior)
+    for mem in memories_used:
+        mid = mem.get("memory_id", "?")
+        influence_breakdown[mid] = {
+            "type": "established",
+            "influence": "confirmation",
+            "memory_id": mid,
+            "retrieval_score": mem.get("final_score", mem.get("static_relevance", 0)),
+        }
+        provenance.append({
+            "memory_id": mid,
+            "memory_type": mem.get("type", "established"),
+            "retrieval_score": mem.get("final_score", 0),
+            "injection_format": "semantic_guidance",
+            "agent_reference": "implicit_usage",
+        })
+        max_influence_level = max(max_influence_level, INFLUENCE_LEVELS["confirmation"])
+
+    # 2. Hypothesis influence (NEW in Phase 8.2.1.5)
+    if hyp_list:
+        hyp_engagement = _detect_hypothesis_engagement(agent_response, hyp_list) if agent_response else {}
+
+        for hyp in hyp_list:
+            hid = hyp.get("memory_id", "")
+            if not hid:
+                continue
+
+            eng = hyp_engagement.get(hid, {})
+            eng_level = eng.get("engagement_level", "none")
+
+            influence_breakdown[hid] = {
+                "type": "hypothesis",
+                "influence": eng_level,
+                "memory_id": hid,
+                "retrieval_score": hyp.get("final_score", hyp.get("static_relevance", 0)),
+                "referenced": eng.get("referenced", False),
+                "id_mentioned": eng.get("id_mentioned", False),
+                "term_matches": eng.get("term_matches", 0),
+                "changed_decision": eng.get("changed_decision", False),
+            }
+
+            if eng_level != "none":
+                provenance.append({
+                    "memory_id": hid,
+                    "memory_type": "hypothesis",
+                    "retrieval_score": hyp.get("final_score", 0),
+                    "injection_format": "hypothesis_injection",
+                    "agent_reference": "explicit" if eng.get("id_mentioned") else "semantic",
+                })
+
+            eng_level_num = INFLUENCE_LEVELS.get(eng_level, 0)
+            max_influence_level = max(max_influence_level, eng_level_num)
+
+    # 3. Determine primary influence
+    for level_name, level_num in INFLUENCE_LEVELS.items():
+        if level_num == max_influence_level:
+            primary_influence = level_name
+            break
+
+    return {
+        "influence": primary_influence,
+        "influence_breakdown": influence_breakdown,
+        "provenance": provenance,
+    }
+
+
 # ── Trace Building ───────────────────────────────────────────────
 
 def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
@@ -611,13 +902,12 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
             "match_reasons": h.get("match_reasons", []),
         })
 
-    # Determine influence
-    if not memories_used:
-        influence = "none"
-    elif len(memories_used) == 1 and mem_list[0].get("memory_id", "").startswith("AP-"):
-        influence = "confirmation"
-    else:
-        influence = "confirmation"
+    # Phase 8.2.1.5: Hypothesis-aware influence attribution
+    agent_response = runtime_result.get("response_text", "")
+    attribution = _determine_influence(mem_list, hyp_list, agent_response)
+    influence = attribution["influence"]
+    influence_breakdown = attribution["influence_breakdown"]
+    influence_provenance = attribution["provenance"]
 
     # Phase 5.7: REAL Router section (from agent_router, not simulated)
     intent = route_decision.get("intent", classification.get("category", "backend"))
@@ -686,7 +976,20 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
             "total_retrieved": len(memories_considered),
             "memories_considered": memories_considered,
             "memories_used": memories_used,
+            "hypotheses_injected": [h.get("memory_id", "") for h in hyp_list],
             "influence": influence,
+            "influence_breakdown": influence_breakdown,
+            "decision_influence": {
+                "level": influence,
+                "provenance": influence_provenance,
+                "established_count": len(memories_used),
+                "hypothesis_count": len(hyp_list),
+                "hypothesis_influence_detected": any(
+                    ib.get("influence", "none") != "none"
+                    for ib in influence_breakdown.values()
+                    if ib.get("type") == "hypothesis"
+                ),
+            },
             "memory_summary": f"Retrieved {len(memories_used)} memories, {len(hyp_list)} hypotheses (separated). Memory is supporting input only.",
         },
 

@@ -1,0 +1,322 @@
+# Execution Trace — AOS-B6BCB4 (Memory ON)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T10:33:21.616319+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788345201
+trace_id: TRACE-EXEC-1788345201-3cbf4964e55d
+task_id: AOS-B6BCB4
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'on'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T10:31:18.484488+00:00'
+    memory_retrieved: '2026-09-02T10:31:20.848614+00:00'
+    routing_completed: '2026-09-02T10:31:20.849755+00:00'
+    skill_loaded: '2026-09-02T10:31:20.852233+00:00'
+    orchestration_completed: '2026-09-02T10:31:20.852746+00:00'
+    agent_started: '2026-09-02T10:31:20.857296+00:00'
+    agent_completed: '2026-09-02T10:33:21.616191+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T10:31:18.369263+00:00'
+  pid: 890286
+  cwd: /home/shade/Public/test
+  task_id: AOS-B6BCB4
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: confirmation
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: T-005
+    type: task
+    category: ai
+    relevance_score: 0.01
+    evidence_weight: 0.4
+    final_score: 0.365
+    used: true
+    match_reasons: &id003
+    - success_rate=0.868
+    - confidence=0.4
+  - memory_id: S-002
+    type: success
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.347
+    used: true
+    match_reasons: &id004
+    - success_rate=0.889
+    - confidence=0.4
+  - memory_id: P-001
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.347
+    used: true
+    match_reasons: &id005
+    - success_rate=0.889
+    - confidence=0.4
+  - memory_id: T-010
+    type: task
+    category: optimization
+    relevance_score: 0.0
+    evidence_weight: 0.0
+    final_score: 0.311
+    used: true
+    match_reasons: &id006
+    - success_rate=0.919
+  - memory_id: P-002
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.0
+    final_score: 0.292
+    used: true
+    match_reasons: &id007
+    - success_rate=0.96
+  memories_used:
+  - T-005
+  - S-002
+  - P-001
+  - T-010
+  - P-002
+  influence: confirmation
+  memory_summary: Retrieved 5 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9e539d4fffe210qkq3K4x5Gmm
+  tokens:
+    total: 46935
+    input: 2975
+    output: 2899
+    reasoning: 1125
+    cache_read: 39936
+    cache_write: 0
+  cost: 0
+  latency_ms: 120757
+agent_response: "Having traced the write paths and the aggregator, here is the full\
+  \ assessment.\n\n## 1. Aggregate inputs (what the cache actually snapshots)\n\n\
+  `DashboardService.compute` derives the cached `DashboardVO` from two read paths\
+  \ (`DashboardService.java:93-177`):\n\n| View section | Source rows | Filter | Backing\
+  \ columns |\n|---|---|---|---|\n| `dimensions` (radar) | `interview_result` | `user_id`\
+  \ | `dimensions` JSON (`knowledge/expression/source/analysis`) |\n| `weakPoints`\
+  \ / `suggestions` | `interview_result` | `user_id` | parsed from `dimensions` +\
+  \ `suggestions` JSON |\n| `stats.totalInterviews` | `interview_session` | `user_id`\
+  \ AND `status='FINISHED'` AND `total_score IS NOT NULL` | — |\n| `stats.avgScore/maxScore`\
+  \ | `interview_session` | same filter, `finished_at` asc | `total_score` |\n| `stats.totalQuestions`\
+  \ / `trend` | `interview_session` | same filter | `question_count`, `total_score`,\
+  \ `finished_at` (keys off `session` rows) |\n\nNote the asymmetry: radar aggregates\
+  \ `interview_result`, but stats/trend aggregate **`interview_session` filtered on\
+  \ `total_score IS NOT NULL`**. Those are two different tables and two different\
+  \ conditions — a mutation is only \"safe\" if it correctly invalidates for *both*\
+  \ consumers.\n\n## 2. Cache mechanism today\n\n- Key: `dashboard:user:{userId}`\
+  \ (`DashboardService.java:48-50`).\n- Access: read-through — on cache hit deserialize\
+  \ and return; on miss `compute()` from DB, then `bucket.set(..., 10, MINUTES)` (`:52-70`).\n\
+  - Invalidation: manual `evict(userId)` → `bucket.delete()` (`:81-91`). **`evict()`\
+  \ swallows all exceptions and logs only at `WARN`** (`:88-89`).\n- TTL: fixed 10\
+  \ minutes (`:38`).\n\nSo freshness is *not* maintained by the TTL — it is maintained\
+  \ by `evict()` being called after every mutation. The TTL is only a safety floor\
+  \ for the *\"mutation happened but evict was missed/failed\"* case.\n\n## 3. When\
+  \ the cached view is stale\n\nThere are four distinct staleness sources:\n\n**(a)\
+  \ TTL-only drift — missed or failed eviction.** Because `evict` is manual and exception-swallowing,\
+  \ if a mutation path forgets `evict`, or `delete()` throws, the cached view stays\
+  \ stale for up to its *remaining* TTL. Worse: if mutations keep happening without\
+  \ successful eviction, and no read expires/recomputes in between, staleness can\
+  \ persist well beyond 10 min because the same stale blob keeps getting served and\
+  \ re-hit. The 10-min TTL is the *resilience cap*, not a freshness guarantee.\n\n\
+  **(b) Read-compute-write race, even with \"correct\" eviction.** This is the classic\
+  \ cache-aside hazard:\n1. `build()` reads DB (old state), computes `VO_A`.\n2. Concurrent\
+  \ mutation commits to DB, then `evict()` deletes the key.\n3. `build()` writes `VO_A`\
+  \ after the evict.\n\nThe cache now holds a stale value *for a fresh key*, live\
+  \ for a full TTL. To be fully stale-proof, `evict` must be issued with cache-`delete`\
+  \ **before** (or atomically with) the DB commit, or the read must be double-checked.\
+  \ Current code does `updateById()` → `evict()` (write-then-invalidate), which is\
+  \ the vulnerable ordering under concurrency.\n\n**(c) Silent eviction failure.**\
+  \ Every `evict` is wrapped in try/catch that only warns. A transient Redis outage\
+  \ or a serialization error in the *writer* path (the write in `build` is also swallowed,\
+  \ `:67-69`) leaves the cache holding last-known data. Two silent-failure points\
+  \ make the staleness invisible.\n\n**(d) Source-of-truth incompleteness that no\
+  \ cache fix can cure.** The stats/trend query requires `total_score IS NOT NULL`\
+  \ on the *session*. In the synchronous path, `answer()`/`answerStream()` insert\
+  \ the result and evict but **never set `session.totalScore`** (`InterviewService.java:150-157,\
+  \ 225-232`) — only the async scorer sets it (`RuleBasedScoringService.java:63`).\
+  \ So a finished session may never enter `stats`/`trend`, the cache faithfully reflects\
+  \ that undercount for its whole TTL, and the radar (from `interview_result`) disagrees\
+  \ with the stats (from `interview_session`). From the user's perspective the dashboard\
+  \ is \"wrong\" and stays wrong despite correct eviction.\n\n## 4. Mutation-path\
+  \ audit (safe / unsafe / risky)\n\nAll mutations to aggregate inputs, and their\
+  \ invalidation status:\n\n| Mutation path | Files | Affects | Evicts? | Verdict\
+  \ |\n|---|---|---|---|---|\n| Sync rule score (finish during `answer`/`answerStream`)\
+  \ | `InterviewService.java:150-157`, `225-232` | inserts `interview_result` | yes\
+  \ (×2, incl. `finishSession`) | **Safe** cache-wise; but **risky** — session `totalScore`\
+  \ not persisted, MCQs not updated (see #5) |\n| `finishSession` (status→FINISHED,\
+  \ `finishedAt`, `currentQuestionId`, `questionCount`) | `InterviewService.java:340-359`\
+  \ | updates `interview_session` | yes (`:349`) | **Safe** |\n| Async rule scoring\
+  \ (MQ) | `RuleBasedScoringService.java:56-66` | inserts result + sets session `totalScore`/`report`\
+  \ | yes (×2, `:57`, `:66`) | **Safe** |\n| Async AI scoring (MQ) | `InterviewScoringService.java:105-111`,\
+  \ `LegacyAiScoringService.java:112-118` | inserts result + sets session `totalScore`/`report`\
+  \ | yes (after insert and after update) | **Safe** (but see note on dual listeners\
+  \ below) |\n| Non-scoring session updates (`setStatus(ASKING)`, `questionCount`,\
+  \ `currentQuestionId`) | `InterviewService.java:114,186,261` | these columns are\
+  \ **not** read by `compute` stats/trend | no | **Safe — no eviction needed** (fields\
+  \ not part of aggregate) |\n| Delete/update of a result or of a FINISHED session's\
+  \ `totalScore`/`finishedAt` (e.g. future admin edit, session reset, report regen)\
+  \ | none today (only inserts found) | would change aggregate | **not implemented**\
+  \ | **Unsafe if added** — no evict exists for these paths |\n\nSummary of the audit:\n\
+  \n- **Safe (evict correctly):** async rule, async AI, legacy AI, `finishSession`,\
+  \ sync-rule insert. Each either doesn't touch aggregate fields or calls `evict`\
+  \ right after the DB write.\n- **Safe without evicting (correctly):** mid-interview\
+  \ `ASKING`/`questionCount`/`currentQuestionId` updates — none are inputs to `compute`.\n\
+  - **Unsafe today if they existed / latent risks:** any UPDATE/DELETE touching `interview_result`\
+  \ rows or `interview_session.total_score`/`finished_at` would drift silently. Right\
+  \ now none exist, which is why the current code mostly \"works\", but `evict` is\
+  \ the only guard and it is not enforceable.\n\nTwo concrete latent defects that\
+  \ *undermine* the cache's value even though eviction is technically present:\n\n\
+  - **Dual `@RabbitListener` on the same queue** `aiview.interview.scoring`: `InterviewScoringService.java:46`\
+  \ has no `@ConditionalOnProperty`, while `RuleBasedScoringService.java:25` is `matchIfMissing`\
+  \ → under the default `rule` mode **both** beans consume the same `ScoringMessage`.\
+  \ Both try `resultMapper.insert` with a unique `session_id` (`schema.sql:76`) —\
+  \ the second throws, the session `totalScore`/`report` update is skipped, and the\
+  \ message is possibly redelivered/requeued indefinitely. The aggregate therefore\
+  \ never picks up `total_score` for that session.\n- **Sync path + async path double-inserting**\
+  \ for the same finish: `InterviewService` already persists a synchronous result\
+  \ and then publishes a scoring message (`:350-358`), so the async scorer's insert\
+  \ collides. The result/session become inconsistent, and the cache — correctly evicted\
+  \ and rebuilt — faithfully reflects the inconsistent DB.\n\n## 5. Recommended hardening\n\
+  \n**R1 — Put a version/generation on the key so stale reads can't overwrite a fresh\
+  \ eviction (fixes (b)).**\nAdd an opaque version (e.g. session-count or a per-user\
+  \ `updated_at`/`seq`) to the cache key: `dashboard:user:{id}:v{generation}`. Bump\
+  \ the generation on every invalidating mutation. A stale read computing an old generation\
+  \ cannot clobber a newer generation's key.\n\n**R2 — Invalidate before/in same transaction\
+  \ as the write, or confirm a cache-rebuild after commit (fixes (b)).**\nFor a single-writer-per-session\
+  \ flow, delete the key *before* `updateById` (invalidate-first):\n```java\n// prefer:\
+  \ delete first, then write; worst case a miss triggers a fresh compute\ndashboardService.evict(userId);\n\
+  sessionMapper.updateById(session);\ndashboardService.evict(userId); // belt-and-suspenders\
+  \ after commit\n```\n\n**R3 — Make eviction non-silent and consistent (fixes (c)).**\n\
+  Log at `ERROR` on eviction failure and consider an application-level monotonic \"\
+  dirty\" flag flushed by a scheduled job, so eviction failures are not silently swallowed:\n\
+  ```java\npublic void evict(Long userId) {\n    try {\n        redissonClient.getBucket(key(userId)).delete();\n\
+  \    } catch (Exception e) {\n        log.error(\"EVICT FAILED userId={} — dashboard\
+  \ may serve stale data\", userId, e); // promote from WARN\n    }\n}\n```\n\n**R4\
+  \ — Fix the source-of-truth split: persist `totalScore` on the session in the sync\
+  \ path (fixes (d)).**\nSo a session becomes visible to the stats/trend query at\
+  \ finish-time, not only after async scoring:\n```java\nsession.setTotalScore(evaluationService.score(session,\
+  \ messages).getTotalScore());\n```\n…or make `compute` fall back to `interview_result.total_score`\
+  \ when the session `totalScore` is null, so both views read from the same source.\n\
+  \n**R5 — De-duplicate the scoring pipeline (fixes the double-listener / double-insert).**\n\
+  Keep exactly one active `@RabbitListener` per environment. Remove the unconditional\
+  \ `InterviewScoringService` listener (or gate it behind `mode=ai`) and consolidate\
+  \ on `RuleBasedScoringService`/`LegacyAiScoringService`, which are already profile-conditional.\n\
+  \n**R6 — Cache-stampede protection (mitigates (b) thundering herd on eviction).**\n\
+  Use a distributed lock so only one compute happens after an eviction when many users\
+  \ hit the dashboard simultaneously:\n```java\nRLock lock = redissonClient.getLock(\"\
+  dashboard:user:\" + userId + \":lock\");\nif (lock.tryLock(1, 5, TimeUnit.SECONDS))\
+  \ {\n    try {\n        // double-check cache, else compute+set\n    } finally {\
+  \ lock.unlock(); }\n}\n```\n\n**R7 — Keep the TTL but match it to the write cadence.**\n\
+  10 min is reasonable for a per-user read-mostly aggregate. Only lower it if the\
+  \ (b)/(c) races remain after R1–R3; otherwise raising it just widens the silent-staleness\
+  \ window for the rare missed eviction. If strict freshness ever matters, switch\
+  \ `stats`/`trend` to a query-time compute (or materialized table) and keep only\
+  \ radar/insights in Redis.\n\n## 6. Configuration notes\n\n- `CACHE_TTL_MINUTES`\
+  \ (`DashboardService.java:38`) is hard-coded; prefer `spring.data.redis.ttl`-style\
+  \ config so the floor is tunable without a rebuild.\n- Redis eviction policy matters:\
+  \ put `maxmemory-policy noeviction` (or `volatile-lru`) so a full Redis cache evicts\
+  \ *our* expiry keys and forces recompute rather than holding a stale blob.\n- The\
+  \ MQ scoring backlog indirectly controls freshness: if RabbitMQ is down or the queue\
+  \ backs up, `total_score` lands late and `stats` lags even with perfect cache invalidation.\
+  \ Monitor queue depth as a freshness signal.\n\n**Bottom line:** All current *insert/FINISHED-transition*\
+  \ mutation paths call `evict()` correctly, so eviction coverage is good *by enumeration*.\
+  \ The real staleness risks are (1) the read-compute-write race not resolved by evict-after-write,\
+  \ (2) swallowed eviction failures, and (3) the `interview_session.total_score`/`interview_result`\
+  \ source-of-truth split (plus the dual-listener double-insert) that can make the\
+  \ DB itself incomplete. Priority is R4/R5 (correctness of source data) before R1–R3\
+  \ (cache hardening)."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 120758
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T10:31:20.849755+00:00'
+    completed_at: '2026-09-02T10:31:20.849755+00:00'
+  memory:
+    status: completed
+    started_at: '2026-09-02T10:31:20.848614+00:00'
+    completed_at: '2026-09-02T10:31:20.848614+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T10:31:20.852233+00:00'
+    completed_at: '2026-09-02T10:31:20.852233+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T10:31:20.852746+00:00'
+    completed_at: '2026-09-02T10:31:20.852746+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T10:31:20.857296+00:00'
+    completed_at: '2026-09-02T10:33:21.616191+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons:
+    T-005: *id003
+    S-002: *id004
+    P-001: *id005
+    T-010: *id006
+    P-002: *id007
+  orchestrator_rules:
+  - multi_skill

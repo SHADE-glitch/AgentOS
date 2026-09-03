@@ -1,0 +1,1355 @@
+loop_id: LOOP-20260902111508
+team_id: team-18087af2
+team_result:
+  team_id: team-18087af2
+  status: success
+  lead_output:
+    agent: database-engineer
+    status: completed
+    summary: '# Interview Session Continuation — Redis TTL vs DB Validity
+
+
+      ## TL;DR (诊断结论)
+
+
+      Continuation breaks whenever the **runtime/transient state** required to resume
+      the session lives *only* in Redis and its '
+    output: "# Interview Session Continuation — Redis TTL vs DB Validity\n\n## TL;DR\
+      \ (诊断结论)\n\nContinuation breaks whenever the **runtime/transient state** required\
+      \ to resume the session lives *only* in Redis and its key disappears, while\
+      \ the **durable row** in the DB still says the session is valid/in-progress.\
+      \ Redis saying \"gone\" and the DB saying \"alive\" are **two valid, contradictory\
+      \ truths**; the app has no correct resume path, so it either errors, silently\
+      \ restarts the session, or leaks partially-done progress. This is not a bug\
+      \ in isolation — it's a **durability-of-ephemeral-state** design gap.\n\n---\n\
+      \n## 1. Root Cause (根因)\n\nYou have two sources of truth with different lifetimes:\n\
+      \n| Store | What it holds | Lifetime | Semantics |\n|---|---|---|---|\n| **DB**\
+      \ | Committed session metadata: `session_id`, user, `status=in_progress`, timestamps,\
+      \ score, final answers | Persistent | Durable, source of truth for *committed*\
+      \ facts |\n| **Redis** | Runtime/transient state: current question index, cursor,\
+      \ elapsed timer, partial answer buffer, locked tokens/quota, socket/queue refs,\
+      \ token budget | Ephemeral, fixed TTL | Only the *live execution context* |\n\
+      \nThe failure is that **resume depends on Redis, but validity is judged by the\
+      \ DB**. When the Redis key is evicted/expired while the DB row is still `in_progress`,\
+      \ the system faces a contradiction: *\"the session legally exists, but I have\
+      \ nothing to resume it with.\"* Every code path that assumed \"Redis present\
+      \ ⟺ can continue\" now breaks.\n\n---\n\n## 2. When It Breaks (构造完整时序)\n\n###\
+      \ 2.1 Fixed TTL expires during a legitimately long/active session\nAn interview\
+      \ that runs longer than `ttl_seconds`. Session is active, user is mid-question,\
+      \ Redis key dies at `now >= set_at + ttl`. DB row untouched.\n\n```\nt0    \
+      \    t_ttl                     \n |────────|──────────────►\n Redis:   alive\
+      \       EXPIRED\n DB:      in_progress  in_progress   ← still valid\n Continue:\
+      \ OK          BROKEN        ← nothing to resume\n```\n\n### 2.2 Idle-but-not-terminated\
+      \ session (most common)\nAbsolute/fixed TTL (set once, never refreshed) vs *sliding*\
+      \ TTL. User pauses 25 min to research; TTL is 15 min. Key expires. `status`\
+      \ stays `in_progress` because \"idle\" was never treated as \"abandon\".\n\n\
+      ### 2.3 TTL only refreshed on specific events\nSliding renewal wired to \"next-question\"\
+      \ but not to \"heartbeat/mouse/keyboard/timer-tick\". A long dwell time on a\
+      \ single answer silently exhausts TTL.\n\n### 2.4 Redis eviction before TTL\
+      \ (memory-pressure)\n`maxmemory-policy` (e.g. `allkeys-lru`, `allkeys-random`,\
+      \ `volatile-*` variants) can **evict keys early**, before their TTL is reached.\
+      \ TTL is an upper bound, not a guarantee, under pressure.\n\n### 2.5 Redis restart\
+      \ / failover / data loss\nIf persistence is misconfigured (`save \"\"`, `appendonly\
+      \ no`) or the node is lost without replication catching up, the whole keyspace\
+      \ vanishes instantaneously regardless of TTL. DB untouched and still valid →\
+      \ mass breakage.\n\n### 2.6 Non-deterministic TTL at write time\nUse of `SET\
+      \ ... EX` with a per-session random/derived TTL means expiry moment is unpredictable;\
+      \ the DB doesn't carry the TTL, so you can't even predict *when* the resume\
+      \ will fail.\n\n### 2.7 Host/language time skew (edge)\nIf the Redis client/driver\
+      \ sets TTL using a wrong system clock, keys may expire earlier than intended\
+      \ relative to DB timestamps.\n\n### 2.8 Multi-key (pipeline) tear\nState split\
+      \ across several Redis keys with *staggered* TTLs → partial expiry leaves a\
+      \ half-resumable session (e.g. `session:cursor` gone but `session:answers` present)\
+      \ → inconsistent mid-flight state.\n\n---\n\n## 3. Why Continuation Breaks (机理)\n\
+      \nEven though the DB row is intact, the **resume payload is non-committal data\
+      \ that was never durable**. Specifically:\n\n1. **The DB doesn't hold transient\
+      \ context.** Resuming requires the *position* in the flow (current question,\
+      \ sub-state, partial typed answers, remaining time, token budget). These are\
+      \ only in Redis. No Redis = no resume.\n\n2. **No reconstruction path (or an\
+      \ inadequate one).** The app either:\n   - returns an error (`SESSION_NOT_FOUND`\
+      \ / `RESUME_FAILED`), or\n   - **silently restarts** at question 1, discarding\
+      \ partial progress — the \"silent\" bug is worst because the DB *still* claims\
+      \ validity, so the user is never told anything was lost; or\n   - misreads staleness\
+      \ as an active session fault and corrupts the DB row.\n\n3. **State-machine\
+      \ ambiguity.** The system cannot distinguish:\n   - *\"expired but session legitimately\
+      \ continues\"* → should rebuild from DB\n   - *\"truly abandoned\"* → should\
+      \ mark `expired`\n   Without an explicit marker, it guesses, and all guesses\
+      \ are wrong for at least one user class.\n\n> The core defect is **assuming\
+      \ Redis lifetime ≥ session lifetime**, which is never guaranteed. TTL is a cache-hygiene\
+      \ mechanism, not a session-lifetime contract.\n\n---\n\n## 4. Design Comparison\
+      \ & Decision\n\n```text\nOption A — Reconstruct from DB on miss (Read-through\
+      \ / Refresh)\n- Strengths: No state duplication grows unbounded; DB remains\
+      \ single source of truth.\n- Weaknesses: Requires DB to hold enough to rebuild;\
+      \ adds a rebuild path + latency; must handle partial state.\n- Best for: Sessions\
+      \ that can be deterministically rebuilt from committed DB facts.\n\nOption B\
+      \ — Singular source of truth in DB, Redis as optional cache\n- Strengths: Eliminates\
+      \ the contradiction entirely; Redis helps only for hot reads.\n- Weaknesses:\
+      \ More DB writes for every cursor/timer tick; higher write load; may need a\
+      \ \"current position\" column.\n- Best for: Correctness-critical, slow-changing\
+      \ sessions (few updates per minute).\n\nOption C — Sliding Renewal + Continued-lambda\
+      \ (renew-on-access) in Redis\n- Strengths: Robust against idle expiry during\
+      \ legitimate use; simple to implement; keeps hot state in Redis.\n- Weaknesses:\
+      \ Still breaks under eviction/restart/failover; idle-abandon detection still\
+      \ needed.\n- Best for: Short-lived, high-frequency sessions where Redis uptime\
+      \ is tolerable.\n\nOption D — Flow-Token / State-Machine Handoff\n- Strengths:\
+      \ Designative: every PATCH writes both DB state and a resume token; resume fetches\
+      \ token + rehydrates Redis.\n- Weaknesses: More writes; more code; requires\
+      \ idempotent resume semantics.\n\nDecision — Recommended: Hybrid (C + A + heartbeat\
+      \ + explicit terminal state)\n- Keep hot runtime in Redis BUT always renew on\
+      \ access (sliding TTL), set a generous floor, and\n  treat Redis as recoverable:\
+      \ on miss, rebuild from DB (Option A) before declaring failure.\n- Why it fits:\
+      \ interviews are slow-state (a cursor + timer), so DB rebuild cost is low; rebuild\
+      \ fixes\n  eviction, restart, and long-idle cases at once.\n- Risks & mitigations:\n\
+      \  * DB write amplification → only persist the *cursor + committed answers*,\
+      \ not every tick.\n  * Rebuild ambiguity → record explicit session terminal\
+      \ states (COMPLETED/EXPIRED/ABANDONED) in DB.\n```\n\n---\n\n## 5. Implementation\
+      \ (实施方案)\n\n### 5.1 Sliding renewal — always renew on *any* touch, not only\
+      \ on \"next\"\n```python\n# Redis: exclusive set with sliding TTL on every resume/touch\n\
+      def touch_session(session_id: str, ttl: int = 1800):\n    r.extend.ex(invalidate=False)\n\
+      \    return r.set(f\"session:{session_id}:runtime\", single_run_blob, kwargs={\"\
+      EX\": ttl, \"XX\": False})\n    # key detail: use a write that REFRESHES EX\
+      \ on each access\n```\nBetter: use `SET key val EX ttl` on every `GET` touch\
+      \ (or Lua), so idle-but-alive sessions never expire:\n```lua\n-- renew_if_exists.lua\n\
+      if redis.call('EXISTS', KEYS[1]) == 1 then\n    redis.call('EXPIRE', KEYS[1],\
+      \ ARGV[1], 'NX')  -- only bump when key exists\n    return redis.call('GET',\
+      \ KEYS[1])\nend\nreturn false\n```\n\n### 5.2 Rebuild on miss — never hard-fail\
+      \ on Redis absence\n```python\ndef load_session(session_id: str) -> Session:\n\
+      \    ctx = _redis_get(f\"session:{session_id}:runtime\")\n    if ctx is not\
+      \ None:\n        return ctx\n    return _rebuild_from_db(session_id)   # fall\
+      \ back to durable row\n\ndef _rebuild_from_db(session_id: str) -> Session:\n\
+      \    row = db.fetchone(\"SELECT * FROM session WHERE id=%s\", session_id)\n\
+      \    if row is None or row.status in (\"COMPLETED\", \"ABANDONED\", \"EXPIRED\"\
+      ):\n        raise SessionNotFound(session_id)          # genuinely gone / terminal\n\
+      \    # Rehydrate runtime from durable columns only\n    return Session(question_idx=row.current_question,\n\
+      \                   answers=row.committed_answers,\n                   started_at=row.started_at,\n\
+      \                   remaining=row.time_budget)\n```\n\n### 5.3 Persist enough\
+      \ in DB to rebuild (schema contract)\n```sql\nCREATE TABLE session (\n  id \
+      \           UUID PRIMARY KEY,\n  user_id       UUID NOT NULL,\n  status    \
+      \    TEXT NOT NULL DEFAULT 'IN_PROGRESS' CHECK (status IN\n                \
+      \                 ('IN_PROGRESS','PAUSED','COMPLETED','ABANDONED','EXPIRED')),\n\
+      \  current_question INT NOT NULL DEFAULT 1,      -- resumable cursor\n  committed_answers\
+      \ JSONB NOT NULL DEFAULT '{}', -- durable partial answers\n  time_budget   INTERVAL\
+      \ NOT NULL,\n  started_at    TIMESTAMPTZ NOT NULL DEFAULT now(),\n  updated_at\
+      \    TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n-- Redis holds only: remaining_time,\
+      \ in-progress buffer, locks, token budget.\n-- Anything that must survive a\
+      \ restart lives in the DB above.\n```\n\n### 5.4 Guard against eviction & restart\n\
+      ```yaml\n# redis.conf — hardening so TTL isn't bypassed by contention/persist\
+      \ gaps\nmaxmemory-policy      volatile-ttl   # prefer evicting soonest-expiring\
+      \ keys;\n                                     # NOT allkeys-lru which nukes\
+      \ active sessions\nsave 900 1\nappendonly  yes                      # survive\
+      \ restart\nappendfsync  everysec                # balance durability vs perf\n\
+      ```\nSet a **minimum TTL floor** and alert when close:\n```python\nMIN_TTL_SECS\
+      \ = 300\nif ttl_secs < MIN_TTL_SECS:\n    metrics.incr(\"session.ttl.floor.violation\"\
+      , tags={\"session_id\": session_id})\n    ttl_secs = MIN_TTL_SECS\n```\n\n###\
+      \ 5.5 Explicit terminal states — remove ambiguity\nWhen user closes/times-out/abandons,\
+      \ **write a DB terminal status before/atomically with removing Redis**:\n```python\n\
+      def end_session(session_id, status):   # e.g. status='COMPLETED'|'ABANDONED'|'EXPIRED'\n\
+      \    tx(db):\n        db.execute(\"UPDATE session SET status=%s, updated_at=now()\
+      \ WHERE id=%s\", status, session_id)\n        # then allow Redis key to be dropped\
+      \ / reject further resume\n    redis.delete(f\"session:{session_id}:runtime\"\
+      )\n```\nNow on Redis miss, the DB answer is unambiguous:\n\n- DB `status IN\
+      \ (COMPLETED, ABANDONED, EXPIRED)` → **reject resume** (correct).\n- DB `status\
+      \ = IN_PROGRESS` → **rebuild from DB** (correct).\n\n### 5.6 Heartbeat / idle-abandon\
+      \ detection\nA background job marks abandoned sessions: candidate = `IN_PROGRESS`\
+      \ AND `updated_at < now() - IDLE_LIMIT`. This converts \"looks alive but Redis\
+      \ is gone\" into a definitive DB state, so resume-rebuild and cleanup share\
+      \ one rule:\n```sql\nUPDATE session SET status='ABANDONED', updated_at=now()\n\
+      WHERE status='IN_PROGRESS' AND updated_at < now() - INTERVAL '30 minutes';\n\
+      ```\n\n---\n\n## 6. Verification (验证方式)\n\n- **TTL-expiry simulation:** insert\
+      \ a session, set TTL=5s, wait, attempt resume → assert it **rebuilds from DB**,\
+      \ no error, cursor preserved.\n- **Eviction simulation:** `maxmemory 1mb` +\
+      \ batch activity → assert active key not preferentially dropped (or that rebuild\
+      \ works).\n- **Restart simulation:** stop Redis → resume → assert rebuild path\
+      \ triggers, not `SessionNotFound`.\n- **Idle abandonment:** no touch for `IDLE_LIMIT`\
+      \ → assert DB flips to `ABANDONED`, resume rejected.\n- **Multi-key tear:**\
+      \ set a 1s and a 60s TTL on the two runtime keys → assert resume still consistent.\n\
+      \n**Expected:** All paths above yield *either* a clean resume (state preserved)\
+      \ *or* a clean, labeled rejection — never a silent restart or a mid-flight corruption.\n\
+      \n---\n\n## 7. Follow-up Optimizations (后续优化)\n\n- Make Redis a true footer\
+      \ with **watchdog metrics** (`redis-key-hit-rate`, `rebuild_rate`) and alert\
+      \ when `rebuild_rate` spikes.\n- Add an `expires_at` column to the DB row so\
+      \ resume can reject with *why* (duration vs idle).\n- For in-progress partial\
+      \ answers larger than a JSONB cell, snapshot to blob storage with the same atomic-terminal\
+      \ pattern.\n- Add `resume_token` (HMAC of session+state) for tamper/mid-air-fight\
+      \ protection on resume.\n\n**Bottom line:** don't fight TTL with a bigger TTL\
+      \ — make Redis **recoverable** (sliding renewal + DB rebuild) and make the DB\
+      \ the only citation for whether a session is valid. Then the two stores can\
+      \ never silently contradict."
+    execution_id: ''
+    trace_id: ''
+    tokens:
+      total: 24479
+      input: 1450
+      output: 3117
+      reasoning: 456
+      cache_read: 19456
+      cache_write: 0
+    latency_ms: 58784
+    reliability:
+      summary:
+        total_attempts: 1
+        retries_performed: 0
+        fallbacks_used: []
+        models_tried:
+        - ''
+        final_status: success
+        total_latency_ms: 58784
+        classification: success
+      cross_stack: null
+  contributions:
+  - role: database-engineer
+    task_id: task-database-engineer-7589c4
+    output:
+      agent: database-engineer
+      status: completed
+      summary: '# Interview Session Continuation — Redis TTL vs DB Validity
+
+
+        ## TL;DR (诊断结论)
+
+
+        Continuation breaks whenever the **runtime/transient state** required to resume
+        the session lives *only* in Redis and its '
+      output: "# Interview Session Continuation — Redis TTL vs DB Validity\n\n## TL;DR\
+        \ (诊断结论)\n\nContinuation breaks whenever the **runtime/transient state** required\
+        \ to resume the session lives *only* in Redis and its key disappears, while\
+        \ the **durable row** in the DB still says the session is valid/in-progress.\
+        \ Redis saying \"gone\" and the DB saying \"alive\" are **two valid, contradictory\
+        \ truths**; the app has no correct resume path, so it either errors, silently\
+        \ restarts the session, or leaks partially-done progress. This is not a bug\
+        \ in isolation — it's a **durability-of-ephemeral-state** design gap.\n\n\
+        ---\n\n## 1. Root Cause (根因)\n\nYou have two sources of truth with different\
+        \ lifetimes:\n\n| Store | What it holds | Lifetime | Semantics |\n|---|---|---|---|\n\
+        | **DB** | Committed session metadata: `session_id`, user, `status=in_progress`,\
+        \ timestamps, score, final answers | Persistent | Durable, source of truth\
+        \ for *committed* facts |\n| **Redis** | Runtime/transient state: current\
+        \ question index, cursor, elapsed timer, partial answer buffer, locked tokens/quota,\
+        \ socket/queue refs, token budget | Ephemeral, fixed TTL | Only the *live\
+        \ execution context* |\n\nThe failure is that **resume depends on Redis, but\
+        \ validity is judged by the DB**. When the Redis key is evicted/expired while\
+        \ the DB row is still `in_progress`, the system faces a contradiction: *\"\
+        the session legally exists, but I have nothing to resume it with.\"* Every\
+        \ code path that assumed \"Redis present ⟺ can continue\" now breaks.\n\n\
+        ---\n\n## 2. When It Breaks (构造完整时序)\n\n### 2.1 Fixed TTL expires during a\
+        \ legitimately long/active session\nAn interview that runs longer than `ttl_seconds`.\
+        \ Session is active, user is mid-question, Redis key dies at `now >= set_at\
+        \ + ttl`. DB row untouched.\n\n```\nt0        t_ttl                     \n\
+        \ |────────|──────────────►\n Redis:   alive       EXPIRED\n DB:      in_progress\
+        \  in_progress   ← still valid\n Continue: OK          BROKEN        ← nothing\
+        \ to resume\n```\n\n### 2.2 Idle-but-not-terminated session (most common)\n\
+        Absolute/fixed TTL (set once, never refreshed) vs *sliding* TTL. User pauses\
+        \ 25 min to research; TTL is 15 min. Key expires. `status` stays `in_progress`\
+        \ because \"idle\" was never treated as \"abandon\".\n\n### 2.3 TTL only refreshed\
+        \ on specific events\nSliding renewal wired to \"next-question\" but not to\
+        \ \"heartbeat/mouse/keyboard/timer-tick\". A long dwell time on a single answer\
+        \ silently exhausts TTL.\n\n### 2.4 Redis eviction before TTL (memory-pressure)\n\
+        `maxmemory-policy` (e.g. `allkeys-lru`, `allkeys-random`, `volatile-*` variants)\
+        \ can **evict keys early**, before their TTL is reached. TTL is an upper bound,\
+        \ not a guarantee, under pressure.\n\n### 2.5 Redis restart / failover / data\
+        \ loss\nIf persistence is misconfigured (`save \"\"`, `appendonly no`) or\
+        \ the node is lost without replication catching up, the whole keyspace vanishes\
+        \ instantaneously regardless of TTL. DB untouched and still valid → mass breakage.\n\
+        \n### 2.6 Non-deterministic TTL at write time\nUse of `SET ... EX` with a\
+        \ per-session random/derived TTL means expiry moment is unpredictable; the\
+        \ DB doesn't carry the TTL, so you can't even predict *when* the resume will\
+        \ fail.\n\n### 2.7 Host/language time skew (edge)\nIf the Redis client/driver\
+        \ sets TTL using a wrong system clock, keys may expire earlier than intended\
+        \ relative to DB timestamps.\n\n### 2.8 Multi-key (pipeline) tear\nState split\
+        \ across several Redis keys with *staggered* TTLs → partial expiry leaves\
+        \ a half-resumable session (e.g. `session:cursor` gone but `session:answers`\
+        \ present) → inconsistent mid-flight state.\n\n---\n\n## 3. Why Continuation\
+        \ Breaks (机理)\n\nEven though the DB row is intact, the **resume payload is\
+        \ non-committal data that was never durable**. Specifically:\n\n1. **The DB\
+        \ doesn't hold transient context.** Resuming requires the *position* in the\
+        \ flow (current question, sub-state, partial typed answers, remaining time,\
+        \ token budget). These are only in Redis. No Redis = no resume.\n\n2. **No\
+        \ reconstruction path (or an inadequate one).** The app either:\n   - returns\
+        \ an error (`SESSION_NOT_FOUND` / `RESUME_FAILED`), or\n   - **silently restarts**\
+        \ at question 1, discarding partial progress — the \"silent\" bug is worst\
+        \ because the DB *still* claims validity, so the user is never told anything\
+        \ was lost; or\n   - misreads staleness as an active session fault and corrupts\
+        \ the DB row.\n\n3. **State-machine ambiguity.** The system cannot distinguish:\n\
+        \   - *\"expired but session legitimately continues\"* → should rebuild from\
+        \ DB\n   - *\"truly abandoned\"* → should mark `expired`\n   Without an explicit\
+        \ marker, it guesses, and all guesses are wrong for at least one user class.\n\
+        \n> The core defect is **assuming Redis lifetime ≥ session lifetime**, which\
+        \ is never guaranteed. TTL is a cache-hygiene mechanism, not a session-lifetime\
+        \ contract.\n\n---\n\n## 4. Design Comparison & Decision\n\n```text\nOption\
+        \ A — Reconstruct from DB on miss (Read-through / Refresh)\n- Strengths: No\
+        \ state duplication grows unbounded; DB remains single source of truth.\n\
+        - Weaknesses: Requires DB to hold enough to rebuild; adds a rebuild path +\
+        \ latency; must handle partial state.\n- Best for: Sessions that can be deterministically\
+        \ rebuilt from committed DB facts.\n\nOption B — Singular source of truth\
+        \ in DB, Redis as optional cache\n- Strengths: Eliminates the contradiction\
+        \ entirely; Redis helps only for hot reads.\n- Weaknesses: More DB writes\
+        \ for every cursor/timer tick; higher write load; may need a \"current position\"\
+        \ column.\n- Best for: Correctness-critical, slow-changing sessions (few updates\
+        \ per minute).\n\nOption C — Sliding Renewal + Continued-lambda (renew-on-access)\
+        \ in Redis\n- Strengths: Robust against idle expiry during legitimate use;\
+        \ simple to implement; keeps hot state in Redis.\n- Weaknesses: Still breaks\
+        \ under eviction/restart/failover; idle-abandon detection still needed.\n\
+        - Best for: Short-lived, high-frequency sessions where Redis uptime is tolerable.\n\
+        \nOption D — Flow-Token / State-Machine Handoff\n- Strengths: Designative:\
+        \ every PATCH writes both DB state and a resume token; resume fetches token\
+        \ + rehydrates Redis.\n- Weaknesses: More writes; more code; requires idempotent\
+        \ resume semantics.\n\nDecision — Recommended: Hybrid (C + A + heartbeat +\
+        \ explicit terminal state)\n- Keep hot runtime in Redis BUT always renew on\
+        \ access (sliding TTL), set a generous floor, and\n  treat Redis as recoverable:\
+        \ on miss, rebuild from DB (Option A) before declaring failure.\n- Why it\
+        \ fits: interviews are slow-state (a cursor + timer), so DB rebuild cost is\
+        \ low; rebuild fixes\n  eviction, restart, and long-idle cases at once.\n\
+        - Risks & mitigations:\n  * DB write amplification → only persist the *cursor\
+        \ + committed answers*, not every tick.\n  * Rebuild ambiguity → record explicit\
+        \ session terminal states (COMPLETED/EXPIRED/ABANDONED) in DB.\n```\n\n---\n\
+        \n## 5. Implementation (实施方案)\n\n### 5.1 Sliding renewal — always renew on\
+        \ *any* touch, not only on \"next\"\n```python\n# Redis: exclusive set with\
+        \ sliding TTL on every resume/touch\ndef touch_session(session_id: str, ttl:\
+        \ int = 1800):\n    r.extend.ex(invalidate=False)\n    return r.set(f\"session:{session_id}:runtime\"\
+        , single_run_blob, kwargs={\"EX\": ttl, \"XX\": False})\n    # key detail:\
+        \ use a write that REFRESHES EX on each access\n```\nBetter: use `SET key\
+        \ val EX ttl` on every `GET` touch (or Lua), so idle-but-alive sessions never\
+        \ expire:\n```lua\n-- renew_if_exists.lua\nif redis.call('EXISTS', KEYS[1])\
+        \ == 1 then\n    redis.call('EXPIRE', KEYS[1], ARGV[1], 'NX')  -- only bump\
+        \ when key exists\n    return redis.call('GET', KEYS[1])\nend\nreturn false\n\
+        ```\n\n### 5.2 Rebuild on miss — never hard-fail on Redis absence\n```python\n\
+        def load_session(session_id: str) -> Session:\n    ctx = _redis_get(f\"session:{session_id}:runtime\"\
+        )\n    if ctx is not None:\n        return ctx\n    return _rebuild_from_db(session_id)\
+        \   # fall back to durable row\n\ndef _rebuild_from_db(session_id: str) ->\
+        \ Session:\n    row = db.fetchone(\"SELECT * FROM session WHERE id=%s\", session_id)\n\
+        \    if row is None or row.status in (\"COMPLETED\", \"ABANDONED\", \"EXPIRED\"\
+        ):\n        raise SessionNotFound(session_id)          # genuinely gone /\
+        \ terminal\n    # Rehydrate runtime from durable columns only\n    return\
+        \ Session(question_idx=row.current_question,\n                   answers=row.committed_answers,\n\
+        \                   started_at=row.started_at,\n                   remaining=row.time_budget)\n\
+        ```\n\n### 5.3 Persist enough in DB to rebuild (schema contract)\n```sql\n\
+        CREATE TABLE session (\n  id            UUID PRIMARY KEY,\n  user_id     \
+        \  UUID NOT NULL,\n  status        TEXT NOT NULL DEFAULT 'IN_PROGRESS' CHECK\
+        \ (status IN\n                                 ('IN_PROGRESS','PAUSED','COMPLETED','ABANDONED','EXPIRED')),\n\
+        \  current_question INT NOT NULL DEFAULT 1,      -- resumable cursor\n  committed_answers\
+        \ JSONB NOT NULL DEFAULT '{}', -- durable partial answers\n  time_budget \
+        \  INTERVAL NOT NULL,\n  started_at    TIMESTAMPTZ NOT NULL DEFAULT now(),\n\
+        \  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n-- Redis holds only:\
+        \ remaining_time, in-progress buffer, locks, token budget.\n-- Anything that\
+        \ must survive a restart lives in the DB above.\n```\n\n### 5.4 Guard against\
+        \ eviction & restart\n```yaml\n# redis.conf — hardening so TTL isn't bypassed\
+        \ by contention/persist gaps\nmaxmemory-policy      volatile-ttl   # prefer\
+        \ evicting soonest-expiring keys;\n                                     #\
+        \ NOT allkeys-lru which nukes active sessions\nsave 900 1\nappendonly  yes\
+        \                      # survive restart\nappendfsync  everysec          \
+        \      # balance durability vs perf\n```\nSet a **minimum TTL floor** and\
+        \ alert when close:\n```python\nMIN_TTL_SECS = 300\nif ttl_secs < MIN_TTL_SECS:\n\
+        \    metrics.incr(\"session.ttl.floor.violation\", tags={\"session_id\": session_id})\n\
+        \    ttl_secs = MIN_TTL_SECS\n```\n\n### 5.5 Explicit terminal states — remove\
+        \ ambiguity\nWhen user closes/times-out/abandons, **write a DB terminal status\
+        \ before/atomically with removing Redis**:\n```python\ndef end_session(session_id,\
+        \ status):   # e.g. status='COMPLETED'|'ABANDONED'|'EXPIRED'\n    tx(db):\n\
+        \        db.execute(\"UPDATE session SET status=%s, updated_at=now() WHERE\
+        \ id=%s\", status, session_id)\n        # then allow Redis key to be dropped\
+        \ / reject further resume\n    redis.delete(f\"session:{session_id}:runtime\"\
+        )\n```\nNow on Redis miss, the DB answer is unambiguous:\n\n- DB `status IN\
+        \ (COMPLETED, ABANDONED, EXPIRED)` → **reject resume** (correct).\n- DB `status\
+        \ = IN_PROGRESS` → **rebuild from DB** (correct).\n\n### 5.6 Heartbeat / idle-abandon\
+        \ detection\nA background job marks abandoned sessions: candidate = `IN_PROGRESS`\
+        \ AND `updated_at < now() - IDLE_LIMIT`. This converts \"looks alive but Redis\
+        \ is gone\" into a definitive DB state, so resume-rebuild and cleanup share\
+        \ one rule:\n```sql\nUPDATE session SET status='ABANDONED', updated_at=now()\n\
+        WHERE status='IN_PROGRESS' AND updated_at < now() - INTERVAL '30 minutes';\n\
+        ```\n\n---\n\n## 6. Verification (验证方式)\n\n- **TTL-expiry simulation:** insert\
+        \ a session, set TTL=5s, wait, attempt resume → assert it **rebuilds from\
+        \ DB**, no error, cursor preserved.\n- **Eviction simulation:** `maxmemory\
+        \ 1mb` + batch activity → assert active key not preferentially dropped (or\
+        \ that rebuild works).\n- **Restart simulation:** stop Redis → resume → assert\
+        \ rebuild path triggers, not `SessionNotFound`.\n- **Idle abandonment:** no\
+        \ touch for `IDLE_LIMIT` → assert DB flips to `ABANDONED`, resume rejected.\n\
+        - **Multi-key tear:** set a 1s and a 60s TTL on the two runtime keys → assert\
+        \ resume still consistent.\n\n**Expected:** All paths above yield *either*\
+        \ a clean resume (state preserved) *or* a clean, labeled rejection — never\
+        \ a silent restart or a mid-flight corruption.\n\n---\n\n## 7. Follow-up Optimizations\
+        \ (后续优化)\n\n- Make Redis a true footer with **watchdog metrics** (`redis-key-hit-rate`,\
+        \ `rebuild_rate`) and alert when `rebuild_rate` spikes.\n- Add an `expires_at`\
+        \ column to the DB row so resume can reject with *why* (duration vs idle).\n\
+        - For in-progress partial answers larger than a JSONB cell, snapshot to blob\
+        \ storage with the same atomic-terminal pattern.\n- Add `resume_token` (HMAC\
+        \ of session+state) for tamper/mid-air-fight protection on resume.\n\n**Bottom\
+        \ line:** don't fight TTL with a bigger TTL — make Redis **recoverable** (sliding\
+        \ renewal + DB rebuild) and make the DB the only citation for whether a session\
+        \ is valid. Then the two stores can never silently contradict."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 24479
+        input: 1450
+        output: 3117
+        reasoning: 456
+        cache_read: 19456
+        cache_write: 0
+      latency_ms: 58784
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 58784
+          classification: success
+        cross_stack: null
+    is_lead: true
+  - role: security-engineer
+    task_id: task-security-engineer-18c61d
+    output:
+      agent: security-engineer
+      status: completed
+      summary: '# Redis Session State TTL vs DB Validity — Continuation Break Analysis
+
+
+        **Role:** Database Engineer (security-engineering focus) · **Team:** team-18087af2
+        · **Output:** for lead review
+
+
+        ## 1. Problem '
+      output: "# Redis Session State TTL vs DB Validity — Continuation Break Analysis\n\
+        \n**Role:** Database Engineer (security-engineering focus) · **Team:** team-18087af2\
+        \ · **Output:** for lead review\n\n## 1. Problem Statement\n\nThe interview\
+        \ runtime keeps transient state in Redis (session phase, tool-calling decision\
+        \ context, distributed lock tokens) under a **fixed TTL**, while the authoritative\
+        \ record (interview, answers, score state) lives in the DB. When the Redis\
+        \ TTL fires but the DB row is still `ACTIVE`/valid, the running client's in-band\
+        \ state disappears. Continuation then **breaks in a specific way**: the app\
+        \ still recognizes the interview (DB says valid) but has lost the runtime\
+        \ context it needs to resume the tool-calling state machine.\n\n---\n\n##\
+        \ 2. When Breakage Actually Occurs (Threat Model)\n\nContinuation breaks only\
+        \ when the missing Redis state is **irrecoverable** and **required**, not\
+        \ merely cached. Classify every Redis key by recovery cost:\n\n| Key class\
+        \ | Example | Rebuildable from DB? | TTL expiry impact |\n|---|---|---|---|\n\
+        | **Session / phase pointer** | `ivt:{id}:phase`, step index | Yes — replay\
+        \ deterministic steps | Degraded: can recompute |\n| **Verification inputs**\
+        \ | user answers, question set refs, **nonces / anti-replay tokens** | **No**\
+        \ for the nonce/token | **Fails safely** (must fail) |\n| **Tool-calling decision\
+        \ context** | partial tool args, choice state, LLM call idempotency key |\
+        \ **No** | **Breaks mid-flight** |\n| **Distributed lock token** | `lock:ivt:{id}`\
+        \ + token | No — lease semantics lost | **Data-consistency risk** if stale\
+        \ holder continues |\n| **Ephemeral challenge / MFA** | short-lived auth nonce\
+        \ | No (by design) | Fails safely |\n\n**The dangerous breakpoint is the tool-calling\
+        \ / decision context combined with the lock.** The state machine has already\
+        \ issued partial tool calls (e.g., \"score current answer\" → LLM → store\
+        \ result). If the TTL dies between \"LLM called\" and \"result persisted\"\
+        , you have an **un-recorded partial write** and a **lost continuation point**.\n\
+        \n---\n\n## 3. Why TTL Expiry Late-Fires and Is Non-Deterministic (Security\
+        \ View)\n\nFixed-TTL expiry is **neither crash-consistent nor atomic** with\
+        \ the DB transaction that keeps the interview valid:\n\n1. **Two-clock problem.**\
+        \ Redis `EXPIRE` uses absolute wall clock on the Redis server + per-key lazy/active\
+        \ expiry sampling. The DB validity uses application logical state. The clocks\
+        \ are not synchronized → the Redis key can die at any offset from the DB transition.\n\
+        2. **Lazy expiry sampling** (`activeExpireCycle`) — expired keys are only\
+        \ reclaimed by `expireIfNeeded` on access, so a *naive read* may still return\
+        \ a technically-moribund key (fails on the *next* operation). This yields\
+        \ **non-deterministic continuation**: sometimes it works, sometimes it 500s.\n\
+        3. **Write-then-expire ordering.** If an application DTO carries its own `createdAt`/`expiresAt`\
+        \ and the code checks Redis-first but validates staleness from the *stored\
+        \ timestamp*, slow request queues can present a value past its window — a\
+        \ classic **TOCTOU (time-of-check-to-time-of-use)** race.\n4. **No atomicity\
+        \ with the DB commit.** Redis SET-with-TTL and the SQL COMMIT are separate\
+        \ steps. Between \"DB committed = interview valid\" and \"Redis SETEX issued,\"\
+        \ a crash produces **DB-valid, Redis-absent** — exactly the \"valid DB, no\
+        \ runtime state\" state you're describing.\n\n---\n\n## 4. Concrete Failure\
+        \ Paths (with code)\n\n### 4.1 Mid-tool-call continuation break\n\n```python\n\
+        # NON-ATOMIC pattern — BAD\nredis.setex(f\"ivt:{id}:toolctx\", ttl=600, value=json.dumps(ctx))\n\
+        invoke_llm(ctx)                    # slow, >TTL window in pathological case\n\
+        result = await llm.complete(ctx)   # expires can happen BETWEEN these lines\n\
+        redis.setex(f\"ivt:{id}:toolctx\", ttl=600, value=json.dumps(result))\n```\n\
+        Between the two writes the TTL fires with a fixed `600s`. The *second* SETEX\
+        \ re-creates the key with a **new** identity — any distributed-lock token\
+        \ bound to the old key value no longer matches → **someone else can now acquire\
+        \ the lock** → double-eval / corruption.\n\n### 4.2 Lock token orphaned\n\n\
+        ```python\ntoken = uuid4()\ngot = redis.set(f\"lock:ivt:{id}\", token, nx=True,\
+        \ ex=600)\n# ... long operation ...\n# TTL fires -> key deleted -> DB still\
+        \ says in-progress\nok = redis.get(f\"lock:ivt:{id}\") == token   # -> None,\
+        \ fails\n# A concurrent worker acquires with its OWN token and proceeds\n\
+        ```\n\nSecurity impact: **lost mutual exclusion** → the same interview's score/answer\
+        \ rows get written by two workers → torn/corrupted DB records, or a stale\
+        \ holder resuming with orphaned context.\n\n### 4.3 Verification nonce expired\
+        \ (desired fail)\n\n```python\n# Correct behavior: MUST fail closed\nnonce\
+        \ = redis.get(f\"ivt:{id}:answer_vote\")   # expired -> None\nif nonce is\
+        \ None and expected is not None:\n    audit.error(\"anti-replay nonce expired\
+        \ mid-session\", ref_id=id)\n    return 409 / 428   # never auto-continue\n\
+        ```\n\n---\n\n## 5. Recommendations (ranked)\n\n### 5.1 Make TTL contract\
+        \ explicit and DB-coupled (primary fix)\nStore `expires_at` **in the DB row**\
+        \ alongside status; let expiry be derived, not duplicated:\n- Add column `runtime_expires_at\
+        \ timestamptz NOT NULL`.\n- Logic resolves validity from the **DB value only**;\
+        \ Redis is treated as a **pure cache** that may always be absent.\n- On any\
+        \ Redis miss, **re-entrantly rebuild** from DB for deterministic steps; **fail\
+        \ closed** for nonce/lock.\n\n### 5.2 Sliding window, not fixed TTL\nFixed\
+        \ TTL is the root cause. Use **sliding expiry** refreshed on every heartbeat/admissible\
+        \ interaction:\n\n```python\nPIPELINE:\n  WATCH session-key\n  if exists:\
+        \  redis.expire(key, SLIDING_TTL)   # touch on activity\n  else:       rehydrate_or_fail(session-key)\n\
+        ```\n\n### 5.3 Atomic expiry + lock = lease model\nNever let lock lifetime\
+        \ equal the *operation* lifetime. Use a **short lease** with periodic renewal\
+        \ in the same atomic scripts:\n\n```lua\n-- renew.lua\nif redis.call(\"get\"\
+        , KEYS[1]) == ARGV[1] then\n    return redis.call(\"expire\", KEYS[1], ARGV[2])\n\
+        end\nreturn 0\n```\nWorker renews every `RENEW_INTERVAL < LEASE_TTL`; if a\
+        \ renewal is missed, the lease is released **and the DB transaction must be\
+        \ rolled back or tombstoned** so no orphan continues.\n\n### 5.4 Heartbeat\
+        \ + graceful continuation\n- Client/worker sends heartbeat `PING ivt:{id}`\
+        \ every `t <= TTL/4`; on TTL expiry detected (no heartbeat), set DB status\
+        \ to `INTERRUPTED` and provide a **resume token** stored in the DB (recoverable),\
+        \ rather than a silent loss.\n- Expose continuation as explicit `POST /interviews/{id}/resume`\
+        \ that rehydrates context **idempotently**, never auto.\n\n### 5.5 Visibility\
+        \ + alerting (security ops)\n- `INFO keyspace` / scan to count active session\
+        \ keys vs. DB ACTIVE rows; alert on **divergence** (Redis keys < DB actives)\
+        \ — this is your canary for silent expiry.\n- Log the expiry event with the\
+        \ **identity** (interview id) and whether it failed-open/closed, for audit.\n\
+        \n### 5.6 Security defaults — fail closed by data class\n| Data | On expiry\
+        \ | Rationale |\n|---|---|---|\n| answers, nonce, partial tool args | **fail\
+        \ closed** (428/409, require restate) | anti-replay, no torn state |\n| phase\
+        \ pointer, progress | **rebuild from DB** | deterministic, cheap |\n\n---\n\
+        \n## 6. Summary — Bottom Line for Lead\n\n- **Fixed TTL + separate DB is the\
+        \ bug.** It decouples liveness from logical validity and makes continuation\
+        \ non-deterministic.\n- **Continuation breaks exactly when** (a) the DB row\
+        \ is `ACTIVE` but (b) irrecoverable runtime state (lock token, partial tool\
+        \ call, nonce) was Redis-only — you get \"still valid, cannot resume.\"\n\
+        - **Fix hierarchy:** derive expiry from the DB → sliding TTL + heartbeat →\
+        \ lease-based distributed lock → classify keys as *rebuildable* vs *fail-closed*\
+        \ and never silently continue on the latter.\n- **Must actions:** atomic lock-renewal\
+        \ Lua, fail-closed on nonce/partial state, divergence alerting, audit logging\
+        \ of every expiry.\n\nReviewed for security correctness. Ready for lead review\
+        \ and DB/backend slot reconciliation."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 22395
+        input: 798
+        output: 2034
+        reasoning: 107
+        cache_read: 19456
+        cache_write: 0
+      latency_ms: 41877
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 41877
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: code-reviewer
+    task_id: task-code-reviewer-a9f2d0
+    output:
+      agent: code-reviewer
+      status: completed
+      summary: '# Code Review — Redis TTL 静默过期 vs DB 有效时"续答"断裂
+
+
+        **审查对象:** `InterviewStateStore`（固定 TTL）与 `InterviewService.answer/answerStream/requireAsking`
+        的续答（continuation）语义。
+
+        **结论先行:** 当前实现因 `requireAsking()` 存在 '
+      output: "# Code Review — Redis TTL 静默过期 vs DB 有效时\"续答\"断裂\n\n**审查对象:** `InterviewStateStore`（固定\
+        \ TTL）与 `InterviewService.answer/answerStream/requireAsking` 的续答（continuation）语义。\n\
+        **结论先行:** 当前实现因 `requireAsking()` 存在 DB 回退重建，**简单过期不会立刻硬崩**——这恰恰是危险所在：它把一次\"\
+        权威状态过期\"静默降级为\"回读 DB 重建\"，掩盖了根因。断裂与否取决于一个未定的隐含契约：DB 快照是否永远是运行时状态的真超集。今天恰好是，明天只要往\
+        \ `SessionState` 加一个不镜像到 `interview_session` 的字段，就会从\"静默恢复\"变成\"静默数据丢失\"。\n\
+        \n---\n\n## 1. 根因与关键问题\n\n### 1.1 权威契约是反的（最根本问题）\n`InterviewStateStore` 类注释声明\
+        \ Redis 是\"状态机的单一权威来源\"，但实现里 DB 才是真正持久层，Redis 只是带 TTL 的可变运行时缓存。`requireAsking`\
+        \ 的 fallback 明确证明：**Redis 丢了，系统靠 DB 兜底。** 契约未定会导致两类 bug 交替出现：\n- 相信 DB → 不处理过期\
+        \ → 续答静默丢运行时位点。\n- 相信 Redis → 该写时只写 Redis → DB 永不落库。\n\n针对性结论见 §3 方案。\n\n\
+        ### 1.2 \"固定 TTL\"的真实语义是\"每次写即续期 24h\"\n`InterviewStateStore.java:51`：\n```java\n\
+        redissonClient.getBucket(key(sessionId)).set(json, TTL_HOURS, TimeUnit.HOURS);\n\
+        ```\nRedisson `set(key, val, ttl)` 每次调用都**从当前时刻重新计算完整 24h**；而 `read()`（:34-46）**不续期**。因此\
+        \ key 生命周期 = \"距最近一次 `write` 之后 24h\"，不是\"自会话开始 24h\"。结果：\n- 活跃会话（一直答）会被每次\
+        \ `write` 无限续期，Redis 永不释放；\n- 闲置会话在**最后一次交互 24h 后**静默消失，与业务预期（\"我的面试还存着\"\
+        ）不符。\n\n### 1.3 过期检测被\"读取/解析失败\"两个条件混为一谈\n`read()` 在 `json == null` 和 `JSON\
+        \ 解析异常` 时都返回 `null`（:37-45）。这导致 `requireAsking` 无法区分\"过期/LRU 淘汰\"与\"数据损坏/版本不兼容\"\
+        ，二者都触发同一个 DB 回退重建路径——损坏数据也被当成过期静默重写，掩盖真正的坏值。\n\n### 1.4 DB 与 Redis 之间没有跨存储事务\n\
+        `InterviewService` 里总是先后执行 `sessionMapper.updateById(session)` 再 `stateStore.write(...)`（如\
+        \ :183-189）。两步之间若 Redis 写失败（`InterviewStateStore.write` 抛 `BizException`），或\
+        \ TTL 恰好在间隙触发，则 Redis 保留 **24h 前的旧位点**，与 DB 分裂。下一次续答在锁内重读，多数时候能查到 null 走 fallback，但存在短暂、不确定的\"\
+        读到旧镜像\"窗口。\n\n---\n\n## 2. 何时/为何续答断裂（分场景判定）\n\n### 场景 A —— 空闲 > TTL，返回续答【当前不会断裂，靠\
+        \ fallback 兜住】\n最后一次 `answer` 写后 24h → key 过期。用户返回 `/answer`：\n```java\n//\
+        \ requireAsking, InterviewService.java:380-399\nstate = stateStore.read(sessionId);\
+        \      // null\nif (state == null) {\n    sessionMapper.selectById(sessionId)\
+        \      // DB 仍有效，ASKING\n    state = new SessionState(s.getStatus(), s.getQuestionCount(),\
+        \ s.getCurrentQuestionId());\n    stateStore.write(sessionId, state);    \
+        \  // 重建 + 重置 24h\n}\n```\n**结论：今天不硬断**，因为 DB 三字段恰好是全量重建源。但它静默地完成了\"权威切换 Redis→DB\"\
+        。危险在于：这段重建**无日志、无指标、无告警**，过期事件对运维不可见。\n\n### 场景 B —— 续答断裂的\"真\"引爆点：运行时状态超出\
+        \ DB 字段\n只要演进中给 `SessionState`（`:27`）增加 **DB 没有镜像**的运行时字段——例如跟进提问序号、`questionSequences`、`lastAskedKnowledgePointSequence`、剩余题目游标——过期后\
+        \ fallback 只能重建出 `(status, questionCount, currentQuestionId)`，那些字段被静默归零/丢弃，**后续\
+        \ `pickQuestion` 的去重与游标全部错乱**，用户看到重复题目或跳过。这是本场景真正的断裂期。\n\n### 场景 C —— 读侧用户交互与\"\
+        权威丢失\"不一致\n`detail()`/`listByUser()`（:283-299）**完全不读 Redis**，直接用 DB 渲染。同一个会话，Redis\
+        \ 过期与否不影响列表\"看起来有效\"（DB 有效），用户自然认为可继续——与 Redis 里运行时位点已消失形成反差。这正是任务里\"DB 仍有效、Redis\
+        \ 已过期\"的静默与困惑来源。\n\n### 场景 D —— `answerStream` 持有旧引用跨越 TTL\n`answerStream`（:197）在流开始时\
+        \ `requireAsking` 读一次 state，随后为整段 300s SSE **复用 JVM 内 `state` 对象**（:254 `state.questionCount()+1`）不再重读\
+        \ Redis。若 TTL 恰在此流执行期间到期，写侧仍在结束用 `set(...,24h)` 续期——多数情况一致，但又一次把\"续期正确性\"\
+        寄托在与 TTL 时序的隐性耦合上。\n\n### 统一定性\n续答断不断，**完全取决于 DB 快照是否为运行时状态的超集**。今天\"是\"，表现为静默切源；将来\"\
+        不是\"，就表现为数据静默丢失。把正确性押在\"恰好字段相等\"上，是教科书式的脆弱耦合。\n\n---\n\n## 3. 方案对比与建议\n\n\
+        ```text\n方案 A：把 Redis 真正当作纯缓存，DB 为唯一权威\n- 强度：契约清晰；过期只代表\"缓存未命中\"，天然可重算；跨存储一致性问题归零\n\
+        - 弱点：需保证 DB 表字段覆盖全部运行时位点；每答多一次 DB 读\n- 适合：会话延迟敏感度中等的单机部署\n\n方案 B：Redis 做权威，TTL\
+        \ 只在显式结束/终态时清理\n- 强度：吞吐最高，swap-in/TTL 不丢位点\n- 弱点：废弃会话需 TTL 清理；终态必须删 key；分配回收需兜底扫描\n\
+        - 适合：纯运行时状态、DB 仅归档消息/报告的架构\n\n方案 C：采用滑动续期（key 非 24h 固定，读写都续期）+ 记录 lastHeartbeatAt\n\
+        - 强度：过期只发生在真正闲置；心跳字段让\"何时过期\"可观测、可审计\n- 弱点：仍是双写；仍需 DB 兜底校验\n\n## 决策（对当前代码库）\n\
+        推荐 A + 3 处最小加固，理由：改造成本最低、与现有 fallback 一致、立即终结\"权威不明\"。\n```\n\n### 具体落地（最小改动）\n\
+        \n**① 把 Redis 降级为缓存，明示非权威**\n- 改类注释：去掉\"单一权威来源\"表述，改成\"运行时缓存，DB 为唯一事实来源\"\
+        。\n- 给 `InterviewStateStore` 加 `key()`/重建逻辑独立化，`requireAsking` 的 fallback\
+        \ 抽出并补日志：\n\n```java\n// InterviewStateStore 增加可观测重建\npublic SessionState\
+        \ readOrRecover(Long sessionId, Function<Long, SessionState> fromDb) {\n \
+        \   SessionState cached = read(sessionId);\n    if (cached != null) return\
+        \ cached;\n    SessionState rebuilt = fromDb.apply(sessionId);\n    if (rebuilt\
+        \ == null) return null;\n    log.info(\"session state expired/corrupt, rebuilt\
+        \ from DB: sessionId={}\", sessionId);\n    write(sessionId, rebuilt);\n \
+        \   return rebuilt;\n}\n```\n\n**② `read()` 区分\"过期\"与\"损坏\"**\n```java\npublic\
+        \ SessionState read(Long sessionId) {\n    RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\n\
+        \    String json = bucket.get();\n    if (json == null) return null;     \
+        \            // 未命中/已过期\n    try {\n        return objectMapper.readValue(json,\
+        \ SessionState.class);\n    } catch (Exception e) {\n        log.warn(\"session\
+        \ state CORRUPT, will rebuild from DB: sessionId={}: {}\", sessionId, e.getMessage());\n\
+        \        throw new BizException(ResultCode.SESSION_STATE_CORRUPT);   // 让重建路径可观测\n\
+        \    }\n}\n```\n\n**③ 消除跨存储竞态：DB 先行 + 失败即告警**\n保持\"先 DB 后 Redis\"顺序不可倒置，并给\
+        \ `InterviewStateStore.write` 的失败以明确后果，而不是吞掉后抛无关的 `INTERNAL_ERROR`：\n```java\n\
+        // owner 只会因为 Redis 全部不可用而失败；会话仍可在下次请求由 DB 重建，但必须告警\nlog.error(\"session state\
+        \ write failed, DB is authoritative, sessionId={}\", sessionId);\n```\n\n\
+        **④ 给 `interview_session` 预留\"运行时游标\"字段**\n为防止\"DB 快照非超集\"引爆场景 B，新增可选列 `runtime_seq\
+        \ INT DEFAULT 0`（或 Json 列），让「下一步唯一性提示/Cnt」可被 DB 重建。这是让\"续答不断裂\"的硬保证。\n\n**⑤\
+        \ 配置建议**\n- 不要在全站全局 TTL 上偷懒：将 TTL 提为配置项 `interview.session-state-ttl`（默认 24h），并在会话反馈里向用户呈现\"\
+        未完成面试保留时长\"，避免\"DB 显示可续、Redis 已过期\"的静默反差。\n- Redis 开启 `notify-keyspace-events\
+        \ Ex` 订阅 `expired` 事件，对 `interview:session:*` 过期打监控/清理 `interview:lock:*`\
+        \ 残留——锁 key（`interview:lock:<id>`）也带 TTL，若装饰器默认续期机制失效，会与已过期会话一起被隐式回收。\n\n\
+        ---\n\n## 4. 验证方式\n- **UT**：注入 `stateStore.read → null`，断言续答走 DB 重建且第 6 问后正常终态；`read`\
+        \ 返回非法 JSON 时断言抛 `SESSION_STATE_CORRUPT` 而非静默重建。\n- **场景 B 回放**：删掉 DB 对 `runtime_seq`\
+        \ 的镜像，人为让 `SessionState` 多一个字段，模拟过期续答 → 断言出现去重错乱，证明 §2 场景 B 的真实性。\n- **集成**（Docker\
+        \ Compose 起 Redis）：`SET` 一个会话 key 后手动 `PEXPIRE 2000`，立即调 `/answer`，观察日志出现\
+        \ \"rebuilt from DB\" 且无重复提问。\n- **预期**：过期为\"可观测的缓存未命中\"，不做任何业务功能性断裂；损坏为显式异常；DB\
+        \ 与 Redis 位点始终一致。\n\n## 5. 复盘建议\n- 明确单一权威并写进接口约定：`InterviewSession`(DB) =\
+        \ 权威；Redis 仅加速 `answer` 热点读取。\n- 把\"过期重建\"做成可见事件（日志/metrics 计数：`session_state_rebuild_total{mode=expired|corrupt}`），否则隐式切源永远查不到根因。\n\
+        - `SessionState` 每加字段前强制自检：是否已镜像进 `interview_session`？若不是，禁止加入 `SessionState`，或同时加\
+        \ DB 列与迁移。\n\n**一句话结论：** 当前代码续答不硬断，靠的是 DB 回退恰好是全量重建源；这种\"静默切源\"把 TTL 过期变成了不可观测的隐性故障，一旦运行时字段不再被\
+        \ DB 超集覆盖，就会演化成静默数据丢失。治理方向是把 Redis 明确定位为缓存、DB 定为唯一权威、并让每次重建/损坏可见。"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 37381
+        input: 684
+        output: 2802
+        reasoning: 103
+        cache_read: 33792
+        cache_write: 0
+      latency_ms: 125356
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 125356
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: backend-architect
+    task_id: task-backend-architect-1a507e
+    output:
+      agent: backend-architect
+      status: completed
+      summary: '## Database Engineer Review: Redis TTL Silently Expiring vs. Valid
+        DB
+
+
+        ### 1. Ground truth from the code
+
+
+        Two places hold the same session state (`status`, `questionCount`, `currentQuestionId`):
+
+
+        - **'
+      output: "## Database Engineer Review: Redis TTL Silently Expiring vs. Valid\
+        \ DB\n\n### 1. Ground truth from the code\n\nTwo places hold the same session\
+        \ state (`status`, `questionCount`, `currentQuestionId`):\n\n- **DB** — `interview_session`\
+        \ row, written on every mutation (`InterviewService.java:111–114`, `183–186`,\
+        \ `258–261`).\n- **Redis** — `InterviewStateStore.write` sets `RBucket.set(key,\
+        \ json, TTL_HOURS, HOURS)` with a fixed `TTL_HOURS = 24` (`InterviewStateStore.java:25,\
+        \ 51`).\n\nComment declares Redis \"单一权威来源\" (single source of truth) for\
+        \ the state machine (`InterviewStateStore.java:14–16`), yet the *same* fields\
+        \ are also snapshotted to MySQL. That dual-write, non-transactional setup\
+        \ is the root of the problem.\n\n### 2. What the \"fixed TTL\" actually means\n\
+        \nEvery `write()` calls `bucket.set(k, v, 24, HOURS)`, which **resets the\
+        \ clock to 24h on each mutation**. So the effective semantics are *idle timeout*\
+        \ (\"24h since last state write\"), **not** \"24h since session creation\"\
+        . An actively-used interview never expires; only a session **idle > 24h between\
+        \ mutations** dies. This matters: the expiry is triggered purely by user inactivity,\
+        \ while the DB row remains a valid `ASKING`/`START` row.\n\n### 3. When continuation\
+        \ breaks (and when it silently doesn't)\n\nThe important correction for the\
+        \ lead: **a plain idle expiry does *not* hard-fail here, because `requireAsking`\
+        \ has a DB fallback.**\n\n`InterviewService.java:380–399`:\n```java\nInterviewStateStore.SessionState\
+        \ state = stateStore.read(sessionId);\nif (state == null) {              \
+        \        // key expired / missing\n    InterviewSession s = sessionMapper.selectById(sessionId);\n\
+        \    ...\n    state = new SessionState(s.getStatus(), s.getQuestionCount(),\
+        \ s.getCurrentQuestionId());\n    stateStore.write(sessionId, state);   //\
+        \ re-hydrate lazily\n}\n```\nSo on expiry the state is rebuilt from DB and\
+        \ the interview continues. That resilience is real — and it acts as the mask.\
+        \ The breaks live in the gaps around that fallback:\n\n**3a. Dual-write is\
+        \ non-atomic → silent drift (the core defect).**\n`updateById(...)` (DB commit)\
+        \ and `stateStore.write(...)` (Redis) are two independent writes with **no\
+        \ transaction, no ordering guarantee, no comparison on read**. Because the\
+        \ read path trusts any non-null Redis value and never cross-checks the DB\
+        \ (`requireAsking.java:381–390`), any state written to Redis that is *newer\
+        \ or older* than MySQL is accepted blindly.\n\nCrash / partial-failure scenario\
+        \ that corrupts continuity even *without* TTL:\n1. t=0  answer(Q1): Redis+DB\
+        \ → Q2, count=2, Redis TTL=+24h.\n2. t=23h answer(Q2): DB `updateById` commits\
+        \ Q3, count=3, **then** Redis `write` fails (timeout/error, `InterviewStateStore.java:52`)\
+        \ → 500 to user, but DB is now Q3. Redis still holds Q2… but this residual\
+        \ Redis value was refreshed at t=0 and expires at t=24h.\n3. t=25h: Redis\
+        \ key finally gone → fallback rehydrates from DB → *recovers*.\n\nThe genuinely\
+        \ silent break is the mirror image: **Redis is non-null but stale** (a later\
+        \ crash after DB write left Redis on the *old* generation, and a subsequent\
+        \ successful write refreshed its TTL). Now `requireAsking` sees a non-null\
+        \ Redis value, *skips the DB*, and resumes from a stale `currentQuestionId`/`questionCount`\
+        \ → it double-asks a question, or miscounts the state machine. TTL expiry\
+        \ is not the only trigger, but it is the most common one that *looks* benign\
+        \ because of the fallback.\n\n**3b. TOCTOU across the expiry boundary.**\n\
+        If the key's absolute TTL lapses during an in-flight `answerStream`/`answer`\
+        \ (a virtual thread holds the request for up to 300s, `InterviewService.java:198`),\
+        \ the final `stateStore.write` at the tail re-writes with a fresh 24h — that\
+        \ self-heals. But if expiry happens *between* the `requireAsking` read and\
+        \ the DB mutation, the state the caller latched onto is gone; recovery now\
+        \ depends entirely on the DB row being current, which is guaranteed only if\
+        \ the earlier dual-write completed. Any prior partial failure invalidates\
+        \ that assumption.\n\n**3c. Resumption after idle expiry re-WRITES stale semantics\
+        \ into Redis.**\nThe fallback at `InterviewService.java:389` unconditionally\
+        \ writes the reconstructed state back with a fresh 24h TTL — including a `FINISHED`\
+        \ status. So a finished-and-forgotten session whose key expired gets resurrected\
+        \ in Redis as FINISHED for another 24h, and any subsequent correct-termination\
+        \ checks (e.g. dashboard recompute, `INTERVIEW_FINISHED`) now treat \"resurrected\
+        \ cache key\" as truth.\n\n**3d. Locks share the same vulnerable store.**\n\
+        `interview:lock:{id}` (`InterviewService.java:362`) is also a Redis key with\
+        \ a watchdog lease. Any Redis outage/eviction that kills session state on\
+        \ a node also drops mutual exclusion, so two concurrent `answer` calls can\
+        \ double-advance the state machine. TTL expiry on the session key is usually\
+        \ accompanied by the lock keys being renamed/recreated.\n\n### 4. The verdict\
+        \ for the lead\n\n- **Normal idle-expiry alone does not break continuation**\
+        \ — the `requireAsking` DB fallback recovers it. Anyone claiming a hard failure\
+        \ on plain TTL expiry is wrong about this codebase.\n- **Continuation breaks\
+        \ when Redis and DB drift**, and TTL expiry is the trigger that *lets* problematic\
+        \ stale-non-null Redis values survive longest, because it also resets TTLs\
+        \ (3a), masks ordering issues (3b), and resurrects finished states (3c).\n\
+        - Single point of failure is `requireAsking`: the only reader with a DB fallback.\
+        \ Every path trusts it.\n\n### 5. Recommendations\n\n1. **Pick one source\
+        \ of truth: make the DB authoritative.** Treat Redis strictly as a read-through\
+        \ cache with a *short* TTL + \"revalidate on miss\" (already present). Then\
+        \ continuity survives full Redis eviction, not just TTL.\n\n2. **Reconcile\
+        \ on every read, not only on miss.** Read Redis; compare a monotonic `version`\
+        \ field against the DB (or simply always read `currentQuestionId`/`status`\
+        \ from DB on resume). On mismatch → DB wins → overwrite Redis. This closes\
+        \ 3a/3b/3c.\n   ```java\n   // InterviewStateStore.readWithVerify()\n   SessionState\
+        \ cached = read(id);\n   InterviewSession s = mapper.selectById(id);     \
+        \ // cheap enough on resume\n   return (cached != null && s != null\n    \
+        \       && Objects.equals(s.getStatus(), cached.status())\n           && Objects.equals(s.getCurrentQuestionId(),\
+        \ cached.currentQuestionId()))\n       ? cached : rebuildSessionState(s);\n\
+        \   ```\n\n3. **Make TTL a true sliding/idle TTL, refreshed+read atomically,\
+        \ and decouple it from the DB's validity horizon.**\n   - On every `read()`\
+        \ (used by `requireAsking`) refresh remaining TTL if below a threshold, so\
+        \ an active session never dies mid-use:\n   ```java\n   RBucket<String> bucket\
+        \ = redissonClient.getBucket(key(id));\n   String json = bucket.get();\n \
+        \  if (json != null) {\n       long ttl = bucket.remainTimeToLive();     \
+        \   // 0 = expired (key gone), -1 = none\n       if (ttl != -1 && ttl < IDLE_REFRESH_MS)\
+        \      // e.g. < 5min\n           bucket.expire(TTL_HOURS, TimeUnit.HOURS);\n\
+        \   }\n   ```\n   - Keep DB `interview_session` as the durable *valid* horizon\
+        \ and let Redis TTL be a short-lived fast-path (e.g. 30m idle), with DB revalidation\
+        \ on miss. That way \"key gone\" is a normal, cheap, always-correct path instead\
+        \ of a silent failure.\n\n4. **Harden the dual write with optimistic concurrency\
+        \ on the DB (version CAS).**\n   Add `int version` to `interview_session`\
+        \ and mutate with `UPDATE ... SET version=version+1 WHERE id=? AND version=?`.\
+        \ This makes concurrent / rehydrated writes idempotent and lets you detect\
+        \ the stale-non-null Redis case in step 2 (write contains the version; read\
+        \ compares it).\n\n5. **Make the pair consistent in one place.** If you keep\
+        \ Redis authoritative (current design intent), the DB write should be the\
+        \ *cache* of the last committed Redis state, not written independently — or\
+        \ use an outbox/event so MySQL and Redis converge. Right now both are written\
+        \ opportunistically with no ordering → guaranteed eventual drift.\n\n6. **Reset\
+        \ the session-validity clock on real activity.** Since the TTL is an idle\
+        \ timeout, explicitly refresh it on user-facing actions (answer submit, resume,\
+        \ SSE heartbeat), and *never* on background/cron touches, so an abandoned\
+        \ interview actually expires and is cleanly rehydrated from a FINISHED/ABANDONED\
+        \ DB state rather than being resurrected as ASKING.\n\nI recommend step 1\
+        \ + 2 (DB-authoritative + reconcile-on-read) and step 3 (short sliding cache\
+        \ TTL) as the minimal, low-risk fix; steps 4–6 are the robust follow-ups.\
+        \ Ready for lead review."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 36234
+        input: 1023
+        output: 2130
+        reasoning: 2361
+        cache_read: 30720
+        cache_write: 0
+      latency_ms: 126103
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 126103
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: llm-engineer
+    task_id: task-llm-engineer-308f27
+    output:
+      agent: llm-engineer
+      status: completed
+      summary: '# Redis Session TTL vs Persistent DB: Silent Expiry & Continuation
+        Breaks
+
+
+        ## 1. Problem Summary
+
+
+        An interview session has two logical parts:
+
+
+        | Layer | Where stored | Lifecycle |
+
+        |-------|-----------'
+      output: "# Redis Session TTL vs Persistent DB: Silent Expiry & Continuation\
+        \ Breaks\n\n## 1. Problem Summary\n\nAn interview session has two logical\
+        \ parts:\n\n| Layer | Where stored | Lifecycle |\n|-------|-------------|-----------|\n\
+        | **Runtime/transient state** (active Q&A, current question index, timer,\
+        \ in-progress user responses, lock, dedup keys) | Redis, fixed TTL (e.g. `EXPIRE\
+        \ 1800`) | Volatile, meant to be short-lived |\n| **Canonical/persistent state**\
+        \ (session record, completed answers, scores, audit log) | PostgreSQL / MySQL\
+        \ / Mongo | Survives restarts, considered \"source of truth\" |\n\nThe flaw:\
+        \ `TTL + fixed` is a **write-once assumption**. The key gets `SETEX`/`SET\
+        \ EX`/`EXPIRE` when created, but the TTL is **not renewed** by subsequent\
+        \ activity. Meanwhile the DB row for that session stays valid (its own validity\
+        \ is derived from DB timestamps/logic, not the Redis TTL).\n\n> Redis silently\
+        \ expires the runtime state → a continuation request reloads the session from\
+        \ the DB → runtime state is gone/partial; the DB looks \"valid\" so the system\
+        \ tries to continue, but runtime context is missing → broken continuation.\n\
+        \n## 2. When It Breaks (Trigger Conditions)\n\nContinuation breaks when **DB\
+        \ validity outlives the Redis TTL**. Concretely:\n\n1. **Long active sessions.**\
+        \ A slow interview / review that stays \"in progress\" past the TTL window.\
+        \ User keeps working, continuously hitting Redis-backed keys, but TTL counts\
+        \ from creation only → keys vanish mid-session.\n2. **Idle-but-not-ended sessions.**\
+        \ User pauses think > TTL, returns to \"resume\". DB session is still `status='in_progress'`\
+        \ (valid), Redis state expired. This is the most common break.\n3. **Long-running/async\
+        \ interview steps.** Async agent steps (LLM scoring, proctoring checks) that\
+        \ exceed TTL between writes.\n4. **Fixed TTL < realistic session length.**\
+        \ e.g. TTL=15min on a 60-min interview → uniform expiry independent of actual\
+        \ usage.\n5. **Only runtime data in Redis.** If user's \"current position\"\
+        \ or \"answered question ids\" live only in Redis and are not mirrored to\
+        \ DB, expiry = irretrievable data loss.\n\n## 3. Why It Breaks (Root Causes)\n\
+        \n- **Fixed (creation-based) TTL is not usage-based.** Correct sliding expiry\
+        \ would call `EXPIRE <key> <ttl>` on *every* interaction. With fixed TTL there\
+        \ is no refresh, so the lifetime is bounded by wall-clock from creation regardless\
+        \ of activity.\n\n- **Dual-source-of-truth mismatch.** The DB says \"session\
+        \ active\"; Redis (which held the granular position) says \"gone\". Continuation\
+        \ loading logic only checks DB validity, so it *thinks* it can resume and\
+        \ proceeds with empty/degraded runtime state.\n\n- **Silent failure.** Redis\
+        \ `GET` on an expired key returns `nil`, not an error. Code that does `redis.get(key)`\
+        \ and treats `nil` as \"not done yet / first time\" reconstructs a **fresh/blank\
+        \ state** instead of failing loudly → misroutes to a new-question flow or\
+        \ returns 200 with wrong content.\n\n- **Race with the DB source-of-truth.**\
+        \ The DB row is updated at *different frequencies* (only on question boundaries\
+        \ or completion) than Redis keys (per-tick). So between DB writes, Redis is\
+        \ the only detailed state; its expiry leaves a gap the DB cannot fill.\n\n\
+        ## 4. Specific Failure Modes (Debug Cases)\n\n| Symptom | Likely cause | Fatality\
+        \ |\n|---------|-------------|----------|\n| Resume returns empty form / starts\
+        \ new question | Session position key expired, `nil` treated as \"start\"\
+        \ | High |\n| 200 OK but wrong content (blank \"current question\") | Position\
+        \ in Redis, content only from DB on boundary | High |\n| Duplicate answer\
+        \ submission after resume | `idempotency/dedup` key expired client-side retry\
+        \ path | Medium |\n| Lock expired mid-write → concurrent double-processing\
+        \ | `SET NX PX` lock TTL < operation time | Medium |\n| No error, silent reset,\
+        \ user confused | Trusting DB validity alone, no Redis staleness check | High\
+        \ |\n\n## 5. Recommendations (Configuration & Code)\n\n### 5.1 Split TTL policy:\
+        \ sliding vs fixed\nUse **sliding expiration** for runtime state (renewed\
+        \ on each access/interaction) and a **hard cap** as an upper bound:\n\n```python\n\
+        # Every touch renews the window; session cannot die while user is active.\n\
+        def touch_runtime(session_id: str, ttl: int = 1800):\n    key = runtime_key(session_id)\n\
+        \    r.set(key, ..., ex=ttl)          # reset on write\n    r.expire(key,\
+        \ ttl)                # also renew TTL on read-touch\n\n# Optional Lua/atomic:\
+        \ get-and-refresh\nTOUCH = \"\"\"\nlocal k = redis.call('GET', KEYS[1])\n\
+        if k then redis.call('EXPIRE', KEYS[1], ARGV[1]) end\nreturn k\n\"\"\"\n```\n\
+        \nThe hard cap (e.g. 4h) prevents zombie sessions from never being cleaned.\n\
+        \n### 5.2 Validate Redis against DB on \"resume\" — fail loudly, not silently\n\
+        \nNever assume `nil` == \"new session\". Distinguish three cases:\n\n```python\n\
+        def resume(session_id):\n    db = load_session_from_db(session_id)   # authoritative\
+        \ existence\n    rt = redis.get(runtime_key(session_id))\n\n    if db is None:\n\
+        \        return 404                           # truly new\n    if rt is None:\n\
+        \        # DB valid but runtime gone -> explicit recover path\n        rebuild_runtime_from_db(session_id)\
+        \  # or return 409 \"needs reset\"\n        # never silently treat as a fresh\
+        \ session\n```\n\nExplicitly query remaining TTL to detect imminent expiry\
+        \ proactively:\n\n```rust\n// Rust/redis-rs or via TTL command generally\n\
+        let ttl: i64 = conn.ttl(&key)?;   // <0 ==> expired/missing\nif ttl != -1\
+        \ && ttl < 60 { log::warn!(target:key, \"session near expiry\") }\n```\n\n\
+        ### 5.3 Mirror minimal runtime state to DB (data of record)\nAt least persist\
+        \ to the DB on question boundaries:\n- `current_question_index`, `remaining_question_ids`,\
+        \ `answered_ids`, `updated_at`.\n\nThen Redis is a **cache**, fully reconstructible:\n\
+        \n```\nDB:  [session_id, current_index, answered[], status, heartbeat_ts]\n\
+        Redis: [live encodings, cooldowns, locks, transient UI state]  <-- expirable\
+        \ safely\n```\n\n### 5.4 Lock discipline for idempotency\nUse `SET key val\
+        \ NX PX <ttl>` and set TTL comfortably above max operation time; if TTL is\
+        \ too short the lock expires mid-operation → double execution. Prefer task-scoped\
+        \ TTLs derived from the operation, not a global constant.\n\n### 5.5 Keep\
+        \ a `heartbeat` / re-validate gate\nMaintain DB-side `last_activity_at`. On\
+        \ resume, if `now - last_activity_at > GAP_THRESHOLD` while Redis is empty,\
+        \ treat as **expired-interrupted** and route to a clearly-labeled recovery\
+        \ (do not silently replay).\n\n### 5.6 Monitoring / alerting\n```\nExpired-while-DB-valid\
+        \ counter (metric on the nil-from-valid-DB branch)\nRedis keyspace TTL distribution\
+        \ for session keys (confirm sliding works)\nDB heartbeat staleness alert\n\
+        ```\n\n## 6. Bottom Line\n\n- **Breaks when** the Redis TTL is *creation-fixed*\
+        \ and outlived by actual session activity or idle-but-open sessions, while\
+        \ the DB still flags the session valid.\n- **Breaks because** (1) fixed TTL\
+        \ isn't renewed, (2) Redis holds granular runtime state that never reaches\
+        \ the DB, and (3) `nil` from Redis is silently treated as \"new\" instead\
+        \ of \"expired/stale\", so continuation proceeds with missing context and\
+        \ returns broken/noisy behavior.\n\nFix = **sliding TTL** + **persist minimal\
+        \ position to DB** + **explicit nil-vs-new branching** + **heartbeat-aware\
+        \ resume gate**."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 21412
+        input: 36
+        output: 1811
+        reasoning: 109
+        cache_read: 19456
+        cache_write: 0
+      latency_ms: 38864
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 38864
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: rag-engineer
+    task_id: task-rag-engineer-bce84e
+    output:
+      agent: rag-engineer
+      status: completed
+      summary: '## Interview Session Runtime State: Redis Fixed-TTL Expiry vs. Persistent
+        DB
+
+
+        ### Executive Summary
+
+
+        The failure mode you describe — **Redis runtime state silently disappears
+        via fixed TTL while the a'
+      output: "## Interview Session Runtime State: Redis Fixed-TTL Expiry vs. Persistent\
+        \ DB\n\n### Executive Summary\n\nThe failure mode you describe — **Redis runtime\
+        \ state silently disappears via fixed TTL while the authoritative DB row remains\
+        \ valid** — is a classic two-tier state mismatch. Continuation breaks *transitively*:\
+        \ the DB says the session is still alive, but the Redis-resident runtime context\
+        \ (the very state needed to answer the next question, resume a partially-saved\
+        \ answer, or authenticate a resume token) has been repudiated by Redis's eviction\
+        \ policy. The DB becomes a *liability disguised as truth*: it actively drives\
+        \ the client back to a resource that no longer exists in the hot cache.\n\n\
+        ---\n\n### 1. When Continuation Breaks (Trigger Matrix)\n\nContinuation breaks\
+        \ occur whenever **the client's resume/continue attempt lands after `TTL`\
+        \ elapsed** but **before the DB row is deleted/archived**. Specifically:\n\
+        \n| # | Scenario | Breaks? | Why |\n|---|----------|---------|-----|\n| 1\
+        \ | Interview resumes after Redis TTL, DB row still `active` | ✅ | Resume\
+        \ token or hydrate call hits a missing/rendered-null Redis key; DB still advertises\
+        \ a live session |\n| 2 | User stays active *within* TTL window (touching\
+        \ keys) | ❌ | Key still present — *unless* TTL is fixed, see #3 |\n| 3 | User\
+        \ is active but TTL is **fixed** (not sliding/extended on access) | ✅ | Even\
+        \ healthy, in-flight users expire if session duration > TTL. Access does not\
+        \ refresh the deadline. |\n| 4 | Long-running interview (1h+) with short TTL\
+        \ (e.g. 15 min) | ✅ | Guaranteed expiry mid-interview regardless of activity\
+        \ |\n| 5 | Token has `issued_at`/`exp` validated against **Redis** state |\
+        \ ✅ | Token parse succeeds, Redis lookup 404s → 401/410 semantics mismatch\
+        \ |\n| 6 | Token validated only against **DB** (JWT alone) | ⚠️ | Auth \"\
+        succeeds\" but next state read fails → confusing mid-request 500 rather than\
+        \ clean 401 |\n\nThe subtlest case is **#3**: a *fixed* (non-sliding) TTL\
+        \ means a perfectly healthy user doing continuous work still gets evicted.\
+        \ That's the \"silent\" part — no error surfaces at expiry time, only on the\
+        \ *next* continuation attempt.\n\n---\n\n### 2. Why Continuation Breaks (Mechanism)\n\
+        \n**1. Redis has a pure time-based eviction policy.** With default `volatile-lru`/`volatile-ttl`/`allkeys-*`\
+        \ — or even a simple `EXPIRE` — Redis *lazily* evicts on access (`expireIfNeeded`\
+        \ runs at lookup) and *actively* via the 10Hz timer. Unless a **sliding TTL**\
+        \ script (`GET` + `EXPIRE` under a single atomic op) is used, reads do **not**\
+        \ extend the deadline. A vanilla `SETEX key val 3600` is a dead-man's line:\
+        \ immutable from creation.\n\n**2. Redis is a *cache*, DB is the *system of\
+        \ record*.** They diverge by design. Explainability rule to quote in review:\n\
+        > *\"A key missing from Redis is indistinguishable from 'expired', 'evicted\
+        \ for memory', 'node restarted', or 'never written'. None of these are queryable\
+        \ back to the caller.\"*\n\n**3. The DB read path masks recursion.** Typical\
+        \ continuation flow:\n```\nrequest → load session(id) from DB (valid) \n \
+        \       → check runtime state in Redis (GONE)\n        → 500 / state-required\
+        \ error\n```\nBecause the DB check *succeeds first*, the failure is deferred\
+        \ and re-thrown *every* retry — each retry re-validates DB then misses Redis.\
+        \ Horrible retry/backoff behavior, and the error is ambiguous (DB-valid, cache-miss).\
+        \ This is the exact \"silently expire while DB remains valid\" symptom.\n\n\
+        **4. Split-brain from TTL ≠ DB lifecycle.** If DB row is cleared on a *different*\
+        \ trigger (explicit `DELETE` on completion, scheduled cleanup job) than Redis\
+        \ TTL, the two clocks drift. Any gap = a read-only window where DB advertises\
+        \ existence Redis denies.\n\n---\n\n### 3. Root-Cause Classification (for\
+        \ the lead)\n\n- **P0 – TTL set incorrectly**: fixed TTL shorter than max\
+        \ expected interview span.\n- **P0 – No renewal on active use**: session should\
+        \ be sliding, not absolute.\n- **P1 – No expiry callback/cleanup**: nothing\
+        \ reconciles Redis expiry with the DB row → orphaned \"valid\" DB rows.\n\
+        - **P1 – No distinguishability of expiry**: no tombstone, no `expired` flag\
+        \ persisted, so the client can't tell \"session over\" from \"transient cache\
+        \ miss.\"\n- **P2 – Token/state coupling**: token lifetime and cache lifetime\
+        \ not coordinated.\n\n---\n\n### 4. Recommended Fixes & Configuration\n\n\
+        #### 4a. Sliding TTL (renew on access) — atomic\n\nThe single highest-value\
+        \ fix. Use Lua so the read+extend is atomic (avoids a thread renewing an *expired*\
+        \ key):\n\n```lua\n-- redis eval script: get_session\nif redis.call(\"EXISTS\"\
+        , KEYS[1]) == 0 then\n  return nil\nend\nredis.call(\"EXPIRE\", KEYS[1], ARGV[1])\
+        \   -- slide the deadline\nreturn redis.call(\"GET\", KEYS[1])\n```\n\nAlso\
+        \ set an **inactivity ceiling** so an id idle-but-open interview *does* eventually\
+        \ die — sliding alone leaks state forever if no absolute cap:\n\n```lua\n\
+        -- wrap in the same script: cap absolute age\nlocal now = redis.call(\"TIME\"\
+        )[1]\nlocal born = tonumber(redis.call(\"HGET\", KEYS[1], \"born_at\") or\
+        \ now)\nif (now - born) > tonumber(ARGV[2]) then\n  redis.call(\"DEL\", KEYS[1]);\
+        \ return nil\nend\nredis.call(\"EXPIRE\", KEYS[1], ARGV[1])\n```\n\n#### 4b.\
+        \ Tune Redis eviction + add second TTL field\n\n```conf\nmaxmemory-policy\
+        \ noeviction   # or volatile-ttl; NEVER allkeys-lru for authoritative session\
+        \ state\n```\nAdd `volatile-ttl` on the *session* shard or keep session keys\
+        \ under a dedicated DB namespace so eviction for memory pressure can't silently\
+        \ drop active interviews. Prefer Redis **7.0 RDB/AOF persistence** (`appendonly\
+        \ yes`, `appendfsync everysec`) so a node restart doesn't compound the problem.\n\
+        \n#### 4c. Reconcile the two tiers — expiry callback / tombstone\n\nDo NOT\
+        \ rely on TTL alone. Persist a soft-delete marker in the DB so the DB stops\
+        \ advertising valid-but-expired sessions:\n\n```\non Redis expiration (keyspace\
+        \ notification `expired`):\n    UPDATE sessions SET status='expired' WHERE\
+        \ id=:id AND status='active'\n```\nUse **keyspace notifications** (notifications-keyspace-events\
+        \ via config `notify-keyspace-events Ex` — note: `E` for keyevent). Subscribe\
+        \ on `__keyevent@<db>__:expired`, mark the DB row. This closes the read-only\
+        \ window and makes continuation fail *fast and cleanly* with a 410 `GONE`,\
+        \ not an ambiguous 500.\n\n```conf\nnotify-keyspace-events Ex\n```\n\n####\
+        \ 4d. Coordinate token lifetime with cache lifetime\n\nNever mint a resume\
+        \ token that outlives the Redis state it references. Derive `exp` from the\
+        \ session's refresh boundary:\n\n```go\n// token.ttl = min(sessionTTL, absoluteSessionCap)\n\
+        ```\n\n#### 4e. Decide the authoritative clock\n\nPick **one** master: either\
+        \ Redis TTL drives DB cleanup, or the DB row expiry drives Redis DEL. Recommendation:\
+        \ **Redis TTL = runtime availability**; **DB shares the same TTL value**,\
+        \ and the keyspace-notification handler deletes the DB session on expiry.\
+        \ Single source of truth = one expiry value stored once, propagated to both\
+        \ tiers.\n\n---\n\n### 5. Concrete Redis CLI Verification\n\nTest the silent-expiry\
+        \ hypothesis directly:\n\n```bash\n# reproduce\nredis-cli SETEX session:d5a31f\
+        \ 30 '{\"q\":3,\"score\":12}'\nredis-cli TTL session:d5a31f        # 30\n\
+        sleep 35\nredis-cli GET session:d5a31f        # (nil)  <- silent; DB still\
+        \ says active\n\n# fix: sliding via lua eval\nredis-cli --eval /tmp/get_session.lua\
+        \ session:d5a31f , 60\nredis-cli TTL session:d5a31f        # should be ~60\
+        \ again after each read\n```\n\n---\n\n### 6. Deliverables for Lead Review\n\
+        \n1. **Fix primary bug**: convert fixed TTL → sliding TTL with absolute inactivity\
+        \ cap (**4a**).\n2. **Close the divergence gap**: keyspace-notification expiry\
+        \ handler to reconcile DB row (**4c**).\n3. **Bound token lifetime** to cache\
+        \ lifetime (**4d**).\n4. **Make failure explicit**: return 410 `GONE` (not\
+        \ 500) once DB knows the runtime state expired, so retries stop hammering.\n\
+        5. **Add observability**: metric on `cache_miss_but_db_valid` frequency —\
+        \ this is the canary for the whole class of bug.\n6. **Future guard**: add\
+        \ a Redis↔DB consistency test (set TTL=1s, assert DB row flips to `expired`,\
+        \ assert resume returns 410).\n\n**Bottom line for the lead:** *\"Continuation\
+        \ breaks the moment the client's request boundary crosses it was TTL deadline\
+        \ while the DB clock still says 'alive.' It's not a Redis bug or a DB bug\
+        \ — it's a missing reconciliation layer between two clocks that were never\
+        \ synchronized.\"*"
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 22100
+        input: 35
+        output: 2163
+        reasoning: 446
+        cache_read: 19456
+        cache_write: 0
+      latency_ms: 43441
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 43441
+          classification: success
+        cross_stack: null
+    is_lead: false
+  - role: prompt-engineer
+    task_id: task-prompt-engineer-3beb6f
+    output:
+      agent: prompt-engineer
+      status: completed
+      summary: '## Database Engineer — Contribution: Redis Fixed-TTL vs DB-Validity
+        Session Expiry
+
+
+        ### Diagnosis (grounded in this codebase)
+
+
+        Two stores coexist for the same logical session:
+
+
+        - **DB (`interview_sess'
+      output: "## Database Engineer — Contribution: Redis Fixed-TTL vs DB-Validity\
+        \ Session Expiry\n\n### Diagnosis (grounded in this codebase)\n\nTwo stores\
+        \ coexist for the same logical session:\n\n- **DB (`interview_session`)**\
+        \ — permanent, durable truth for `status`, `question_count`, `current_question_id`.\n\
+        - **Redis (`interview:session:{id}`)** — a `SessionState` record via `InterviewStateStore`,\
+        \ documented as \"单一权威来源\" (single source of truth) — `InterviewStateStore.java:15`.\n\
+        \n```java\nprivate static final long TTL_HOURS = 24;                     \
+        \  // :25\nredissonClient.getBucket(key(sessionId))\n        .set(json, TTL_HOURS,\
+        \ TimeUnit.HOURS);                  // :51 every write\n```\n\n**Key facts\
+        \ about the TTL behavior:**\n1. The TTL is **fixed (24h)** and only **re-armed\
+        \ on `write()`**. `write()` runs on *state transitions only* — `create()`\
+        \ (`:91`, `:116`), `answer()` (`:188`), `finishSession()` (`:345`). There\
+        \ is **no refresh on read**, and no activity-based sliding window.\n2. Therefore\
+        \ the key expires at `last_write_time + 24h` regardless of continued use.\
+        \ A user who returns to a non-FINISHED session (DB fully valid) after an idle\
+        \ gap > 24h hits a Redis miss.\n\n**Important nuance:** this codebase has\
+        \ a self-healing fallback in `requireAsking()` (`InterviewService.java:380-399`):\n\
+        \n```java\nif (state == null) {\n    InterviewSession s = sessionMapper.selectById(sessionId);\n\
+        \    state = new SessionState(s.getStatus(), s.getQuestionCount(), s.getCurrentQuestionId());\n\
+        \    stateStore.write(sessionId, state);   // re-arms 24h, resumes silently\n\
+        }\n```\n\nBecause the three `SessionState` fields are **fully mirrored in\
+        \ the DB**, rehydration mostly reconstructs the cursor and the hard break\
+        \ is *masked* for the common single-action resume.\n\n### When and why continuation\
+        \ actually breaks\n\n**Break 1 — Silent expiry between two answers of a slow,\
+        \ ongoing conversation (the headline case).**\nSince TTL is fixed at 24h and\
+        \ re-armed only on writes, an active-but-slow session (e.g., user answers\
+        \ every 20–30h) expires *between answers*. The `requireAsking` fallback rehydrates\
+        \ it — so this specific codebase **masks** it. The problem is the fallback\
+        \ is an *incidental* behavior, not a designed contract: it silently continues\
+        \ with **zero observability**. \"Silent expiration\" still happens; the app\
+        \ just hides it. There is no log, no metric, no distinction between \"fresh\
+        \ state\" and \"reconstructed from DB.\"\n\n**Break 2 — Divergence is frozen\
+        \ and resurrected on expiry (rewind).**\nThe dual-write is non-atomic (`stateStore.write`\
+        \ + `sessionMapper.updateById` in separate calls, e.g. `:111-117`, `:183-189`).\
+        \ If a transition updates Redis but the DB update lags/fails (or the MQ scoring\
+        \ path at `:353-354` reorders), then on expiry the rehydration **loads whatever\
+        \ the DB row last committed** — rolling the state machine backward to an older\
+        \ `status/question_count`. The expired Redis value is discarded and an older\
+        \ DB snapshot becomes the new truth, silently.\n\n**Break 3 — True hard break\
+        \ once any Redis-only field is added.**\nToday `SessionState` (`status, questionCount,\
+        \ currentQuestionId`) is a strict DB mirror, so rehydration works. But the\
+        \ model is labeled \"single source of truth\" and *invites* Redis-only runtime\
+        \ fields (LLM tool-call context, in-flight AI cursor, follow-up pointer, streaming\
+        \ flags). The moment such a field exists, expiry drops it with **no DB column\
+        \ to rehydrate from** — continuation genuinely breaks with no exception path;\
+        \ the interviewer continues as if that context never existed.\n\n**Break 4\
+        \ — State-machine error inversion from stale TTL freshness.**\n`requireAsking`\
+        \ derives its decisions from the **Redis** state when present (`:391-397`:\
+        \ FINISHED→`INTERVIEW_FINISHED`, ELSE non-ASKING→`INTERVIEW_STATE_ERROR`).\
+        \ Redis may hold a *stale* value within its 24h window while the DB has moved\
+        \ on (or vice-versa), producing a spurious `INTERVIEW_FINISHED` / `INTERVIEW_STATE_ERROR`\
+        \ even though the DB says the session is resumable. Fixed TTL makes the freshness\
+        \ of the authoritative cursor unpredictable.\n\n### Design options\n\n```\n\
+        Option A — Sliding TTL (refresh on read)\n- Strengths: minimal change; active\
+        \ sessions never expire mid-conversation; preserves Redis-first model.\n-\
+        \ Weaknesses: Redis remains a source of truth → Break 2/4 (divergence/write-failure)\
+        \ still unhandled; still hides expiry.\n- Best for: quick fix if you want\
+        \ to keep the current architecture and just eliminate idle-cut deaths.\n\n\
+        Option B — DB is truth, Redis is cache (formalize the existing fallback)\n\
+        - Strengths: matches the reality that DB already mirrors all fields; kills\
+        \ Break 3 structurally (no state exists only in Redis); expiry becomes recoverable-by-design,\
+        \ not coincidence.\n- Weaknesses: needs discipline to never add Redis-only\
+        \ authoritative fields; small rehydration cost on miss.\n- Best for: long-term\
+        \ correctness; aligns with the existing `interview_session` columns + distributed\
+        \ lock.\n\nOption C — Hybrid (recommended)\n- Strengths: sliding refresh +\
+        \ cache-then-rehydrate + explicit logging; covers Break 1 (no idle cut), Break\
+        \ 3 (no Redis-only truth), Break 4 (decide from DB truth) and adds observability.\n\
+        - Weaknesses: slightly more code; must keep RBucket + lock usage coherent.\n\
+        - Best for: this project given it already has both stores and a per-session\
+        \ Redisson lock.\n```\n\n### Recommended implementation (Option C / grounded)\n\
+        \n**1. Make the fallback explicit and always decide from DB truth** (`InterviewService.requireAsking`,\
+        \ keep as-is but log the miss so \"silent\" expiry becomes visible):\n\n```java\n\
+        if (state == null) {\n    log.warn(\"interview:{} state missing in Redis (likely\
+        \ TTL expiry) - rehydrating from DB\", sessionId);\n    InterviewSession s\
+        \ = sessionMapper.selectById(sessionId);\n    if (s == null) throw new BizException(ResultCode.INTERVIEW_NOT_FOUND);\n\
+        \    state = new InterviewStateStore.SessionState(s.getStatus(), s.getQuestionCount(),\
+        \ s.getCurrentQuestionId());\n    stateStore.write(sessionId, state);\n}\n\
+        ```\n\n**2. Convert fixed TTL to sliding refresh on read** so active conversations\
+        \ survive long idle gaps (`InterviewStateStore`):\n\n```java\npublic SessionState\
+        \ read(Long sessionId) {\n    RBucket<String> bucket = redissonClient.getBucket(key(sessionId));\n\
+        \    String json = bucket.get();\n    if (json == null) return null;\n   \
+        \ bucket.expire(Duration.ofHours(TTL_HOURS)); // sliding: refresh on every\
+        \ read\n    // ... parse\n}\n```\n\n```java\n// make TTL configurable, not\
+        \ a hardcoded 24h\n@Value(\"${interview.state-ttl-hours:24}\") long ttlHours;\n\
+        ```\n\n**3. Prevent the \"rewind\" (Break 2) by making the transition single-writer\
+        \ — it already is** via `lockFor(sessionId)` (`:361`). Add a **DB-powered\
+        \ truth check inside the lock**: on rehydration, if DB status is `FINISHED`,\
+        \ raise `INTERVIEW_FINISHED` (current code already does this). Do **not**\
+        \ add Redis-only authoritative fields without a corresponding DB column.\n\
+        \n**4. Observability + config:**\n```yaml\ninterview:\n  state-ttl-hours:\
+        \ 24        # sliding, refreshed on read\n  rehydrate-on-miss: true    # fail-closed\
+        \ vs self-heal; log warnings\n```\nAdd a Redisson key event / a simple metric\
+        \ counting `rehydrate-on-miss` occurrences so silent expirations surface in\
+        \ monitoring instead of being invisible.\n\n### Risks & mitigations\n- **Risk:**\
+        \ sliding refresh on every read increases Redis writes slightly. *Mitigation:*\
+        \ `expire` is a cheap single command; negligible for session-count workloads.\n\
+        - **Risk:** if you choose a non-sliding long TTL, an idle-but-resumable session\
+        \ still dies at the fixed mark. *Mitigation:* use sliding (Option A) or rely\
+        \ on DB rehydration (Option B) — never cold-fixed TTL for an authoritative\
+        \ live cursor.\n- **Risk:** JSON parse failure silently returns `null` (`InterviewStateStore.java:43-45`)\
+        \ and now triggers a **rehydration** — treating corrupt data as \"expired\"\
+        . *Mitigation:* log the corruption separately from a true miss, and consider\
+        \ deleting the corrupted key rather than silently overwriting good DB truth.\n\
+        \n### Bottom line for the lead\nWith the current mirrored schema the hard\
+        \ break is *latent and masked by the `requireAsking` fallback*, not a guaranteed\
+        \ fault. The genuine defects are: (1) no activity-sliding → guaranteed expiry\
+        \ for sessions idle >24h; (2) the fallback is incidental → no logging/metrics,\
+        \ so \"silent expiration\" is real but invisible; (3) the architecture invites\
+        \ Redis-only state that would make continuation hard-break the moment it's\
+        \ added. Fix by making DB the source of truth, turning TTL into a sliding\
+        \ refresh, and adding explicit, observable rehydration — minimal change to\
+        \ `InterviewStateStore.java:29-46,51` and one log line in `InterviewService.java:382-389`."
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 35417
+        input: 5827
+        output: 2094
+        reasoning: 2920
+        cache_read: 24576
+        cache_write: 0
+      latency_ms: 93379
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: success
+          total_latency_ms: 93379
+          classification: success
+        cross_stack: null
+    is_lead: false
+  conflicts: []
+  summary: Lead agent (database-engineer) completed primary work. Support agents (security-engineer,
+    code-reviewer, backend-architect, llm-engineer, rag-engineer, prompt-engineer)
+    contributed
+  agent_count: 7
+  completed_count: 7
+  failed_count: 0
+task_cards:
+- task_id: task-database-engineer-7589c4
+  role: database-engineer
+  status: completed
+  output_summary: '# Interview Session Continuation — Redis TTL vs DB Validity
+
+
+    ## TL;DR (诊断结论)
+
+
+    Continuation breaks whenever the **runtime/transient state** required to resume
+    the session lives *only* in Redis and its '
+  output_len: 12306
+  latency_ms: 58784
+- task_id: task-security-engineer-18c61d
+  role: security-engineer
+  status: completed
+  output_summary: '# Redis Session State TTL vs DB Validity — Continuation Break Analysis
+
+
+    **Role:** Database Engineer (security-engineering focus) · **Team:** team-18087af2
+    · **Output:** for lead review
+
+
+    ## 1. Problem '
+  output_len: 7927
+  latency_ms: 41877
+- task_id: task-code-reviewer-a9f2d0
+  role: code-reviewer
+  status: completed
+  output_summary: '# Code Review — Redis TTL 静默过期 vs DB 有效时"续答"断裂
+
+
+    **审查对象:** `InterviewStateStore`（固定 TTL）与 `InterviewService.answer/answerStream/requireAsking`
+    的续答（continuation）语义。
+
+    **结论先行:** 当前实现因 `requireAsking()` 存在 '
+  output_len: 6112
+  latency_ms: 125356
+- task_id: task-backend-architect-1a507e
+  role: backend-architect
+  status: completed
+  output_summary: '## Database Engineer Review: Redis TTL Silently Expiring vs. Valid
+    DB
+
+
+    ### 1. Ground truth from the code
+
+
+    Two places hold the same session state (`status`, `questionCount`, `currentQuestionId`):
+
+
+    - **'
+  output_len: 8422
+  latency_ms: 126103
+- task_id: task-llm-engineer-308f27
+  role: llm-engineer
+  status: completed
+  output_summary: '# Redis Session TTL vs Persistent DB: Silent Expiry & Continuation
+    Breaks
+
+
+    ## 1. Problem Summary
+
+
+    An interview session has two logical parts:
+
+
+    | Layer | Where stored | Lifecycle |
+
+    |-------|-----------'
+  output_len: 7153
+  latency_ms: 38864
+- task_id: task-rag-engineer-bce84e
+  role: rag-engineer
+  status: completed
+  output_summary: '## Interview Session Runtime State: Redis Fixed-TTL Expiry vs.
+    Persistent DB
+
+
+    ### Executive Summary
+
+
+    The failure mode you describe — **Redis runtime state silently disappears via
+    fixed TTL while the a'
+  output_len: 8236
+  latency_ms: 43441
+- task_id: task-prompt-engineer-3beb6f
+  role: prompt-engineer
+  status: completed
+  output_summary: '## Database Engineer — Contribution: Redis Fixed-TTL vs DB-Validity
+    Session Expiry
+
+
+    ### Diagnosis (grounded in this codebase)
+
+
+    Two stores coexist for the same logical session:
+
+
+    - **DB (`interview_sess'
+  output_len: 8605
+  latency_ms: 93379
+execution_order:
+- task-backend-architect-1a507e
+- task-llm-engineer-308f27
+- task-database-engineer-7589c4
+- task-security-engineer-18c61d
+- task-rag-engineer-bce84e
+- task-prompt-engineer-3beb6f
+- task-code-reviewer-a9f2d0
+completed_count: 7
+failed_count: 0

@@ -1,0 +1,177 @@
+# Execution Trace — AOS-D3707B (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T13:55:14.049536+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788357314
+trace_id: TRACE-EXEC-1788357314-102f8b70acb1
+task_id: AOS-D3707B
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T13:53:29.433700+00:00'
+    memory_retrieved: '2026-09-02T13:53:29.438179+00:00'
+    routing_completed: '2026-09-02T13:53:29.455307+00:00'
+    skill_loaded: '2026-09-02T13:53:29.457990+00:00'
+    orchestration_completed: '2026-09-02T13:53:29.458524+00:00'
+    agent_started: '2026-09-02T13:53:29.463025+00:00'
+    agent_completed: '2026-09-02T13:55:14.049447+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T13:53:29.333665+00:00'
+  pid: 1104617
+  cwd: /home/shade/Public/test
+  task_id: AOS-D3707B
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  influence: none
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9d9a8c10ffeuXCDBqN7aiQjBB
+  tokens:
+    total: 44059
+    input: 4834
+    output: 1821
+    reasoning: 1564
+    cache_read: 35840
+    cache_write: 0
+  cost: 0
+  latency_ms: 104584
+agent_response: "我已完整审查了缓存路径。以下是作为 Database Engineer 的评估报告。\n\n---\n\n## 1. 目标与缓存概览\n\
+  \n**业务目标**：`/api/dashboard` 返回用户跨面试聚合（四维雷达、成绩趋势、薄弱点），聚合成本随面试数与结果数线性增长，故用 Redis 缓存降本。\n\
+  \n**当前实现** (`DashboardService.java`):\n- 键 `dashboard:user:{userId}`（Redisson `RBucket<String>`），序列化为\
+  \ `DashboardVO`（Jackson）。\n- TTL 固定 `10` 分钟，写入时 `bucket.set(..., 10, MINUTES)`（`DashboardService.java:38,66`）。\n\
+  - 读路径：命中即反序列化返回；未命中则 `compute(userId)` 从 DB 聚合并回写（`DashboardService.java:52-71`）。\n\
+  - 失效路径：`evict(userId)` 直接 `delete` 键（`DashboardService.java:81-91`）。\n\n**聚合输入源**（`compute`,\
+  \ `DashboardService.java:93-177`）——这是判断\"何时 stale\"的判据：\n1. `interview_result` 全部行：`dimensions`（雷达）、`suggestions`/`weakPoints`。\n\
+  2. `interview_session` 中 **`status=FINISHED` 且 `totalScore IS NOT NULL`** 的行：`stats`\
+  \ 与 `trend`。\n\n---\n\n## 2. 何时缓存\"陈旧\"（stale）？\n\n缓存本身是 DB 聚合的一份带 TTL 快照。**只有当\"\
+  影响聚合源的写操作\"没有触发 `evict()` 时**，后续 `build()` 才会在 TTL 剩余窗口内命中旧值 → stale。三种情况：\n\n1.\
+  \ **写后未失效**：任何对 `interview_result` 的 insert/update/delete，或对 `interview_session`\
+  \ 中 `totalScore/finishedAt/questionCount/status` 的变更，漏调 `evict()`。\n2. **跨实例不一致**：多副本情况下，若某实例写库但没清\
+  \ Redis 键（清的是共享的，故此处全局可见，未触发）；或事务提交前清了缓存，随后又在提交路径之外被旧读回写。\n3. **TTL 窗口内的天然陈旧**（可接受）：即便全正确，10\
+  \ 分钟内并发\"读\"可能看到的是旧快照。这是缓存语义本身，非 bug。\n\n---\n\n## 3. Mutation paths 逐一审计\n\n| 写路径\
+  \ | 改动源数据 | 是否调 `evict()` | 结论 |\n|---|---|---|---|\n| `InterviewService.answer()`\
+  \ 触发结束评分（`InterviewService.java:151-152`） | `resultMapper.insert` | ✅ | 失效完备 |\n\
+  | `InterviewService.answer()` 题库用尽评分（`169`） | insert | ✅ | 失效完备 |\n| `InterviewService.answerStream()`（`227,244`）\
+  \ | insert | ✅ | 失效完备 |\n| `InterviewService.finishSession()`（`349`） | `status=FINISHED`、`finishedAt`\
+  \ | ✅ | 失效完备 |\n| `RuleBasedScoringService.score()` MQ（默认 mode=rule，`57,66`） | insert\
+  \ + `totalScore/report` 更新 | ✅ | 失效完备 |\n| `InterviewScoringService.score()` MQ（AI\
+  \ 模式，`106,111`） | insert + session 更新 | ✅ | 失效完备 |\n| `LegacyAiScoringService.score()`（`113,118`）\
+  \ | insert + session 更新 | ✅ | 失效完备 |\n| `interview_result` /已完成 session 的 **update/delete**\
+  \ | 无任何 UPDATE/DELETE 路径 | — | 目前不存在 |\n\n**结论：所有现存 mutation 路径都正确调用了 `evict()`，尚未发现\"\
+  写过没清缓存\"的遗漏，缓存失效语义完备。** 红色风险不在这里。\n\n---\n\n## 4. 我发现的真实问题（与缓存无关，但会破坏 Dashboard\
+  \ 正确性）\n\n这正是本任务最值得指出的地方——**缓存即使完全正确，聚合结果仍是错的**：\n\n### 问题 A：结果的重复插入（双写），导致雷达分数约翻倍\n\
+  - 同步路径：`InterviewService.answer/answerStream` 用 `evaluationService.score()` 评分并\
+  \ `resultMapper.insert(result)`（`InterviewService.java:150-151`），随后 `finishSession()`（`157`）向\
+  \ RabbitMQ 投递评分任务（`353-354`）。\n- 异步路径：`RuleBasedScoringService.score()`（默认 `mode=rule`,\
+  \ `matchIfMissing=true`，`RuleBasedScoringService.java:25,39`）消费同一条消息，**再次** `evaluationService.score()`\
+  \ + `resultMapper.insert`（`55-56`）。\n\n同一 session 于是产生 **两行 `interview_result`**。`compute()`\
+  \ 对维度按行累加（`DashboardService.java:109-125`）→ **雷达图四项分数约等于真实值的 2 倍**。趋势/统计用 session\
+  \ 的 `totalScore`（只写一次）仍正确，所以只体现在雷达/薄弱点上。\n\n修复建议（二选一）：\n- 删除 `InterviewService`\
+  \ 里同步的 `resultMapper.insert`，评分只由 MQ 消费方落库；\n- 或保留同步落库，但 `finishSession` 不再投递 MQ。\n\
+  \n### 问题 B：finish → 异步评分的最终一致性窗口\n`finishSession` 置 `status=FINISHED` 时 `totalScore`\
+  \ 仍为 `null`（`InterviewService.java:341-344`），`compute()` 过滤 `isNotNull(totalScore)`\
+  \ 会**暂时不含本次面试**；等 MQ 消费写 `totalScore` 再 evict 后才出现。用户在下一次刷新前看到的是\"少一次\"的统计。属最终一致，可以接受，但值得明确：\n\
+  \n> 若想即时正确，应让 `evict()` 后 `build()` 按 `interview_result`（已含 synch 行）而非依赖 session.totalScore\
+  \ 计算 stats/trend，或同步阶段就写入 `totalScore` 再转 FINISHED。\n\n### 问题 C：evict 分散且无事务边界 ——\
+  \ 未来易漏\n`evict()` 被散落在 6+ 个方法里手写调用。若日后新增\"删除/重算结果\"\"管理员改分\"等路径忘记失效 → 回到 10 分钟 stale。建议收敛为**事件驱动\
+  \ + 提交后失效**：\n\n```java\n@EventListener\npublic void onResultSaved(InterviewResultSavedEvent\
+  \ e) {\n    // 事务提交后再删缓存，避免\"清后又被回写\"\n}\n\n@TransactionalEventListener(phase =\
+  \ TransactionPhase.AFTER_COMMIT)\npublic void onCommitted(InterviewResultSavedEvent\
+  \ e) {\n    dashboardService.evict(e.getUserId());\n}\n```\n\n在 `resultMapper.insert`/session\
+  \ 更新处 `applicationEventPublisher.publishEvent(...)`，单点收口。\n\n---\n\n## 5. 决策与风险总结\n\
+  \n| 项 | 决策 | 理由 / 风险与缓解 |\n|---|---|---|\n| 现有失效路径 | **保持**，无需改 | 全部已正确 `evict()`，TTL\
+  \ 仅作兜底 |\n| 结果双写（Problem A） | **必修**，删除同步 insert或停止投递 | 这是当前唯一使 Dashboard 数值错误的根因；改后雷达/薄弱点恢复真实\
+  \ |\n| 最终一致窗口（Problem B） | **接受**，记录预期行为 | 短暂少一次；若要即时正确需调整 stats 计算来源 |\n| 失效收口（Problem\
+  \ C） | **建议改造**为 `@TransactionalEventListener(AFTER_COMMIT)` | 消除未来\"写后漏清\"风险，避免提交前清缓存被旧读回写\
+  \ |\n\n**安全的 mutation paths**：现存的 7 条写路径（结果 insert、会话 finish、异步评分落库+更新）全部经过 `evict()`，缓存一致。**整体缓存治理是安全的**；真正需要动手的是同步+异步的重复落库，而不是缓存本身。\n\
+  \n需要我直接动手修复 Problem A（去掉同步重复插入），或接入 Problem C 的事件化失效吗？"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 104586
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T13:53:29.455307+00:00'
+    completed_at: '2026-09-02T13:53:29.455307+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-02T13:53:29.438179+00:00'
+    completed_at: '2026-09-02T13:53:29.438179+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T13:53:29.457990+00:00'
+    completed_at: '2026-09-02T13:53:29.457990+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T13:53:29.458524+00:00'
+    completed_at: '2026-09-02T13:53:29.458524+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T13:53:29.463025+00:00'
+    completed_at: '2026-09-02T13:55:14.049447+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

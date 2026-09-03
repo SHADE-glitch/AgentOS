@@ -17,6 +17,7 @@ Input:  task description (query)
 Output: Top-K memories ranked by adaptive_score
 """
 
+import sys
 import yaml
 import os
 import re
@@ -30,12 +31,23 @@ TRACES_DIR = "/home/shade/.agents/runtime/traces"
 RETRIEVAL_HISTORY = "/home/shade/.agents/runtime/memory-feedback/retrieval/retrieval-history.yaml"
 SCORING_LOG = "/home/shade/.agents/runtime/memory-feedback/retrieval/scoring-log.yaml"
 
-# Scoring weights
-WEIGHTS = {
-    "relevance": 0.35,
-    "success_rate": 0.25,
-    "confidence": 0.20,
-    "performance": 0.20,
+# Phase 8.2.1.5: Multiplicative scoring model.
+# Root cause: additive formula (static * 0.55 + success * 0.20 + ...)
+# allowed generic high-success memories to dominate task-relevant ones.
+# A memory with static=0.01 and success=0.94 could score 0.285,
+# beating a task-relevant memory with static=0.50 and success=0.0 (0.275).
+#
+# Fix: multiplicative formula — static_relevance is the primary factor,
+# quality metrics are only a modifier (0-30% boost).
+#   quality_bonus = success * 0.15 + confidence * 0.10 + perf * 0.05
+#   final = static * (1.0 + quality_bonus)
+#
+# This ensures task-relevant memories always outrank generic ones,
+# regardless of memory quality history.
+QUALITY_BONUS_WEIGHTS = {
+    "success_rate": 0.15,
+    "confidence": 0.10,
+    "performance": 0.05,
 }
 
 # Thresholds
@@ -167,35 +179,83 @@ def compute_static_relevance(memory, query):
     """
     Compute static relevance score from retrieval-protocol.md Section 4.
     This is a deterministic, metadata-driven score.
+
+    Phase 8.2.1.5: Root cause fix — Task Context → Retrieval Query → Relevance.
+    - Direct task-text-to-tag matching: memory tags that appear literally
+      in the task text receive a strong relevance signal. This is the
+      most direct signal of task-memory relevance and is classifier-independent.
+    - Expanded domain/role/keyword matching beyond tags.
+    - Multiplicative scoring in compute_adaptive_score ensures static_relevance
+      dominates over memory quality metrics.
     """
     category = memory.get("category", "")
     tags = [t.lower() for t in memory.get("tags", [])]
+    mem_roles = [r.lower() for r in memory.get("roles", [])]
 
     q_category = query.get("category", "").lower()
     q_domains = [d.lower() for d in query.get("domains", [])]
     q_roles = [r.lower() for r in query.get("roles", [])]
     q_keywords = [k.lower() for k in query.get("keywords", [])]
 
+    # ── Phase 8.2.1.5: Direct task-text-to-tag matching ──────────
+    # This is the primary task-relevance signal. It directly checks whether
+    # a memory's tags appear in the raw task text. This is:
+    # - Generic: works for any task, not benchmark-specific
+    # - Classifier-independent: doesn't rely on rules.yaml capturing all terms
+    # - Language-agnostic: works for both English and Chinese tags
+    task_text = query.get("task_text", "").lower()
+    task_text_score = 0.0
+    if task_text and tags:
+        task_tag_matches = 0
+        for tag in tags:
+            # Only count meaningful tags (min 3 chars) to avoid false positives
+            # from short tags like "ai", "ui", "go"
+            if len(tag) >= 3 and tag in task_text:
+                task_tag_matches += 1
+        # Each matching tag contributes 0.20, capped at 0.60
+        # This ensures strong task-relevant signals dominate
+        task_text_score = min(task_tag_matches * 0.20, 0.60)
+
     # Category match
     category_match = 1.0 if q_category and q_category in category.lower() else 0.0
 
-    # Domain match
+    # Phase 8.2.1.5: Expanded domain match
+    # Check query domains against memory tags and category only.
+    # Roles are checked separately in role_match — including them here
+    # creates false positives (e.g., 'database' in 'database-engineer'
+    # matching a generic AI memory that happens to have that role).
     domain_match = 0.0
     if q_domains:
-        domain_overlap = sum(1 for d in q_domains if d in tags)
-        domain_match = domain_overlap / max(len(q_domains), 1)
+        domain_signal = 0
+        for d in q_domains:
+            in_tags = d in tags
+            in_category = d in category.lower()
+            if in_tags or in_category:
+                domain_signal += 1
+        domain_match = domain_signal / max(len(q_domains), 1)
 
-    # Role match
+    # Phase 8.2.1.5: Expanded role match
     role_match = 0.0
     if q_roles:
-        role_overlap = sum(1 for r in q_roles if r in tags)
-        role_match = role_overlap / max(len(q_roles), 1)
+        role_signal = 0
+        for r in q_roles:
+            in_mem_roles = r in mem_roles
+            in_tags = r in tags
+            if in_mem_roles or in_tags:
+                role_signal += 1
+        role_match = role_signal / max(len(q_roles), 1)
 
-    # Keyword match
+    # Phase 8.2.1.5: Expanded keyword match
     keyword_match = 0.0
     if q_keywords:
-        kw_overlap = sum(1 for k in q_keywords if k in tags)
-        keyword_match = kw_overlap / max(len(q_keywords), 1)
+        kw_signal = 0
+        for k in q_keywords:
+            in_tags = k in tags
+            in_category = k in category.lower()
+            in_roles = any(k in r for r in mem_roles)
+            if in_tags or in_category or in_roles:
+                kw_signal += 1
+        keyword_match = kw_signal / max(len(q_keywords), 1)
 
     # Type boost
     mem_type = memory.get("type", "")
@@ -220,15 +280,17 @@ def compute_static_relevance(memory, query):
         tag_overlap = len(set(tags) & all_query_tags) / max(len(tags), 1)
         tag_overlap = min(tag_overlap, 0.05)
 
-    # Weights from retrieval-protocol.md
+    # Phase 8.2.1.5: task_text_score is the primary task-relevance signal.
+    # Weighted at 0.40 to ensure it dominates over other signals.
     relevance = (
-        category_match * 0.25 +
-        domain_match * 0.20 +
-        type_boost * 0.15 +
-        role_match * 0.15 +
+        task_text_score * 0.40 +
+        category_match * 0.15 +
+        domain_match * 0.15 +
+        type_boost * 0.10 +
+        role_match * 0.10 +
         keyword_match * 0.10 +
-        difficulty_match * 0.10 +
-        tag_overlap * 0.05
+        difficulty_match * 0.00 +
+        tag_overlap * 0.00
     )
 
     return round(relevance, 3)
@@ -237,10 +299,14 @@ def compute_static_relevance(memory, query):
 def compute_adaptive_score(memory, static_relevance, usage_data, eval_data, decay_factor=1.0):
     """
     Compute the adaptive score for a memory.
+
+    Phase 8.2.1.5: Multiplicative scoring model.
+    static_relevance is the primary factor; quality metrics only modify it.
+    This prevents generic high-success memories from outranking task-relevant ones.
     """
     memory_id = memory["memory_id"]
 
-    # 1. Static relevance
+    # 1. Static relevance (primary factor)
     relevance_score = static_relevance
 
     # 2. Success rate
@@ -257,13 +323,17 @@ def compute_adaptive_score(memory, static_relevance, usage_data, eval_data, deca
     perf = eval_data.get(memory_id, {})
     performance_gain = perf.get("performance_gain", 0.0)
 
-    # Adaptive score
-    adaptive = (
-        relevance_score * WEIGHTS["relevance"] +
-        success_rate * WEIGHTS["success_rate"] +
-        confidence_score * WEIGHTS["confidence"] +
-        performance_gain * WEIGHTS["performance"]
+    # Phase 8.2.1.5: Multiplicative formula
+    # quality_bonus caps at 0.30 (30% boost max from quality)
+    quality_bonus = (
+        success_rate * QUALITY_BONUS_WEIGHTS["success_rate"] +
+        confidence_score * QUALITY_BONUS_WEIGHTS["confidence"] +
+        performance_gain * QUALITY_BONUS_WEIGHTS["performance"]
     )
+    quality_bonus = min(quality_bonus, 0.30)
+
+    # adaptive = static_relevance * (1.0 + quality_bonus)
+    adaptive = relevance_score * (1.0 + quality_bonus)
 
     # Apply decay
     final_score = adaptive * decay_factor
@@ -274,6 +344,7 @@ def compute_adaptive_score(memory, static_relevance, usage_data, eval_data, deca
         "success_rate": round(success_rate, 3),
         "confidence_score": round(confidence_score, 3),
         "performance_gain": round(performance_gain, 3),
+        "quality_bonus": round(quality_bonus, 3),
         "adaptive_score": round(adaptive, 3),
         "decay_factor": round(decay_factor, 3),
         "final_score": round(final_score, 3),
@@ -299,8 +370,8 @@ def _ensure_reconciled():
         capture_output=True, text=True,
     )
     if result.returncode != 0:
-        print(f"WARNING: State inconsistency detected. Run repair first.")
-        print(result.stdout.strip()[:200])
+        print(f"WARNING: State inconsistency detected. Run repair first.", file=sys.stderr)
+        print(result.stdout.strip()[:200], file=sys.stderr)
 
 
 def retrieve(query, decay_factors=None):
@@ -389,12 +460,13 @@ def format_retrieval_output(retrieval_result):
     lines.append(f"Query: {retrieval_result['query'].get('task_text', '?')[:80]}")
     lines.append(f"Category: {retrieval_result['query'].get('category', '?')}")
     lines.append(f"Domains: {retrieval_result['query'].get('domains', [])}")
+    lines.append(f"Keywords: {retrieval_result['query'].get('keywords', [])}")
     lines.append(f"Considered: {retrieval_result['total_considered']} → Filtered: {retrieval_result['after_filter']} → Top-{retrieval_result['top_k']}")
     lines.append("")
 
     for i, r in enumerate(retrieval_result["results"]):
         lines.append(f"  #{i+1} {r['memory_id']} ({r['type']})")
-        lines.append(f"      final_score: {r['final_score']}  adaptive: {r['adaptive_score']}  static: {r['static_relevance']}")
+        lines.append(f"      final_score: {r['final_score']}  static: {r['static_relevance']}  quality_bonus: {r.get('quality_bonus', 'N/A')}")
         lines.append(f"      success: {r['success_rate']}  confidence: {r['confidence_score']}  perf: {r['performance_gain']}  decay: {r['decay_factor']}")
         lines.append(f"      evidence: {r['evidence_level']}  confidence: {r['confidence']}  uses: {r['usage_count']}")
         if r.get("warning"):

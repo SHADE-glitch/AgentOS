@@ -1,0 +1,187 @@
+# Execution Trace — AOS-5A4984 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T22:52:27.367804+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788389547
+trace_id: TRACE-EXEC-1788389547-7070871ad318
+task_id: AOS-5A4984
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T22:51:11.214299+00:00'
+    memory_retrieved: '2026-09-02T22:51:11.218634+00:00'
+    routing_completed: '2026-09-02T22:51:11.238142+00:00'
+    skill_loaded: '2026-09-02T22:51:11.240740+00:00'
+    orchestration_completed: '2026-09-02T22:51:11.241289+00:00'
+    agent_started: '2026-09-02T22:51:11.246129+00:00'
+    agent_completed: '2026-09-02T22:52:27.367694+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T22:51:11.099291+00:00'
+  pid: 1241831
+  cwd: /home/shade/Public/test
+  task_id: AOS-5A4984
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  influence: none
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9bae4480ffesuaggMU4y3uubz
+  tokens:
+    total: 36952
+    input: 1947
+    output: 2307
+    reasoning: 1978
+    cache_read: 30720
+    cache_write: 0
+  cost: 0
+  latency_ms: 76119
+agent_response: "I've traced the full dashboard-cache lifecycle in the codebase. Here's\
+  \ the assessment as a Database Engineer.\n\n## 诊断结论\n\nDashboard 采用 **Cache-Aside（旁路）**\
+  \ 缓存：`build()` 先读 Redis，未命中则从 MySQL 聚合后写回（`DashboardService.java:52-71`），TTL 10\
+  \ 分钟（`CACHE_TTL_MINUTES=10`）。缓存的有效性完全依赖于**\"每次影响聚合结果的变更都调用 `evict(userId)`\"** 这一不变式是否被无遗漏地遵守。\n\
+  \n**核心结论：当前所有已存在的\"写路径\"都正确调用了 evict，单一写路径自身是安全的；真正的陈旧源是三个缺失的兜底机制（缓存旁路竞态、崩溃间隙、未来变更面不完整），且最坏陈旧窗口\
+  \ = TTL = 10 分钟。**\n\n## 数据聚合依赖\n\n聚合 `compute()`（`DashboardService.java:93-177`）读取两张表，因此任何一动这两张表相关列的操作都可能产出陈旧视图：\n\
+  \n| 缓存内容子项 | 依赖来源 | 相关变更列 |\n|---|---|---|\n| 雷达图四维均分 / 建议 | `InterviewResult.dimensions\
+  \ / suggestions` | result insert/update/delete |\n| 统计(面试数/均值/最高/题数) | `InterviewSession(totalScore,\
+  \ finishedAt)` | session 更新这些列 |\n| 趋势图 | `InterviewSession.finishedAt / totalScore`\
+  \ | session 更新这些列 |\n\n**决定\"是否陈旧\"的判定规则：一个 mutation 若会导致上述任一列的值变化，就必须带 evict；否则就是陈旧路径。**\n\
+  \n## 写路径审计（哪些安全）\n\n逐条核对了所有 `resultMapper.insert` / `sessionMapper.updateById` 调用点：\n\
+  \n| 写路径 | 位置 | 是否影响聚合 | 是否 evict | 判定 |\n|---|---|---|---|---|\n| 同步评分结束（answer）\
+  \ | `InterviewService:151,169` | ✓ | ✓ | ✅ 安全 |\n| 同步评分结束（answerStream） | `InterviewService:226,244`\
+  \ | ✓ | ✓ | ✅ 安全 |\n| `finishSession` 置 `FINISHED+finishedAt` | `InterviewService:344,349`\
+  \ | ✓ | ✓(即使前置已evict仍无害) | ✅ 安全 |\n| 异步评分（Rule）insert result | `RuleBasedScoringService:56-57`\
+  \ | ✓ | ✓ | ✅ 安全 |\n| 异步评分（Rule）更新 totalScore | `RuleBasedScoringService:65-66`\
+  \ | ✓ | ✓ | ✅ 安全 |\n| 异步评分（Legacy AI）两处 | `LegacyAiScoringService:113,118` | ✓ |\
+  \ ✓ | ✅ 安全 |\n| 新建会话(insert START, `:87`) | — | ✗(非FINISHED无分) | 无(不需要) | ✅ 安全 |\n\
+  | 答题推进(questionCount/ASKING, `:114,186,261`) | — | ✗(未结束) | 无(不需要) | ✅ 安全 |\n| 题库使用计数(QuestionBank:85)\
+  \ | — | ✗(无关) | 无(不需要) | ✅ 安全 |\n\n**结论：所有当下存在的影响聚合的写路径均带 evict，均为安全路径。** 之前的 Run2\
+  \ 陈旧问题（\"只缓存不失效\"）已经在 `DashboardService.java:78-79` 修复。\n\n## 何时缓存是陈旧的（陈旧源枚举）\n\n\
+  即使所有写路径都 evict，仍存在三类陈旧窗口：\n\n### 1) Cache-Aside 竞态（Lost-Update / stale rewrite）—\
+  \ 最主要的隐患\n```\nT1(评分): INSERT result → COMMIT → evict(=DELETE 缓存key)\nT2(读):  MISS\
+  \ → compute():SELECT 读到旧行(or 先于T1 commit) → ……T1已DELETE→ T2 bucket.set(旧聚合,10min)\n\
+  结果：旧值在 evict 之后被重新写回，缓存陈旧最长 10 分钟。\n```\n`evict`(delete) 与 `compute` 内的两次 SELECT\
+  \ + `set` 之间没有互斥或版本校验，无法用 evict 单独消除。**TTL 是唯一最终兜底**（10 分钟后自愈，能否接受取决于业务对实时性的要求）。\n\
+  \n### 2) 崩溃间隙（write≠evict 非原子）\nDB 写入成功、进程在 `evict` 前崩溃 → 陈旧直至 TTL。窗口窄但存在。\n\n###\
+  \ 3) 未来/遗漏的变更面\n当前仅存在 insert select 路径；一旦出现 **`InterviewResult` update/delete、session\
+  \ 删除/退单重评、多消费者重复评分**等，若作者忘记 evict 即静默陈旧。`answer` 的同步结束路径是被双写（insert-evict 后又 finishSession-evict）而覆盖的，属良性冗余。\n\
+  \n## 方案设计\n\n```\nOption A（保持现状）— 依赖 TTL 自愈\n- Strengths: 零改动；读多写少时命中率高\n- Weaknesses:\
+  \ 陈旧窗口上限=10min；存在竞态理论窗口；靠\"约定\"保证失效\n- Best for: 仪表盘可容忍 10 分钟内滞后的场景\n\nOption B（TTL\
+  \ 调低 + Cache-Aside 加固）\n- Strengths: 简单；缩小陈旧窗口；可加随机化(SETEX 抖动)避免雪崩\n- Weaknesses:\
+  \ 未消除竞态本身；TTL 太低会打穿 DB 聚合\n- Best for: 需要 1–3 分钟内可见，但不接受引入事件管线的场景\n\nOption C（TTL\
+  \ + 基于版本/锁的原子写回）\n- Strengths: 从机制上消除 stale rewrite 竞态\n- Weaknesses: 需维护版本号并保证\
+  \ setNX 语义，复杂度上升\n- Best for: 持久性数据、跨进程多读多写、实时性要求高\n```\n\n## 推荐实施方案\n\n**组合：B（调短\
+  \ TTL 到 3~5 分钟）+ 轻量 C（set 前校验 + Lua/Redisson CAS 防旧值回写）+ D（用\"变更即失效\"把约定固化为测试/SQL\
+  \ 触发器式兜底）。**\n\nLua 原子写回（只有 key 不存在或旧版本低于新版本才覆盖）：\n```lua\n-- KEYS[1]=cacheKey \
+  \ ARGV[1]=newJson  ARGV[2]=newVersion  ARGV[3]=ttlSec\nlocal old = redis.call('EXISTS',\
+  \ KEYS[1])\nif old == 0 then\n  redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[3]))\n\
+  \  return 1\nend\nlocal v = tonumber(redis.call('HGET', KEYS[1], 'ver') or '-1')\n\
+  if tonumber(ARGV[2]) > v then\n  redis.call('DEL', KEYS[1])\n  redis.call('HMSET',\
+  \ KEYS[1], 'json', ARGV[1], 'ver', ARGV[2])\n  redis.call('EXPIRE', KEYS[1], tonumber(ARGV[3]))\n\
+  \  return 1\nend\nreturn 0\n```\n对应 Java 侧：`evict` 删除后再次 `build`，用来自 DB 的稳定性状态（如\
+  \ `MAX(finishedAt)` 或 result 数）作为 `version`，`set` 前算版本并单条 Lua 写入，即可让\"读到旧数据的慢读\"\
+  无法覆盖更新版本。\n\n**配置建议：**\n```yml\n# .env / application\naiview.dashboard.cache-ttl-minutes:\
+  \ 3      # 改为 3（原 10）\n# 按需监控：缓存命中率、compute() 耗时、陈旧命中告警\n```\n并加一个幂等采集：每次 `compute()`\
+  \ 记录耗时，若聚合查询 >200ms 说明 TTL 偏低，反之可回调。\n\n**兜底固化（别名\"防护性 evict\"）：**\n- 为 `DashboardService.violates-ttl`\
+  \ 增加一项 **集成测试**：对每个写仓库(context)，插入/更新 result 或 session 后断言缓存 key 已被删除。可用 Spock/JUnit\
+  \ + Redis testcontainer 实现。\n- 若后续出现 `InterviewResult.delete/update`、`session 删除`、多消费者重复评分（Rule\
+  \ 与 Legacy 同队列 —— 需确认不会重复插入），一律在改动点补 `evict(session.getUserId())`。\n\n## 验证方式\n\n\
+  1. **单元/集成测试**：写 session(result)→`build` 命中→再提交新 result→断言 `bucket.get()==null`（即失败消息已删除）。覆盖\
+  \ Rule/Legacy/同步三条写路径。\n2. **竞态测试**：并发 `N` 次 read + `1` 次 scoring，验证最终缓存值 ≥ 数据库最新版本（用\
+  \ version 校验断言）。\n3. **运行时监控**：`DashboardController /dashboard` 命中断言返回的 `cachedAt`/version，日志中统计\"\
+  stale hit\"频率。\n4. **Redis 观测**：`redis-cli monitor` 在测试期确认每次业务写后紧跟 `DEL dashboard:user:*`。\n\
+  \n## 复盘与后续优化\n\n- 最坏陈旧窗口 = **min(TTL, 下次写后的 evict) 竞态下 = TTL**。若 3 分钟内仍不可接受，建议升级为\
+  \ **DB outbox + 变更订阅（Binlog CDC）** 触发的定向失效，彻底脱离\"应用代码记得 evict\"的约定耦合——这是把当前\"约定式失效\"\
+  改成\"机制式失效\"的最彻底解。\n- 当前 `evict` 在被调处多冗余调用（同步结束路径 evict 两次），无害但可收敛；真正要注意的是**异步评分消费与前端读取的并发**，而非本地冗余。\n\
+  - **最大风险提示**：Rule 与 Legacy 两个 `@RabbitListener` 若绑定同一队列/同一 session，可能产生\"重复 result\
+  \ + 双 evict\"，建议在评分侧按 `sessionId` 幂等（唯一索引或去重），避免聚合分数被重复计入。\n\n未改动任何代码（此为评估性任务）；如需我落地\"\
+  TTL 调整 + Lua 版本写回\"或补充上述集成测试，告诉我即可。"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 76121
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T22:51:11.238142+00:00'
+    completed_at: '2026-09-02T22:51:11.238142+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-02T22:51:11.218634+00:00'
+    completed_at: '2026-09-02T22:51:11.218634+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T22:51:11.240740+00:00'
+    completed_at: '2026-09-02T22:51:11.240740+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T22:51:11.241289+00:00'
+    completed_at: '2026-09-02T22:51:11.241289+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T22:51:11.246129+00:00'
+    completed_at: '2026-09-02T22:52:27.367694+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

@@ -1,0 +1,251 @@
+# Execution Trace — AOS-DF339C (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-03T02:38:16.535462+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788403096
+trace_id: TRACE-EXEC-1788403096-d1857b8a70d0
+task_id: AOS-DF339C
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-03T02:37:13.071619+00:00'
+    memory_retrieved: '2026-09-03T02:37:13.075981+00:00'
+    routing_completed: '2026-09-03T02:37:13.094830+00:00'
+    skill_loaded: '2026-09-03T02:37:13.097531+00:00'
+    orchestration_completed: '2026-09-03T02:37:13.098039+00:00'
+    agent_started: '2026-09-03T02:37:13.102960+00:00'
+    agent_completed: '2026-09-03T02:38:16.535346+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-03T02:37:12.962935+00:00'
+  pid: 1434133
+  cwd: /home/shade/Public/test
+  task_id: AOS-DF339C
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  hypotheses_injected: []
+  influence: none
+  influence_breakdown: {}
+  decision_influence:
+    level: none
+    provenance: []
+    established_count: 0
+    hypothesis_count: 0
+    hypothesis_influence_detected: false
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9adf5565ffe1xjg51xBVzkY5J
+  tokens:
+    total: 41054
+    input: 7844
+    output: 2669
+    reasoning: 796
+    cache_read: 29745
+    cache_write: 0
+  cost: 0
+  latency_ms: 63430
+agent_response: "### Dashboard Redis Cache: Staleness Assessment & Mutation Safety\n\
+  \n**Stack:** `aiview` Spring Boot + MyBatis/MySQL + Redisson `redis:7-alpine` (`docker-compose.yml:24`,\
+  \ `backend/src/main/java/com/aiview/config/RedissonConfig.java:22-28`) + RabbitMQ\
+  \ async scoring.\n\n#### 1. Current Implementation (Grounded)\n\n`backend/src/main/java/com/aiview/interview/service/DashboardService.java:38`:\n\
+  ```java\nprivate static final long CACHE_TTL_MINUTES = 10;\nprivate String key(Long\
+  \ userId) { return \"dashboard:user:\" + userId; } // :48-49\n```\n\nCache-aside\
+  \ in `DashboardService.java:52-71`:\n```java\npublic DashboardVO build(Long userId)\
+  \ {\n  RBucket<String> bucket = redissonClient.getBucket(key(userId)); // :54\n\
+  \  String cached = bucket.get(); // :55\n  if (cached != null) return objectMapper.readValue(cached,\
+  \ DashboardVO.class); // :56-58 - no freshness check\n  DashboardVO vo = compute(userId);\
+  \ // :64 - aggregates InterviewResult + FINISHED InterviewSession\n  bucket.set(writeValueAsString(vo),\
+  \ CACHE_TTL_MINUTES, TimeUnit.MINUTES); // :66 - 10m TTL\n  return vo;\n}\n```\n\
+  `compute()` at `DashboardService.java:93-177` aggregates `interview_result.user_id`\
+  \ (dimension avg) + `interview_session` where `status=FINISHED && totalScore !=\
+  \ null` (trend/stats: `avgScore,maxScore,totalQuestions`).\n\nInvalidation primitive\
+  \ `DashboardService.java:81-91`:\n```java\n/** Must be called after any mutation\
+  \ that affects dashboard aggregation */\npublic void evict(Long userId) { redissonClient.getBucket(key(userId)).delete();\
+  \ }\n```\n\n> Principle: `DashboardVO` is a **projection**, MySQL is source-of-truth.\
+  \ Redis `dashboard:user:*` must never be treated as authoritative.\n\n#### 2. When\
+  \ Is Cached View Stale? - 4 Windows\n\n| Window | Condition | Duration | Impact\
+  \ |\n|---|---|---|---|\n| **G1: TTL staleness** | `build()` returned cached value\
+  \ after DB mutation but before TTL expiry/eviction | Up to `10m` (`CACHE_TTL_MINUTES:38`)\
+  \ | User sees old `RadarDimVO`, `TrendPointVO`, `StatsVO.avgScore`. Drives wrong\
+  \ learning advice (`DashboardService.java:127-142` weak-point calc). |\n| **G2:\
+  \ Commit -> Evict gap** | `resultMapper.insert()` committed, `evict()` not yet executed\
+  \ or exception swallowed (`evict:88-90` warns only) | ms to `10m` if `evict` fails\
+  \ | Same as G1 but caused by non-atomic dual-write. |\n| **G3: Cache-aside race\
+  \ (T0/T2)** | `T1: build() get==null`, `T2: result insert + evict`, `T1: set(stale_compute)`\
+  \ | Until next evict/TTL | Re-caches stale aggregate *after* invalidation. Classic\
+  \ cache-aside race. `build():55-66` has no lock/version. |\n| **G4: No version/freshness\
+  \ stamp** | `DashboardVO.java:10-39` has no `cachedAt`/`version` | Permanent design\
+  \ gap | Consumer cannot detect staleness; FE `vue-query` also needs eviction (`frontend/src/pages/Dashboard.vue:18-19`,\
+  \ `Interview.vue:53-54`). |\n\n**Stale predicate:** `cached != null && DB.max(updatedAt)\
+  \ > cacheWriteTime` OR `cache exists after any `InterviewResult`/`InterviewSession.FINISHED`\
+  \ mutation.\n\n#### 3. Mutation Path Safety - Differential Audit\n\nRequired: enumerate\
+  \ *every* write path that touches `interview_result` or `interview_session.totalScore/finishedAt`.\n\
+  \n| Write Path | File:Line | `evict()`? | Safe? | Note |\n|---|---|---|---|---|\n\
+  | `InterviewService.answer()` sync finish | `InterviewService.java:152,169` | `dashboardService.evict(session.getUserId())`\
+  \ | **SAFE** | After `resultMapper.insert` |\n| `InterviewService.answerStream()`\
+  \ async finish | `InterviewService.java:227,244` | YES x2 | **SAFE** | Same + virtual\
+  \ thread |\n| `InterviewService.finishSession()` | `InterviewService.java:347-349`\
+  \ | YES | **SAFE** | After `sessionMapper.updateById(FINISHED)` + before RabbitMQ\
+  \ dispatch |\n| `InterviewScoringService.score()` (AI, async `aiview.interview.scoring`)\
+  \ | `InterviewScoringService.java:106,111` | YES x2 | **SAFE** | Insert + update\
+  \ `totalScore` both evict. Double-evict needed because `compute()` reads both tables.\
+  \ |\n| `RuleBasedScoringService.score()` (default `app.interview.mode=rule`) | `RuleBasedScoringService.java:57,66`\
+  \ | YES x2 | **SAFE** | Same pattern, conditional bean:25 |\n| `LegacyAiScoringService`\
+  \ | `LegacyAiScoringService.java:113,118` | YES x2 | **SAFE** | |\n| **Unsafe if\
+  \ missing:** `DELETE FROM interview_result`, admin `UPDATE totalScore`, direct SQL\
+  \ correction, `resultMapper.updateById()` elsewhere | `grep -r \"resultMapper\\\
+  .(update\\|delete)\" backend/src` | **VERIFY** | **UNSAFE if not evicting** | Gold\
+  \ G2: *any* path without `evict()` = `10m` stale window. Currently all 4 scoring\
+  \ services covered, but audit must be re-run on every new mapper. |\n\n**Verification\
+  \ command:**\n```bash\ngrep -rn \"dashboardService.evict\\|dashboard:user\" backend/src/main/java\
+  \ --include=\"*.java\"\ngrep -rn \"resultMapper\\.\\(insert\\|update\\|delete\\\
+  )\\|sessionMapper\\.update\" backend/src/main/java --include=\"*.java\" | grep -v\
+  \ \"dashboardService.evict\" -B2 -A2\nredis-cli --scan --pattern \"dashboard:user:*\"\
+  \ | head\n```\n\n> Historical defect (Run2): `DashboardService` cached `10m` with\
+  \ **zero** callers of `evict()` → stale-until-expiry. Fixed by adding 9 `evict()`\
+  \ call sites above. Asserting \"no invalidation\" now is **false** (`benchmark-8.2.1.4/01-gold-set-derivation.md:45-50`).\n\
+  \n#### 4. Steps to Assess Staleness (Reproducible)\n\n1.  **Static audit:** Confirm\
+  \ `CACHE_TTL_MINUTES` and key schema (`DashboardService.java:38,48`). List all `evict()`\
+  \ callers vs all `INSERT/UPDATE` on `interview_result`/`interview_session`.\n2.\
+  \  **Timeline test:**\n```java\n// Integration test matrix\nDashboardVO v1 = dashboardService.build(userId);\
+  \ // populates cache :66\nresultMapper.insert(newResult(userId)); // mutation WITHOUT\
+  \ evict (simulate missing path)\nDashboardVO v2 = dashboardService.build(userId);\
+  \ // HITs cache :56 -> stale if v1==v2\nassertNotEquals(v1.getStats().getAvgScore(),\
+  \ dashboardService.compute(userId).getStats().getAvgScore()); // prove G1\n// With\
+  \ evict\ndashboardService.evict(userId);\nDashboardVO v3 = dashboardService.build(userId);\
+  \ // MISS -> recompute -> fresh\nassertEquals(computeAvg(), v3.getStats().getAvgScore());\n\
+  ```\n3.  **Race test:** Concurrent `build()` + `score()` + `evict()` with `CountDownLatch`;\
+  \ assert no stale `set()` after evict (detect G3).\n4.  **Failure injection:** Mock\
+  \ `redissonClient.getBucket().delete()` to throw; verify `log.warn:89` leaves stale\
+  \ cache for full TTL → needs retry.\n5.  **Observability:** `TTL dashboard:user:{id}`\
+  \ before/after mutation; `INFO stats` hit ratio.\n\n#### 5. Safe Mutation Pattern\
+  \ & Config Recommendations\n\n**A. Transaction-safe eviction (post-commit, never\
+  \ before):**\n```java\n// InterviewService.java:152 pattern - correct order\n@Transactional\n\
+  public void finishWithResult(Session s, Result r) {\n  resultMapper.insert(r); //\
+  \ 1. DB commit first\n  sessionMapper.updateById(s);\n  // 2. Evict AFTER commit,\
+  \ via TransactionSynchronization\n  TransactionSynchronizationManager.registerSynchronization(new\
+  \ TransactionSynchronization(){\n    public void afterCommit(){ dashboardService.evict(s.getUserId());\
+  \ }\n  });\n}\n```\nNever `evict()` before DB commit → cache miss will recompute\
+  \ incomplete data.\n\n**B. Mitigate G3 race + G2 failure - double delete:**\n```java\n\
+  public void evictWithRetry(Long userId) {\n  redissonClient.getBucket(key(userId)).delete();\n\
+  \  // async delayed delete to kill T0/T2 race\n  CompletableFuture.delayedExecutor(500,\
+  \ TimeUnit.MILLISECONDS)\n    .execute(() -> redissonClient.getBucket(key(userId)).delete());\n\
+  }\n```\nInvoke from `InterviewScoringService.java:106` and `RuleBasedScoringService.java:57`.\n\
+  \n**C. Add freshness stamp to `DashboardVO.java:10`:**\n```java\nprivate Instant\
+  \ cachedAt; // set in build():66 before set()\nprivate long version; // Redis INCR\
+  \ dashboard:version:{userId} on evict\n```\nReturn `cachedAt` to FE; FE shows *\"\
+  updated 7m ago\"* and can force refresh. Enables `if (cachedAt < dbMaxUpdatedAt)\
+  \ evict`.\n\n**D. Redis config `RedissonConfig.java:22-28` & `docker-compose.yml:24`:**\n\
+  ```yaml\nredis:\n  command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru\n\
+  \  # keep 10m TTL but add jitter to avoid thundering herd\n```\n```java\nlong ttl\
+  \ = CACHE_TTL_MINUTES*60 + ThreadLocalRandom.current().nextInt(-60, 60); // ±60s\
+  \ jitter\nbucket.set(json, ttl, TimeUnit.SECONDS);\nbucket.set(json, ttl, TimeUnit.SECONDS);\
+  \ // use setIfAbsent + lock for G3 if QPS high\n```\n\n**E. RabbitMQ scoring (`RabbitConfig.SCORING_EXCHANGE:353`)**\
+  \ is already async; keep dual `evict()` (after insert *and* after `totalScore` update)\
+  \ as now implemented (`RuleBasedScoringService.java:57,66`). Ideal: single evict\
+  \ after `afterCommit` of scoring TX, or Debezium/CDC to evict on `Binlog` if scale\
+  \ grows.\n\n#### 6. Monitoring & Alerting\n\n* `redis-cli INFO` + Prometheus: `rate(dashboard_cache_hit[5m])`\
+  \ vs `rate(dashboard_evict_total[5m])`\n* Log: `evict:87` debug + count failures\
+  \ at `warn:89` → alert if `evict_failed > 0`\n* DB-vs-cache parity job (hourly):\
+  \ `SELECT user_id, MAX(updated_at) FROM interview_result GROUP BY user_id` compare\
+  \ to `GET dashboard:user:{id}` → `cachedAt` drift → alert if `now - cachedAt > 11m`\
+  \ and DB newer\n* FE: invalidate `vue-query` key `['dashboard', userId]` on `mutation.onSuccess`\
+  \ (`Dashboard.vue:31`)\n\n#### 7. Remediation Checklist\n\n- [ ] No `CACHE_TTL_MINUTES`\
+  \ increase as fix - eviction is primary, TTL is fallback (`600s` is reasonable for\
+  \ `10m` aggregates)\n- [ ] Differential audit passes: `grep evict` covers all `insert/update/delete`\
+  \ on result/session tables - add CI check\n- [ ] `build()` adds `cachedAt` + jitter,\
+  \ `evict()` uses `afterCommit` + delayed double-delete\n- [ ] Tests cover G1-G4\
+  \ matrix (stale-until-expiry, commit-evict gap, T0/T2 race, delete-path)\n- [ ]\
+  \ Docs: `evict()` Javadoc at `DashboardService.java:73-80` is authoritative; any\
+  \ new scoring service MUST call it.\n\nStale view exists for at most `10m` now only\
+  \ if `evict()` fails or race G3 fires; with `afterCommit` + double-delete + version\
+  \ stamp, window shrinks to `<500ms` and becomes observable.\n"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 63432
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-03T02:37:13.094830+00:00'
+    completed_at: '2026-09-03T02:37:13.094830+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-03T02:37:13.075981+00:00'
+    completed_at: '2026-09-03T02:37:13.075981+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-03T02:37:13.097531+00:00'
+    completed_at: '2026-09-03T02:37:13.097531+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-03T02:37:13.098039+00:00'
+    completed_at: '2026-09-03T02:37:13.098039+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-03T02:37:13.102960+00:00'
+    completed_at: '2026-09-03T02:38:16.535346+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

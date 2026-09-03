@@ -1,0 +1,361 @@
+# Execution Trace — AOS-1A6E14 (Memory ON)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-03T02:18:53.466300+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788401933
+trace_id: TRACE-EXEC-1788401933-5b59408e3103
+task_id: AOS-1A6E14
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'on'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-03T02:18:05.315880+00:00'
+    memory_retrieved: '2026-09-03T02:18:09.246476+00:00'
+    routing_completed: '2026-09-03T02:18:09.248984+00:00'
+    skill_loaded: '2026-09-03T02:18:09.251673+00:00'
+    orchestration_completed: '2026-09-03T02:18:09.252175+00:00'
+    agent_started: '2026-09-03T02:18:09.256784+00:00'
+    agent_completed: '2026-09-03T02:18:53.453536+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-03T02:18:05.200661+00:00'
+  pid: 1424463
+  cwd: /home/shade/Public/test
+  task_id: AOS-1A6E14
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: H-039-REDISSONCONFIG-JAVA-22-28----R
+    type: hypothesis
+    category: engineering_pattern
+    relevance_score: 0.28
+    evidence_weight: 0.2
+    final_score: 0.307
+    used: false
+    rejection_reason: Hypothesis — not an established rule
+    match_reasons: &id003
+    - confidence=0.2
+  - memory_id: H-041-REDISSONCONFIG-JAVA-22-28--CON
+    type: hypothesis
+    category: engineering_pattern
+    relevance_score: 0.28
+    evidence_weight: 0.2
+    final_score: 0.307
+    used: false
+    rejection_reason: Hypothesis — not an established rule
+    match_reasons: &id004
+    - confidence=0.2
+  - memory_id: H-044-REDISSONCONFIG-JAVA-22-28---RE
+    type: hypothesis
+    category: engineering_pattern
+    relevance_score: 0.28
+    evidence_weight: 0.2
+    final_score: 0.307
+    used: false
+    rejection_reason: Hypothesis — not an established rule
+    match_reasons: &id005
+    - confidence=0.2
+  - memory_id: H-087-REDISSONCONFIG-JAVA-22-28-
+    type: hypothesis
+    category: engineering_pattern
+    relevance_score: 0.28
+    evidence_weight: 0.2
+    final_score: 0.307
+    used: false
+    rejection_reason: Hypothesis — not an established rule
+    match_reasons: &id006
+    - confidence=0.2
+  - memory_id: H-100-BUCKET-GET------WHEN-REDIS-IS-
+    type: hypothesis
+    category: engineering_pattern
+    relevance_score: 0.28
+    evidence_weight: 0.2
+    final_score: 0.307
+    used: false
+    rejection_reason: Hypothesis — not an established rule
+    match_reasons: &id007
+    - confidence=0.2
+  memories_used: []
+  hypotheses_injected:
+  - H-039-REDISSONCONFIG-JAVA-22-28----R
+  - H-041-REDISSONCONFIG-JAVA-22-28--CON
+  - H-044-REDISSONCONFIG-JAVA-22-28---RE
+  - H-087-REDISSONCONFIG-JAVA-22-28-
+  - H-100-BUCKET-GET------WHEN-REDIS-IS-
+  influence: hypothesis_confirmed
+  influence_breakdown:
+    H-039-REDISSONCONFIG-JAVA-22-28----R:
+      type: hypothesis
+      influence: hypothesis_confirmed
+      memory_id: H-039-REDISSONCONFIG-JAVA-22-28----R
+      retrieval_score: 0.307
+      referenced: true
+      id_mentioned: false
+      term_matches: 6
+      changed_decision: false
+    H-041-REDISSONCONFIG-JAVA-22-28--CON:
+      type: hypothesis
+      influence: hypothesis_confirmed
+      memory_id: H-041-REDISSONCONFIG-JAVA-22-28--CON
+      retrieval_score: 0.307
+      referenced: true
+      id_mentioned: false
+      term_matches: 6
+      changed_decision: false
+    H-044-REDISSONCONFIG-JAVA-22-28---RE:
+      type: hypothesis
+      influence: hypothesis_confirmed
+      memory_id: H-044-REDISSONCONFIG-JAVA-22-28---RE
+      retrieval_score: 0.307
+      referenced: true
+      id_mentioned: false
+      term_matches: 6
+      changed_decision: false
+    H-087-REDISSONCONFIG-JAVA-22-28-:
+      type: hypothesis
+      influence: hypothesis_confirmed
+      memory_id: H-087-REDISSONCONFIG-JAVA-22-28-
+      retrieval_score: 0.307
+      referenced: true
+      id_mentioned: false
+      term_matches: 6
+      changed_decision: false
+    H-100-BUCKET-GET------WHEN-REDIS-IS-:
+      type: hypothesis
+      influence: hypothesis_confirmed
+      memory_id: H-100-BUCKET-GET------WHEN-REDIS-IS-
+      retrieval_score: 0.307
+      referenced: true
+      id_mentioned: false
+      term_matches: 3
+      changed_decision: false
+  decision_influence:
+    level: hypothesis_confirmed
+    provenance:
+    - memory_id: H-039-REDISSONCONFIG-JAVA-22-28----R
+      memory_type: hypothesis
+      retrieval_score: 0.307
+      injection_format: hypothesis_injection
+      agent_reference: semantic
+    - memory_id: H-041-REDISSONCONFIG-JAVA-22-28--CON
+      memory_type: hypothesis
+      retrieval_score: 0.307
+      injection_format: hypothesis_injection
+      agent_reference: semantic
+    - memory_id: H-044-REDISSONCONFIG-JAVA-22-28---RE
+      memory_type: hypothesis
+      retrieval_score: 0.307
+      injection_format: hypothesis_injection
+      agent_reference: semantic
+    - memory_id: H-087-REDISSONCONFIG-JAVA-22-28-
+      memory_type: hypothesis
+      retrieval_score: 0.307
+      injection_format: hypothesis_injection
+      agent_reference: semantic
+    - memory_id: H-100-BUCKET-GET------WHEN-REDIS-IS-
+      memory_type: hypothesis
+      retrieval_score: 0.307
+      injection_format: hypothesis_injection
+      agent_reference: semantic
+    established_count: 0
+    hypothesis_count: 5
+    hypothesis_influence_detected: true
+  memory_summary: Retrieved 0 memories, 5 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9af0c8a2ffedDNQwa3XVTDvFw
+  tokens:
+    total: 38973
+    input: 4780
+    output: 2190
+    reasoning: 466
+    cache_read: 31537
+    cache_write: 0
+  cost: 0
+  latency_ms: 44195
+agent_response: "### Dashboard Redis Cache (`10m TTL`): Staleness Assessment & Safe\
+  \ Mutation Paths\n\n**Scope:** `DashboardService.java:38,52-91` `RedissonConfig.java:22-28`\
+  \ `InterviewService.java:152,169,227,244,345-349` `RuleBasedScoringService.java:57,66`\
+  \ `InterviewScoringService.java:106,111` `LegacyAiScoringService.java:113,118` —\
+  \ *All H-039/H-041/H-044/H-087/H-100 UNVALIDATED — verify via runtime execution,\
+  \ do not treat as established truth.*\n\n#### 1. Current Implementation - `DashboardService.java:52-71`\n\
+  \n```java\n// DashboardService.java:38\nprivate static final long CACHE_TTL_MINUTES\
+  \ = 10;\n\npublic DashboardVO build(Long userId) { // 52\n  RBucket<String> bucket\
+  \ = redissonClient.getBucket(\"dashboard:user:\"+userId); //54\n  String cached\
+  \ = bucket.get(); //55 — authoritative until TTL w/o version check\n  if (cached\
+  \ != null) return objectMapper.readValue(cached, DashboardVO.class); //57\n  DashboardVO\
+  \ vo = compute(userId); //64 aggregates FINISHED sessions+InterviewResult\n  bucket.set(objectMapper.writeValueAsString(vo),\
+  \ CACHE_TTL_MINUTES, TimeUnit.MINUTES); //66\n  return vo;\n}\n\n// DashboardService.java:81\
+  \ — must be called after ANY aggregation-affecting write\npublic void evict(Long\
+  \ userId) {\n  redissonClient.getBucket(key(userId)).delete(); //86 — swallows exception\
+  \ 88\n}\n```\n\n`compute():93-177` sources `InterviewResult.userId` + `InterviewSession\
+  \ status=FINISHED, totalScore, finishedAt, questionCount`. Cache is `cache-aside,\
+  \ TTL-only` — no `version/updatedAt` freshness validation on `get()`.\n\n`RedissonConfig.java:24-27`\
+  \ `useSingleServer().setAddress(redis://host:port).setConnectionMinimumIdleSize(4).setConnectionPoolSize(16)`\
+  \ — no `retryAttempts`, `codec`, `nettyThreads`, `timeout`.\n\n#### 2. When Cached\
+  \ View is Stale\n\nStale window = `mutation_time < read_time < min(eviction_time,\
+  \ mutation_time+10m)` . `bucket.get()!=null` (`H-100`) is treated as truth.\n\n\
+  | Scenario | Stale? | Duration | Root Cause `G1-G4` |\n|---|---|---|---|\n| `InterviewResult.insert()`\
+  \ then `build()` before evict | **YES** | 0-10m | `G1` cache served until TTL/evict\
+  \ |\n| `InterviewSession.FINISHED` + `totalScore` update then `build()` | **YES**\
+  \ | 0-10m | `G4` trend/stats derive from `sessions` query `99-101` |\n| Async scoring\
+  \ `RuleBasedScoringService:56,63` completes, evict fails (Redis down, exception\
+  \ swallowed `88`) | **YES** | full 10m | non-transactional dual-write, no retry\
+  \ |\n| Direct DB `UPDATE t_interview_result` via SQL/admin bypassing service | **YES**\
+  \ | indefinite* | No evict call-site — `grep dashboard:user` only hits `DashboardService.java`\
+  \ |\n| No mutation, `10m` idle | NO (recomputes from DB truth) | - | TTL expiry\
+  \ forces `compute()` |\n\n*Invalidate-only TTL masks bug for 10m; without `evict()`\
+  \ next `build()` repopulates stale `compute()` if transaction not yet committed.\n\
+  \n> **Verification:** `grep -rn \"dashboardService.evict\" backend/` must cover\
+  \ *every* write path. Prior benchmark `Run2` showed `no invalidation after InterviewResult\
+  \ write → stale-until-expiry matrix` when grep returned zero call-sites.\n\n####\
+  \ 3. Mutation Path Audit — Which Paths Are Safe?\n\n**Safe = calls `dashboardService.evict(userId)`\
+  \ in same transaction/lifecycle, twice (after `result.insert` + after `session.update`).\
+  \ Current codebase FIXED for Run2 drift (post-`8.2.1.4`):**\n\n| Path | File:Line\
+  \ | Evict Coverage | Safe? |\n|---|---|---|---|\n| Sync finish `InterviewService.answer():151-152,169,347-349`\
+  \ + `finishSession:345-349` | `InterviewService.java:152,169,349` | `insert result\
+  \ → evict → update session → evict` | **SAFE** (if no exception between) |\n| Streaming\
+  \ `InterviewService.answerStream():226-227,243-244,263` | `InterviewService.java:227,244`\
+  \ | Same as above | **SAFE** |\n| Rule async `RuleBasedScoringService.score():56,65-66`\
+  \ | `RuleBasedScoringService.java:57,66` | `insert result → evict → update session.totalScore/report\
+  \ → evict` | **SAFE** — note `ConditionalOnProperty app.interview.mode=rule` |\n\
+  | AI async `InterviewScoringService.score():105-106,110-111` | `InterviewScoringService.java:106,111`\
+  \ | Identical double-evict | **SAFE** |\n| Legacy `LegacyAiScoringService:113,118`\
+  \ | `LegacyAiScoringService.java:113,118` | Same | **SAFE** |\n\n**Unsafe / Residual\
+  \ Risk:**\n\n1.  **Swallowed evict failure** `DashboardService.java:88` `log.warn`\
+  \ only — caller assumes success, 10m stale window persists. `RBucket.delete()` failure\
+  \ leaves old JSON authoritative.\n2.  **Dual-write non-transactional** `resultMapper.insert()`\
+  \ commits, `evict()` after — crash between = stale. No Outbox/CDC.\n3.  **Manual\
+  \ DB mutation** any `UPDATE t_interview_session SET totalScore` without service\
+  \ layer — no trigger.\n4.  **Race:** `build()` computes between `result.insert`\
+  \ and first `evict()` (gap on async path) → writes stale aggregate with fresh `10m`\
+  \ TTL — extends staleness to `10m` *after* evict.\n\n#### 4. Configuration & Code\
+  \ Recommendations\n\n**A. Do NOT fix by raising TTL** — axiom `H-039` unvalidated\
+  \ but directionally correct: `TTL, freshness, invalidation, DB parity` must be verified.\
+  \ Longer TTL worsens staleness.\n\n**Recommended:**\n\n1.  **Keep `10m` TTL as fallback,\
+  \ add jitter + delete-on-write:**\n```java\n// DashboardService.java:66 — add random\
+  \ jitter to avoid thundering herd\nlong ttl = CACHE_TTL_MINUTES + ThreadLocalRandom.current().nextInt(-2,\
+  \ 3);\nbucket.set(json, ttl, TimeUnit.MINUTES);\n\n// On write path — delete, not\
+  \ update; let next read recompute from DB truth\ntry { dashboardService.evict(session.getUserId());\
+  \ } \ncatch (Exception e) { // publish to retry topic\n  rabbitTemplate.convertAndSend(\"\
+  aiview.dlq\", \"dashboard.evict.retry\", userId);\n}\n```\n2.  **Make evict reliable**\
+  \ `DashboardService.java:81-91`:\n```java\npublic boolean evict(Long userId) {\n\
+  \  if (userId==null) return false;\n  // Use lua for idempotent delete + metrics\n\
+  \  return redissonClient.getBucket(key(userId)).delete(); // returns boolean\n}\n\
+  // Callers: assert evicted || log metric dashboard.cache.evict.failed\n```\nDo *not*\
+  \ swallow silently — expose `Counter dashboard_evict_failures`.\n\n3.  **RedissonConfig.java:22-28**\
+  \ hardening:\n```java\nconfig.useSingleServer()\n  .setAddress(\"redis://\" + redisHost\
+  \ + \":\" + redisPort)\n  .setConnectionPoolSize(16).setConnectionMinimumIdleSize(4)\n\
+  \  .setTimeout(3000).setRetryAttempts(2).setRetryInterval(500)\n  .setSubscriptionsPerConnection(5);\n\
+  config.setCodec(new JsonJacksonCodec(objectMapper)); // avoid String ser overhead\n\
+  ```\n\n4.  **DB parity / freshness stamp (G4):** Store `computedAt` in cached JSON;\
+  \ readers can emit `X-Cache-Stale: age=...` and UI can warn. For strict freshness:\
+  \ `SELECT MAX(updated_at) FROM t_interview_result WHERE userId=?` vs `cached.computedAt`\
+  \ — but adds DB hit.\n\n5.  **Idempotent double-evict is intentional** `RuleBasedScoringService.java:57,66`\
+  \ — keep both; first evicts `avg(dimensions)` staleness, second evicts `trend/totalScore`\
+  \ staleness after `sessionMapper.updateById`.\n\n#### 5. Verification Steps (Execute\
+  \ Before Closing)\n\n```bash\n# 1. Coverage audit — every InterviewResult/Session\
+  \ FINISHED write must evict\ngrep -rn \"resultMapper.insert\\|sessionMapper.updateById\"\
+  \ backend/src/main/java --include=\"*.java\" | \\\n  grep -v \"DashboardService\"\
+  \ngrep -rn \"dashboardService.evict\" backend/src/main/java --include=\"*.java\"\
+  \n# Expect 1:1 mapping — currently 9 evict sites for 5 write sites (double-evict)\n\
+  \n# 2. Reproduce stale window (testing-agent matrix)\n# T1: call DashboardService.build(userId)\
+  \ -> cache populated\n# T2: insert InterviewResult via RuleBasedScoringService.score()\
+  \ but mock evict to throw\n# T3: call build() within 10m -> assert stale (old dim\
+  \ avg) vs DB truth\n# T4: after evict+TTL expiry -> assert fresh\n\n# 3. TTL semantics\
+  \ check\n# InterviewStateStore.java:25 TTL_HOURS=24 is 24h of *silence* since last\
+  \ write:51, not session lifetime\n# DashboardService 10m is 10m since last build():66,\
+  \ not since last mutation\n```\n\n**Decision Rule:** Treat `RBucket.get()!=null`\
+  \ as *hint*, not authority. `DB = source of truth` (`InterviewResultMapper`/`InterviewSessionMapper`).\
+  \ Invalidate on write, TTL only as safety net for leaked keys. Monitor `hitRate`,\
+  \ `evictFailures`, `stalenessAge = now - cached.computedAt`.\n"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 44196
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-03T02:18:09.248984+00:00'
+    completed_at: '2026-09-03T02:18:09.248984+00:00'
+  memory:
+    status: completed
+    started_at: '2026-09-03T02:18:09.246476+00:00'
+    completed_at: '2026-09-03T02:18:09.246476+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-03T02:18:09.251673+00:00'
+    completed_at: '2026-09-03T02:18:09.251673+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-03T02:18:09.252175+00:00'
+    completed_at: '2026-09-03T02:18:09.252175+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-03T02:18:09.256784+00:00'
+    completed_at: '2026-09-03T02:18:53.453536+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons:
+    H-039-REDISSONCONFIG-JAVA-22-28----R: *id003
+    H-041-REDISSONCONFIG-JAVA-22-28--CON: *id004
+    H-044-REDISSONCONFIG-JAVA-22-28---RE: *id005
+    H-087-REDISSONCONFIG-JAVA-22-28-: *id006
+    H-100-BUCKET-GET------WHEN-REDIS-IS-: *id007
+  orchestrator_rules:
+  - multi_skill

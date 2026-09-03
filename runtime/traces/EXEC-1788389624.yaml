@@ -1,0 +1,170 @@
+# Execution Trace — AOS-6F5805 (Memory OFF)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T22:53:44.834270+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788389624
+trace_id: TRACE-EXEC-1788389624-03364ec10514
+task_id: AOS-6F5805
+task_text: dashboard aggregates are cached in Redis with a TTL; assess when the cached
+  view is stale and which mutation paths are safe.
+domain: Coding
+difficulty: medium
+memory_mode: 'off'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T22:52:30.217428+00:00'
+    memory_retrieved: '2026-09-02T22:52:30.221858+00:00'
+    routing_completed: '2026-09-02T22:52:30.241019+00:00'
+    skill_loaded: '2026-09-02T22:52:30.243735+00:00'
+    orchestration_completed: '2026-09-02T22:52:30.244273+00:00'
+    agent_started: '2026-09-02T22:52:30.248757+00:00'
+    agent_completed: '2026-09-02T22:53:44.834159+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T22:52:30.105477+00:00'
+  pid: 1243112
+  cwd: /home/shade/Public/test
+  task_id: AOS-6F5805
+router:
+  intent: coding
+  lead_skill: database-engineer
+  support_skills:
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  confidence: high
+  memory_influence: none
+  rules_applied: &id002
+  - Domain 'database' → lead database-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'off'
+  total_retrieved: 0
+  memories_considered: []
+  memories_used: []
+  influence: none
+  memory_summary: Retrieved 0 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: database-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  skills_loaded:
+  - database-engineer
+  - backend-architect
+  - frontend-architect
+  - system-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: database-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9bad1081ffejIuC15z1odytX8
+  tokens:
+    total: 44048
+    input: 2384
+    output: 1706
+    reasoning: 1046
+    cache_read: 38912
+    cache_write: 0
+  cost: 0
+  latency_ms: 74583
+agent_response: "## 目标\n- **业务目标:** 保证 `/api/interview/dashboard` 反映用户跨面试的聚合（四维均分、成绩趋势、薄弱点、建议），不显示长时间过期数据。\n\
+  - **当前约束:** 聚合只读 DB 的两个表（`interview_result`、`interview_session`），以 10 分钟 TTL 缓存于\
+  \ Redis，key 为 `dashboard:user:{userId}`；支持同步完成 + RabbitMQ 异步评分两种落地路径。\n- **成功标准:**\
+  \ 任何影响聚合的写入在提交后，下一次 `build()` 都能重算出与 DB 一致的数据；过期窗口有界且有明确归属。\n\n## 问题判断\n**聚合的两个输入源**（`DashboardService.compute()`\
+  \ @ DashboardService.java:93-177）：\n1. `interview_result`：按 `userId` 查询**全部**结果（驱动四维均分\
+  \ / 薄弱点 / 建议）——见 :94-95、:109。\n2. `interview_session`：`status=FINISHED AND totalScore\
+  \ IS NOT NULL`（驱动 session 数、平均分、最高分、题量、趋势）——见 :97-101、:144-155。\n\n**缓存读写**（DashboardService.java:52-91）：`build()`\
+  \ 读缓存命中即返回；未命中 `compute()` + 写缓存（TTL 10min）；`evict()` 删除 key。写入方通过 `dashboardService.evict(userId)`\
+  \ 主动失效。\n\n### 关键结论\n当前代码**已为每条结果/会话写入路径补上了主动失效（Run2 drift 修复已生效）**，因此不存在“写入后必须等到\
+  \ TTL 过期才更新”的原始 bug。但仍有一个真正的**异步竞态窗口**和一个**静默失效失败的兜底缺口**。\n\n## 方案设计（缓存一致性策略对比）\n\
+  \nOption A — 纯 TTL\n- 强度: 实现简单、无写耦合\n- 弱点: Run2 drift；最坏 10 分钟过期；不可接受（已被弃用）\n- 最佳:\
+  \ 对一致性无要求的报表\n\nOption B — 主动失效 + 较短 TTL（当前实现）\n- 强度: 命中率高（读多写少），写后即时重算；TTL 作为兜底防呆\n\
+  - 弱点: 依赖写方不漏 `evict()`；异步路径存在短暂中间态窗口（见下）\n- 最佳: 当前业务（用户读取频繁、写入低频、需强且即时一致性）\n\nOption\
+  \ C — 写后直写缓存 / 事件驱动刷新\n- 强度: 消除窗口\n- 弱点: 与聚合逻辑耦合、需在写侧重算（放大写成本）、引入额外事件链路\n- 最佳: 一致性要求苛刻且写频极低的场景；此处暂不必要\n\
+  \n**决策**\n- 推荐: Option B（维持现状），但**修复异步窗口**并**把失效失败变为可观测**。\n- 理由: 聚合只由结果与会话两表驱动，写入点有限且集中，主动失效是成本最低的正确解。\n\
+  - 风险与缓解: 主风险为“未来新增的写路径漏 `evict`”；以不变量约束 + 简单测试兜底（见下文）。\n\n## 实施方案\n\n### 现状逐路径审计（全部安全路径\
+  \ / 已覆盖路径）\n\n`interview_result` 写入（写后均已 `evict`）：\n- `InterviewService.answer()`\
+  \ 两分支 :151/169 → :152/170 ✓\n- `InterviewService.answerStream()` 两分支 :227/244 →\
+  \ 紧随 ✓\n- `RuleBasedScoringService.score()` :56 ✓\n- `InterviewScoringService.score()`\
+  \ :105 ✓\n- `LegacyAiScoringService.score()` :112 ✓\n\n`interview_session` 写入：\n\
+  - `finishSession()` 置 FINISHED/finishedAt :341-344 → `evict` :349 ✓\n- 三个评分服务更新\
+  \ `totalScore` :65/:110/:117 → 随后 `evict` ✓\n\n确认**无需失效**的写入（不改变两表聚合输入）：RAG（kb/chunk）、Auth（user/profile）、QuestionBank（question）、InterviewMessage（消息不在聚合内）。可将这些视为“safe\
+  \ mutation paths”。\n\n确认**无遗漏**：全仓不存在 `interview_result` / `interview_session` 的\
+  \ delete 路径，因此当前没有“删除后未失效”的缺口。\n\n### 真实过期窗口（cached view 为何及何时 stale）\n\n1. **异步评分竞态——主要残余窗口。**\n\
+  \   `finishSession()` 先提交 `FINISHED`（此时 `totalScore=null`）并 `evict`（:344-349）。随后评分任务异步执行\
+  \ `insert(result)` + `update(totalScore)`，直到**最后一次写之后再次 `evict`** 才会收敛。中间任意一次 `build()`\
+  \ 会重算并缓存一个**排除该已完成会话分数**的聚合（因为 `totalScore IS NOT NULL` 过滤）。窗口时长 = 评分延迟（rule 模式极短；AI\
+  \ 模式数秒）。\n   **安全性:** 由于评分服务在最后一步写之后继续 `evict`（RuleBased:66、Interview:111、Legacy:118），最终必然收敛——属“最终一致”，但呈现为短暂的老状态。\n\
+  \n2. **非事务写入的中间态。**\n   每个 `insert`/`updateById` 独立自动提交。`insert(result)` 与 `update(totalScore)`\
+  \ 之间若并发 `build()`，会短暂看到“维度含新结果、但 session 均分/趋势不含”。同样被最后的 `evict` 修复。\n\n3. **`evict()`\
+  \ 失败被吞掉——TTL 兜底缺口。**（DashboardService.java:85-91）\n   `delete()` 异常仅 `log.warn`，不向上抛。若\
+  \ Redis 短暂故障，失效失败 → 缓存停留在 DB 提交前的旧值，最多 10 分钟。这是唯一真正“与 DB 不一致但超时未纠正”的场景。\n\n### 建议改动（小、聚焦）\n\
+  \n1. 评分服务中两个 `evict` 可合并为最终一次（RuleBased:57 与 :66 等）——仅为减少重复调用，非 bug。\n\n2. 将 `evict()`\
+  \ 失败提升为可观测（保留不致误报写失败）：\n```java\ncatch (Exception e) {\n    log.warn(\"evict dashboard\
+  \ cache failed, userId={}: {}\", userId, e.getMessage());\n    // 例如 counters.inc(\"\
+  dashboard.evict.failure\"); 便于告警\n}\n```\n\n3. 为聚合不变量补一条防回归断言/测试：**“任何对 interview_result.insert\
+  \ 或 interview_session 状态/总分写入的返回路径，必须调用 dashboardService.evict(userId)”**。推荐用集成测试覆盖\
+  \ rule 与 ai 两种 `app.interview.mode`：完成一次面试 → 读 dashboard → 应为最新分数而非旧缓存。\n\n## 验证方式\n\
+  - **测试/检查:** ① 同步路径：完成面试、直接断言 dashboard 分数即时更新；② rule/AI 异步路径：在评分 Consumer 尚未提交\
+  \ `totalScore` 前触发 `GET /dashboard`，确认其显示为该用户最新 DB 状态并在评分收敛后更新；③ 人为关闭 Redis 后写入，确认\
+  \ `evict` 失败仅告警、下次重算按 TTL 自愈。\n- **预期结果:** 每次 `build()` 返回与 DB 一致（或在异步窗口内为真实中间态），最终一致，无超过\
+  \ TTL 的陈旧值。\n- **复盘建议:** 若未来增加“删除会话/删除结果/编辑评分”等功能，务必在同一事务边界后追加 `evict`，否则将重新引入最长\
+  \ 10 分钟的过期。"
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 74585
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T22:52:30.241019+00:00'
+    completed_at: '2026-09-02T22:52:30.241019+00:00'
+  memory:
+    status: skipped
+    started_at: '2026-09-02T22:52:30.221858+00:00'
+    completed_at: '2026-09-02T22:52:30.221858+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T22:52:30.243735+00:00'
+    completed_at: '2026-09-02T22:52:30.243735+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T22:52:30.244273+00:00'
+    completed_at: '2026-09-02T22:52:30.244273+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T22:52:30.248757+00:00'
+    completed_at: '2026-09-02T22:53:44.834159+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons: {}
+  orchestrator_rules:
+  - multi_skill

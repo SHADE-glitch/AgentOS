@@ -1,0 +1,289 @@
+# Execution Trace — AOS-D81876 (Memory ON)
+# Phase 5.7 — Agent OS Runtime Pipeline (Closed Loop)
+# Generated: 2026-09-02T08:29:21.680309+00:00
+# Provider: opencode
+# Model: 
+
+execution_id: EXEC-1788337761
+trace_id: TRACE-EXEC-1788337761-f94b3b2f5776
+task_id: AOS-D81876
+task_text: KeywordKnowledgeRetriever fallback returns all child knowledge points for
+  a topic when no keyword match exists, diluting prompt context — assess impact.
+domain: Coding
+difficulty: medium
+memory_mode: 'on'
+provider: opencode
+model: ''
+status: success
+phase: '5.7'
+pipeline:
+  step_timestamps:
+    task_received: '2026-09-02T08:26:20.838152+00:00'
+    memory_retrieved: '2026-09-02T08:26:22.923360+00:00'
+    routing_completed: '2026-09-02T08:26:22.925158+00:00'
+    skill_loaded: '2026-09-02T08:26:22.928973+00:00'
+    orchestration_completed: '2026-09-02T08:26:22.929460+00:00'
+    agent_started: '2026-09-02T08:26:22.934240+00:00'
+    agent_completed: '2026-09-02T08:29:21.680172+00:00'
+entry:
+  entry_type: aos_cli
+  executable: /home/shade/.agents/bin/aos
+  command: aos run
+  entry_timestamp: '2026-09-02T08:26:20.741395+00:00'
+  pid: 768766
+  cwd: /home/shade/Public/test
+  task_id: AOS-D81876
+router:
+  intent: coding
+  lead_skill: prompt-engineer
+  support_skills:
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  confidence: high
+  memory_influence: confirmation
+  rules_applied: &id002
+  - Domain 'ai' → lead prompt-engineer
+  source: agent_router.route() — Phase 5.7 REAL Router
+memory_retrieval:
+  mode: 'on'
+  total_retrieved: 5
+  memories_considered:
+  - memory_id: T-005
+    type: task
+    category: ai
+    relevance_score: 0.01
+    evidence_weight: 0.4
+    final_score: 0.362
+    used: true
+    match_reasons: &id003
+    - success_rate=0.857
+    - confidence=0.4
+  - memory_id: S-002
+    type: success
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.345
+    used: true
+    match_reasons: &id004
+    - success_rate=0.881
+    - confidence=0.4
+  - memory_id: S-001
+    type: success
+    category: ai
+    relevance_score: 0.203
+    evidence_weight: 0.0
+    final_score: 0.344
+    used: true
+    match_reasons: &id005
+    - success_rate=0.833
+  - memory_id: P-001
+    type: pattern
+    category: cross-cutting
+    relevance_score: 0.0
+    evidence_weight: 0.4
+    final_score: 0.343
+    used: true
+    match_reasons: &id006
+    - success_rate=0.871
+    - confidence=0.4
+  - memory_id: T-010
+    type: task
+    category: optimization
+    relevance_score: 0.0
+    evidence_weight: 0.0
+    final_score: 0.308
+    used: true
+    match_reasons: &id007
+    - success_rate=0.906
+  memories_used:
+  - T-005
+  - S-002
+  - S-001
+  - P-001
+  - T-010
+  influence: confirmation
+  memory_summary: Retrieved 5 memories, 0 hypotheses (separated). Memory is supporting
+    input only.
+skill:
+  lead_skill: prompt-engineer
+  lead_loaded: true
+  support_skills: &id001
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  skills_loaded:
+  - prompt-engineer
+  - rag-engineer
+  - llm-engineer
+  - backend-architect
+  source: skill_loader.build_skill_context() — Phase 5.7 REAL Skill Loader
+orchestrator:
+  team_formed: true
+  team_size: 4
+  lead_role: prompt-engineer
+  support_roles: *id001
+agent_invocation:
+  backend: opencode
+  model: ''
+  session_id: ses_f9ec6054affe90wB2XwR8qDywz
+  tokens:
+    total: 41133
+    input: 1377
+    output: 2150
+    reasoning: 742
+    cache_read: 36864
+    cache_write: 0
+  cost: 0
+  latency_ms: 178743
+agent_response: "## Impact Assessment: `KeywordKnowledgeRetriever` Fallback Dilution\n\
+  \n### 1. Behavior confirmation (code evidence)\n\nThe described fallback exists\
+  \ exactly as stated at `KeywordKnowledgeRetriever.java:62-70`:\n\n```java\n// 如果没有匹配，返回所有知识点概述\n\
+  if (matchCount == 0) {\n    sb.append(\"当前主题知识点：\");\n    for (KnowledgePoint point\
+  \ : points) {\n        if (point.getParentId() != null) { // 只显示子知识点\n         \
+  \   sb.append(point.getName()).append(\"、\");\n        }\n    }\n}\n```\n\nWhen\
+  \ the keyword matcher (lines 53–60) finds zero hits, it dumps **every child knowledge\
+  \ point** for the topic (all rows returned by the topic-only query at lines 38–40),\
+  \ joined by `、`, with no cap. Compare with the matched path, which caps at `matchCount\
+  \ >= 5` (line 58).\n\n**Critical contextual finding (changes the risk rating):**\
+  \ the `knowledgeRetriever` bean is injected into `InterviewService.java:61` but\
+  \ **never invoked anywhere** in the codebase — `grep` for `knowledgeRetriever.`\
+  \ returns nothing, and the active `rule`-mode scoring is purely rule-based (`EvaluationService.evaluateKnowledge`,\
+  \ keyword counting at `EvaluationService.java:144`). So the dilution is **latent/structural**,\
+  \ not today's live behavior. If the intended design (class javadoc: \"替代 AI RAG\
+  \ 检索\" / replace AI RAG) is wired up to feed an LLM prompt, this fallback becomes\
+  \ active and the impact below applies.\n\n---\n\n### 2. Impact on the LLM prompt\
+  \ when the context string reaches a model\n\n#### 2.1 Context dilution (signal-to-noise\
+  \ collapse)\n- The matched path returns **targeted** points with **descriptions**\
+  \ (name + description, line 56).\n- The fallback returns **only bare names** of\
+  \ every child point, with no descriptions, no relevance ordering — a uniform list\
+  \ where *all* points are treated with equal importance regardless of the user's\
+  \ actual question/answer.\n- The model receives a wall of equally-weighted candidate\
+  \ topics with zero relevance signal to the query, so it cannot discriminate which\
+  \ are relevant to the current exchange. Relevance degrades by design exactly when\
+  \ retrieval failed.\n\n#### 2.2 Token/cost/latency inflation (unbounded, non-linear)\n\
+  - `points` is unbounded: the query has **no limit** (lines 38–40 `selectList(...).eq(topic)`).\
+  \ Every child point's name is appended with no cap.\n- Matched path caps at **5**;\
+  \ fallback is **O(n)** for all children.\n  - A topic with 30 child points × ~10\
+  \ chars ≈ 300+ chars ≈ **200–400 tokens** dumped unconditionally on every no-match\
+  \ answer.\n  - Multiplied across a MAX_QUESTIONS=6 interview (InterviewService.java:65),\
+  \ this compounds per answer, inflating prompt size, latency, and cost on exactly\
+  \ the turns where retrieval gave nothing useful.\n\n#### 2.3 Correctness / instruction-following\
+  \ degradation\n- A long, flat, unlabeled list competes for the same attention budget\
+  \ as the actual question, the user's answer, and scoring instructions. The model\
+  \ is more likely to:\n  - **Hallucinate relevance** — pick a topic from the overloaded\
+  \ list and anchor the evaluation/next question on it.\n  - **Anchor on list order**\
+  \ (DB `sort_order`) rather than the user's answer.\n  - **Fail to flag uncertainty**\
+  \ — presence of \"knowledge\" in context discourages \"insufficient info\" responses\
+  \ even though the content is only topic names, not facts.\n\n#### 2.4 Masks retrieval\
+  \ failures\nThe fallback converts a *\"no keyword match\"* signal (meaningful: the\
+  \ query semantics won't match by substring) into *\"here is everything\"*, so operators/LLM\
+  \ can't distinguish a real retrieval miss from a retrieval success. This hides the\
+  \ underlying matcher weakness (substring matching on `name`/`description` only,\
+  \ `toLowerCase()` on Chinese text is a no-op, no segmentation) instead of surfacing\
+  \ it.\n\n#### 2.5 Inconsistent context grammar\n- Matched: `- name：description`\
+  \ bullets.\n- Fallback: `name、name、name` comma-join. Two different prompt-context\
+  \ grammars the model must interpret, increasing variance in how context is used.\n\
+  \n---\n\n### 3. Quantitative illustration (Chinese tokenizer ≈ 1–1.5 tok/char)\n\
+  \n| Scenario | Points in context | Est. prompt tokens | Signal | Verdict |\n|---|---|---|---|---|\n\
+  | Keyword match (caps at 5, w/ descriptions) | ≤5 (targeted) | ~80–150 | High |\
+  \ OK |\n| **No-match fallback** (small topic, 12 children) | 12 | ~**60–100** |\
+  \ Low | Acceptable only if rare |\n| **No-match fallback** (large topic, 30–50 children)\
+  \ | 30–50 | ~**200–400** | ~0 | Reduces accuracy/cost-efficiency |\n| Optimal |\
+  \ 0–3 (relevant only) | ~0–90 | High | Best |\n\nSignal-to-noise ratio drops ~4×+\
+  \ vs. the matched path, and it is *inversely correlated* with usefulness: you spend\
+  \ the most context when you have the least to contribute.\n\n---\n\n### 4. Severity\
+  \ & risk rating\n- **Current state:** Low (dead code, no live LLM path) — but a\
+  \ **trap**: wiring it in \"to add RAG context\" activates latent dilution + unbounded\
+  \ growth.\n- **If wired into an LLM prompt:** Medium–High. Degrades answer-relevance\
+  \ and token economics across a whole interview session; worst on genuinely non-matching\
+  \ turns.\n\nRecommendation: **do not ship the dump-all fallback**; degrade to an\
+  \ explicit low-signal response instead.\n\n---\n\n### 5. Recommended fixes\n\n####\
+  \ 5.1 Better retrieval (reduce the \"no match\" case) — wrap the matcher\nA defect\
+  \ here is that the *entire query string* is substring-matched as one unit. Tokenize\
+  \ and match any keyword, so fallback fires far less often:\n\n```java\nprivate int\
+  \ match(KnowledgePoint p, String[] keywords) {\n    String name = p.getName().toLowerCase();\n\
+  \    String desc = p.getDescription() == null ? \"\" : p.getDescription().toLowerCase();\n\
+  \    int hit = 0;\n    for (String kw : keywords) if (!kw.isBlank() && (name.contains(kw)\
+  \ || desc.contains(kw))) hit++;\n    return hit;\n}\n// pass description too: score\
+  \ relevance, sort by hit count then sortOrder\n```\n\nAlso add a damped score: even\
+  \ a redundant match is better than an empty dump, so fall to \"top by `difficulty`/`sortOrder`\"\
+  \ instead of \"all\".\n\n#### 5.2 Replace dump-all with an explicit, bounded low-signal\
+  \ block\n```java\nif (matchCount == 0) {\n    long childCount = points.stream().filter(p\
+  \ -> p.getParentId() != null).count();\n    if (childCount <= 3) {\n        // only\
+  \ tiny topics: still return a short, labeled list\n        sb.append(\"当前主题子知识点：\"\
+  );\n        points.stream().filter(p -> p.getParentId() != null).limit(3)\n    \
+  \         .forEach(p -> sb.append(p.getName()).append(\"、\"));\n        sb.setLength(sb.length()\
+  \ - 1);\n    }\n    // else: emit a sentinel the system prompt teaches the model\
+  \ to interpret\n    return \"[无关键词命中的知识点上下文]\";\n}\n```\n\n#### 5.3 Align the prompt\
+  \ contract (Prompt Engineering layer)\nTeach the model how to interpret each context\
+  \ tier — this is the key prompt change:\n\n```text\n系统指令（追加）：\n- 「知识点上下文」仅当明确标注“相关”时作为可靠的追问/评分依据。\n\
+  - 若上下文为「无关键词命中的知识点上下文」，视为检索未命中：\n  不要据此虚构知识点，基于候选人实际回答和通用知识评价；\n  必要时在反馈中注明“该回答未命中主题知识点”。\n\
+  - 对未提供描述的纯知识点名称列表，仅用于提示话题范围，不得当作事实来源。\n```\n\nThis turns the fallback input from\
+  \ *ambiguously useful* into *explicitly low-trust*, and makes model behavior predictable.\n\
+  \n#### 5.4 Enforce a hard cap regardless of branch\n```java\n// shared guard near\
+  \ the top of the loop / before build\nlimitMatches(sb, TOP_CONTEXT_LIMIT); // e.g.\
+  \ 8 entries or ~600 chars\n```\n\n#### 5.5 Structural cleanup (remove dead-path\
+  \ risk)\nSince `knowledgeRetriever` is injected but never called, either **wire\
+  \ it deliberately** behind `@ConditionalOnProperty(mode=rule)` at the call site\
+  \ that feeds the LLM prompt, or **remove the bean** until then. Keeping a live-looking\
+  \ but unused retriever lets the latent dilution re-appear unnoticed during future\
+  \ refactors.\n\n---\n\n### Summary\n| Item | Finding |\n|---|---|\n| Code path |\
+  \ `KeywordKnowledgeRetriever.java:62-70`, unbounded O(n) dump of child point names,\
+  \ no description, no cap |\n| Current blast radius | **Low** — bean injected in\
+  \ `InterviewService.java:61` but never invoked; active path is rule-based |\n| If\
+  \ wired to an LLM prompt | **Medium–High** — context dilution, token/cost/latency\
+  \ inflation, hallucination & relevance degradation, masks retrieval failures |\n\
+  | Primary fix | Replace dump-all with a bounded sentinel + prompt-contract; improve\
+  \ token/segmented matching; hard-cap context |\n| Additional | Fix the untrusted-context\
+  \ prompt block (5.3); wire or remove the dead bean (5.5) |\n\nThe core prompt-engineering\
+  \ principle: **when retrieval fails, return an explicit, low-trust marker rather\
+  \ than a high-volume, low-relevance substitute** — never let the fallback be more\
+  \ expensive and noisier than a successful retrieval."
+execution_reliability:
+  summary:
+    total_attempts: 1
+    retries_performed: 0
+    fallbacks_used: []
+    models_tried:
+    - ''
+    final_status: success
+    total_latency_ms: 178745
+    classification: success
+  cross_stack: null
+cross_stack_validation: {}
+code_validation: {}
+pipeline_stages:
+  router:
+    status: completed
+    started_at: '2026-09-02T08:26:22.925158+00:00'
+    completed_at: '2026-09-02T08:26:22.925158+00:00'
+  memory:
+    status: completed
+    started_at: '2026-09-02T08:26:22.923360+00:00'
+    completed_at: '2026-09-02T08:26:22.923360+00:00'
+  skill:
+    status: completed
+    started_at: '2026-09-02T08:26:22.928973+00:00'
+    completed_at: '2026-09-02T08:26:22.928973+00:00'
+  orchestrator:
+    status: completed
+    started_at: '2026-09-02T08:26:22.929460+00:00'
+    completed_at: '2026-09-02T08:26:22.929460+00:00'
+  runtime:
+    status: completed
+    started_at: '2026-09-02T08:26:22.934240+00:00'
+    completed_at: '2026-09-02T08:29:21.680172+00:00'
+  trace:
+    status: completed
+decision_provenance:
+  router_rules: *id002
+  memory_match_reasons:
+    T-005: *id003
+    S-002: *id004
+    S-001: *id005
+    P-001: *id006
+    T-010: *id007
+  orchestrator_rules:
+  - multi_skill
