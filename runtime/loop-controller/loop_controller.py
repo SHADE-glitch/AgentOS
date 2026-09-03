@@ -732,11 +732,12 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         state["current_stage"] = "runtime"
         pipeline_timestamps["agent_started"] = datetime.now(timezone.utc).isoformat()
 
-        # Attach entry metadata to decision_context for trace
+        # Attach entry metadata to decision_context for trace (Phase 8.5-T2: loop_id provenance)
         decision_context["entry_metadata"] = state.get("entry", {})
+        decision_context["loop_id"] = loop_id
 
         try:
-            exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps, project_root=project_root)
+            exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps, project_root=project_root, loop_id=loop_id)
             state["runtime"]["status"] = "completed"
             state["runtime"]["execution_id"] = exec_result["execution_id"]
             state["runtime"]["trace_id"] = exec_result["trace_id"]

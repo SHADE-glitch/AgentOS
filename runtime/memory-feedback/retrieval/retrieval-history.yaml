@@ -16836,3 +16836,1158 @@ retrievals:
   - H-105-INTERVIEWSTATESTORE-READ-----R
   - H-115-STATESTORE-WRITE-----THROWS-AF
   - H-139-STATESTORE-READ-----RETURNS--N
+- timestamp: '2026-09-03T10:35:05.166249+00:00'
+  query:
+    task_text: 'You are the Agent OS Architecture Engineer.
+
+
+      Phase 8.5 Hypothesis Reinforcement Lane Consolidation has completed.
+
+
+      Read:
+
+
+      - benchmark-8.5/Phase-8.5-Architecture-Review.md
+
+      - benchmark-8.5/Phase-8.5-Implementation-Report.md
+
+      - benchmark-8.5/Phase-8.5.1-Runtime-Closure-Audit.md
+
+
+      Do NOT modify code.
+
+
+      Start Phase 8.6 Architecture Review only.
+
+
+      Objective:
+
+
+      Design the next safety and scalability layer after Hypothesis Lane consolidation.
+
+
+      Focus areas:
+
+
+      1. Cross-memory interaction safety
+
+
+      Analyze coexistence between:
+
+
+      - R1 normal memory lane
+
+      - R4 team/shared memory lane
+
+      - R7 hypothesis reinforcement lane
+
+
+      Verify whether retrieval, candidate generation, validation, and promotion can
+      cause:
+
+
+      - cross-lane contamination
+
+      - incorrect reinforcement
+
+      - duplicate evidence counting
+
+      - memory type confusion
+
+
+
+      2. Self-confirmation resistance
+
+
+      Audit:
+
+
+      same_loop_as_creation
+
+
+      Determine whether Phase 8.6 should introduce:
+
+
+      - validator filtering
+
+      - observation provenance constraints
+
+      - minimum independent loop requirement
+
+      - execution diversity requirements
+
+
+
+      3. Evidence independence model
+
+
+      Design a stronger evidence model:
+
+
+      Current:
+
+
+      source_execution dedup
+
+
+      Future possibilities:
+
+
+      - source_loop independence
+
+      - agent independence
+
+      - temporal separation
+
+      - retrieval-context diversity
+
+
+
+      4. Retrieval interaction audit
+
+
+      Review whether hypothesis memories can influence:
+
+
+      - normal retrieval ranking
+
+      - team memory retrieval
+
+      - future hypothesis generation
+
+
+      without bypassing trust boundaries.
+
+
+
+      5. Define Phase 8.6 scope
+
+
+      Produce:
+
+
+      benchmark-8.6/Phase-8.6-Architecture-Review.md
+
+
+      Include:
+
+
+      - current architecture state
+
+      - identified risks
+
+      - invariants to preserve
+
+      - proposed changes
+
+      - frozen surfaces
+
+      - implementation tasks
+
+      - test strategy
+
+      - rollback strategy
+
+
+      Constraints:
+
+
+      - Architecture review only
+
+      - No code changes
+
+      - No implementation
+
+      - Preserve Phase 8.5 frozen surfaces
+
+
+      Final output must include:
+
+
+      APPROVED / REJECTED recommendation for Phase 8.6 implementation readiness. '
+    category: optimization
+    domains:
+    - frontend
+    - ai
+    - architecture
+    - testing
+    roles:
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-006
+  - T-009
+  - E-011
+  - S-001
+- timestamp: '2026-09-03T10:36:24.495984+00:00'
+  query:
+    task_text: '▣ DCP | -817.1K removed, +698 summary
+
+
+      │███████████████████████████████████████░░░░░█░░█⣿█│
+
+      ▣ Compression #3 -68.1K removed, +220 summary
+
+      → Topic: Phase 8.5 impl + closure
+
+      → Items: 36 messages and 33 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T10:36:52.686776+00:00'
+  query:
+    task_text: 'You are the Agent OS Architecture Engineer.
+
+
+      Phase 8.5 Hypothesis Reinforcement Lane Consolidation has completed.
+
+
+      Read:
+
+
+      - benchmark-8.5/Phase-8.5-Architecture-Review.md
+
+      - benchmark-8.5/Phase-8.5-Implementation-Report.md
+
+      - benchmark-8.5/Phase-8.5.1-Runtime-Closure-Audit.md
+
+
+      Do NOT modify code.
+
+
+      Start Phase 8.6 Architecture Review only.
+
+
+      Objective:
+
+
+      Design the next safety and scalability layer after Hypothesis Lane consolidation.
+
+
+      Focus areas:
+
+
+      1. Cross-memory interaction safety
+
+
+      Analyze coexistence between:
+
+
+      - R1 normal memory lane
+
+      - R4 team/shared memory lane
+
+      - R7 hypothesis reinforcement lane
+
+
+      Verify whether retrieval, candidate generation, validation, and promotion can
+      cause:
+
+
+      - cross-lane contamination
+
+      - incorrect reinforcement
+
+      - duplicate evidence counting
+
+      - memory type confusion
+
+
+
+      2. Self-confirmation resistance
+
+
+      Audit:
+
+
+      same_loop_as_creation
+
+
+      Determine whether Phase 8.6 should introduce:
+
+
+      - validator filtering
+
+      - observation provenance constraints
+
+      - minimum independent loop requirement
+
+      - execution diversity requirements
+
+
+
+      3. Evidence independence model
+
+
+      Design a stronger evidence model:
+
+
+      Current:
+
+
+      source_execution dedup
+
+
+      Future possibilities:
+
+
+      - source_loop independence
+
+      - agent independence
+
+      - temporal separation
+
+      - retrieval-context diversity
+
+
+
+      4. Retrieval interaction audit
+
+
+      Review whether hypothesis memories can influence:
+
+
+      - normal retrieval ranking
+
+      - team memory retrieval
+
+      - future hypothesis generation
+
+
+      without bypassing trust boundaries.
+
+
+
+      5. Define Phase 8.6 scope
+
+
+      Produce:
+
+
+      benchmark-8.6/Phase-8.6-Architecture-Review.md
+
+
+      Include:
+
+
+      - current architecture state
+
+      - identified risks
+
+      - invariants to preserve
+
+      - proposed changes
+
+      - frozen surfaces
+
+      - implementation tasks
+
+      - test strategy
+
+      - rollback strategy
+
+
+      Constraints:
+
+
+      - Architecture review only
+
+      - No code changes
+
+      - No implementation
+
+      - Preserve Phase 8.5 frozen surfaces
+
+
+      Final output must include:
+
+
+      APPROVED / REJECTED recommendation for Phase 8.6 implementation readiness. '
+    category: optimization
+    domains:
+    - frontend
+    - ai
+    - architecture
+    - testing
+    roles:
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-006
+  - T-009
+  - E-011
+  - S-001
+- timestamp: '2026-09-03T10:40:06.905902+00:00'
+  query:
+    task_text: "You are the Agent OS Implementation Planner.\n\nTask:\nCreate:\n\n\
+      benchmark-8.6/Phase-8.6-Implementation-Plan.md\n\nbased strictly on:\n\nbenchmark-8.6/Phase-8.6-Architecture-Review.md\n\
+      \nThe Architecture Review is APPROVED.\nDo not redesign architecture.\nDo not\
+      \ introduce new scope.\n\nYour job is to convert the approved architecture into\
+      \ an executable implementation plan.\n\nHard constraints:\n\n1. Frozen surfaces\
+      \ MUST remain frozen:\n- promoter.py\n- retrieval_optimizer.py scoring\n- retrieval_adapter.py\n\
+      - agent prompts\n- benchmark templates\n\nAllowed runtime_adapter.py modification\
+      \ ONLY:\n- same_loop_as_creation / created_loop provenance wiring\n\nAllowed\
+      \ files:\n- collector.py\n- validator.py\n- team_result_collector.py\n- runtime_adapter.py\
+      \ (C1 only)\n- tests/test_phase_8_6_hypothesis_safety.py\n\nImplementation scope\
+      \ MUST be limited to:\n\nC1:\nImplement or remove same_loop_as_creation.\nPreferred:\n\
+      implement real provenance.\n\nRequirements:\n- add created_loop provenance\n\
+      - calculate:\n  same_loop_as_creation = (current loop_id == created_loop)\n\
+      - preserve backward compatibility\n- default missing values safely\n\nC2:\n\
+      Hypothesis validation must become loop-based.\n\nRules:\n- hypothesis lane uses\
+      \ canonical_source\n- canonical_source priority:\n  hypothesis_engagement.loop_id\n\
+      \  ->\n  trace.loop_id\n  ->\n  source_execution\n\nValidation rules:\n- hypothesis:\n\
+      \  minimum 1 independent loop\n- validated:\n  minimum 2 independent loops\n\
+      \nSame loop multiple executions count as ONE.\n\nC3:\nAdd fail-closed type validation.\n\
+      \nReject:\n- candidate_type=reinforce targeting H-xxx\n\nReject:\n- candidate_type=reinforce_hypothesis\
+      \ targeting non-H memory\n\nDo not silently convert.\n\nC4:\nCanonical evidence\
+      \ normalization.\n\nKeep:\n- source_execution for audit\n\nAdd:\n- canonical_source\
+      \ for validation counting\n\nOnly hypothesis lane changes.\n\nEstablished R1-R6\
+      \ behavior MUST remain unchanged.\n\nC5:\nExtract shared helper:\n\nis_countable_observation(candidate)\n\
+      \nUsed by:\n- collector observation log gate\n- validator validation counting\
+      \ gate\n\nGoal:\nPrevent inconclusive observation drift.\n\nTesting requirements:\n\
+      \nCreate:\n\ntests/test_phase_8_6_hypothesis_safety.py\n\nMust include:\n\n\
+      1.\ntest_same_loop_as_creation_populated\n\n2.\ntest_same_loop_confirmation_excluded\n\
+      \n3.\ntest_two_executions_same_loop_counts_as_one\n\n4.\ntest_two_loops_counts_as_two_validated\n\
+      \n5.\ntest_canonical_source_priority\n\n6.\ntest_reject_hypothesis_type_mismatch\n\
+      \n7.\ntest_inconclusive_never_counts\n\n8.\ncross-memory coexistence:\nR1 +\
+      \ R4 + R7 concurrent without contamination\n\n\nTesting rules:\n\n- No live\
+      \ opencode run.\n- No bypassing collector.\n- Use frozen pipeline:\n\nbuild_trace()\n\
+      \ ->\ncollect_from_trace_ids()\n ->\nvalidate_candidates()\n\nExisting tests\
+      \ must remain:\n\ntest_phase_8_4_hypothesis_reinforcement.py\ntest_phase_8_5_integration.py\n\
+      \nmust stay green.\n\nOutput requirements for Implementation Plan:\n\nInclude:\n\
+      \n1. Objective\n2. Scope\n3. File-by-file change list\n4. Detailed implementation\
+      \ steps\n5. Data flow changes\n6. Test plan\n7. Rollback plan\n8. Risk assessment\n\
+      9. Definition of Done\n\nDo not write code.\nDo not modify files except creating:\n\
+      \nbenchmark-8.6/Phase-8.6-Implementation-Plan.md\n\nAfter completion, report:\n\
+      - created file\n- files planned to modify\n- frozen surfaces preserved\n- estimated\
+      \ implementation order "
+    category: optimization
+    domains:
+    - frontend
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    - freshness
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - H-117-CACHED-QUESTIONCOUNT-----ROW-G
+  - H-202-STATE-QUESTIONCOUNT-----1--FRO
+  - H-204-STATE-QUESTIONCOUNT-----1---DE
+  - H-234-STATE-QUESTIONCOUNT-----AT---1
+- timestamp: '2026-09-03T11:06:53.525468+00:00'
+  query:
+    task_text: '你现在是 Agent OS Runtime Executor。
+
+
+      Phase 8.6 Implementation 已由 Trae 完成。
+
+
+      请不要修改 Agent OS 源码。
+
+
+      你的任务是执行 Phase 8.6 Runtime Validation，验证实现是否在真实 Runtime 环境中成立。
+
+
+      验证依据：
+
+
+      - Phase-8.6-Architecture-Review.md
+
+      - Phase-8.6-Implementation-Plan.md
+
+      - Phase-8.6-Implementation-Report.md
+
+
+
+      目标：
+
+
+      验证 C1-C5 在真实运行流程中是否生效。
+
+
+
+      重点验证：
+
+
+      ## C1 same_loop_as_creation provenance
+
+
+      构造场景：
+
+
+      1. loop A 创建 hypothesis H-xxx
+
+      2. loop A 内产生 confirmation observation
+
+
+      确认：
+
+
+      - same_loop_as_creation=true
+
+      - 不进入 validation_runs
+
+
+
+      然后：
+
+
+      1. loop A 创建 hypothesis
+
+      2. loop B 产生 observation
+
+
+      确认：
+
+
+      - same_loop_as_creation=false
+
+      - 可以作为独立 evidence
+
+
+
+      ## C2 distinct loop threshold
+
+
+      验证：
+
+
+      同一个 loop：
+
+
+      EXEC-1
+
+      EXEC-2
+
+      EXEC-3
+
+
+      只能算：
+
+
+      1 个 validation source
+
+
+
+      不同 loop：
+
+
+      LOOP-A
+
+      LOOP-B
+
+
+      才能达到：
+
+
+      validated
+
+
+
+      ## C3 fail-closed type guard
+
+
+      攻击：
+
+
+      H-xxx + reinforce
+
+
+      确认：
+
+
+      必须拒绝。
+
+
+
+      攻击：
+
+
+      普通 memory + reinforce_hypothesis
+
+
+      确认：
+
+
+      必须拒绝。
+
+
+
+      禁止自动转换。
+
+
+
+      ## C4 canonical_source
+
+
+      验证：
+
+
+      hypothesis lane 使用 canonical_source 统计。
+
+
+      确认：
+
+
+      source_execution 不影响 validation count。
+
+
+
+      ## C5 is_countable_observation
+
+
+      验证：
+
+
+      以下不能计数：
+
+
+      - inconclusive hypothesis observation
+
+      - same_loop_as_creation=true
+
+
+
+      以下可以计数：
+
+
+      - 正常 cross-loop observation
+
+
+
+      ## Cross lane coexistence
+
+
+      验证：
+
+
+      R1 established memory
+
+
+      R4 team hypothesis
+
+
+      R7 individual hypothesis
+
+
+      同时存在时：
+
+
+      互不污染。
+
+
+
+      输出：
+
+
+      Phase-8.6-Runtime-Validation-Report.md
+
+
+
+      报告必须包含：
+
+
+      1. Runtime环境
+
+      2. 执行场景
+
+      3. Trace Evidence
+
+      4. Observation Log Evidence
+
+      5. Validation结果
+
+      6. 发现的问题
+
+      7. 是否通过 Runtime Closure Audit
+
+
+
+      注意：
+
+
+      你不是 Developer。
+
+
+      不要修改：
+
+
+      - collector.py
+
+      - validator.py
+
+      - runtime_adapter.py
+
+      - frozen surfaces
+
+
+      如果发现问题：
+
+
+      只记录 Evidence，并反馈给 Trae 修复。 '
+    category: debug
+    domains:
+    - ai
+    - architecture
+    roles:
+    - system-architect
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-006
+  - P-001
+  - E-011
+  - S-001
+  - S-002
+- timestamp: '2026-09-03T11:07:27.895718+00:00'
+  query:
+    task_text: '▣ DCP | -937.7K removed, +1.1K summary
+
+
+      │██████████████████████████████████████░░░░░⣿░░⣿░██│
+
+      ▣ Compression #4 -100.7K removed, +1.1K summary
+
+      → Topic: Phase 8.6 Arch + Plan
+
+      → Items: 28 messages and 24 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T11:34:21.893900+00:00'
+  query:
+    task_text: "# Phase 8.7 Implementation Execution\n\n你现在是 Agent OS Runtime 执行者。\n\
+      \n根据已经 APPROVED 的 Phase 8.7 Implementation Plan 执行。\n\n限制：\n\n只修改：\n- collector.py\n\
+      - validator.py\n- runtime_adapter.py\n- test_phase_8_7_integrity.py\n\n禁止：\n\
+      - 修改 promoter.py\n- 修改 retrieval_optimizer.py\n- 修改 retrieval_adapter.py\n-\
+      \ 修改 prompts\n- 修改 benchmark templates\n\n要求：\n\n1. 保留 Phase 8.6 C1-C5 全部行为\n\
+      2. 所有新增字段必须 backward compatible\n3. 不改变 established lane counting\n4. 不改变 promotion\
+      \ lifecycle\n5. 每一步执行后运行测试\n\n完成后输出：\n\n- changed files\n- invariant mapping\n\
+      - tests executed\n- regression result\n- remaining risks   下面是任务：# Phase 8.7\
+      \ Implementation Plan Review\nVerdict: APPROVED (with 1 implementability observation)\n\
+      \n## Review Checklist\nCriterion Result Detail Frozen surfaces respected PASS\
+      \ All 5 confirmed untouched in §1, §5, §6 All 7 invariants covered PASS I10-I16\
+      \ each mapped to ≥1 change Execution order safe PASS Dataflow direction respected;\
+      \ Phase 8.6 C1-C5 preserved Schema plan complete PASS 30+ fields: type/source/lifecycle/default/compat\
+      \ Backward compat PASS All defaults safe; old logs read with defaults Test coverage\
+      \ PASS 10 tests, 7 invariants covered OpenCode brief executable PASS Step-by-step\
+      \ with file/func/field precision Regression baseline PASS 56 existing tests\
+      \ must stay green\n\n## Detailed Findings\n### Strengths\n1. Scope map is comprehensive\
+      \ — 17 changes mapped to files, functions, invariants, and risk levels. No ambiguity\
+      \ about what touches what.\n2. I10/I11 dedup is correctly layered on top of\
+      \ C4 — canonical_source_for (C4) runs first, then I10/I11 as second-level dedup.\
+      \ This preserves Phase 8.6 invariants.\n3. I12 negative evidence preservation\
+      \ is well-designed — The key insight is removing the is_countable_observation\
+      \ gate only from log writing (collector), while keeping it in counting (validator).\
+      \ This is the minimal change to achieve the invariant.\n4. I14 confidence cap\
+      \ is correctly scoped — hypothesis lane only, established lane unchanged. The\
+      \ M4_confidence gate in promoter uses validation_runs (raw count), not the capped\
+      \ confidence field, so promoter Trust Gate is unaffected.\n5. Risk review covers\
+      \ edge cases — old observation logs, missing metadata, partial pipeline failure\
+      \ all addressed.\n### Observation 1: I10/I11 seen_* set tracking (MINOR)\nPlan\
+      \ says (Step 3.1):\n \"Only add to executions if both conditions pass. Add to\
+      \ seen_* sets after adding.\"\nIssue: If an observation is rejected by the I11\
+      \ check (same model+context), its root_task_id is NOT added to seen_root_task_ids\
+      \ . A subsequent observation with the same root_task_id but different model+context\
+      \ would incorrectly pass the I10 check.\n\nExample:\n\n```\nObs 1: root_task_id=T1, model=claude, context=ABC  → counted, sets={T1}, {(claude,\n\
+      ABC)}\nObs 2: root_task_id=T2, model=claude, context=ABC  → I11 fails (same model\n\
+      +context), NOT counted\n                                                        T2 NOT added to \n\
+                                                              seen_root_task_ids\n\
+      Obs 3: root_task_id=T2, model=gpt,    context=DEF  → T2 not in seen → I10 passes\n\
+                                                              (gpt,DEF) not in seen → \n\
+                                                              I11 passes\n                                                        → INCORRECTLY counted \n\
+                                                              (same root as Obs 2)\n\
+      ```\nFix: Track seen sets for ALL observations, not just counted ones:\n\n```\n\
+      seen_root_task_ids.add(root_task_id)          # always\nseen_model_contexts.add((model_family, ctx))  # always\n\
+      if root_task_id_is_new AND model_context_is_new:\n    executions.add(canonical_source)          # only if both pass\n\
+      ```\nSeverity: LOW — fix is one line; the OpenCode executor can implement correctly\
+      \ from the intent.\n\n## Verdict\nAPPROVED FOR IMPLEMENTATION\n\nThe plan is\
+      \ thorough, executable, and respects all constraints. The single observation\
+      \ above is a minor implementability detail that does not affect the plan's architectural\
+      \ soundness. The OpenCode executor should apply the fix described in Observation\
+      \ 1 during implementation.\n\nReady for OpenCode execution. "
+    category: debug
+    domains:
+    - frontend
+    - database
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - agent
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - S-001
+  - T-005
+  - E-004
+  - T-001
+- timestamp: '2026-09-03T11:35:06.775410+00:00'
+  query:
+    task_text: '▣ DCP | -975.5K removed, +1.4K summary
+
+
+      │█████████████████████████████████████░░░░░░░░░░░██│
+
+      ▣ Compression #5 -35.9K removed, +1.4K summary
+
+      → Topic: Phase 8.6 validation + 8.7 prep
+
+      → Items: 7 messages and 5 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T11:35:31.687737+00:00'
+  query:
+    task_text: '▣ DCP | -1007.8K removed, +1.9K summary
+
+
+      │█████████████████████████████████████░░░░░░░░░░░██│
+
+      ▣ Compression #6 -32.3K removed, +1.9K summary
+
+      → Topic: Phase 8.7 impl prep
+
+      → Items: 4 messages and 3 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T11:36:24.377956+00:00'
+  query:
+    task_text: '▣ DCP | -1070.8K removed, +2K summary
+
+
+      │█████████████████████████████████████░░░░░░░░░░⣿⣿█│
+
+      ▣ Compression #7 -63K removed, +2K summary
+
+      → Topic: Phase 8.7 exec start
+
+      → Items: 30 messages and 26 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T11:46:25.462318+00:00'
+  query:
+    task_text: "You are executing Phase 8.7 Runtime Validation.\n\nRead and strictly\
+      \ follow:\n\n/home/shade/.agents/Phase-8.7-Runtime-Validation-Plan.md\n\n\n\
+      Mission:\n\nExecute all 6 runtime attack scenarios (I10-I16) against the existing\
+      \ Phase 8.7 pipeline.\n\nThis is VALIDATION ONLY.\n\nSTRICT CONSTRAINTS:\n\n\
+      1. Do NOT modify any .py source file.\n2. Do NOT modify frozen surfaces:\n \
+      \  - runtime/memory-feedback/promotion/promoter.py\n   - runtime/memory-feedback/retrieval/retrieval_optimizer.py\n\
+      \   - runtime/loop-controller/retrieval_adapter.py\n   - prompts/\n3. Do NOT\
+      \ modify memory lifecycle behavior.\n4. Do NOT update production runtime state.\n\
+      5. Only create temporary validation artifacts.\n\nWorking directory:\n\ncd /home/shade/.agents/runtime/loop-controller\n\
+      \n\nExecution requirements:\n\nFor each case:\n\n1. Create isolated temporary\
+      \ validation directory.\n2. Generate crafted trace inputs described in Phase-8.7-Runtime-Validation-Plan.md.\n\
+      3. Run the real pipeline:\n\nbuild_trace()\n    ->\nwrite trace YAML\n    ->\n\
+      collect_from_trace_ids()\n    ->\nvalidate_candidates()\n\n\n4. Verify expected\
+      \ invariants with assertions.\n\n\nCases to execute:\n\nCase 1:\nEvidence Fan-Out\
+      \ Attack\nInvariant:\nI10 Evidence Independence\n\nVerify:\n\nvalidation_runs\
+      \ == 1\nroot_task_ids count == 1\n\n\nCase 2:\nMulti-Agent Echo Attack\nInvariant:\n\
+      I11 Causal Independence\n\nVerify:\n\nvalidation_runs == 1\nmodel_families count\
+      \ == 1\ncontext_hashes count == 1\n\n\nCase 3:\nNegative Evidence Injection\n\
+      Invariant:\nI12 Negative Evidence Preservation\n\nVerify:\n\nobservation log\
+      \ contains exactly 3 entries.\n\nExpected:\n\ncountable:\ntrue\nfalse\nfalse\n\
+      \nVerify:\n\nnegative_evidence_count == 2\n\ncounter_evidence_ratio == 0.33\n\
+      \n\nCase 4:\nObservation Identity Trace\n\nInvariant:\nI13\n\nVerify identical\
+      \ observation_id through:\n\n1. trace influence_breakdown\n2. collector candidate\n\
+      3. observation log\n4. validator result\n\n\nCase 5:\nFeedback Amplification\n\
+      \nInvariant:\nI14\n\nCreate:\n\n5 independent hypothesis observations\n\nand\n\
+      \n5 established memory observations.\n\nVerify:\n\nhypothesis confidence ==\
+      \ 0.4\n\nestablished confidence == 1.0\n\nhypothesis validation_runs == 5\n\n\
+      \nCase 6:\nContext Drift\n\nInvariant:\nI16\n\nCreate:\n\ndifferent env_fingerprint\
+      \ observations\n\nand same env control.\n\nVerify:\n\ndifferent env:\n\nstaleness_warning\
+      \ == true\n\n\nsame env:\n\nstaleness_warning == false\n\n\nAfter all cases:\n\
+      \nGenerate:\n\nbenchmark-8.7/Phase-8.7-Runtime-Validation-Report.md\n\n\nReport\
+      \ must include:\n\n1. Overall PASS/FAIL table\n2. Each case:\n   - attack description\n\
+      \   - input summary\n   - expected artifact\n   - actual artifact\n   - assertion\
+      \ result\n3. Artifact locations\n4. Artifact checksums\n5. Existing regression\
+      \ status:\n   67/67 tests PASS\n6. Frozen surface verification result\n\n\n\
+      Finally run:\n\ngit diff --name-only HEAD -- \\\nruntime/memory-feedback/promotion/promoter.py\
+      \ \\\nruntime/memory-feedback/retrieval/retrieval_optimizer.py \\\nruntime/loop-controller/retrieval_adapter.py\
+      \ \\\nprompts/\n\n\nExpected:\n\nNo output.\n\n\nDo not optimize.\nDo not refactor.\n\
+      Do not fix failures by changing implementation.\n\nIf any case fails:\n\nSTOP\
+      \ and produce:\n\n- failing invariant\n- actual artifact\n- expected artifact\n\
+      - suspected layer:\n  runtime_adapter / collector / validator\n\nDo not patch\
+      \ code. "
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - ai
+    - testing
+    roles:
+    - frontend-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    - freshness
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - P-001
+  - H-051-INTERVIEWSTATESTORE-WRITE---IN
+  - H-105-INTERVIEWSTATESTORE-READ-----R
+  - H-115-STATESTORE-WRITE-----THROWS-AF
+- timestamp: '2026-09-03T11:53:22.772762+00:00'
+  query:
+    task_text: "You are implementing Phase 8.8 Memory Integrity Stress Validation.\n\
+      \nContext:\nPhase 8.7 is complete.\n\nVerified:\n- I10 Evidence Independence\
+      \ PASS\n- I11 Multi-Agent Echo PASS\n- I12 Negative Evidence Preservation PASS\n\
+      - I13 Observation Identity PASS\n- I14 Confidence Amplification Protection PASS\n\
+      - I16 Context Drift Detection PASS\n- 67/67 regression PASS\n- Frozen surfaces\
+      \ untouched\n\nDo NOT modify existing Phase 8.7 implementation.\n\nObjective:\n\
+      Design and implement Phase 8.8 validation only.\n\nConstraints:\n- Validation\
+      \ artifacts only\n- No modification to frozen surfaces:\n  promoter.py\n  retrieval_optimizer.py\n\
+      \  retrieval_adapter.py\n  prompts/\n- No production memory mutation\n- Use\
+      \ isolated temp directories\n- update_state=False\n\nCreate:\nbenchmark-8.8/Phase-8.8-Stress-Validation-Plan.md\n\
+      \nInclude:\n\n1. Validation objectives:\n   I17 Long Horizon Stability\n   I18\
+      \ Memory Saturation\n   I19 Adversarial Sequence Attack\n   I20 Replay Attack\n\
+      \n2. Runtime scenarios:\n\nCase 1:\nLong horizon simulation:\n- 100/500/1000\
+      \ observations\n- mixed hypothesis and established memory\n- verify:\n  confidence\
+      \ stability\n  validation_runs stability\n  evidence independence stability\n\
+      \n\nCase 2:\nMemory saturation:\n- generate 1000 hypotheses\n- validate:\n \
+      \ grouping correctness\n  dedup correctness\n  validator runtime degradation\n\
+      \n\nCase 3:\nAdversarial sequence:\nSequence:\nreinforce\nreinforce\nweaken\n\
+      reinforce\necho\ndrift\n\nVerify:\n- negative evidence preserved\n- echo collapsed\n\
+      - confidence bounded\n\n\nCase 4:\nReplay attack:\nReplay identical observation\
+      \ multiple times.\nVerify:\n- validation_runs unchanged\n- confidence unchanged\n\
+      - observation identity unchanged\n\n\nFor each case define:\n- crafted input\n\
+      - expected artifacts\n- invariants\n- PASS criteria\n- Python assert examples\n\
+      \n\nDo not implement code yet.\n\nOnly produce the validation plan document.\n\
+      \nAfter completion:\nreport file path and summarize proposed invariants. "
+    category: optimization
+    domains:
+    - ai
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    - mutation
+    - freshness
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - T-006
+  - P-001
+  - E-004
+- timestamp: '2026-09-03T11:56:13.948947+00:00'
+  query:
+    task_text: "# Phase 8.8 Stress Validation Execution\n\nRead and execute:\n\n~/.agents/benchmark-8.8/Phase-8.8-Stress-Validation-Plan.md\n\
+      \n\nObjective:\n\nExecute ONLY validation.\n\nDO NOT:\n- modify any .py file\n\
+      - modify frozen surfaces\n- modify production memory state\n- update runtime/traces\n\
+      - update memory-observation-log.yaml\n- update collector_state.yaml\n\n\nUse\
+      \ isolated temporary directories only.\n\nPipeline:\n\nbuild_trace()\n→ write\
+      \ trace YAML\n→ collect_from_trace_ids(update_state=False)\n→ validate_candidates()\n\
+      → collect artifacts\n\n\nExecute all 4 stress cases:\n\n1. I17 Long Horizon\
+      \ Stability\n   - horizons:\n     100\n     500\n     1000\n   - verify:\n \
+      \    confidence cap\n     evidence independence\n     negative evidence accounting\n\
+      \     no replay inflation\n\n\n2. I18 Memory Saturation\n   - generate:\n  \
+      \   1000 hypotheses\n     2010 traces\n   - verify:\n     groups == 1000\n \
+      \    dedup works\n     no evidence inflation\n     runtime metrics\n\n\n3. I19\
+      \ Adversarial Sequence\n   Execute:\n\n   reinforce\n   reinforce\n   weaken\n\
+      \   reinforce\n   echo\n   drift\n\n   Verify:\n\n   validation_runs == 4\n\
+      \   negative_evidence_count == 1\n   confidence == 0.4\n   echo collapsed\n\
+      \   staleness_warning == true\n\n\n4. I20 Replay Attack\n\n   Execute replay\
+      \ counts:\n\n   N=1\n   N=5\n   N=10\n\n   Verify:\n\n   validation_runs unchanged\n\
+      \   confidence unchanged\n   provenance dedup works\n\n\nAfter execution produce:\n\
+      \n~/.agents/benchmark-8.8/Phase-8.8-Stress-Validation-Report.md\n\n\nReport\
+      \ MUST contain:\n\n1. PASS/FAIL summary table\n2. Per-case attack description\n\
+      3. Expected vs actual artifacts\n4. JSON excerpts\n5. Artifact directories\n\
+      6. SHA256 truncated checksums\n7. Runtime metrics\n8. Regression:\n\npytest\
+      \ tests/test_phase_8_7_integrity.py \\\ntests/test_phase_8_6_hypothesis_safety.py\
+      \ \\\ntests/test_phase_8_4_hypothesis_reinforcement.py \\\ntests/test_phase_8_5_integration.py\
+      \ -q\n\nExpected:\n67 passed\n\n\n9. Frozen surface verification:\n\ngit diff\
+      \ --name-only HEAD -- \\\nruntime/memory-feedback/promotion/promoter.py \\\n\
+      runtime/memory-feedback/retrieval/retrieval_optimizer.py \\\nruntime/loop-controller/retrieval_adapter.py\
+      \ \\\nprompts/\n\n\nExpected:\nno output\n\n\nIf any assertion fails:\n\nDO\
+      \ NOT fix code.\n\nOnly:\n- record failure\n- identify violated invariant\n\
+      - identify layer\n- produce report\n\n\nFinal output:\n\nPhase 8.8 Stress Validation\
+      \ Report only.\nNo Phase 9 design.\nNo implementation changes. "
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - ai
+    - testing
+    roles:
+    - frontend-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    - freshness
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-051-INTERVIEWSTATESTORE-WRITE---IN
+  - H-105-INTERVIEWSTATESTORE-READ-----R
+  - H-115-STATESTORE-WRITE-----THROWS-AF
+  - H-139-STATESTORE-READ-----RETURNS--N
+  - H-200-STATESTORE-READ------IF-A-CONS
+- timestamp: '2026-09-03T11:56:37.911686+00:00'
+  query:
+    task_text: '▣ DCP | -1122.7K removed, +2.3K summary
+
+
+      │███████████████████████████████████░░░░░░░░░░░██⣿█│
+
+      ▣ Compression #8 -51.9K removed, +2.3K summary
+
+      → Topic: Phase 8.7 validation complete
+
+      → Items: 18 messages and 16 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T12:19:32.076215+00:00'
+  query:
+    task_text: '▣ DCP | -1225.1K removed, +3.7K summary
+
+
+      │██████████████████████████████████░░░░░░░░░░░⣿⣿⣿░█│
+
+      ▣ Compression #9 -102.4K removed, +3.7K summary
+
+      → Topic: Phase 8.8 progress
+
+      → Items: 62 messages and 58 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T12:42:06.476572+00:00'
+  query:
+    task_text: '▣ DCP | -1297.9K removed, +4K summary
+
+
+      │██████████████████████████████████░░░░░░░░░░░░░░░█│
+
+      ▣ Compression #10 -72.8K removed, +4K summary
+
+      → Topic: Phase 8.8 execution
+
+      → Items: 22 messages and 19 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007

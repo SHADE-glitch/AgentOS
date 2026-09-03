@@ -762,8 +762,35 @@ def _detect_hypothesis_engagement(agent_response: str, hypotheses: list) -> dict
     return engagement
 
 
+def _extract_model_family(model: str) -> str:
+    """Phase 8.7: Derive model_family by stripping version/date suffix.
+
+    e.g. claude-sonnet-4-20250514 -> claude-sonnet-4
+         anthropic/claude-sonnet-4-20250514 -> claude-sonnet-4
+         gpt-4o-2024-05-13 -> gpt-4o
+         unknown / empty -> unknown
+    """
+    if not model or not isinstance(model, str):
+        return "unknown"
+    if "/" in model:
+        model = model.split("/")[-1]
+    model = model.strip()
+    if not model:
+        return "unknown"
+    import re as _re
+    m = _re.match(r"^(.*)-\d{8}$", model)
+    if m:
+        return m.group(1)
+    m = _re.match(r"^(.*)-\d{4}-\d{2}-\d{2}$", model)
+    if m:
+        return m.group(1)
+    return model
+
+
 def _determine_influence(memories_used: list, hyp_list: list,
-                         agent_response: str = "") -> dict:
+                         agent_response: str = "", loop_id: str = None,
+                         execution_id: str = None, task_id: str = None,
+                         model_family: str = None) -> dict:
     """Determine the decision influence with hypothesis-aware attribution.
 
     Returns a dict with:
@@ -775,6 +802,16 @@ def _determine_influence(memories_used: list, hyp_list: list,
     influence_breakdown = {}
     max_influence_level = 0
     primary_influence = "none"
+
+    # Phase 8.7: compute retrieval_context_hash once for all hypotheses
+    retrieval_context_hash = ""
+    if hyp_list:
+        try:
+            import json as _json
+            sorted_ids = sorted([h.get("memory_id", "") for h in hyp_list if h.get("memory_id")])
+            retrieval_context_hash = hashlib.sha256(_json.dumps(sorted_ids).encode()).hexdigest()[:16]
+        except Exception:
+            retrieval_context_hash = ""
 
     # 1. Established memory influence (existing behavior)
     for mem in memories_used:
@@ -806,6 +843,16 @@ def _determine_influence(memories_used: list, hyp_list: list,
             eng = hyp_engagement.get(hid, {})
             eng_level = eng.get("engagement_level", "none")
 
+            # Phase 8.6-C1: compute same_loop_as_creation from real provenance
+            created_loop = hyp.get("created_loop", "")
+            _loop_id = loop_id or ""
+            same_loop = bool(_loop_id and created_loop and _loop_id == created_loop)
+
+            # Phase 8.7: additional provenance fields (additive, backward compat)
+            _obs_id = f"OBS-{execution_id}-{hid}" if execution_id else f"OBS-{hid}"
+            _root_task = task_id or ""
+            _model_family = model_family or "unknown"
+
             influence_breakdown[hid] = {
                 "type": "hypothesis",
                 "influence": eng_level,
@@ -815,6 +862,17 @@ def _determine_influence(memories_used: list, hyp_list: list,
                 "id_mentioned": eng.get("id_mentioned", False),
                 "term_matches": eng.get("term_matches", 0),
                 "changed_decision": eng.get("changed_decision", False),
+                # Phase 8.5-T2: loop_id provenance (additive, backward compat)
+                "loop_id": _loop_id,
+                "source_loop": _loop_id,
+                # Phase 8.6-C1: real self-confirmation provenance
+                "created_loop": created_loop,
+                "same_loop_as_creation": same_loop,
+                # Phase 8.7: adversarial integrity provenance
+                "observation_id": _obs_id,
+                "root_task_id": _root_task,
+                "model_family": _model_family,
+                "retrieval_context_hash": retrieval_context_hash,
             }
 
             if eng_level != "none":
@@ -846,7 +904,7 @@ def _determine_influence(memories_used: list, hyp_list: list,
 
 def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
                 provider, model, runtime_result, pipeline_timestamps=None,
-                code_validation_result=None):
+                code_validation_result=None, loop_id=None):
     """
     Build a trace YAML dict. Provider-agnostic.
 
@@ -902,9 +960,16 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
             "match_reasons": h.get("match_reasons", []),
         })
 
-    # Phase 8.2.1.5: Hypothesis-aware influence attribution
+    # Phase 8.7: derive model_family + env_fingerprint
+    _model_family = _extract_model_family(model)
+    # Phase 8.2.1.5: Hypothesis-aware influence attribution (Phase 8.5-T2: loop_id provenance)
     agent_response = runtime_result.get("response_text", "")
-    attribution = _determine_influence(mem_list, hyp_list, agent_response)
+    # loop_id may be passed explicitly or via decision_context
+    _loop_id = loop_id or decision_context.get("loop_id") or ""
+    attribution = _determine_influence(
+        mem_list, hyp_list, agent_response, loop_id=_loop_id,
+        execution_id=execution_id, task_id=task_id, model_family=_model_family,
+    )
     influence = attribution["influence"]
     influence_breakdown = attribution["influence_breakdown"]
     influence_provenance = attribution["provenance"]
@@ -931,10 +996,26 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
     # P0-2: Cross-stack info
     cross_stack_info = runtime_result.get("cross_stack_warning", {})
 
+    # Phase 8.7: env_fingerprint and retrieval_diversity (audit-only)
+    _env_fingerprint = {
+        "python_version": sys.version.split()[0] if hasattr(sys, "version") else "unknown",
+        "collector_version": "8.7",
+        "model_family": _model_family,
+    }
+    _retrieval_diversity = {
+        "hypotheses_injected_count": len(hyp_list),
+        "audit_only": True,
+    }
+
     trace = {
         "execution_id": execution_id,
         "trace_id": trace_id,
+        "loop_id": _loop_id or "",
         "task_id": task_id,
+        "root_task_id": task_id or "",
+        "model_family": _model_family,
+        "env_fingerprint": _env_fingerprint,
+        "retrieval_diversity": _retrieval_diversity,
         "task_text": task_text,
         "domain": intent.capitalize(),
         "difficulty": classification.get("difficulty", "medium"),
@@ -1052,7 +1133,7 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
 # ── Legacy compatibility wrapper ─────────────────────────────────
 
 def execute(task_id, task_text, decision_context, model="", provider="opencode",
-            pipeline_timestamps=None, project_root=""):
+            pipeline_timestamps=None, project_root="", loop_id=None):
     """
     Execute a task via the runtime provider.
     Legacy wrapper — use execute_with_reliability for P0-1 features.
@@ -1074,10 +1155,11 @@ def execute(task_id, task_text, decision_context, model="", provider="opencode",
     if pipeline_timestamps is None:
         pipeline_timestamps = {}
 
-    # Build trace
+    # Build trace (Phase 8.5-T2: loop_id provenance)
     trace = build_trace(
         execution_id, trace_id, task_id, task_text, decision_context,
         provider, model, exec_result, pipeline_timestamps=pipeline_timestamps,
+        loop_id=loop_id or decision_context.get("loop_id"),
     )
 
     # Write trace file — Phase 5.9: atomic write

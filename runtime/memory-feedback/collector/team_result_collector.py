@@ -263,6 +263,12 @@ class TeamResultCollector(Collector):
                     continue  # abstain
                 # I5: multiple agents share team context → record provenance marker.
                 eng_norm["shared_context_with_other_agents"] = True
+                # Phase 8.6-C1: mirror same_loop_as_creation for team lane
+                eng_norm["created_loop"] = eng_norm.get("created_loop", "")
+                # same_loop_as_creation: team lane uses loop_id == created_loop
+                # (same logic as individual lane); defaults to false if created_loop unknown
+                eng_norm["same_loop_as_creation"] = bool(
+                    loop_id and eng_norm.get("created_loop") and loop_id == eng_norm.get("created_loop"))
                 quality = self._assess_quality({"evidence": {
                     "output_length": len(lead_text),
                     "token_usage": lead_output.get("tokens", {}) or {},

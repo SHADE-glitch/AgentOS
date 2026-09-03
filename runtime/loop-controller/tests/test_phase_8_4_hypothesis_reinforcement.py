@@ -151,7 +151,8 @@ class TestClassifyHypothesisEngagement(unittest.TestCase):
             set(prov.keys()),
             {"referenced", "engagement_level", "term_matches", "id_mentioned",
              "changed_decision", "same_loop_as_creation",
-             "shared_context_with_other_agents"},
+             "shared_context_with_other_agents",
+             "created_loop"},  # Phase 8.6-C1: created_loop provenance
         )
         self.assertTrue(prov["referenced"])
         self.assertTrue(prov["changed_decision"])

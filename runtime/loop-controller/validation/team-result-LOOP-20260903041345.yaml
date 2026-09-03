@@ -1,0 +1,222 @@
+loop_id: LOOP-20260903041345
+team_id: team-46a4d7a7
+team_result:
+  team_id: team-46a4d7a7
+  status: success
+  lead_output:
+    agent: database-engineer
+    status: failed
+    summary: ''
+    output: ''
+    execution_id: ''
+    trace_id: ''
+    tokens:
+      total: 0
+      input: 0
+      output: 0
+    latency_ms: 0
+    reliability:
+      summary:
+        total_attempts: 1
+        retries_performed: 0
+        fallbacks_used: []
+        models_tried:
+        - ''
+        final_status: failed
+        total_latency_ms: 0
+        classification: orchestration_failure
+        terminated_early: true
+        termination_reason: ORCHESTRATION_FAILURE (provider_error) — not retryable
+        failures:
+        - attempt: 1
+          failure_type: provider_error
+          category: orchestration_failure
+          timestamp: '2026-09-03T04:13:45.178039+00:00'
+          latency_ms: 0
+          error_message: 'Unknown provider: test_provider'
+          provider: test_provider
+          model: ''
+          recovery_action: ''
+      failures:
+      - attempt: 1
+        failure_type: provider_error
+        category: orchestration_failure
+        timestamp: '2026-09-03T04:13:45.178039+00:00'
+        latency_ms: 0
+        error_message: 'Unknown provider: test_provider'
+        provider: test_provider
+        model: ''
+        recovery_action: ''
+  contributions:
+  - role: database-engineer
+    task_id: task-database-engineer-cfebf9
+    output:
+      agent: database-engineer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 0
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: failed
+          total_latency_ms: 0
+          classification: orchestration_failure
+          terminated_early: true
+          termination_reason: ORCHESTRATION_FAILURE (provider_error) — not retryable
+          failures:
+          - attempt: 1
+            failure_type: provider_error
+            category: orchestration_failure
+            timestamp: '2026-09-03T04:13:45.178039+00:00'
+            latency_ms: 0
+            error_message: 'Unknown provider: test_provider'
+            provider: test_provider
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: provider_error
+          category: orchestration_failure
+          timestamp: '2026-09-03T04:13:45.178039+00:00'
+          latency_ms: 0
+          error_message: 'Unknown provider: test_provider'
+          provider: test_provider
+          model: ''
+          recovery_action: ''
+    is_lead: true
+  - role: testing-engineer
+    task_id: task-testing-engineer-dcf911
+    output:
+      agent: testing-engineer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 0
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: failed
+          total_latency_ms: 0
+          classification: orchestration_failure
+          terminated_early: true
+          termination_reason: ORCHESTRATION_FAILURE (provider_error) — not retryable
+          failures:
+          - attempt: 1
+            failure_type: provider_error
+            category: orchestration_failure
+            timestamp: '2026-09-03T04:13:45.178163+00:00'
+            latency_ms: 0
+            error_message: 'Unknown provider: test_provider'
+            provider: test_provider
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: provider_error
+          category: orchestration_failure
+          timestamp: '2026-09-03T04:13:45.178163+00:00'
+          latency_ms: 0
+          error_message: 'Unknown provider: test_provider'
+          provider: test_provider
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  - role: code-reviewer
+    task_id: task-code-reviewer-d0e58b
+    output:
+      agent: code-reviewer
+      status: failed
+      summary: ''
+      output: ''
+      execution_id: ''
+      trace_id: ''
+      tokens:
+        total: 0
+        input: 0
+        output: 0
+      latency_ms: 0
+      reliability:
+        summary:
+          total_attempts: 1
+          retries_performed: 0
+          fallbacks_used: []
+          models_tried:
+          - ''
+          final_status: failed
+          total_latency_ms: 0
+          classification: orchestration_failure
+          terminated_early: true
+          termination_reason: ORCHESTRATION_FAILURE (provider_error) — not retryable
+          failures:
+          - attempt: 1
+            failure_type: provider_error
+            category: orchestration_failure
+            timestamp: '2026-09-03T04:13:45.178118+00:00'
+            latency_ms: 0
+            error_message: 'Unknown provider: test_provider'
+            provider: test_provider
+            model: ''
+            recovery_action: ''
+        failures:
+        - attempt: 1
+          failure_type: provider_error
+          category: orchestration_failure
+          timestamp: '2026-09-03T04:13:45.178118+00:00'
+          latency_ms: 0
+          error_message: 'Unknown provider: test_provider'
+          provider: test_provider
+          model: ''
+          recovery_action: ''
+    is_lead: false
+  conflicts: []
+  summary: Lead agent (database-engineer) completed primary work. Support agents (testing-engineer,
+    code-reviewer) contributed
+  agent_count: 3
+  completed_count: 3
+  failed_count: 0
+task_cards:
+- task_id: task-database-engineer-cfebf9
+  role: database-engineer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 0
+- task_id: task-testing-engineer-dcf911
+  role: testing-engineer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 0
+- task_id: task-code-reviewer-d0e58b
+  role: code-reviewer
+  status: completed
+  output_summary: ''
+  output_len: 0
+  latency_ms: 0
+execution_order:
+- task-database-engineer-cfebf9
+- task-code-reviewer-d0e58b
+- task-testing-engineer-dcf911
+completed_count: 3
+failed_count: 0

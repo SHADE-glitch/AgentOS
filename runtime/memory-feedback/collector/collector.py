@@ -17,6 +17,8 @@ TRACES_DIR = "/home/shade/.agents/runtime/traces"
 CANDIDATES_FILE = "/home/shade/.agents/runtime/memory-feedback/memory-candidates.yaml"
 COLLECTOR_STATE_FILE = "/home/shade/.agents/runtime/loop-controller/state/collector_state.yaml"
 OBSERVATION_LOG_FILE = "/home/shade/.agents/runtime/memory-feedback/memory-observation-log.yaml"
+# Phase 8.5-T3: retention cap (additive, isolated)
+OBSERVATION_LOG_MAX_PER_MEMORY = 20
 
 # Phase 5.9: Atomic write utility
 sys.path.insert(0, os.path.join("/home/shade/.agents", "runtime", "loop-controller"))
@@ -67,6 +69,33 @@ def compute_output_hash(response):
 # Independent, low-trust evidence lane. Consumes provenance only (I1-I8).
 HYPOTHESIS_CANDIDATE_TYPES = ("reinforce_hypothesis", "weaken_hypothesis")
 
+
+# ── Phase 8.6-C5: Single-gate shared observation counting helper ──
+def is_countable_observation(candidate):
+    """Determine whether a candidate observation should count toward
+    validation_runs.  Shared by collector observation-log gate and
+    validator counting gate (cross-gate invariant)."""
+    # Phase 8.4 I7: inconclusive hypothesis observations never count
+    if (candidate.get("candidate_type") in HYPOTHESIS_CANDIDATE_TYPES
+            and candidate.get("outcome") == "inconclusive"):
+        return False
+    # Phase 8.6 I9: same-loop self-confirmation must not count
+    if candidate.get("hypothesis_engagement", {}).get("same_loop_as_creation"):
+        return False
+    return True
+
+
+# ── Phase 8.6-C4: Canonical evidence source for hypothesis lane ───
+def canonical_source_for(candidate):
+    """Return the canonical evidence source for hypothesis-lane counting.
+    Priority: hypothesis_engagement.loop_id → source_loop →
+    candidate.loop_id → source_execution (fallback)."""
+    he = candidate.get("hypothesis_engagement", {})
+    return (he.get("loop_id")
+            or he.get("source_loop")
+            or candidate.get("loop_id")
+            or candidate.get("source_execution", ""))
+
 _HYPOTHESIS_REFUTATION_PATTERNS = [
     r"(?:hypothesis|H-\d+).{0,60}(?:refuted|wrong|incorrect|false|does not hold|contradicted|fails)",
     r"(?:contradicts|refutes|rejects|negates|invalidates).{0,40}(?:hypothesis|H-\d+)",
@@ -85,16 +114,24 @@ def _hypothesis_level(info):
 
 def _normalize_hypothesis_engagement(info, shared_context=False):
     """Build full provenance dict (invariant I8) from a raw attribution dict."""
-    return {
+    # Phase 8.7: preserve adversarial provenance fields if present
+    base = {
         "referenced": bool(info.get("referenced", False)),
         "engagement_level": _hypothesis_level(info),
         "term_matches": info.get("term_matches", 0),
         "id_mentioned": bool(info.get("id_mentioned", False)),
         "changed_decision": bool(info.get("changed_decision", False)),
         "same_loop_as_creation": bool(info.get("same_loop_as_creation", False)),
+        "created_loop": info.get("created_loop", ""),
         "shared_context_with_other_agents": bool(
             info.get("shared_context_with_other_agents", shared_context)),
     }
+    # Phase 8.7: copy through provenance fields if present (additive, keeps legacy key set intact)
+    for _k in ("loop_id", "source_loop", "observation_id", "root_task_id",
+               "model_family", "retrieval_context_hash"):
+        if info.get(_k) not in (None, ""):
+            base[_k] = info.get(_k)
+    return base
 
 
 def classify_hypothesis_engagement(agent_response, hyp_id, info):
@@ -339,12 +376,24 @@ def generate_candidates(trace, quality):
         ctype, outcome, eng = classify_hypothesis_engagement(response, hyp_id, brk)
         if ctype is None:
             continue  # abstain — not engaged (I6)
-        candidates.append({
+        # Phase 8.7: build candidate with adversarial provenance propagation
+        _obs_id = brk.get("observation_id") or f"OBS-{eid}-{hyp_id}"
+        _root_task = brk.get("root_task_id") or trace.get("root_task_id") or trace.get("task_id", "")
+        _model_family = brk.get("model_family") or trace.get("model_family") or "unknown"
+        _rctx = brk.get("retrieval_context_hash") or ""
+        _root_exec = trace.get("execution_id", eid)
+        _env_fp = trace.get("env_fingerprint", {}) or {}
+        _cand = {
             "candidate_id": f"CAND-{eid}-HYP-{hyp_id}",
             "source_execution": eid,
             "target_memory": hyp_id,
             "candidate_type": ctype,
             "quality_score": qs,
+            "canonical_source": canonical_source_for({
+                "hypothesis_engagement": eng,
+                "loop_id": trace.get("loop_id", ""),
+                "source_execution": eid,
+            }),
             "quality_breakdown": {
                 "completeness": quality["completeness"],
                 "accuracy": quality["accuracy"],
@@ -357,10 +406,21 @@ def generate_candidates(trace, quality):
                 f"(level={eng['engagement_level']}, term_matches={eng['term_matches']}, "
                 f"id_mentioned={eng['id_mentioned']}). Evidence from real execution."
             ),
-            "evidence": {**evidence.copy(), "agent_role": "lead"},
+            "evidence": {**evidence.copy(), "agent_role": "lead", "env_fingerprint": _env_fp},
             "outcome": outcome,
             "hypothesis_engagement": eng,
-        })
+            # Phase 8.7: top-level provenance for validator dedup
+            "observation_id": _obs_id,
+            "root_task_id": _root_task,
+            "root_execution_id": _root_exec,
+            "model_family": _model_family,
+            "retrieval_context_hash": _rctx,
+            "env_fingerprint": _env_fp,
+            "loop_id": trace.get("loop_id", ""),
+            "countable": True,  # placeholder, computed below
+        }
+        _cand["countable"] = is_countable_observation(_cand)
+        candidates.append(_cand)
 
     return candidates
 
@@ -378,6 +438,27 @@ def save_collector_state(state):
     atomic_yaml_write(COLLECTOR_STATE_FILE, state)
 
 
+# Phase 8.5-T3: retention — keep last N per memory (additive, reversible)
+def prune_observation_log(log, max_per_memory=OBSERVATION_LOG_MAX_PER_MEMORY):
+    """Prune observations to last max_per_memory per memory_id (additive, isolated)."""
+    obs = log.get("observations", [])
+    if len(obs) <= max_per_memory:
+        return log
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    for o in obs:
+        grouped[o.get("memory_id", "")].append(o)
+    pruned = []
+    for mid, lst in grouped.items():
+        # keep last max_per_memory by observed_at (ISO sort works)
+        lst.sort(key=lambda x: x.get("observed_at", ""))
+        pruned.extend(lst[-max_per_memory:])
+    # preserve global order by observed_at
+    pruned.sort(key=lambda x: x.get("observed_at", ""))
+    log["observations"] = pruned
+    return log
+
+
 # Phase 8.3: Observation log for cross-run validation aggregation
 def load_observation_log():
     """Load memory-observation-log.yaml or return empty."""
@@ -388,7 +469,8 @@ def load_observation_log():
 
 
 def save_observation_log(log):
-    """Save observation log atomically."""
+    """Save observation log atomically. Phase 8.5-T3: prune before save (additive)."""
+    log = prune_observation_log(log)
     log["last_updated"] = datetime.now(timezone.utc).isoformat()
     os.makedirs(os.path.dirname(OBSERVATION_LOG_FILE), exist_ok=True)
     with open(OBSERVATION_LOG_FILE, "w") as f:
@@ -400,16 +482,30 @@ def append_observation_log(memory_id, candidate, loop_id):
     log = load_observation_log()
     if "observations" not in log:
         log["observations"] = []
+    he = candidate.get("hypothesis_engagement", {}) or {}
     log["observations"].append({
         "memory_id": memory_id,
         "source_loop": loop_id or "unknown",
+        "canonical_source": canonical_source_for(candidate) or loop_id or "unknown",
         "source_execution": candidate.get("source_execution", ""),
         "session_id": candidate.get("evidence", {}).get("session_id", ""),
         "output_hash": candidate.get("evidence", {}).get("output_hash", ""),
         "quality_score": candidate.get("quality_score", 0),
         "candidate_type": candidate.get("candidate_type", ""),
+        "outcome": candidate.get("outcome", ""),
+        "same_loop_as_creation": he.get("same_loop_as_creation", False),
+        "created_loop": he.get("created_loop", ""),
         "observed_at": datetime.now(timezone.utc).isoformat(),
         "origin": "runtime",
+        # Phase 8.7: adversarial provenance (additive, backward compat)
+        "observation_id": candidate.get("observation_id") or he.get("observation_id") or "",
+        "root_task_id": candidate.get("root_task_id") or he.get("root_task_id") or "",
+        "root_execution_id": candidate.get("root_execution_id") or candidate.get("source_execution", ""),
+        "model_family": candidate.get("model_family") or he.get("model_family") or "unknown",
+        "retrieval_context_hash": candidate.get("retrieval_context_hash") or he.get("retrieval_context_hash") or "",
+        "env_fingerprint": candidate.get("env_fingerprint") or candidate.get("evidence", {}).get("env_fingerprint", {}) or {},
+        "countable": candidate.get("countable", is_countable_observation(candidate)),
+        "loop_id": candidate.get("loop_id") or he.get("loop_id") or loop_id or "",
     })
     save_observation_log(log)
 
@@ -457,6 +553,33 @@ def collect_from_trace_ids(trace_ids, quiet=False, update_state=True, loop_id=No
         quality = evaluate_quality(response)
         candidates = generate_candidates(trace, quality)
 
+        # Phase 8.7: propagate root_task_id / model_family etc from trace to all candidates (additive)
+        _trace_root = trace.get("root_task_id") or trace.get("task_id", "")
+        _trace_model = trace.get("model_family") or "unknown"
+        _trace_loop = trace.get("loop_id", "")
+        for c in candidates:
+            if not c.get("root_task_id"):
+                c["root_task_id"] = _trace_root
+                # also propagate into engagement for backward compat
+                if "hypothesis_engagement" in c and isinstance(c["hypothesis_engagement"], dict):
+                    c["hypothesis_engagement"].setdefault("root_task_id", _trace_root)
+            if not c.get("model_family"):
+                c["model_family"] = _trace_model
+                if "hypothesis_engagement" in c:
+                    c["hypothesis_engagement"].setdefault("model_family", _trace_model)
+            if not c.get("retrieval_context_hash"):
+                c["retrieval_context_hash"] = c.get("hypothesis_engagement", {}).get("retrieval_context_hash", "")
+            if "countable" not in c:
+                c["countable"] = is_countable_observation(c)
+            if not c.get("root_execution_id"):
+                c["root_execution_id"] = c.get("source_execution", "")
+            if not c.get("env_fingerprint"):
+                c["env_fingerprint"] = trace.get("env_fingerprint", {}) or {}
+            if not c.get("observation_id"):
+                # fallback for established or old hypothesis traces
+                hid = c.get("target_memory", "")
+                c["observation_id"] = f"OBS-{c.get('source_execution','')}-{hid}" if hid else ""
+
         if not quiet:
             print(f"    task_id: {trace['task_id']}, status: {trace['status']}")
             print(f"    quality: {quality['weighted']}, candidates: {len(candidates)}")
@@ -474,14 +597,12 @@ def collect_from_trace_ids(trace_ids, quiet=False, update_state=True, loop_id=No
             c["loop_id"] = loop_id
 
     # Phase 8.3: Append to observation log for cross-run validation aggregation
+    # Phase 8.5-T2: prefer per-candidate loop_id from hypothesis provenance
+    # Phase 8.7: write ALL observations including non-countable with countable flag (I12)
     for c in all_candidates:
         try:
-            # Phase 8.4: inconclusive hypothesis observations must not count
-            # toward validation_runs in later synthesis/enrichment (I4).
-            if c.get("candidate_type") in HYPOTHESIS_CANDIDATE_TYPES \
-               and c.get("outcome") == "inconclusive":
-                continue
-            append_observation_log(c["target_memory"], c, loop_id)
+            eff_loop = canonical_source_for(c) or loop_id
+            append_observation_log(c["target_memory"], c, eff_loop)
         except Exception:
             pass  # Non-critical to observation log write
 
@@ -533,6 +654,8 @@ def write_candidates_output(candidates, source_executions, loop_id=None):
             "reinforce": sum(1 for c in candidates if c.get("candidate_type") == "reinforce"),
             "weaken": sum(1 for c in candidates if c.get("candidate_type") == "weaken"),
             "create_hypothesis": sum(1 for c in candidates if c.get("candidate_type") == "create_hypothesis"),
+            "reinforce_hypothesis": sum(1 for c in candidates if c.get("candidate_type") == "reinforce_hypothesis"),
+            "weaken_hypothesis": sum(1 for c in candidates if c.get("candidate_type") == "weaken_hypothesis"),
             "safety_checks": {
                 "no_memory_off_processed": "PASS",
                 "all_candidates_from_real_traces": "PASS",
