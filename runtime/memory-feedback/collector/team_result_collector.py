@@ -19,11 +19,21 @@ import os
 import sys
 import yaml
 import re
+import hashlib
 from datetime import datetime, timezone
 from typing import Optional
 
 from base_collector import Collector
 from experience_extractor import extract_experiences
+
+# Phase 8.4: Reuse the shared hypothesis classification + runtime engagement detector.
+from collector import (
+    HYPOTHESIS_CANDIDATE_TYPES,
+    classify_hypothesis_engagement,
+)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                "loop-controller"))
+from runtime_adapter import _detect_hypothesis_engagement
 
 # Paths
 VALIDATION_DIR = os.path.join(
@@ -229,6 +239,61 @@ class TeamResultCollector(Collector):
                             },
                             source_execution=loop_id,
                         ))
+
+        # ── R4: Hypothesis Reinforcement Lane (Phase 8.4) ──
+        # Only the lead-agent output is used for engagement attribution, kept
+        # distinct from the generic pattern lane (R1). Identity comes strictly
+        # from source["hypotheses_injected"] (I1/I6).
+        hyp_ids = source.get("hypotheses_injected") or []
+        hyp_ids = [h for h in hyp_ids if isinstance(h, str) and h]
+        lead_output = team_result.get("lead_output", {})
+        lead_text = lead_output.get("output", "") or ""
+        lead_role = lead_output.get("agent", "lead")
+        if hyp_ids and lead_text:
+            # Minimal hyp stubs: zero tags/guidance so only explicit ID /
+            # engagement-pattern mentions count (no text-grep false positives).
+            hyp_stubs = [{"memory_id": hid, "tags": [], "guidance": ""} for hid in hyp_ids]
+            eng_map = _detect_hypothesis_engagement(lead_text, hyp_stubs)
+            for hid, eng in eng_map.items():
+                if not eng.get("referenced"):
+                    continue  # abstain — agent did not engage (I6)
+                ctype, outcome, eng_norm = classify_hypothesis_engagement(
+                    lead_text, hid, eng)
+                if ctype is None:
+                    continue  # abstain
+                # I5: multiple agents share team context → record provenance marker.
+                eng_norm["shared_context_with_other_agents"] = True
+                quality = self._assess_quality({"evidence": {
+                    "output_length": len(lead_text),
+                    "token_usage": lead_output.get("tokens", {}) or {},
+                }})
+                candidates.append(Collector.make_candidate(
+                    candidate_id=f"CAND-{loop_id}-LEAD-HYP-{hid}",
+                    target_memory=hid,
+                    candidate_type=ctype,
+                    outcome=outcome,
+                    reasoning=(
+                        f"Hypothesis {hid} engaged by lead agent '{lead_role}' "
+                        f"(level={eng_norm['engagement_level']}, "
+                        f"term_matches={eng_norm['term_matches']}). "
+                        f"Multi-agent team {team_id} execution."
+                    ),
+                    quality_score=quality["weighted"],
+                    quality_breakdown=quality,
+                    evidence={
+                        "session_id": f"TEAM-{team_id}-{loop_id}",
+                        "output_hash": hashlib.sha256(lead_text.encode()).hexdigest()[:16],
+                        "token_usage": lead_output.get("tokens", {}) or {},
+                        "latency_ms": lead_output.get("latency_ms", 0) or 0,
+                        "output_length": len(lead_text),
+                        "is_real_execution": True,
+                        "agent_role": lead_role,
+                        "team_id": team_id,
+                        "is_lead": True,
+                    },
+                    source_execution=loop_id,
+                ))
+                candidates[-1]["hypothesis_engagement"] = eng_norm
 
         return candidates
 

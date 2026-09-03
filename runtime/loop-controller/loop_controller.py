@@ -370,7 +370,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["current_stage"] = "retrieval"
 
     try:
-        decision_context = retrieval_adapt(task_id, task_text, memory_mode)
+        decision_context = retrieval_adapt(task_id, task_text, memory_mode, loop_id=loop_id)
         state["retrieval"]["status"] = "completed"
         state["retrieval"]["retrieved_count"] = decision_context.get("total_retrieved", 0)
         state["retrieval"]["memory_ids"] = decision_context.get("ranking", [])
@@ -647,6 +647,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
                 "loop_id": loop_id,
                 "team_id": team_plan.team_id,
                 "team_result": aggregated.to_dict() if hasattr(aggregated, 'to_dict') else {},
+                "hypotheses_injected": state.get("retrieval", {}).get("hypotheses", []),
                 "task_cards": [
                     {
                         "task_id": tc.task_id,
@@ -926,7 +927,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
                 print(f"  (No candidates extracted — this is expected if no patterns matched)")
         else:
             # Phase 5.10: Collect candidates without updating state yet
-            candidates = collect_from_trace_ids([execution_id], quiet=True, update_state=False)
+            candidates = collect_from_trace_ids([execution_id], quiet=True, update_state=False, loop_id=loop_id)
         
         # Write candidates to memory-candidates.yaml (append to existing)
         if candidates:
@@ -950,7 +951,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
             source_executions = list(set(source_executions + new_eids))
             
             # Write merged candidates
-            write_candidates_output(all_candidates, source_executions)
+            write_candidates_output(all_candidates, source_executions, loop_id=loop_id)
             
             # Now update collector state (mark traces as processed)
             state_data = load_collector_state()
@@ -999,7 +1000,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["current_stage"] = "validation"
 
     try:
-        validation_results = validate_candidates(candidates, quiet=True)
+        validation_results = validate_candidates(candidates, quiet=True, loop_id=loop_id)
         state["validation"]["status"] = "completed"
         state["validation"]["validated_ids"] = [
             r["memory_id"] for r in validation_results if r["status"] == "validated"
@@ -1041,7 +1042,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
 
     try:
         for v in validated_results:
-            result = promote_validated(v)
+            result = promote_validated(v, loop_id=loop_id)
             promotion_results.append(result)
             if result["status"] == "applied":
                 state["promotion"]["promoted_ids"].append(result["memory_id"])

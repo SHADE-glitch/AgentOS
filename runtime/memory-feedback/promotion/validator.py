@@ -67,7 +67,16 @@ def group_candidates_by_memory(candidates):
         mid = c["target_memory"]
         groups[mid]["memory_id"] = mid
         groups[mid]["candidates"].append(c)
-        groups[mid]["executions"].add(c["source_execution"])
+
+        # Phase 8.4 (Hypothesis Reinforcement Lane): inconclusive hypothesis
+        # engagement is aberrant/negative evidence — keep it for audit but never
+        # count it toward validation_runs (would otherwise inflate confidence).
+        is_inconclusive_hyp = (
+            c.get("candidate_type") in ("reinforce_hypothesis", "weaken_hypothesis")
+            and c.get("outcome") == "inconclusive"
+        )
+        if not is_inconclusive_hyp:
+            groups[mid]["executions"].add(c["source_execution"])
 
         qs = c.get("quality_score", 0)
         groups[mid]["all_quality_scores"].append(qs)
@@ -128,7 +137,7 @@ def validate_memory_group(memory_id, group):
     elif ctype == "create_hypothesis" and not is_hypothesis:
         status = "rejected"
         rejection_reason = "Hypothesis candidates are held, never auto-promoted (Rule 5)"
-    elif ctype == "weaken":
+    elif ctype in ("weaken", "weaken_hypothesis"):
         status = "rejected"
         rejection_reason = "Weaken candidates require human review, not auto-processed"
     elif not checks["has_independent_verification"]:
@@ -334,14 +343,16 @@ def synthesize_groups_from_observation_log(groups):
     return groups
 
 
-def validate_candidates(candidates, quiet=False):
+def validate_candidates(candidates, quiet=False, loop_id=None):
     """
     Validate a list of candidates directly (programmatic entry point).
     Phase 5.8.2.2: Added for loop controller integration.
+    Phase 8.3: loop_id added for artifact authority.
 
     Args:
         candidates: list of candidate dicts from collector
         quiet: suppress console output
+        loop_id: optional str, for artifact authority tracing
 
     Returns:
         list of validation result dicts
@@ -371,6 +382,8 @@ def validate_candidates(candidates, quiet=False):
     results = []
     for memory_id, group in sorted(groups.items()):
         status, result = validate_memory_group(memory_id, group)
+        if loop_id:
+            result["loop_id"] = loop_id
         if not quiet:
             print(f"  {memory_id}: {status} (runs={result['validation_runs']}, quality={result['quality_score']})")
             if result.get("rejection_reason"):
