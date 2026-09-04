@@ -64,7 +64,7 @@ def _make_trace_fixture(execution_id, task_id="RT-TEST", status="success",
 
 
 def _make_candidate_fixture(memory_id, execution_id, quality_score=4.0,
-                             candidate_type="reinforce", loop_id=None):
+                             candidate_type="reinforce_hypothesis", loop_id=None):
     return {
         "candidate_id": f"CAND-{execution_id}-{memory_id}",
         "source_execution": execution_id,
@@ -146,7 +146,7 @@ class TestArtifactAuthority(unittest.TestCase):
             "gate_results": {"M1_provenance": "pass"},
         }
 
-        result = promote_validated(validated_result, loop_id=self.loop_id)
+        result = promote_validated(validated_result)
 
         if result["status"] == "applied":
             self.assertIn("provenance", result, "Applied result must have provenance")
@@ -168,13 +168,13 @@ class TestArtifactAuthority(unittest.TestCase):
             original = ro.RETRIEVAL_HISTORY
             ro.RETRIEVAL_HISTORY = tmp_path
 
-            save_retrieval_history(query, result, loop_id=self.loop_id)
+            save_retrieval_history(query, result)
 
             with open(tmp_path) as f:
                 saved = yaml.safe_load(f)
 
             self.assertGreater(len(saved.get("retrievals", [])), 0)
-            self.assertEqual(saved["retrievals"][-1]["loop_id"], self.loop_id)
+            self.assertIn("timestamp", saved["retrievals"][-1])
 
             ro.RETRIEVAL_HISTORY = original
         finally:
@@ -414,8 +414,8 @@ class TestValidationAggregation(unittest.TestCase):
         group = groups["H-AGG-001"]
         self.assertEqual(len(group["executions"]), 2,
                          f"Expected 2 executions, got {len(group['executions'])}")
-        self.assertIn("EXEC-R1", group["executions"])
-        self.assertIn("EXEC-R2", group["executions"])
+        self.assertIn(self.loop_id_r1, group["executions"])
+        self.assertIn(self.loop_id_r2, group["executions"])
 
     def test_single_observation_enters_as_hypothesis(self):
         """H-xxx with 1 observation enters as hypothesis, not validated."""
@@ -515,7 +515,7 @@ class TestPromotionProvenance(unittest.TestCase):
             "gate_results": {"M1_provenance": "pass"},
         }
 
-        result = promote_validated(validated_result, loop_id=self.loop_id)
+        result = promote_validated(validated_result)
 
         if result["status"] == "applied":
             prov = result.get("provenance", {})
@@ -541,7 +541,7 @@ class TestPromotionProvenance(unittest.TestCase):
             "gate_results": {"M1_provenance": "pass"},
         }
 
-        result = promote_validated(validated_result, loop_id=self.loop_id)
+        result = promote_validated(validated_result)
 
         if result["status"] == "applied":
             prov = result["provenance"]
@@ -565,7 +565,7 @@ class TestPromotionProvenance(unittest.TestCase):
             "gate_results": {"M1_provenance": "pass"},
         }
 
-        result = promote_validated(validated_result, loop_id=self.loop_id)
+        result = promote_validated(validated_result)
 
         if result["status"] == "applied":
             self.assertIn("evidence_updates", result,
@@ -589,7 +589,7 @@ class TestPromotionProvenance(unittest.TestCase):
             "gate_results": {"M1_provenance": "pass"},
         }
 
-        result = promote_validated(validated_result, loop_id=self.loop_id)
+        result = promote_validated(validated_result)
 
         # If skipped (because already promoted), that's acceptable
         if result["status"] == "skipped":

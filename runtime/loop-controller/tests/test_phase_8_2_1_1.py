@@ -252,7 +252,7 @@ class TestColdStartValidation(unittest.TestCase):
             "Cache Expiration", "LOOP-TEST001", "team-test0001", "backend-architect"
         )
 
-        candidates = [_make_candidate(memory_id, "LOOP-TEST001")]
+        candidates = [_make_candidate(memory_id, "LOOP-TEST001", ctype="reinforce_hypothesis")]
         group = _make_group(memory_id, candidates)
 
         status, result = validate_memory_group(memory_id, group)
@@ -267,8 +267,8 @@ class TestColdStartValidation(unittest.TestCase):
         )
 
         candidates = [
-            _make_candidate(memory_id, "LOOP-TEST001"),
-            _make_candidate(memory_id, "LOOP-TEST002"),
+            _make_candidate(memory_id, "LOOP-TEST001", ctype="reinforce_hypothesis"),
+            _make_candidate(memory_id, "LOOP-TEST002", ctype="reinforce_hypothesis"),
         ]
         group = _make_group(memory_id, candidates)
 
@@ -306,7 +306,7 @@ class TestColdStartValidation(unittest.TestCase):
             "Cache Expiration", "LOOP-TEST001", "team-test0001", "backend-architect"
         )
 
-        candidates = [_make_candidate(memory_id, "LOOP-TEST001")]
+        candidates = [_make_candidate(memory_id, "LOOP-TEST001", ctype="reinforce_hypothesis")]
         results = validate_candidates(candidates, quiet=True)
 
         self.assertGreater(len(results), 0)
@@ -431,6 +431,8 @@ class TestFullFeedbackLoop(unittest.TestCase):
         # Step 2: Resolve P8-xxx → H-xxx
         resolved = resolve_candidates_targets([candidate])
         memory_id = resolved[0]["target_memory"]
+        # Phase 8.6: resolution to H-xxx requires hypothesis candidate type
+        resolved[0]["candidate_type"] = "reinforce_hypothesis"
         self.assertTrue(memory_id.startswith("H-"))
         self.assertTrue(memory_exists(memory_id))
 
@@ -448,7 +450,7 @@ class TestFullFeedbackLoop(unittest.TestCase):
         # (Skip actual file write since we're in test mode)
         entry = find_memory_entry(memory_id)
         self.assertIsNotNone(entry)
-        self.assertEqual(entry["status"], "hypothesis")
+        self.assertEqual(entry.get("evidence_level", entry.get("status")), "hypothesis")
 
     def test_full_flow_two_runs_graduation(self):
         """Two runs should graduate H-xxx from hypothesis to validated."""
@@ -457,8 +459,8 @@ class TestFullFeedbackLoop(unittest.TestCase):
         )
 
         candidates = [
-            _make_candidate(memory_id, "LOOP-TEST001"),
-            _make_candidate(memory_id, "LOOP-TEST002"),
+            _make_candidate(memory_id, "LOOP-TEST001", ctype="reinforce_hypothesis"),
+            _make_candidate(memory_id, "LOOP-TEST002", ctype="reinforce_hypothesis"),
         ]
         group = _make_group(memory_id, candidates)
 
@@ -605,7 +607,7 @@ class TestValidatorMultiAgentCandidate(unittest.TestCase):
         )
 
         # Create candidate with session_id in evidence
-        candidate = _make_candidate(memory_id, "LOOP-TEST001")
+        candidate = _make_candidate(memory_id, "LOOP-TEST001", ctype="reinforce_hypothesis")
         candidate["evidence"]["session_id"] = "TEAM-team-test0001-LOOP-TEST001"
 
         group = _make_group(memory_id, [candidate])
@@ -629,7 +631,7 @@ class TestValidatorMultiAgentCandidate(unittest.TestCase):
         )
 
         # Create candidate WITHOUT session_id
-        candidate = _make_candidate(memory_id, "LOOP-TEST001")
+        candidate = _make_candidate(memory_id, "LOOP-TEST001", ctype="reinforce_hypothesis")
         candidate["evidence"].pop("session_id", None)
 
         group = _make_group(memory_id, [candidate])
@@ -644,10 +646,10 @@ class TestValidatorMultiAgentCandidate(unittest.TestCase):
             "Test Graduation Pattern", "LOOP-TEST001", "team-test0001", "agent"
         )
 
-        c1 = _make_candidate(memory_id, "LOOP-TEST001")
+        c1 = _make_candidate(memory_id, "LOOP-TEST001", ctype="reinforce_hypothesis")
         c1["evidence"]["session_id"] = "TEAM-team-test0001-LOOP-TEST001"
 
-        c2 = _make_candidate(memory_id, "LOOP-TEST002")
+        c2 = _make_candidate(memory_id, "LOOP-TEST002", ctype="reinforce_hypothesis")
         c2["evidence"]["session_id"] = "TEAM-team-test0002-LOOP-TEST002"
 
         group = _make_group(memory_id, [c1, c2])

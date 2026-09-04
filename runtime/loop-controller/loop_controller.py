@@ -403,7 +403,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     state["current_stage"] = "retrieval"
 
     try:
-        decision_context = retrieval_adapt(task_id, task_text, memory_mode, loop_id=loop_id)
+        decision_context = retrieval_adapt(task_id, task_text, memory_mode)
         state["retrieval"]["status"] = "completed"
         state["retrieval"]["retrieved_count"] = decision_context.get("total_retrieved", 0)
         state["retrieval"]["memory_ids"] = decision_context.get("ranking", [])
@@ -1179,7 +1179,7 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
 
     try:
         for v in validated_results:
-            result = promote_validated(v, loop_id=loop_id)
+            result = promote_validated(v)
             promotion_results.append(result)
             if result["status"] == "applied":
                 state["promotion"]["promoted_ids"].append(result["memory_id"])

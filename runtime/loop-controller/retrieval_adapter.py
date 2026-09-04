@@ -26,8 +26,7 @@ from retrieval_optimizer import retrieve as retrieval_retrieve, save_retrieval_h
 BASE = "/home/shade/.agents"
 
 # Import the canonical Router Runtime for classification
-sys.path.insert(0, os.path.join(BASE, "runtime", "router"))
-from router import get_router
+from router.router import get_router
 
 # Lazy singleton
 _router = None

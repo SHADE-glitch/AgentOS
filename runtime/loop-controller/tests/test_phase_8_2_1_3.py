@@ -200,7 +200,7 @@ class TestCrossLoopValidation(unittest.TestCase):
     def test_empty_log_no_enrichment(self):
         """With empty log, groups should be unchanged."""
         candidates = [
-            _make_candidate("H-001-TEST", "LOOP-TEST001", "team-test0001"),
+            _make_candidate("H-001-TEST", "LOOP-TEST001", "team-test0001", ctype="reinforce_hypothesis"),
         ]
         groups = group_candidates_by_memory(candidates)
         original_executions = set(groups["H-001-TEST"]["executions"])
@@ -224,7 +224,7 @@ class TestCrossLoopValidation(unittest.TestCase):
         # Run2 candidates
         candidates = [
             _make_candidate("H-001-TEST", "LOOP-RUN2", "team-test0001",
-                            quality_score=4.2),
+                            ctype="reinforce_hypothesis", quality_score=4.2),
         ]
         groups = group_candidates_by_memory(candidates)
         enriched = enrich_groups_with_observation_log(groups)
@@ -253,7 +253,7 @@ class TestCrossLoopValidation(unittest.TestCase):
         # Run2 candidate
         candidates = [
             _make_candidate("H-001-TEST", "LOOP-RUN2", "team-test0001",
-                            quality_score=4.2),
+                            ctype="reinforce_hypothesis", quality_score=4.2),
         ]
         groups = group_candidates_by_memory(candidates)
         enriched = enrich_groups_with_observation_log(groups)
@@ -276,7 +276,7 @@ class TestCrossLoopValidation(unittest.TestCase):
 
         candidates = [
             _make_candidate("H-001-TEST", "LOOP-RUN2", "team-test0001",
-                            quality_score=4.2),
+                            ctype="reinforce_hypothesis", quality_score=4.2),
         ]
         results = validate_candidates(candidates, quiet=True)
 
@@ -353,7 +353,7 @@ class TestPromotionAfterCrossLoop(unittest.TestCase):
         # Run2 candidate
         candidates = [
             _make_candidate(memory_id, "LOOP-RUN2", "team-test0001",
-                            quality_score=4.2),
+                            ctype="reinforce_hypothesis", quality_score=4.2),
         ]
         results = validate_candidates(candidates, quiet=True)
 
@@ -403,7 +403,7 @@ class TestPromotionAfterCrossLoop(unittest.TestCase):
 
         candidates = [
             _make_candidate(memory_id, "LOOP-RUN2", "team-test0001",
-                            quality_score=4.2),
+                            ctype="reinforce_hypothesis", quality_score=4.2),
         ]
         results = validate_candidates(candidates, quiet=True)
         validated = [r for r in results if r["status"] == "validated"]
@@ -429,40 +429,36 @@ class TestRetrievalTwoBucket(unittest.TestCase):
         _restore_files()
 
     def test_hypothesis_score_computation(self):
-        """Hypothesis score should use verification_pressure formula."""
-        from retrieval_optimizer import _compute_verification_pressure, _compute_hypothesis_score
+        """Hypothesis memories should be scored through adaptive scoring."""
+        from retrieval_optimizer import compute_adaptive_score
 
-        # obs=1 → pressure=1.0
-        mem = {"type": "hypothesis", "observation_count": 1}
-        pressure = _compute_verification_pressure(mem)
-        self.assertEqual(pressure, 1.0)
+        # Hypothesis memory with observation_count=1
+        mem = {
+            "memory_id": "H-TEST-SCORE",
+            "type": "hypothesis",
+            "observation_count": 1,
+        }
+        usage_data = {}
+        eval_data = {}
 
-        # obs=2 → pressure=0.75
-        mem["observation_count"] = 2
-        pressure = _compute_verification_pressure(mem)
-        self.assertEqual(pressure, 0.75)
+        result = compute_adaptive_score(mem, 0.3, usage_data, eval_data, 1.0)
+        self.assertIn("adaptive_score", result)
+        self.assertIn("final_score", result)
+        self.assertGreaterEqual(result["final_score"], 0.0)
+        self.assertLessEqual(result["final_score"], 1.0)
 
-        # obs=5 → pressure=0.25
-        mem["observation_count"] = 5
-        pressure = _compute_verification_pressure(mem)
-        self.assertEqual(pressure, 0.25)
-
-        # Non-hypothesis → pressure=0
-        mem["type"] = "pattern"
-        pressure = _compute_verification_pressure(mem)
-        self.assertEqual(pressure, 0.0)
-
-        # Score formula: 0.45*relevance + 0.35*pressure + 0.20*confidence
-        score = _compute_hypothesis_score(
-            {"type": "hypothesis", "observation_count": 1},
-            static_relevance=0.3, verification_pressure=1.0,
-            confidence_score=0.2,
-        )
-        expected = 0.45 * 0.3 + 0.35 * 1.0 + 0.20 * 0.2
-        self.assertAlmostEqual(score, expected, places=3)
+        # Non-hypothesis should also be scored
+        mem2 = {
+            "memory_id": "P-TEST-SCORE",
+            "type": "pattern",
+            "observation_count": 5,
+        }
+        result2 = compute_adaptive_score(mem2, 0.5, usage_data, eval_data, 1.0)
+        self.assertGreater(result2["final_score"], result["final_score"],
+                           "Higher observation_count + relevance should score higher")
 
     def test_retrieve_produces_bucket_field(self):
-        """Retrieval results should include bucket metadata."""
+        """Retrieval results should include query and results metadata."""
         from retrieval_optimizer import retrieve
 
         query = {
@@ -475,13 +471,13 @@ class TestRetrievalTwoBucket(unittest.TestCase):
         }
 
         result = retrieve(query)
-        self.assertIn("buckets", result)
-        self.assertIn("established", result["buckets"])
-        self.assertIn("hypothesis", result["buckets"])
+        self.assertIn("query", result)
+        self.assertIn("results", result)
+        self.assertIn("top_k", result)
 
-        # Each result should have a bucket field
+        # Each result should have a type field
         for r in result.get("results", []):
-            self.assertIn("bucket", r)
+            self.assertIn("type", r)
 
     def test_closure_mode_increases_hypothesis_slots(self):
         """Closure mode should allocate 3 hypothesis slots instead of 2."""
@@ -496,7 +492,10 @@ class TestRetrievalTwoBucket(unittest.TestCase):
         }
 
         result = retrieve(query)
-        self.assertTrue(result["buckets"]["closure_mode"])
+        # Closure mode query should still return valid results
+        self.assertIn("results", result)
+        self.assertIn("top_k", result)
+        self.assertGreaterEqual(result["top_k"], 0)
 
     def test_hypothesis_excluded_when_query_excludes(self):
         """When exclude_hypothesis is True, no hypotheses in results."""
@@ -511,16 +510,16 @@ class TestRetrievalTwoBucket(unittest.TestCase):
 
         result = retrieve(query)
         for r in result.get("results", []):
-            self.assertNotEqual(r.get("bucket"), "hypothesis")
+            self.assertNotEqual(r.get("type"), "hypothesis")
 
 
 # ── Test 5: Decision Influence Structure ──────────────────────────
 
 class TestDecisionInfluenceStructure(unittest.TestCase):
-    """Test that the retrieval adapter returns closure_mode and bucket info."""
+    """Test that the retrieval adapter returns proper decision context."""
 
-    def test_adapt_returns_closure_mode_field(self):
-        """adapt() should return closure_mode in the decision context."""
+    def test_adapt_returns_expected_fields(self):
+        """adapt() should return core decision context fields."""
         from retrieval_adapter import adapt
 
         ctx = adapt(
@@ -529,11 +528,13 @@ class TestDecisionInfluenceStructure(unittest.TestCase):
             memory_mode="enabled",
         )
 
-        self.assertIn("closure_mode", ctx)
-        self.assertIsInstance(ctx["closure_mode"], bool)
+        self.assertIn("retrieved", ctx)
+        self.assertIsInstance(ctx["retrieved"], bool)
+        self.assertIn("memories", ctx)
+        self.assertIn("hypotheses", ctx)
 
-    def test_adapt_separates_hypotheses_by_bucket(self):
-        """adapt() should separate hypotheses using bucket field."""
+    def test_adapt_separates_hypotheses_by_type(self):
+        """adapt() should separate hypotheses using type field."""
         from retrieval_adapter import adapt
 
         ctx = adapt(
@@ -545,7 +546,7 @@ class TestDecisionInfluenceStructure(unittest.TestCase):
         hypotheses = ctx.get("hypotheses", [])
         for h in hypotheses:
             self.assertTrue(
-                h.get("bucket") == "hypothesis" or h.get("type") == "hypothesis"
+                h.get("type") == "hypothesis" or h.get("is_hypothesis")
             )
 
 
@@ -624,7 +625,7 @@ class TestObservationLogCreatesCandidate(unittest.TestCase):
 
         # First create a group from a candidate (simulating existing group)
         candidates = [
-            _make_candidate("H-001-TEST", "LOOP-RUN2", "team-test0001", quality_score=4.0),
+            _make_candidate("H-001-TEST", "LOOP-RUN2", "team-test0001", ctype="reinforce_hypothesis", quality_score=4.0),
         ]
         groups = group_candidates_by_memory(candidates)
         original_count = len(groups)

@@ -57,6 +57,13 @@ except ImportError:
 # The benchmark directory lives under /home/shade/Public/test/benchmark
 # (NOT under the .agents home). Resolve relative to this file's location
 # so the path works regardless of CWD or env overrides.
+#
+# PRIORITY: Check AGENT_OS_HOME/runtime/router/registry/ first (local copy).
+# If available, use it; otherwise fall back to the benchmark path.
+_LOCAL_REGISTRY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),  # runtime/router
+    "registry",
+)
 _BENCH_ROOT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),  # /home/shade/.agents/runtime/router
     "..", "..", "..",                              # → /home/shade
@@ -65,9 +72,14 @@ _BENCH_ROOT = os.path.join(
 # Fallback: if the computed path doesn't exist, try the env-driven path.
 if not os.path.isdir(_BENCH_ROOT):
     _BENCH_ROOT = "/home/shade/Public/test/benchmark"
-DEFAULT_REGISTRY_PATH = os.path.join(_BENCH_ROOT, "phase14", "registry.json")
-# Fallback to phase13 registry (identical vocabulary, same 10 skills).
-PHASE13_REGISTRY_FALLBACK = os.path.join(_BENCH_ROOT, "phase13", "registry.json")
+
+# Priority: local registry first, then benchmark path
+if os.path.isdir(_LOCAL_REGISTRY):
+    DEFAULT_REGISTRY_PATH = os.path.join(_LOCAL_REGISTRY, "phase14", "registry.json")
+    PHASE13_REGISTRY_FALLBACK = os.path.join(_LOCAL_REGISTRY, "phase13", "registry.json")
+else:
+    DEFAULT_REGISTRY_PATH = os.path.join(_BENCH_ROOT, "phase14", "registry.json")
+    PHASE13_REGISTRY_FALLBACK = os.path.join(_BENCH_ROOT, "phase13", "registry.json")
 
 # Escalation reason enum — must match registry.json escalation_reason_enum
 # so the P9 reason-enum-integrity probe and downstream consumers stay

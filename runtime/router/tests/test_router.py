@@ -11,8 +11,8 @@ import unittest
 
 # Add router module to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from runtime.router.router import Router
-from runtime.router.decision import DecisionContext, ClassificationResult
+from router.router import Router
+from router.decision import DecisionContext, ClassificationResult
 
 
 class TestRouterClassification(unittest.TestCase):

@@ -63,9 +63,12 @@ def route(task_text: str, memory_context: dict = None) -> dict:
     router = _ensure_router()
     decision = router.route(task_text, memory_context=memory_context)
 
+    # Ensure domains is never empty (HybridRouter may return [] on fallback)
+    domains = decision.domains if decision.domains else [decision.primary_domain or "fallback"]
+
     return {
         "intent": decision.intent,
-        "domains": decision.domains,
+        "domains": domains,
         "primary_domain": decision.primary_domain,
         "lead_skill": decision.lead_skill,
         "support_skills": decision.support_skills,

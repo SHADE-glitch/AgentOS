@@ -125,7 +125,7 @@ class TestP0_1_ReliabilityGuardIntegration(unittest.TestCase):
                            "P0_1 triggered: failure records generated")
         first_failure = failures[0]
         self.assertEqual(first_failure.get("failure_type"),
-                         FailureType.TIMEOUT,
+                         FailureType.TIMEOUT.value,
                          "P0_1 effective: correctly classified as TIMEOUT")
 
     # ── Scenario C: Consecutive Timeout → RETRY_STORM ──
@@ -195,7 +195,7 @@ class TestP0_1_ReliabilityGuardIntegration(unittest.TestCase):
         # This is how the current execution_reliability.py classifies them
         first = failures[0]
         self.assertEqual(first.get("failure_type"),
-                         FailureType.MODEL_FAILURE,
+                         FailureType.MODEL_FAILURE.value,
                          "P0_1 effective: correctly classified")
 
     # ── Scenario E: No Output → NO_OUTPUT ──
@@ -220,7 +220,7 @@ class TestP0_1_ReliabilityGuardIntegration(unittest.TestCase):
 
         # Verify NO_OUTPUT classification
         failure_types = [f.get("failure_type") for f in failures]
-        self.assertIn(FailureType.NO_OUTPUT, failure_types,
+        self.assertIn(FailureType.NO_OUTPUT.value, failure_types,
                       "P0_1 effective: NO_OUTPUT detected")
 
     # ── Scenario F: Model Failure ──

@@ -20,9 +20,8 @@ import unittest
 _AGENT_HOME = os.environ.get("AGENT_OS_HOME", "/home/shade/.agents")
 _COLLAB_DIR = os.path.join(_AGENT_HOME, "runtime", "collaboration")
 _ORCH_DIR = os.path.join(_AGENT_HOME, "runtime", "orchestrator")
-_ROUTER_DIR = os.path.join(_AGENT_HOME, "runtime", "router")
 
-for d in [_COLLAB_DIR, _ORCH_DIR, _ROUTER_DIR]:
+for d in [_COLLAB_DIR, _ORCH_DIR]:
     if d not in sys.path:
         sys.path.insert(0, d)
 
@@ -37,7 +36,8 @@ from trace import TraceEvent, ExecutionTrace
 
 # Import from orchestrator for test fixtures
 from team import TeamPlan
-from decision import DecisionContext
+# Import from router for decision context
+from router.decision import DecisionContext
 
 
 # ── Helper: Build TeamPlan fixtures ───────────────────────────────
@@ -534,7 +534,7 @@ class TestRegressionRouter(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from router import Router
+        from router.router import Router
         cls.router = Router()
         cls.router.load_rules()
 
@@ -556,10 +556,10 @@ class TestRegressionOrchestrator(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from router import Router
-        from orchestrator import Orchestrator
+        from router.router import Router
         cls.router = Router()
         cls.router.load_rules()
+        from orchestrator import Orchestrator
         cls.orch = Orchestrator()
         cls.orch.load_rules()
 
