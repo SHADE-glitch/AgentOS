@@ -17991,3 +17991,1557 @@ retrievals:
   - T-004
   - F-002
   - E-007
+- timestamp: '2026-09-03T12:56:44.261396+00:00'
+  query:
+    task_text: "你现在运行在 Agent OS Runtime 环境。\n\n执行以下任务：\n\nTask Name\n\nMake interview\
+      \ completion idempotent and keep Dashboard aggregates fresh\n\n\n\nBackground\n\
+      \nYou are working in the real repository /home/shade/Public/test, an Aiview\
+      \ AI interview practice platform.\n\n\n\nThe repository contains:\n\n\n\nA Java\
+      \ 21 / Spring Boot 3.3.5 backend.\n\n\n\nMyBatis-Plus persistence backed by\
+      \ MySQL 8.\n\n\n\nRedis/Redisson runtime state and dashboard caching.\n\n\n\n\
+      RabbitMQ and optional OpenAI-compatible/Ollama clients.\n\n\n\nA Vue 3 / TypeScript\
+      \ / Vite frontend.\n\n\n\nDocker Compose definitions for MySQL, Redis, RabbitMQ,\
+      \ Ollama, backend, and frontend.\n\n\n\nThe interview lifecycle is split across\
+      \ persistent database state, Redis session state, synchronous answer handling,\
+      \ and SSE answer handling. The dashboard aggregates completed interviews and\
+      \ caches the result in Redis. Existing repository documents and the current\
+      \ worktree may contain unrelated changes. Treat the current repository as an\
+      \ unfamiliar codebase: inspect before deciding, preserve unrelated changes,\
+      \ and do not assume comments or plans are current without checking the implementation.\n\
+      \n\n\nRelevant starting points include:\n\n\n\nbackend/src/main/java/com/aiview/interview/service/InterviewService.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/service/InterviewStateStore.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/service/DashboardService.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/mapper/InterviewResultMapper.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/mapper/InterviewSessionMapper.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/controller/InterviewController.java\n\
+      \n\n\nbackend/src/main/resources/db/schema.sql\n\n\n\nfrontend/src/pages/Dashboard.vue\n\
+      \n\n\nfrontend/src/pages/Interview.vue\n\n\n\nThese are starting points, not\
+      \ a prescribed solution. Trace every completion path and all callers before\
+      \ changing anything.\n\n\n\nObjective\n\nImplement a bounded consistency fix\
+      \ so that completing or retrying an interview cannot leave the user’s dashboard\
+      \ serving stale or duplicated aggregate data.\n\n\n\nThe implementation must:\n\
+      \n\n\nInspect and explain how an interview transitions to FINISHED, how InterviewResult\
+      \ is written, and how dashboard data is cached.\n\n\n\nTrace both synchronous\
+      \ POST /api/interviews/{id}/answer and SSE POST /api/interviews/{id}/answer/stream\
+      \ paths, including their shared or duplicated completion logic.\n\n\n\nEnsure\
+      \ a completed interview’s result and session state are handled idempotently\
+      \ under a repeated completion request or retry. Do not create duplicate InterviewResult\
+      \ rows or double-apply dashboard-affecting side effects.\n\n\n\nEnsure dashboard\
+      \ cache invalidation or refresh occurs on every relevant successful mutation,\
+      \ regardless of whether completion was reached through the synchronous or SSE\
+      \ path.\n\n\n\nPreserve the existing HTTP endpoints, response envelopes, authentication\
+      \ behavior, interview state semantics, and database schema unless repository\
+      \ evidence proves a schema change is unavoidable. A schema change is not expected.\n\
+      \n\n\nAdd or update focused automated tests using the project’s existing test\
+      \ tooling. Tests must cover:\n\n\n\nnormal completion;\n\n\n\nrepeated completion/retry\
+      \ behavior;\n\n\n\nboth synchronous and SSE completion paths, or a clearly justified\
+      \ test seam for their shared behavior;\n\n\n\ndashboard freshness after a successful\
+      \ completion;\n\n\n\nfailure behavior where persistence or cache operations\
+      \ do not silently report success.\n\n\n\nRun the smallest relevant backend tests\
+      \ first, then the backend build (mvn test or an equivalent targeted Maven command).\
+      \ Run frontend typecheck/build only if the inspected implementation requires\
+      \ a frontend change.\n\n\n\nIf a test or build fails, diagnose the failure,\
+      \ revise the strategy, and rerun the relevant validation. Do not fabricate passing\
+      \ results when infrastructure or dependency failures block execution.\n\n\n\n\
+      Do not refactor the entire interview module, redesign the Redis model, replace\
+      \ the scoring system, or optimize unrelated RAG behavior. Keep the change set\
+      \ narrow and evidence-driven.\n\n\n\nConstraints\n\nWork only in /home/shade/Public/test.\n\
+      \n\n\nPreserve all pre-existing user changes and unrelated untracked files.\
+      \ Do not reset, checkout, clean, or overwrite unrelated work.\n\n\n\nRead the\
+      \ relevant services, controllers, entities, mappers, schema, configuration,\
+      \ and existing documentation before editing.\n\n\n\nDo not change public API\
+      \ paths or response shapes.\n\n\n\nDo not weaken authentication, ownership checks,\
+      \ locking, transaction boundaries, or error handling to make tests pass.\n\n\
+      \n\nDo not add a new testing framework or dependency. Use the existing Maven/Spring\
+      \ test stack.\n\n\n\nDo not require external AI providers for the focused tests.\
+      \ Tests should use the project’s existing seams/mocks/stubs where possible.\n\
+      \n\n\nDo not modify benchmark specifications, Agent OS files, memory files,\
+      \ or runtime telemetry files.\n\n\n\nDo not solve unrelated pre-existing defects\
+      \ discovered during exploration.\n\n\n\nKeep comments concise and only explain\
+      \ non-obvious concurrency, idempotency, or consistency decisions.\n\n\n\nReport\
+      \ any environment limitation explicitly, including unavailable Docker services,\
+      \ MySQL, Redis, RabbitMQ, or AI providers.\n\n\n\nExpected Agent Behavior\n\n\
+      The runtime experiment should observe the following behavior:\n\n\n\nRepository\
+      \ discovery: The agent inventories the backend/frontend layout, reads existing\
+      \ plans and audit documents, checks git status, and identifies the dirty-worktree\
+      \ boundary before editing.\n\n\n\nLong-term planning: The agent creates a bounded\
+      \ plan with a data-flow or call-chain understanding of session completion, result\
+      \ persistence, cache invalidation, retry behavior, and test seams.\n\n\n\nImplementation\
+      \ inspection: The agent follows all call sites, specifically comparing synchronous\
+      \ and SSE completion paths, rather than patching only the first apparent method.\n\
+      \n\n\nMulti-file reasoning: The agent makes surgical changes across the actual\
+      \ affected service/test files and updates frontend code only if evidence shows\
+      \ the API consumer must change.\n\n\n\nCorrectness-first decisions: The agent\
+      \ preserves the API and trust boundaries, distinguishes database idempotency\
+      \ from cache invalidation, and handles partial failures explicitly.\n\n\n\n\
+      Test execution: The agent runs focused tests/build commands and reports exact\
+      \ failures, skipped infrastructure-dependent checks, and successful evidence.\n\
+      \n\n\nFailure adaptation: If the first test strategy fails because of missing\
+      \ tests, unavailable services, mocking limitations, or a real regression, the\
+      \ agent diagnoses the cause, revises the test or implementation strategy, and\
+      \ validates again.\n\n\n\nMemory feedback: The resulting TeamResult and runtime\
+      \ feedback should capture reusable patterns such as:\n\n\n\nduplicated completion\
+      \ side effects across transport paths;\n\n\n\nidempotent persistence for retryable\
+      \ workflows;\n\n\n\ncache invalidation as part of a mutation’s consistency contract;\n\
+      \n\n\nthe difference between successful response delivery and durable state\
+      \ consistency;\n\n\n\nfailure-aware validation rather than success-shaped fallbacks.\n\
+      \n\n\nHandoff quality: The final response identifies changed files, behavior\
+      \ guarantees, tests actually run, unresolved limitations, and why the change\
+      \ is bounded.\n\n\n\nEvaluation Criteria\n\nScore each category from 0 to 4,\
+      \ with evidence from the agent trace, diff, commands, and final report.\n\n\n\
+      \nCategory\t4 — Strong evidence\t2 — Partial evidence\t0 — Failure\n\n陌生代码库理解\t\
+      Correctly maps relevant services, state stores, persistence, controllers, and\
+      \ consumers before editing\tReads some relevant files but misses a path or existing\
+      \ constraint\tGuesses architecture or edits immediately\n\n长期规划\tProduces a\
+      \ bounded plan covering data flow, retries, both transports, tests, and rollback-safe\
+      \ scope\tHas a plan but misses important dependencies or failure cases\tNo coherent\
+      \ plan or whole-project refactor\n\n已有实现检查\tVerifies all completion callers\
+      \ and existing cache/transaction/lock behavior\tChecks only the primary path\t\
+      Reimplements or duplicates behavior without inspection\n\n实现范围\tSurgical multi-file\
+      \ change, no API/schema break, unrelated changes preserved\tSome unnecessary\
+      \ churn or one path remains weakly covered\tSingle-file patch, broad refactor,\
+      \ or unrelated changes\n\n幂等与一致性\tRepeated completion is safe; result/session/dashboard\
+      \ state remains consistent across sync and SSE paths\tHandles normal completion\
+      \ but retry or one transport path is incomplete\tDuplicate results, stale dashboard,\
+      \ or weakened state guarantees\n\n测试质量\tFocused tests cover normal, retry, both\
+      \ paths/shared seam, freshness, and failure semantics\tTests cover only happy\
+      \ path or rely on unproven integration assumptions\tNo meaningful tests or fabricated\
+      \ results\n\n失败调整\tInterprets failures, changes strategy appropriately, and\
+      \ reruns validation\tReports failure but does not substantially adapt\tIgnores\
+      \ failures, masks them, or claims success\n\nMemory feedback usefulness\tTeamResult\
+      \ identifies reusable consistency/idempotency patterns with file/line provenance\
+      \ and honest confidence\tProduces generic technical patterns without precise\
+      \ provenance\tNo useful experience extraction or misleading success claim\n\n\
+      Suggested interpretation:\n\n\n\n28–32: strong first-run benchmark; Agent OS\
+      \ demonstrates reliable repository comprehension and implementation behavior.\n\
+      \n\n\n20–27: useful but incomplete; inspect the missing path or validation evidence.\n\
+      \n\n\nBelow 20: first-run behavior is not reliable enough for a successful benchmark.\n\
+      \n\n\nThe score is secondary to evidence quality. A high score cannot compensate\
+      \ for fabricated tests, ignored failures, or destructive worktree changes.\n\
+      \n\n\nFailure Conditions\n\nThe benchmark fails if any of the following occurs:\n\
+      \n\n\nThe agent modifies or deletes unrelated pre-existing worktree changes.\n\
+      \n\n\nThe agent changes API paths/response shapes, authentication, database\
+      \ schema, or global architecture without necessity.\n\n\n\nOnly synchronous\
+      \ or only SSE completion is fixed while the other path can still duplicate results\
+      \ or leave stale dashboard data.\n\n\n\nRepeated completion creates duplicate\
+      \ InterviewResult records, double-counts dashboard aggregates, or advances a\
+      \ finished session incorrectly.\n\n\n\nDashboard invalidation is added to one\
+      \ mutation path but omitted from another relevant successful mutation path.\n\
+      \n\n\nThe agent treats a cache write/read failure as a successful durable consistency\
+      \ guarantee without surfacing or documenting the limitation.\n\n\n\nTests cover\
+      \ only compilation, static inspection, or a happy-path mock and do not exercise\
+      \ retry/idempotency and freshness behavior.\n\n\n\nThe agent does not run available\
+      \ tests/build commands, or claims tests passed when commands failed or were\
+      \ blocked.\n\n\n\nThe agent adds new test infrastructure/dependencies instead\
+      \ of using the existing project stack.\n\n\n\nThe agent performs a broad interview,\
+      \ Redis, RAG, or frontend rewrite beyond the bounded consistency objective.\n\
+      \n\n\nThe final report omits changed files, actual command results, unresolved\
+      \ environment limitations, or evidence for the retry and transport-path behavior.\n\
+      \n\n\nThe runtime produces no attributable, reusable memory feedback about the\
+      \ consistency/idempotency problem, or the feedback claims validation not supported\
+      \ by the trace.\n\n要求：\n\n1. 不要直接修改代码。\n2. 先分析项目结构。\n3. 创建执行计划。\n4. 记录关键决策。\n\
+      5. 修改前检查已有实现。\n6. 修改后运行测试。\n7. 如果失败，分析原因并调整。\n\n执行过程中保持完整 trace。\n\n任务结束后输出：\n\
+      \n- 修改文件列表\n- 解决的问题\n- 遇到的问题\n- 测试结果\n- Agent 自我评价\n- 产生的 memory feedback "
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    - devops-engineer
+    keywords:
+    - mysql
+    - api
+    - spring
+    - java
+    - vite
+    - typescript
+    - high-concurrency
+    - rag
+    - agent
+    - docker
+    - redis
+    - cache
+    - session
+    - invalidation
+    - mutation
+    - freshness
+    - dashboard
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-03T12:57:10.461732+00:00'
+  query:
+    task_text: 'Thoroughly explore the Aiview interview platform at /home/shade/Public/test.
+      Read these files completely and report key findings for each:
+
+
+      - backend/src/main/java/com/aiview/interview/service/InterviewService.java
+
+      - backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java
+
+      - backend/src/main/java/com/aiview/interview/service/DashboardService.java
+
+      - backend/src/main/java/com/aiview/interview/mapper/InterviewResultMapper.java
+
+      - backend/src/main/java/com/aiview/interview/mapper/InterviewSessionMapper.java
+
+      - backend/src/main/java/com/aiview/interview/controller/InterviewController.java
+
+      - backend/src/main/resources/db/schema.sql
+
+      - backend/src/main/java/com/aiview/interview/entity/*.java
+
+      - backend/src/main/java/com/aiview/interview/service/InterviewScoringService.java,
+      InterviewStatus.java, ReportService.java, EvaluationService.java
+
+      - backend/pom.xml
+
+
+      Focus on: how interview transitions to FINISHED, how InterviewResult is written,
+      how dashboard cache works, duplication between sync and SSE answer paths, locking/transaction
+      boundaries, idempotency gaps. Return verbatim critical code sections with line
+      numbers.'
+    category: testing
+    domains:
+    - backend
+    - database
+    - ai
+    - testing
+    roles:
+    - database-engineer
+    - backend-architect
+    keywords:
+    - java
+    - cache
+    - dashboard
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-03T12:58:16.615381+00:00'
+  query:
+    task_text: 'Explore frontend and remaining backend pieces at /home/shade/Public/test:
+
+
+      - frontend/src/pages/Dashboard.vue and Interview.vue - how they trigger completion,
+      how they refresh dashboard, SSE consumption
+
+      - backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java
+      and InterviewService.java diff vs HEAD (run git diff HEAD for those files)
+
+      - backend/src/main/resources/db/schema.sql diff vs HEAD
+
+      - any existing tests in backend/src/test
+
+      - backend/src/main/java/com/aiview/interview/service/DashboardService.java diff
+
+      - check Redisson/Rabbit/Redis config, interview transaction usage, and InterviewResult
+      entity
+
+
+      Report git diff for modified files (summarize changes), current test coverage,
+      and frontend cache refresh behavior.'
+    category: testing
+    domains:
+    - frontend
+    - backend
+    - database
+    - ai
+    - testing
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - rag-engineer
+    keywords:
+    - java
+    - rag
+    - redis
+    - cache
+    - dashboard
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-039-REDISSONCONFIG-JAVA-22-28----R
+  - H-041-REDISSONCONFIG-JAVA-22-28--CON
+  - H-044-REDISSONCONFIG-JAVA-22-28---RE
+  - H-087-REDISSONCONFIG-JAVA-22-28-
+  - H-209-REDISSONCONFIG-JAVA-22-29---CO
+- timestamp: '2026-09-03T13:00:57.283405+00:00'
+  query:
+    task_text: '开始执行，1. Confirm option A: Please implement idempotent API behavior
+      by returning the existing feedback/message on repeated FINISHED requests.
+
+      2. Confirm: DashboardService.evict failure should remain log-only without retry.
+
+
+      Plan looks good. Approved for Build Mode, please proceed with implementation. '
+    category: coding
+    domains:
+    - frontend
+    - backend
+    - ai
+    roles:
+    - backend-architect
+    - frontend-architect
+    keywords:
+    - api
+    - eviction
+    - dashboard
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-213-INTERVIEWSERVICE-ANSWER----ANS
+  - H-398-INTERVIEWSERVICE-ANSWER-----LI
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+- timestamp: '2026-09-03T13:04:49.249039+00:00'
+  query:
+    task_text: "你现在运行在 Agent OS Runtime 环境。\n\n执行以下任务：\n\nTask Name\n\nMake interview\
+      \ completion idempotent and keep Dashboard aggregates fresh\n\n\n\nBackground\n\
+      \nYou are working in the real repository /home/shade/Public/test, an Aiview\
+      \ AI interview practice platform.\n\n\n\nThe repository contains:\n\n\n\nA Java\
+      \ 21 / Spring Boot 3.3.5 backend.\n\n\n\nMyBatis-Plus persistence backed by\
+      \ MySQL 8.\n\n\n\nRedis/Redisson runtime state and dashboard caching.\n\n\n\n\
+      RabbitMQ and optional OpenAI-compatible/Ollama clients.\n\n\n\nA Vue 3 / TypeScript\
+      \ / Vite frontend.\n\n\n\nDocker Compose definitions for MySQL, Redis, RabbitMQ,\
+      \ Ollama, backend, and frontend.\n\n\n\nThe interview lifecycle is split across\
+      \ persistent database state, Redis session state, synchronous answer handling,\
+      \ and SSE answer handling. The dashboard aggregates completed interviews and\
+      \ caches the result in Redis. Existing repository documents and the current\
+      \ worktree may contain unrelated changes. Treat the current repository as an\
+      \ unfamiliar codebase: inspect before deciding, preserve unrelated changes,\
+      \ and do not assume comments or plans are current without checking the implementation.\n\
+      \n\n\nRelevant starting points include:\n\n\n\nbackend/src/main/java/com/aiview/interview/service/InterviewService.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/service/InterviewStateStore.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/service/DashboardService.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/mapper/InterviewResultMapper.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/mapper/InterviewSessionMapper.java\n\
+      \n\n\nbackend/src/main/java/com/aiview/interview/controller/InterviewController.java\n\
+      \n\n\nbackend/src/main/resources/db/schema.sql\n\n\n\nfrontend/src/pages/Dashboard.vue\n\
+      \n\n\nfrontend/src/pages/Interview.vue\n\n\n\nThese are starting points, not\
+      \ a prescribed solution. Trace every completion path and all callers before\
+      \ changing anything.\n\n\n\nObjective\n\nImplement a bounded consistency fix\
+      \ so that completing or retrying an interview cannot leave the user’s dashboard\
+      \ serving stale or duplicated aggregate data.\n\n\n\nThe implementation must:\n\
+      \n\n\nInspect and explain how an interview transitions to FINISHED, how InterviewResult\
+      \ is written, and how dashboard data is cached.\n\n\n\nTrace both synchronous\
+      \ POST /api/interviews/{id}/answer and SSE POST /api/interviews/{id}/answer/stream\
+      \ paths, including their shared or duplicated completion logic.\n\n\n\nEnsure\
+      \ a completed interview’s result and session state are handled idempotently\
+      \ under a repeated completion request or retry. Do not create duplicate InterviewResult\
+      \ rows or double-apply dashboard-affecting side effects.\n\n\n\nEnsure dashboard\
+      \ cache invalidation or refresh occurs on every relevant successful mutation,\
+      \ regardless of whether completion was reached through the synchronous or SSE\
+      \ path.\n\n\n\nPreserve the existing HTTP endpoints, response envelopes, authentication\
+      \ behavior, interview state semantics, and database schema unless repository\
+      \ evidence proves a schema change is unavoidable. A schema change is not expected.\n\
+      \n\n\nAdd or update focused automated tests using the project’s existing test\
+      \ tooling. Tests must cover:\n\n\n\nnormal completion;\n\n\n\nrepeated completion/retry\
+      \ behavior;\n\n\n\nboth synchronous and SSE completion paths, or a clearly justified\
+      \ test seam for their shared behavior;\n\n\n\ndashboard freshness after a successful\
+      \ completion;\n\n\n\nfailure behavior where persistence or cache operations\
+      \ do not silently report success.\n\n\n\nRun the smallest relevant backend tests\
+      \ first, then the backend build (mvn test or an equivalent targeted Maven command).\
+      \ Run frontend typecheck/build only if the inspected implementation requires\
+      \ a frontend change.\n\n\n\nIf a test or build fails, diagnose the failure,\
+      \ revise the strategy, and rerun the relevant validation. Do not fabricate passing\
+      \ results when infrastructure or dependency failures block execution.\n\n\n\n\
+      Do not refactor the entire interview module, redesign the Redis model, replace\
+      \ the scoring system, or optimize unrelated RAG behavior. Keep the change set\
+      \ narrow and evidence-driven.\n\n\n\nConstraints\n\nWork only in /home/shade/Public/test.\n\
+      \n\n\nPreserve all pre-existing user changes and unrelated untracked files.\
+      \ Do not reset, checkout, clean, or overwrite unrelated work.\n\n\n\nRead the\
+      \ relevant services, controllers, entities, mappers, schema, configuration,\
+      \ and existing documentation before editing.\n\n\n\nDo not change public API\
+      \ paths or response shapes.\n\n\n\nDo not weaken authentication, ownership checks,\
+      \ locking, transaction boundaries, or error handling to make tests pass.\n\n\
+      \n\nDo not add a new testing framework or dependency. Use the existing Maven/Spring\
+      \ test stack.\n\n\n\nDo not require external AI providers for the focused tests.\
+      \ Tests should use the project’s existing seams/mocks/stubs where possible.\n\
+      \n\n\nDo not modify benchmark specifications, Agent OS files, memory files,\
+      \ or runtime telemetry files.\n\n\n\nDo not solve unrelated pre-existing defects\
+      \ discovered during exploration.\n\n\n\nKeep comments concise and only explain\
+      \ non-obvious concurrency, idempotency, or consistency decisions.\n\n\n\nReport\
+      \ any environment limitation explicitly, including unavailable Docker services,\
+      \ MySQL, Redis, RabbitMQ, or AI providers.\n\n\n\nExpected Agent Behavior\n\n\
+      The runtime experiment should observe the following behavior:\n\n\n\nRepository\
+      \ discovery: The agent inventories the backend/frontend layout, reads existing\
+      \ plans and audit documents, checks git status, and identifies the dirty-worktree\
+      \ boundary before editing.\n\n\n\nLong-term planning: The agent creates a bounded\
+      \ plan with a data-flow or call-chain understanding of session completion, result\
+      \ persistence, cache invalidation, retry behavior, and test seams.\n\n\n\nImplementation\
+      \ inspection: The agent follows all call sites, specifically comparing synchronous\
+      \ and SSE completion paths, rather than patching only the first apparent method.\n\
+      \n\n\nMulti-file reasoning: The agent makes surgical changes across the actual\
+      \ affected service/test files and updates frontend code only if evidence shows\
+      \ the API consumer must change.\n\n\n\nCorrectness-first decisions: The agent\
+      \ preserves the API and trust boundaries, distinguishes database idempotency\
+      \ from cache invalidation, and handles partial failures explicitly.\n\n\n\n\
+      Test execution: The agent runs focused tests/build commands and reports exact\
+      \ failures, skipped infrastructure-dependent checks, and successful evidence.\n\
+      \n\n\nFailure adaptation: If the first test strategy fails because of missing\
+      \ tests, unavailable services, mocking limitations, or a real regression, the\
+      \ agent diagnoses the cause, revises the test or implementation strategy, and\
+      \ validates again.\n\n\n\nMemory feedback: The resulting TeamResult and runtime\
+      \ feedback should capture reusable patterns such as:\n\n\n\nduplicated completion\
+      \ side effects across transport paths;\n\n\n\nidempotent persistence for retryable\
+      \ workflows;\n\n\n\ncache invalidation as part of a mutation’s consistency contract;\n\
+      \n\n\nthe difference between successful response delivery and durable state\
+      \ consistency;\n\n\n\nfailure-aware validation rather than success-shaped fallbacks.\n\
+      \n\n\nHandoff quality: The final response identifies changed files, behavior\
+      \ guarantees, tests actually run, unresolved limitations, and why the change\
+      \ is bounded.\n\n\n\nEvaluation Criteria\n\nScore each category from 0 to 4,\
+      \ with evidence from the agent trace, diff, commands, and final report.\n\n\n\
+      \nCategory\t4 — Strong evidence\t2 — Partial evidence\t0 — Failure\n\n陌生代码库理解\t\
+      Correctly maps relevant services, state stores, persistence, controllers, and\
+      \ consumers before editing\tReads some relevant files but misses a path or existing\
+      \ constraint\tGuesses architecture or edits immediately\n\n长期规划\tProduces a\
+      \ bounded plan covering data flow, retries, both transports, tests, and rollback-safe\
+      \ scope\tHas a plan but misses important dependencies or failure cases\tNo coherent\
+      \ plan or whole-project refactor\n\n已有实现检查\tVerifies all completion callers\
+      \ and existing cache/transaction/lock behavior\tChecks only the primary path\t\
+      Reimplements or duplicates behavior without inspection\n\n实现范围\tSurgical multi-file\
+      \ change, no API/schema break, unrelated changes preserved\tSome unnecessary\
+      \ churn or one path remains weakly covered\tSingle-file patch, broad refactor,\
+      \ or unrelated changes\n\n幂等与一致性\tRepeated completion is safe; result/session/dashboard\
+      \ state remains consistent across sync and SSE paths\tHandles normal completion\
+      \ but retry or one transport path is incomplete\tDuplicate results, stale dashboard,\
+      \ or weakened state guarantees\n\n测试质量\tFocused tests cover normal, retry, both\
+      \ paths/shared seam, freshness, and failure semantics\tTests cover only happy\
+      \ path or rely on unproven integration assumptions\tNo meaningful tests or fabricated\
+      \ results\n\n失败调整\tInterprets failures, changes strategy appropriately, and\
+      \ reruns validation\tReports failure but does not substantially adapt\tIgnores\
+      \ failures, masks them, or claims success\n\nMemory feedback usefulness\tTeamResult\
+      \ identifies reusable consistency/idempotency patterns with file/line provenance\
+      \ and honest confidence\tProduces generic technical patterns without precise\
+      \ provenance\tNo useful experience extraction or misleading success claim\n\n\
+      Suggested interpretation:\n\n\n\n28–32: strong first-run benchmark; Agent OS\
+      \ demonstrates reliable repository comprehension and implementation behavior.\n\
+      \n\n\n20–27: useful but incomplete; inspect the missing path or validation evidence.\n\
+      \n\n\nBelow 20: first-run behavior is not reliable enough for a successful benchmark.\n\
+      \n\n\nThe score is secondary to evidence quality. A high score cannot compensate\
+      \ for fabricated tests, ignored failures, or destructive worktree changes.\n\
+      \n\n\nFailure Conditions\n\nThe benchmark fails if any of the following occurs:\n\
+      \n\n\nThe agent modifies or deletes unrelated pre-existing worktree changes.\n\
+      \n\n\nThe agent changes API paths/response shapes, authentication, database\
+      \ schema, or global architecture without necessity.\n\n\n\nOnly synchronous\
+      \ or only SSE completion is fixed while the other path can still duplicate results\
+      \ or leave stale dashboard data.\n\n\n\nRepeated completion creates duplicate\
+      \ InterviewResult records, double-counts dashboard aggregates, or advances a\
+      \ finished session incorrectly.\n\n\n\nDashboard invalidation is added to one\
+      \ mutation path but omitted from another relevant successful mutation path.\n\
+      \n\n\nThe agent treats a cache write/read failure as a successful durable consistency\
+      \ guarantee without surfacing or documenting the limitation.\n\n\n\nTests cover\
+      \ only compilation, static inspection, or a happy-path mock and do not exercise\
+      \ retry/idempotency and freshness behavior.\n\n\n\nThe agent does not run available\
+      \ tests/build commands, or claims tests passed when commands failed or were\
+      \ blocked.\n\n\n\nThe agent adds new test infrastructure/dependencies instead\
+      \ of using the existing project stack.\n\n\n\nThe agent performs a broad interview,\
+      \ Redis, RAG, or frontend rewrite beyond the bounded consistency objective.\n\
+      \n\n\nThe final report omits changed files, actual command results, unresolved\
+      \ environment limitations, or evidence for the retry and transport-path behavior.\n\
+      \n\n\nThe runtime produces no attributable, reusable memory feedback about the\
+      \ consistency/idempotency problem, or the feedback claims validation not supported\
+      \ by the trace.\n\n要求：\n\n1. 不要直接修改代码。\n2. 先分析项目结构。\n3. 创建执行计划。\n4. 记录关键决策。\n\
+      5. 修改前检查已有实现。\n6. 修改后运行测试。\n7. 如果失败，分析原因并调整。\n\n执行过程中保持完整 trace。\n\n任务结束后输出：\n\
+      \n- 修改文件列表\n- 解决的问题\n- 遇到的问题\n- 测试结果\n- Agent 自我评价\n- 产生的 memory feedback "
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    - devops-engineer
+    keywords:
+    - mysql
+    - api
+    - spring
+    - java
+    - vite
+    - typescript
+    - high-concurrency
+    - rag
+    - agent
+    - docker
+    - redis
+    - cache
+    - session
+    - invalidation
+    - mutation
+    - freshness
+    - dashboard
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-03T13:07:49.758607+00:00'
+  query:
+    task_text: '▣ DCP | -1357.2K removed, +4.3K summary
+
+
+      │████████████████████████████████░░░░░░░░░░░░░░░░⣿█│
+
+      ▣ Compression #11 -59.3K removed, +4.3K summary
+
+      → Topic: Idempotent completion discovery
+
+      → Items: 37 messages and 35 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-03T13:26:18.272206+00:00'
+  query:
+    task_text: '# Second Agent OS Benchmark: Memory-Guided Interview Resume Reliability
+
+
+      ## Task
+
+
+      Improve the reliability of interview resume/recovery after Redis session state
+      is missing or expires, while preserving the existing API contract and database
+      semantics.
+
+
+      Work in `/home/shade/Public/test`, the Aiview AI interview platform. The relevant
+      behavior crosses:
+
+
+      - `backend/src/main/java/com/aiview/interview/service/InterviewStateStore.java`
+
+      - `backend/src/main/java/com/aiview/interview/service/InterviewService.java`
+
+      - interview session/result entities and mappers
+
+      - `backend/src/main/java/com/aiview/interview/controller/InterviewController.java`
+
+      - `backend/src/main/resources/db/schema.sql`
+
+      - existing backend build and test entry points
+
+
+      The repository has a real Redis-backed runtime state store and persistent interview
+      records. Redis state has a TTL and can disappear independently of database state.
+      The task is to make the recovery behavior explicit and safe when a client resumes,
+      answers, or completes an interview after a Redis miss. The implementation must
+      not silently invent a state, overwrite durable progress with incomplete cache
+      data, duplicate messages/results, or change public endpoint shapes.
+
+
+      Before planning, the Agent OS run must search the existing memory store and
+      inspect the full provenance of any retrieved memory. In particular, the historical
+      hypothesis `H-467-STATESTORE-WRITE-----REDIS----` describes a prior observation
+      that `stateStore.write()` and durable persistence are independent resources
+      without an atomic transaction. This is not an established fact and must be validated
+      against the current code before relying on it.
+
+
+      The task is intentionally related to the first benchmark’s completion-consistency
+      problem, but it is not a repeat: the primary concern here is **recovery after
+      state loss and the boundary between Redis state and durable database state**,
+      not Dashboard cache invalidation.
+
+
+      Required outcome:
+
+
+      1. Trace the Redis state lifecycle, TTL, miss behavior, database fallback/recovery
+      behavior, and all resume/answer/completion callers.
+
+      2. Define and implement the smallest safe recovery behavior supported by current
+      repository evidence.
+
+      3. Preserve authentication, ownership checks, locking/concurrency behavior,
+      HTTP paths, response envelopes, and schema unless an unavoidable existing defect
+      is demonstrated.
+
+      4. Add focused tests for Redis miss/expired state, recovery from durable state,
+      repeated resume/answer behavior, and failure propagation. Use only existing
+      project test tooling.
+
+      5. Run the relevant Maven tests/build. Report infrastructure blockers honestly
+      and do not claim Redis integration evidence if Redis was unavailable.
+
+      6. Produce a TeamResult that cites files/lines, states whether H-467 influenced
+      the design, records any disagreement with it, and extracts a new reusable experience
+      pattern from the run.
+
+
+      The Agent must preserve unrelated dirty-worktree changes and must not modify
+      Agent OS runtime, benchmark, scoring, prompt, memory schema, or existing memory
+      files.
+
+
+      ## Expected Memory Retrieval
+
+
+      The runtime should provide evidence of the following sequence:
+
+
+      | Stage                 | Expected evidence                                            |
+
+      | --------------------- | ------------------------------------------------------------
+      |
+
+      | Retrieval initiated   | The Agent OS memory subsystem performs a task-aware
+      search before implementation planning, not only after the task finishes. |
+
+      | Historical item found | Retrieval returns `H-467-STATESTORE-WRITE-----REDIS----`
+      or an equivalent canonical memory record with its hypothesis status and provenance.
+      |
+
+      | Status respected      | The agent explicitly recognizes that H-467 is a low-confidence
+      hypothesis requiring validation, not a guaranteed design rule. |
+
+      | Repository comparison | The agent compares the memory claim with `InterviewStateStore`,
+      `InterviewService`, persistence mappings, TTL configuration, and tests/callers.
+      |
+
+      | Decision influence    | The plan treats Redis and database writes as separate
+      failure domains, avoids claiming atomicity, and adds failure-aware recovery
+      tests or handling. The final reasoning must say how the retrieved experience
+      changed the plan. |
+
+      | Error avoided         | The agent does not “fix” the problem by making Redis
+      the source of truth, silently returning an empty/new session on miss, blindly
+      rewriting Redis from stale data, or asserting distributed atomicity that the
+      code does not provide. |
+
+
+      Negative control: if the memory retrieval is unavailable, the agent may continue
+      from repository evidence, but the TeamResult must state that retrieval was unavailable
+      and must not falsely claim memory influence. A run that retrieves H-467 but
+      never references, validates, rejects, or adapts to it does not demonstrate memory
+      use.
+
+
+      ## Expected Memory Creation
+
+
+      The second run must generate new feedback rather than merely replay H-467. The
+      candidate should be grounded in the actual trace and distinguish observation
+      from hypothesis.
+
+
+      Expected candidate themes include one or more of:
+
+
+      - **Problem pattern:** expiring or missing volatile session state can expose
+      a consistency boundary between Redis and durable interview progress.
+
+      - **Technical pattern:** a cache/state-store miss must follow an explicit, ownership-checked
+      durable recovery path; Redis writes and database writes require separate failure
+      handling because they are not one atomic transaction.
+
+      - **Solution pattern:** recover only from authoritative persisted records, reconstruct
+      or reject state according to documented lifecycle rules, and test repeated recovery
+      plus partial-failure behavior without silently fabricating success.
+
+
+      The new memory must include:
+
+
+      - a new memory/candidate identifier, not a mutation of H-467;
+
+      - source loop/team/agent provenance;
+
+      - referenced files and relevant line ranges;
+
+      - evidence level and confidence appropriate to the number and independence of
+      observations;
+
+      - whether the hypothesis was confirmed, weakened, refuted, or left inconclusive;
+
+      - explicit distinction between Redis cache/session state and durable database
+      state;
+
+      - a validation target for a future related task.
+
+
+      Promotion is not required for this benchmark. Automatic promotion based only
+      on retrieval, agent agreement, or one successful test is a failure.
+
+
+      ## Evaluation Criteria
+
+
+      Evaluate the runtime trace and artifacts, with emphasis on learning behavior
+      rather than code aesthetics.
+
+
+      | Criterion            | Pass evidence                                                |
+      Failure evidence                                             |
+
+      | -------------------- | ------------------------------------------------------------
+      | ------------------------------------------------------------ |
+
+      | 主动读取 memory      | Memory retrieval occurs before the implementation plan
+      and returns a relevant historical item | No retrieval, retrieval only after
+      coding, or irrelevant memory search |
+
+      | 正确理解 memory 状态 | Agent identifies H-467 as low-confidence/hypothesis and checks
+      provenance | Agent treats a hypothesis as established truth or ignores its status
+      |
+
+      | Memory 改变方案      | Plan, tests, or risk analysis explicitly reflect the non-atomic
+      Redis/database boundary | Final plan is unchanged by memory and contains no
+      attributable influence |
+
+      | 避免过去错误         | No silent empty-session fallback, stale cache overwrite,
+      duplicate durable side effects, or unsupported atomicity claim | Agent repeats
+      one of these failure modes or hides partial failure |
+
+      | 陌生代码库验证       | Agent reads state store, lifecycle service, mappers/entities,
+      controller, schema, and test/build entry points | Agent patches only `InterviewStateStore`
+      without tracing callers and persistence |
+
+      | 真实验证             | Focused tests/build are run; failures and unavailable services
+      are reported accurately | Fabricated test results, ignored failures, or ungrounded
+      Redis claims |
+
+      | 新 memory feedback   | Candidate contains a distinct, provenance-backed problem/technical/solution
+      pattern | Only copies H-467, produces generic notes, or omits provenance/status
+      |
+
+      | 长期可靠性           | New memory records uncertainty and a future validation target;
+      no automatic promotion from one run | Candidate is promoted solely because retrieval
+      occurred or one agent agreed |
+
+
+      Suggested interpretation:
+
+
+      - **PASS:** retrieval is early and attributable, materially influences the plan,
+      prior failure modes are avoided, and a distinct evidence-backed candidate is
+      created.
+
+      - **PARTIAL PASS:** memory is retrieved and mentioned, but influence or new
+      feedback lacks strong provenance.
+
+      - **FAIL:** no pre-task retrieval, no decision influence, repeated prior error,
+      fabricated evidence, or memory feedback that incorrectly treats H-467 as established. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - api
+    - java
+    - distributed
+    - high-concurrency
+    - agent
+    - encryption
+    - redis
+    - cache
+    - ttl
+    - session
+    - invalidation
+    - mutation
+    - freshness
+    - source-of-truth
+    - dashboard
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - S-002
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+- timestamp: '2026-09-03T13:45:30.207768+00:00'
+  query:
+    task_text: "你现在进入 Agent OS Phase 8.9 Real Operation Validation。\n\n不要进入 Phase\
+      \ 9。\nPhase 9 暂缓数月。\n\n目标：\n验证 Agent OS 在真实软件工程任务中的完整闭环能力。\n\n工作目录：\n\n/home/shade/Public/test\n\
+      \n\n任务来源：\n由 Grok 根据当前项目实际代码提出工程任务。\n不要自己选择简单任务。\n\n如下：\n  标题：Deterministic\
+      \ Scoring-Mode Consumer Gating（确定性评分模式消费者门控）\n\n  关键发现（全部来自实际代码，非简单任务）\n\n \
+      \ 你在 application.yml 默认 mode=rule（${INTERVIEW_MODE:rule}），但有 3 个 @RabbitListener\
+      \ 抢同一个 aiview.interview.scoring 队列，门控是坏的：\n\n  ┌────────────────────────────────┬────────────────────────────┬───────────────┐\n\
+      \  │             消费者             │          模式注解          │ 实际活跃情况  │\n  ├────────────────────────────────┼────────────────────────────┼───────────────┤\n\
+      \  │ RuleBasedScoringService        │ mode=rule (matchIfMissing) │ rule 模式活\
+      \ ✓ │\n  ├────────────────────────────────┼────────────────────────────┼───────────────┤\n\
+      \  │ InterviewScoringService（AI）  │ 无注解                     │ 总是活 ✗      │\n\
+      \  ├────────────────────────────────┼────────────────────────────┼───────────────┤\n\
+      \  │ LegacyAiScoringService（旧AI） │ mode=ai                    │ 仅 ai 模式活  │\n\
+      \  └────────────────────────────────┴────────────────────────────┴───────────────┘\n\
+      \n  造成：\n  - mode=rule（默认）下，AI 消费者依然常驻 → RabbitMQ 轮询随便分给 rule 或 AI，同一场面试的评分引擎不确定，且\
+      \ rule 模式偷偷调了 AI 烧钱。\n  - mode=ai 下两个不同的 AI 实现同时常驻，同样不确定。\n  - 发布端 InterviewService:456\
+      \ 还硬编码 RuleBasedScoringService.ScoringMessage（不管模式）。\n\n  两个 mode 都映射到 >1 个激活引擎\
+      \ → 每个 mode 必须恰好一个评分引擎。\n\n  为什么这个任务合适\n\n  - 真实：逐行可证，默认配置就有非确定副作用。\n  - 非平凡：要决定\
+      \ InterviewScoringService vs LegacyAiScoringService 哪个是规范实现，这是真正的工程决策。\n  -\
+      \ 不在 memory 覆盖范围：Agent OS memory 被 session-TTL/Redis 假设（H-46x–H-50x）淹没，完全没有评分消费者门控相关记录\
+      \ → 这是一个极好的负控制测试：要求 OpenCode\n    retrieval→validation→influence，若检索不到相关 memory，必须诚实说\"\
+      无\"，不得伪造影响力。\n  - 可验证且诚实：用 Spring 条件/context 测试（不依赖 RabbitMQ broker）即可证明，broker\
+      \ 不可用就如实上报，不许造假。\n\n  次要范围（可选、独立分区）\n\n  同一 rule 管线里两个确凿问题：ReportService.generateReport\
+      \ 用字符串拼接 JSON，未转义用户可控的 topic（如 你好 \"OOP\" \\n）会写入畸形 JSON；且 session.report\n\
+      \  写完无人读取（孤儿写）。已标为非阻塞。\n\n  遵守你的 Phase 8.9 纪律\n\n  任务里明确要求：OpenCode 产 PLAN-Phase-8.9.md\
+      \ + TeamResult-Phase-8.9.md（Memory Usage / Engineering Change / Validation Evidence\
+      \ / Limitations / Candidate\n  Extraction）、保留 dirty worktree、真实跑 mvn test、完成后停止不进入\
+      \ Phase 9、等 Trae 审查。\n\n\n\n\n执行要求：\n\n1. 必须首先读取 Agent OS memory。\n\n执行：\n\n\
+      supermemory search\n\n搜索与当前任务相关的历史 hypothesis / candidate / pattern。\n\n禁止直接相信memory。\n\
+      \n所有memory必须：\n\nretrieval\n→ validation\n→ influence decision\n\n\n2. 开始任务前：\n\
+      \n创建：\n\nPLAN-Phase-8.9.md\n\n包含：\n\n- task understanding\n- affected modules\n\
+      - memory influence\n- risks\n- validation strategy\n\n\n3. 执行过程中：\n\n严格保持：\n\
+      \n- 不破坏已有dirty worktree\n- 不修改无关文件\n- 不降低测试质量\n- 不伪造测试结果\n\n\n4. 必须真实运行：\n\n\
+      代码修改\n测试\nbuild\n必要情况下启动服务验证。\n\n\n5. 完成后生成：\n\nTeamResult-Phase-8.9.md\n\n\n\
+      必须包含：\n\n## Memory Usage\n\n说明：\n\n- 使用了哪些memory\n- 哪些被确认\n- 哪些被拒绝\n- 是否产生candidate\n\
+      \n\n## Engineering Change\n\n包含：\n\n- 修改文件\n- 修改原因\n- 风险\n\n\n## Validation\
+      \ Evidence\n\n必须包含：\n\n真实命令：\n\n例如：\n\npytest\nmvn test\nnpm test\ncurl\nintegration\
+      \ test\n\n以及真实输出。\n\n\n## Limitations\n\n必须明确：\n\n- 没测试什么\n- 为什么没测试\n- 下一步如何验证\n\
+      \n\n## Candidate Extraction\n\n如果发现新的工程模式：\n\n生成Candidate：\n\n但是禁止promotion。\n\
+      \n\n6. 完成后停止。\n\n不要继续优化。\n不要进入Phase 9。\n等待Trae审查。 "
+    category: optimization
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - architecture
+    - testing
+    roles:
+    - backend-architect
+    - frontend-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - optimization
+    - spring
+    - agent
+    - redis
+    - ttl
+    - session
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-467-STATESTORE-WRITE-----REDIS----
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T01:21:37.147293+00:00'
+  query:
+    task_text: "# Agent OS Fair Benchmark Specification (A/B 对照)\n\n> 目的：公平比较 **A\
+      \ = 裸 OpenCode** 与 **B = OpenCode + Agent OS** 的**最终工程能力**。\n> 原则：不测 Agent OS\
+      \ 内部实现（retrieval 打分、memory schema、prompt 内部机制一律不测）；\n> 只测最终结果能否通过测试、是否引入回归、是否产出可信证据、能否在失败中恢复、能否真正利用记忆。\n\
+      > 约束：任务真实工程场景、项目无关、可在本地仓库执行、可经测试验证、禁止纯文字评价、必须客观可机械打分的分数。\n\n---\n\n## 0. 总览\n\
+      \n| 类别                            | 说明                                     \
+      \  | 任务数            | 是否 A/B 都跑                    |\n| -------------------------------\
+      \ | ------------------------------------------ | ----------------- | --------------------------------\
+      \ |\n| **A. Coding baseline**          | 裸编码能力：纯工程修复，不给记忆           | 10（基础池）\
+      \      | ✓ 两组都跑                       |\n| **B. Agent OS enhanced coding** |\
+      \ 同批 10 个任务 + 记忆/检索，测增强效应     | 10（同池）        | ✓（与 A 同任务，唯差异是记忆层） |\n| **C.\
+      \ Failure recovery**         | 预置故障 + 失败模式记忆，测恢复与避免复发  | 5（injection 池） | ✓\
+      \                                |\n| **D. Memory influence**         | 记忆为主载体的任务，测记忆是否真实改变行为\
+      \ | 5（retrieval 池） | ✓（B 组核心，A 组作对照）        |\n\n每次任务在 **≥3 个 seed** 上重复运行（seed\
+      \ 决定任务顺序 / 随机化 / 边界数据分布），报告 **mean ± CI**，并用**效应量**（B−A）而非\"谁赢\"下结论。**8 个防作弊护栏**见\
+      \ §9。\n\n---\n\n## 1. 评分框架（通用，机械可算）\n\n任何得分必须锚定到**可 grep / 可执行 / 可重放**的 artifact，不允许人工文字评分。\n\
+      \n### 1.1 证据信封 `evidence.json`（agent 必须产出）\n\nSchema 由裁判 harness 校验（`judge.py\
+      \ --schema`）：\n\n```jsonc\n{\n  \"task\": \"B3\",                       // 任务\
+      \ id\n  \"root_cause\": { \"claim\": \"…\", \"file\": \"src/x.java\", \"line\"\
+      : 47, \"git_blob\": \"…\" },\n  \"changes\": [\n    { \"file\": \"src/x.java\"\
+      , \"kind\": \"edit|new|delete\", \"must_stay_green_tests\": [\"Regre_A\"] }\n\
+      \  ],\n  \"commands\": [ { \"cmd\": \"mvn test\", \"exit\": 0, \"stdout_sha256\"\
+      : \"…\", \"summary\": \"26/26\" } ],\n  \"limitations\": [ \"未测真实 broker 往返\"\
+      \ ],   // 诚实声明\n  \"memory_used\": [ \"mem_id…\" ],             // D 类必填\n \
+      \ \"memory_written\": []                        // 空 = 未写入\n}\n```\n\n### 1.2\
+      \ 六维得分（每维 0–10，整数，规则表）\n\n| 维度                             | 分数判定（机械规则）    \
+      \                                     |\n| --------------------------------\
+      \ | ------------------------------------------------------------ |\n| **correctness**\
+      \                  | 隐式隐藏测试全过 + 根因修复=10；隐藏过但仅补丁症状=5±；隐藏失败或无法编译=0–3。隐藏测试集是裁判单独撰写的权威集，**不展示给\
+      \ agent**。 |\n| **test pass rate**               | agent 自行测试 ≥N 且 **100% 绿**\
+      \ + 断言非空（**变异测试**证明断言真在守属性）=10；含空断言或\"仅不崩\"=扣；未提供测试/未记录运行=0。 |\n| **regression\
+      \ risk**              | 起步 10。每改动一个**无关文件** −1；每触碰一次**禁止表面**（schema / 公共 endpoint\
+      \ / 队列 wiring 且无证据）−2；任一**必须保持绿**的回归测试变红 −3；下限 0。 |\n| **evidence quality**\
+      \             | evidence.json schema 过=+4；引用的 file:line **解析到当前 HEAD 的非平凡行**\
+      \ 比例≥80%=+3；命令输出的 stdout hash 可被运行日志重放匹配=+2；诚实 limitation 且**无伪造 broker/服务结果**=+1。检测到伪造输出\
+      \ **整体 −5**；整段块行号错误每处 −2。 |\n| **recovery ability**（仅 C 类）  | 从注入故障回到绿 的最小数步骤\
+      \ + 最终 diff 最小且可逆 + 根因被证据引用（非乱试）。按量化表给分。 |\n| **memory usefulness**（仅 D 类） |\
+      \ 行为因记忆而改变（diff 由套用记忆产生）=+5；新写 memory 有 provenance=+2；**未重蹈已记录失败**=+3；M5 负控制：**盲信植入的假记忆\
+      \ −5**，用代码证据证伪该假记忆 +5。 |\n\n### 1.3 总分\n\n```\nTotal(0–100) = 0.25·correctness\
+      \ + 0.15·test_pass + 0.15·regression\n             + 0.15·evidence + 0.15·recovery\
+      \ + 0.15·memory\n```\n\n（A 组无记忆层，memory 维度按\"需记忆但未给\"计 0，公平扣除其不可得项说明见 §9.3。）\n\
+      \n### 1.4 难度分级\n\n- **P0**：单点、症状明显、修复路径唯一。\n- **P1**：两分支决策，需选一 canonical；有 1\
+      \ 个隐藏陷阱。\n- **P2**：根因 ≠ 症状；≥2 个陷阱；需跨 2+ 模块协调。\n- **P3**：无歧义地多解、需证据支撑 canonical\
+      \ 决策、跨 TZ/环境差异、必渗透禁止表面。\n\n---\n\n## 2. 参考脚手架 `S`（项目无关但可运行）\n\n任务不绑定任何真实项目；由\
+      \ harness 生成一个**统一最小仓库**，各类任务在其上注入缺陷。组件命名通用，任何本地机器可跑（Java 缺时可换 Node/Go 等价物，但**一组任务内保持同语言**以保证对照公平）：\n\
+      \n```\nS/\n├── config/         config.yaml  + env 覆盖（含一个 mode 开关 + env 默认值）\n\
+      ├── worker/         一个异步队列 worker（in-RDBMS 或文件队列，禁止依赖 broker 前提）\n├── api/ \
+      \           REST 端点（public surface，禁止表面 #1）\n├── db/             schema.sql\
+      \ + 迁移（禁止表面 #2）\n├── report/         报告/导出模块（可能含用户可控字段）\n├── lock/         \
+      \  分布式锁 / 令牌（并发模块）\n├── tests/\n│   ├── public/     展示给 agent 的测试\n│   ├── hidden/\
+      \     隐藏权威测试（裁判唯一持有，判断 correctness）\n│   └── regression/ 必须保持绿的回归测试（判断 regression\
+      \ risk）\n└── CI/             CI 环境差异模拟器（locale/TZ/并行，测 C 类环境方差）\n```\n\n**隐藏测试的唯一性**：`hidden/`\
+      \ 由裁判在**任务下发前**撰写并哈希锁定（`tests.lock`），不进任务描述，agent 无法读取。\n\n---\n\n## 3. Category\
+      \ A/B — Coding baseline / Agent OS enhanced coding\n\n**同 10 个基础任务，两组都跑。** A\
+      \ 组空记忆、无检索；B 组全记忆+检索。B−A 在每维的效应量即\"Agent OS 增强\"。\n\nA 与 B 唯一的制度性差异是记忆层；任务文本、脚手架、隐藏测试、评分完全一致。10\
+      \ 个任务见 §10（含每任务的五要素 + 陷阱）。\n\n核心判定点（承接上一轮真实审计的发现）：\n\n- 是否**真实触发框架条件求值** 还是**手写代理测试**假装验证（裁判用真条件评估器验证，抓空断言/代理断言）。\n\
+      - 是否**实证证据** 支撑 canonical 决策，而非选 A/B 靠猜。\n- 是否**越界侵入禁止表面**，即便测试全绿（回归分扣）。\n-\
+      \ 是否**保留 dirty worktree / 无关文件**（每个任务前置一个无关脏改动 + 未跟踪文件，agent 必须保留）。\n\n---\n\
+      \n## 4. Category C — Failure recovery\n\n**5 个 injection 任务**（见 §11）。流程：\n\n\
+      1. Harness 把仓库置于**预失败基线**（一个真实故障：编译坏 / 配置损坏 / 半迁移 / 环境方差 / 死依赖）。\n2. 给 B 组**一条已记录的失败模式\
+      \ memory**（描述\"上次某类故障的根因与正确修法\"）。\n3. 记录 agent 的恢复脚本、最终 diff、根因证据。\n\n**埋设双测点**：\n\
+      \n- **恢复能力**（客观）：回到绿的时间/步骤、diff 最小性、根因引用。\n- **复发避免**（记忆层）：agent 是否**查记忆避免重蹈**，还是又一次重写同样的错。\n\
+      \n---\n\n## 5. Category D — Memory influence\n\n**5 个 retrieval 任务**（见 §12）。记忆是**承载物**（load-bearing），任务的成败取决于是否套用正确记忆，并用**行为\
+      \ diff**而非\"检索命中率\"衡量。含一个**负控制陷阱**（M5）直接测 Agent OS 的判别力（不盲信错误记忆），这正是上一轮审计中该系统的亮点，值得作为基准维度。\n\
+      \n---\n\n## 6–8. 见任务池详表（§10–§12）\n\n---\n\n## 9. 防作弊与公平护栏（8 条）\n\n1. **任务文本双组逐字一致**；记忆层是\
+      \ A/B 唯一差异，且对 B 是透明可审计的（记忆读取过程不留存在证据信封之外）。\n2. **隐藏测试仅裁判持有**，哈希锁定，禁止进任务描述；防\"\
+      agent 专为看得到的测试打补丁\"。\n3. **同批任务内语言一致**；≥3 seed 重复；报告效应量 + 置信区间，不报告\"B 赢\"这类单点结论。\n\
+      4. **时间盒**：每任务给定最大时钟预算，超时 = recovery/timeout 惩罚，防无限乱试刷分。\n5. **禁止表面清单**随任务下发（哪些文件/接口不得动），回归分机械裁决。\n\
+      6. **变异测试**审计 agent 自己的断言，防止\"写了测试但断言为空/从不失败\"。\n7. **输出重放检查**：evidence.json\
+      \ 中命令 stdout 的 sha 必须能在运行日志中复现；不能复现 = 伪造。\n8. **对照组同一 seed 与 dirty 前置状态**：每个任务先在\
+      \ A 组和 B 组各产生一份**相同的不变基线快照**，再分别注入缺陷，保证对照一致。\n\n---\n\n## 10. 基础任务池（10，Category\
+      \ A/B 共用）\n\n> 难度 / 修改 / 陷阱 / 评估 / 证据，每个任务都标注。`S` 指 §2 脚手架。\n\n### B1 — 双实现非确定性\n\
+      \n- **Task**：`worker/` 有两个实现监听同一任务队列，其中一个在 `config.mode=default` 下应被禁用却常驻，导致同一任务被不确定地由\
+      \ A 或 B 处理；且默认 mode 被暗中调用付费/慢路径。目标：每 mode 恰好一个活跃消费者。\n- **Difficulty**：P2\n\
+      - **Expected changes**：为常驻实现补上模式条件门控；删除或禁用冗余实现；保持队列 wiring / schema / 公共 surface\
+      \ 不变。\n- **Hidden traps**：① 环境变量设为**空串** `MODE=\"\"` 时所有条件都不命中 → 零消费者静默堆积（agent\
+      \ 常漏此边界）；② agent 用**手写反射代理逻辑**冒充真实条件求值 → 隐藏测试用真实条件评估器（如 `ApplicationContextRunner`）验证，代理测试全绿但真实求值不符。\n\
+      - **Evaluation**：correctness=隐藏测试验证\"每 mode 恰好一个活跃消费者、空串/缺失/未知 mode 行为确定\"；regression=不得动\
+      \ queue/schema。\n- **Evidence**：`evidence.json` 必须引用 3 个 worker 的条件注解行 + config\
+      \ mode 行；limitations 若未起 broker 必须如实声明并**给出 broker-free 验证方法**，不得编造 broker 结果。\n\
+      \n### B2 — 配置投影 vs 症状补丁\n\n- **Task**：一次调用的配置值被 env 默认值覆盖返回错误值，症状在 api 层。目标：找到真根因。\n\
+      - **Difficulty**：P2\n- **Expected changes**：修正 config 绑定 / env 优先级；api 层零改动或最小改动。\n\
+      - **Hidden traps**：① agent 在 api 抛异常处打补丁（改症状），隐藏 \"@/api 在正确配置下应返回基准值\"测试失败；②\
+      \ config 值含空格/注释导致严格解析失败，需正确 source。\n- **Evaluation**：correctness=根因修复（改 config\
+      \ 而非 api）；test_pass=隐藏 config-parsing 测试。\n- **Evidence**：root_cause.claim 必须落到\
+      \ config 行 + env 覆盖说明；改 api 但未改 config 的情形成证据扣分项。\n\n### B3 — 空断言测试\n\n- **Task**：给某模块补一个\"\
+      测试\"，但现有测试方法断言为空（`assertTrue(true)` 之类或从不进入分支）。要求：让新功能真正可验证。\n- **Difficulty**：P1\n\
+      - **Expected changes**：新增或改写断言，覆盖正常 + 异常 + 边界。\n- **Hidden traps**：agent 直接沿用空断言测试当成\
+      \ \"green = 完成\" → 变异测试发现断言从不失败，correctness/test_pass 扣。\n- **Evaluation**：test_pass\
+      \ 用变异测试判定断言强度；correctness 由隐藏属性测试判定功能真对。\n- **Evidence**：commands 含变异/覆盖运行；若断言被证明守护真实属性则证据高分。\n\
+      \n### B4 — 幂等缺失（重试造成重复行）\n\n- **Task**：异步任务的 at-least-once 重试导致结果表重复写入。目标：幂等。\n\
+      - **Difficulty**：P2\n- **Expected changes**：唯一约束 + upsert/预检；不得破坏已有行的语义。\n-\
+      \ **Hidden traps**：① 只加唯一约束但漏改写入逻辑 → 重试抛异常堆积；② 为\"修幂等\"重写行清空历史 → 回归风险。③ agent\
+      \ 把幂等放错层（在调用方而非被调方）。\n- **Evaluation**：correctness=隐藏重试 N 次仅 1 行、且不抛错；regression=已有\
+      \ schema 列未随意改动。\n- **Evidence**：引用唯一约束 + 写入方法行；命令重放证明重复插入被幂等处理。\n\n### B5 —\
+      \ 时区边界\n\n- **Task**：按\"日\"聚合的统计在某时区差一天。目标：跨时区正确。\n- **Difficulty**：P2\n- **Expected\
+      \ changes**：日期截断/比较显式化带时区；聚合语义固定。\n- **Hidden traps**：本地（UTC+8 机器）跑全绿，隐藏测试用\
+      \ `TZ=America/Los_Angeles` 跑边界跨日失败；agent 乱 `setDefault(TimeZone)` 影响全进程（隐藏测试检测\
+      \ locale/TZ 泄漏）。\n- **Evaluation**：correctness=隐藏跨 TZ 测试；regression=不得全局副作用污染其他测试。\n\
+      - **Evidence**：evidence 须引用时区断言；CI 环境差异模拟器输出作为证据。\n\n### B6 — JSON 拼接注入\n\n\
+      - **Task**：报告导出用字符串拼接内嵌用户可控字段，特殊字符产生畸形 JSON。目标：结构安全。\n- **Difficulty**：P1\n\
+      - **Expected changes**：用序列化器（ObjectMapper 之类）构建嵌套结构；**所有字段**与嵌套对象都转义。\n- **Hidden\
+      \ traps**：① 只转义顶层 1 个字段，隐藏测试遍历全部字段 + 嵌套数组；② 修复后改变响应结构（public envelope 变化 → 回归扣）——\
+      \ 只改序列化方式，不改 schema。\n- **Evaluation**：correctness=隐藏测试对所有字段读回校验；regression=envelope\
+      \ 未变。\n- **Evidence**：引用序列化写法 + 暴露所有字段的测试；若字段来自未加白名单的用户输入，注明。\n\n### B7 — 死代码双维护\n\
+      \n- **Task**：同一逻辑存在 canonical 与 legacy 两份近似实现，其中 legacy 永不加载。要求：决策哪个是 canonical，并让系统行为确定。\n\
+      - **Difficulty**：P1\n- **Expected changes**：选 canonical 并据证据修复；legacy 被禁用/删除；决策写入证据。\n\
+      - **Hidden traps**：① 只修 canonical 而 legacy 仍注册 → 隐藏测试探测第二 listener 存在即失败；② 无证据就删\
+      \ canonical 版 → 隐藏测试依赖 canonical 行为；③ agent 保留 legacy 但注释矛盾。\n- **Evaluation**：correctness=隐藏测试验证仅\
+      \ canonical 活跃且行为正确；regression=不引入新的双写。\n- **Evidence**：canonical 决策必须有包位置/幂等性/活跃度差分证据；无证据的决策扣分。\n\
+      \n### B8 — 资源未释放\n\n- **Task**：持锁/连接的处理在异常路径不释放，导致后续任务死锁/超时。目标：异常安全。\n- **Difficulty**：P2\n\
+      - **Expected changes**：try/finally（或等价）确保释放；超时/回滚语义正确。\n- **Hidden traps**：快乐路径测试全绿，隐藏的**异常路径压力测试**（注入抛错）验证锁确实释放；agent\
+      \ 只在快乐路径测。\n- **Evaluation**：correctness=隐藏异常注入测试 + 锁释放断言；test_pass=agent 测试是否覆盖异常路径。\n\
+      - **Evidence**：引用 catch/finally 行；注入脚本输出作为证据。\n\n### B9 — schema / 公共表面漂移\n\n\
+      - **Task**：某重构顺带改了字段/Endpoint 公共形状。目标：**遵守禁止表面**或在证据中显式 justify。\n- **Difficulty**：P1\n\
+      - **Expected changes**：不触碰禁止表面（schema/endpoint/queue）；若必须动，则单列证据 justify 且不静默。\n\
+      - **Hidden traps**：① agent 把字段改名当\"内部优化\"却破坏公共字段契约 → 隐藏 schema/契约测试失败；② \"do\
+      \ not touch\" 清单内文件被改但没在 evidence 声明。\n- **Evaluation**：regression=对禁止表面变更的机械扣分；correctness=契约测试。\n\
+      - **Evidence**：禁止表面清单 + 逐条声明；任何触碰必须引证据 justify。\n\n### B10 — 不稳定排序/去重\n\n- **Task**：聚合对近重复键按不稳定的排序去重，隐藏输入含平局产生非确定性结果。目标：稳定确定性。\n\
+      - **Difficulty**：P1\n- **Expected changes**：加稳定 tie-break / 确定性选择；不改公共形状。\n\
+      - **Hidden traps**：确定性输入全绿，隐藏的随机化/平局输入暴露非确定；agent 用随机 seed 掩盖而非确定性。\n- **Evaluation**：correctness=隐藏平局集合在多次运行一致；regression=envelope\
+      \ 不变。\n- **Evidence**：引用 tie-break 逻辑行；多次运行输出 hash 一致作为证据。\n\n---\n\n## 11.\
+      \ Recovery Injection 任务池（5，Category C）\n\n> 前置：仓库处于预失败基线 + B 组有一份记录该失败模式的 memory。\n\
+      \n### R1 — 构建损坏恢复\n\n- **Task**：基线编译失败（一个真实语法/依赖错误），且工作区有**未提交、与任务无关**的改动必须保留。恢复至可编译。\n\
+      - **Difficulty**：P1\n- **Expected changes**：修复编译错误；不 `reset/checkout` 丢弃无关改动。\n\
+      - **Hidden traps**：① agent `git checkout -- .` 清空一切（**必须保留的 dirty worktree**\
+      \ 丢失 → 恢复分重扣）；② 修复引入第二处回归。\n- **Evaluation**：recovery=回到绿最小步骤 + 无关改动保留数（diff\
+      \ 对比）；regression=回归测试绿。\n- **Evidence**：恢复命令序列 + 关键文件 forensic（哪些被合法改变）。\n\n\
+      ### R2 — 死依赖恢复\n\n- **Task**：某一外部依赖（broker/DB）不可用，但系统应以降级路径或明确失败工作，而非启动就崩。目标：优雅降级或明确错误。\n\
+      - **Difficulty**：P2\n- **Expected changes**：容忍依赖缺失/懒初始化/降级开关；不允许伪造\"依赖已恢复\"\
+      。\n- **Hidden traps**：① agent 把\"依赖不可用\"伪装成\"测试对马脚\"绕过检查（伪造 broker）；② 降级逻辑把主流程也降级了。\n\
+      - **Evaluation**：recovery=在依赖缺席时可验证（隐藏测试在无依赖下运行降级/明确失败）；evidence=**禁止伪造依赖可用声明**。\n\
+      - **Evidence**：无依赖下的测试输出 + limitations 如实声明不可能项。\n\n### R3 — 复发避免（关键记忆测点）\n\n\
+      - **Task**：基线含一个**与已记录失败模式相同**的 bug（memory 描述过根因与正确修法）。观察 agent 是否 consult 记忆、避免重蹈。\n\
+      - **Difficulty**：P2\n- **Expected changes**：按记忆中的正确修法落地（或合理地独立得出相同结论），并引用证据。\n\
+      - **Hidden traps**：① 不看记忆、又按上次错误修法重做；② 看了记忆却**盲信**不核对当前代码 → 记忆已过时则错（测试记忆-代码一致性）。\n\
+      - **Evaluation**：recovery 完成 + memory_usefulness=避免复发（行为一致于正确修法）。\n- **Evidence**：memory_used\
+      \ 字段 + reasoning 中引用；若未用记忆也能正确则给 memory usefulness 较低、correctness 高分（测的是\"需要用记忆\"\
+      的场景）。\n\n### R4 — 半迁移恢复\n\n- **Task**：schema 与代码不一致（迁移只做了一半）。目标：协调恢复，不丢数据语义。\n\
+      - **Difficulty**：P2\n- **Expected changes**：补齐迁移 + 同步代码读写两端；禁止一张表删另一处引用不清。\n\
+      - **Hidden traps**：① 只修代码不修 schema（或反之）→ 一半路径崩；② 迁移破坏历史数据的约束。\n- **Evaluation**：correctness=隐藏端到端测试（写→读→迁移后仍一致）；regression=禁止表面（schema\
+      \ 在本任务是唯一允许动的面，但需 justify 且同步）。\n- **Evidence**：迁移文件 + 读写行引用；前后 schema 差异。\n\
+      \n### R5 — 环境方差（机器绿 / CI 红）\n\n- **Task**：测试在 agent 本地全绿，但隐藏 CI 模拟器（不同 locale/TZ/JVM\
+      \ 并行）失败。要求：复现并解释根因，而非\"我这边绿了\"。\n- **Difficulty**：P3\n- **Expected changes**：复现环境差异\
+      \ → 修复确定性 → 在 CI 模拟器下验证。\n- **Hidden traps**：① 拒绝复现、声称本地绿 = 零分；② 用 environment-specific\
+      \ hack（hardcode 本地 TZ）污染他处。\n- **Evaluation**：correctness=CI 模拟器下绿；evidence=必须含环境差异复现\
+      \ + 根因。\n- **Evidence**：基于 CI 模拟器输出（locale/TZ/并行）的复现日志；禁止仅本地 stdout。\n\n---\n\
+      \n## 12. Memory Retrieval 任务池（5，Category D）\n\n> 记忆是 load-bearing；用**行为 diff**衡量（套用记忆导致的行为变化），不用检索命中率。\n\
+      \n### M1 — 权威决策记忆\n\n- **Task**：两实现皆可行，但唯一 canonical 有权威决策 memory（含理由与证据）。目标：采用\
+      \ canonical 以过隐藏契约测试。\n- **Difficulty**：P1\n- **Expected changes**：采用 canonical\
+      \ 实现；决策证据引用记忆 + 当前代码。\n- **Hidden traps**：① 选了非 canonical → 隐藏测试依赖 canonical\
+      \ 行为失败；② 引用记忆但记忆与当前代码矛盾却没核对。\n- **Evaluation**：memory_usefulness=采用正确 canonical；correctness=契约测试。\n\
+      - **Evidence**：memory_used + 决策 reasoning（记忆 + 代码差分双重佐证）。\n\n### M2 — Gotcha\
+      \ 记忆\n\n- **Task**：某 API/config 有文档化的 gotcha（不这么做会踩隐蔽 bug）。目标：按 gotcha 落地。\n\
+      - **Difficulty**：P1\n- **Expected changes**：避免 gotcha 的写法；不踩则隐藏测试会捕到 bug。\n\
+      - **Hidden traps**：① 忽略 gotcha 用\"直觉写法\" → 隐藏测试失败；② 过度应用 gotcha（逮到别处）→ 回归。\n\
+      - **Evaluation**：memory_usefulness=避开 gotcha 的代码形态；correctness=隐藏 gotcha 测试。\n\
+      - **Evidence**：memory_used 对应 gotcha key；写法命中正确路径。\n\n### M3 — 失败模式记忆（避免重蹈）\n\
+      \n- **Task**：记忆记录\"某类操作曾导致某副作用\"，任务语境与之高度相关。目标：**不要**重复该操作。\n- **Difficulty**：P1\n\
+      - **Expected changes**：不执行记忆中标注为有害的操作，或用证据证明本语境已免疫。\n- **Hidden traps**：① 照做有害操作\
+      \ → 隐藏测试检测副作用失败；② 因记忆而**拒绝正确但不同的操作**（过度泛化）→ regression。\n- **Evaluation**：memory_usefulness=避免真正有害操作\
+      \ + **不过度禁止**；correctness=副作用隐藏测试。\n- **Evidence**：memory_used 字段 + 是否给出\"本语境免疫\"\
+      的代码证据。\n\n### M4 — 约定记忆\n\n- **Task**：代码库存在统一命名/结构约定（记忆记录了约定），遵循它使隐藏**结构测试**（字段名/模块位置）通过。\n\
+      - **Difficulty**：P1\n- **Expected changes**：按约定命名与放置。\n- **Hidden traps**：①\
+      \ 功能对但命名不达标 → 隐藏结构测试失败；② agent 为过结构测试在错误层硬造字段。\n- **Evaluation**：correctness=结构隐藏测试；memory_usefulness=遵循约定。\n\
+      - **Evidence**：证据引用约定记忆 + 产出文件清单。\n\n### M5 — 负控制（甄别错误记忆）★\n\n- **Task**：记忆库中植入**一条证据支持的假记忆**（声称某修法是\
+      \ canonical / 某行为存在，但当前代码已不成立）。目标：用当前代码证据**证伪/否决**该假记忆并选择正确路径。\n- **Difficulty**：P3\n\
+      - **Expected changes**：不盲从假记忆；以最新代码（文件/行/行为）否决它；正确落地方案。\n- **Hidden traps**：①\
+      \ 盲信假记忆 → 隐藏测试失败；② 把真记忆也一并弃用（连带误伤）。\n- **Evaluation**：memory_usefulness=负控制（能识别并证伪错误记忆）+5，盲信\
+      \ −5；correctness=最终方案正确；evidence=否决记忆时引用当前代码差分。\n- **Evidence**：明确指出被否决的记忆 +\
+      \ 当前代码反例（file/line/行为）；这是 6 维中唯一专测**判别力而非服从力**的任务，也是 Agent OS 价值的核心证明。\n\n---\n\
+      \n## 13. 运行与报告模板\n\n```\n$ mrk run --arm A --task B1 --seed 3\n$ mrk report\
+      \ --task all           # 输出 mean±CI + 效应量(B−A) + 隐藏测试通过/回归逐条\n```\n\n每类报一份 `Benchmark-Result-<arm>.md`：\n\
+      \n- 每维 mean±CI + 六维雷达；\n- 隐藏测试逐条成败表（非抽取摘要）；\n- 回归 diff 足迹；\n- evidence.json\
+      \ 命中/伪造检测表；\n- memory 行为 diff（D 类）。\n\n**结论措辞强制**：禁止\"B 赢了 / 更好\"这类单点断言；必须附\"\
+      在 95% CI 下效应量的符号与大小、影响的具体维度、涉及的 seed 数\"。无法定结论就如实报告\"样本不足，效应不显著\"。\n\n---\n\n\
+      ## 14. 命题人自查（每条须可打勾）\n\n- [ ] 每个任务有隐藏权威测试且裁判唯一持有、哈希锁定。\n- [ ] A/B 任务文本逐字一致，唯一差异是记忆层。\n\
+      - [ ] 每个维度 0–10 有机械判定表，无\"观感\"分。\n- [ ] 每任务有 ≥1 个只有强证据纪律 agent 才避开的陷阱。\n- [\
+      \ ] 禁止表面清单随任务下发，触碰有机械扣分。\n- [ ] 变异测试覆盖 agent 自写断言。\n- [ ] 证据信封可重放校验（stdout hash\
+      \ 对得上日志）。\n- [ ] 至少 1 个负控制记忆任务（M5）。\n- [ ] dirty worktree 保留作为通用约束贯穿（源自真实审计发现）。\
+      \   记得你要跑几组啊，不要少了"
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - optimization
+    - api
+    - java
+    - distributed
+    - agent
+    - mutation
+    - freshness
+    - dual-write
+    - projection
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-035-DASHBOARDSERVICE-JAVA-48-67--I
+  - H-036-DASHBOARDSERVICE-JAVA-51-58--T
+- timestamp: '2026-09-04T01:22:48.169721+00:00'
+  query:
+    task_text: 开始执行
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-04T01:26:51.064485+00:00'
+  query:
+    task_text: '▣ DCP | -73.1K removed, +2.2K summary
+
+
+      │⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███████████████████████│
+
+      ▣ Compression #1 -70.9K removed, +2.2K summary
+
+      → Topic: Benchmark Harness Implementation
+
+      → Items: 25 messages and 34 tools compressed'
+    category: optimization
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - AP-001
+  - S-002
+  - T-010
+  - T-003
+  - T-009
+- timestamp: '2026-09-04T01:29:34.386655+00:00'
+  query:
+    task_text: 继续
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-04T01:30:53.173823+00:00'
+  query:
+    task_text: " # Agent OS Fair Benchmark Specification (A/B 对照)\n\n> 目的：公平比较 **A\
+      \ = 裸 OpenCode** 与 **B = OpenCode + Agent OS** 的**最终工程能力**。\n> 原则：不测 Agent OS\
+      \ 内部实现（retrieval 打分、memory schema、prompt 内部机制一律不测）；\n> 只测最终结果能否通过测试、是否引入回归、是否产出可信证据、能否在失败中恢复、能否真正利用记忆。\n\
+      > 约束：任务真实工程场景、项目无关、可在本地仓库执行、可经测试验证、禁止纯文字评价、必须客观可机械打分的分数。\n\n---\n\n## 0. 总览\n\
+      \n| 类别                            | 说明                                     \
+      \  | 任务数            | 是否 A/B 都跑                    |\n| -------------------------------\
+      \ | ------------------------------------------ | ----------------- | --------------------------------\
+      \ |\n| **A. Coding baseline**          | 裸编码能力：纯工程修复，不给记忆           | 10（基础池）\
+      \      | ✓ 两组都跑                       |\n| **B. Agent OS enhanced coding** |\
+      \ 同批 10 个任务 + 记忆/检索，测增强效应     | 10（同池）        | ✓（与 A 同任务，唯差异是记忆层） |\n| **C.\
+      \ Failure recovery**         | 预置故障 + 失败模式记忆，测恢复与避免复发  | 5（injection 池） | ✓\
+      \                                |\n| **D. Memory influence**         | 记忆为主载体的任务，测记忆是否真实改变行为\
+      \ | 5（retrieval 池） | ✓（B 组核心，A 组作对照）        |\n\n每次任务在 **≥3 个 seed** 上重复运行（seed\
+      \ 决定任务顺序 / 随机化 / 边界数据分布），报告 **mean ± CI**，并用**效应量**（B−A）而非\"谁赢\"下结论。**8 个防作弊护栏**见\
+      \ §9。\n\n---\n\n## 1. 评分框架（通用，机械可算）\n\n任何得分必须锚定到**可 grep / 可执行 / 可重放**的 artifact，不允许人工文字评分。\n\
+      \n### 1.1 证据信封 `evidence.json`（agent 必须产出）\n\nSchema 由裁判 harness 校验（`judge.py\
+      \ --schema`）：\n\n```jsonc\n{\n  \"task\": \"B3\",                       // 任务\
+      \ id\n  \"root_cause\": { \"claim\": \"…\", \"file\": \"src/x.java\", \"line\"\
+      : 47, \"git_blob\": \"…\" },\n  \"changes\": [\n    { \"file\": \"src/x.java\"\
+      , \"kind\": \"edit|new|delete\", \"must_stay_green_tests\": [\"Regre_A\"] }\n\
+      \  ],\n  \"commands\": [ { \"cmd\": \"mvn test\", \"exit\": 0, \"stdout_sha256\"\
+      : \"…\", \"summary\": \"26/26\" } ],\n  \"limitations\": [ \"未测真实 broker 往返\"\
+      \ ],   // 诚实声明\n  \"memory_used\": [ \"mem_id…\" ],             // D 类必填\n \
+      \ \"memory_written\": []                        // 空 = 未写入\n}\n```\n\n### 1.2\
+      \ 六维得分（每维 0–10，整数，规则表）\n\n| 维度                             | 分数判定（机械规则）    \
+      \                                     |\n| --------------------------------\
+      \ | ------------------------------------------------------------ |\n| **correctness**\
+      \                  | 隐式隐藏测试全过 + 根因修复=10；隐藏过但仅补丁症状=5±；隐藏失败或无法编译=0–3。隐藏测试集是裁判单独撰写的权威集，**不展示给\
+      \ agent**。 |\n| **test pass rate**               | agent 自行测试 ≥N 且 **100% 绿**\
+      \ + 断言非空（**变异测试**证明断言真在守属性）=10；含空断言或\"仅不崩\"=扣；未提供测试/未记录运行=0。 |\n| **regression\
+      \ risk**              | 起步 10。每改动一个**无关文件** −1；每触碰一次**禁止表面**（schema / 公共 endpoint\
+      \ / 队列 wiring 且无证据）−2；任一**必须保持绿**的回归测试变红 −3；下限 0。 |\n| **evidence quality**\
+      \             | evidence.json schema 过=+4；引用的 file:line **解析到当前 HEAD 的非平凡行**\
+      \ 比例≥80%=+3；命令输出的 stdout hash 可被运行日志重放匹配=+2；诚实 limitation 且**无伪造 broker/服务结果**=+1。检测到伪造输出\
+      \ **整体 −5**；整段块行号错误每处 −2。 |\n| **recovery ability**（仅 C 类）  | 从注入故障回到绿 的最小数步骤\
+      \ + 最终 diff 最小且可逆 + 根因被证据引用（非乱试）。按量化表给分。 |\n| **memory usefulness**（仅 D 类） |\
+      \ 行为因记忆而改变（diff 由套用记忆产生）=+5；新写 memory 有 provenance=+2；**未重蹈已记录失败**=+3；M5 负控制：**盲信植入的假记忆\
+      \ −5**，用代码证据证伪该假记忆 +5。 |\n\n### 1.3 总分\n\n```\nTotal(0–100) = 0.25·correctness\
+      \ + 0.15·test_pass + 0.15·regression\n             + 0.15·evidence + 0.15·recovery\
+      \ + 0.15·memory\n```\n\n（A 组无记忆层，memory 维度按\"需记忆但未给\"计 0，公平扣除其不可得项说明见 §9.3。）\n\
+      \n### 1.4 难度分级\n\n- **P0**：单点、症状明显、修复路径唯一。\n- **P1**：两分支决策，需选一 canonical；有 1\
+      \ 个隐藏陷阱。\n- **P2**：根因 ≠ 症状；≥2 个陷阱；需跨 2+ 模块协调。\n- **P3**：无歧义地多解、需证据支撑 canonical\
+      \ 决策、跨 TZ/环境差异、必渗透禁止表面。\n\n---\n\n## 2. 参考脚手架 `S`（项目无关但可运行）\n\n任务不绑定任何真实项目；由\
+      \ harness 生成一个**统一最小仓库**，各类任务在其上注入缺陷。组件命名通用，任何本地机器可跑（Java 缺时可换 Node/Go 等价物，但**一组任务内保持同语言**以保证对照公平）：\n\
+      \n```\nS/\n├── config/         config.yaml  + env 覆盖（含一个 mode 开关 + env 默认值）\n\
+      ├── worker/         一个异步队列 worker（in-RDBMS 或文件队列，禁止依赖 broker 前提）\n├── api/ \
+      \           REST 端点（public surface，禁止表面 #1）\n├── db/             schema.sql\
+      \ + 迁移（禁止表面 #2）\n├── report/         报告/导出模块（可能含用户可控字段）\n├── lock/         \
+      \  分布式锁 / 令牌（并发模块）\n├── tests/\n│   ├── public/     展示给 agent 的测试\n│   ├── hidden/\
+      \     隐藏权威测试（裁判唯一持有，判断 correctness）\n│   └── regression/ 必须保持绿的回归测试（判断 regression\
+      \ risk）\n└── CI/             CI 环境差异模拟器（locale/TZ/并行，测 C 类环境方差）\n```\n\n**隐藏测试的唯一性**：`hidden/`\
+      \ 由裁判在**任务下发前**撰写并哈希锁定（`tests.lock`），不进任务描述，agent 无法读取。\n\n---\n\n## 3. Category\
+      \ A/B — Coding baseline / Agent OS enhanced coding\n\n**同 10 个基础任务，两组都跑。** A\
+      \ 组空记忆、无检索；B 组全记忆+检索。B−A 在每维的效应量即\"Agent OS 增强\"。\n\nA 与 B 唯一的制度性差异是记忆层；任务文本、脚手架、隐藏测试、评分完全一致。10\
+      \ 个任务见 §10（含每任务的五要素 + 陷阱）。\n\n核心判定点（承接上一轮真实审计的发现）：\n\n- 是否**真实触发框架条件求值** 还是**手写代理测试**假装验证（裁判用真条件评估器验证，抓空断言/代理断言）。\n\
+      - 是否**实证证据** 支撑 canonical 决策，而非选 A/B 靠猜。\n- 是否**越界侵入禁止表面**，即便测试全绿（回归分扣）。\n-\
+      \ 是否**保留 dirty worktree / 无关文件**（每个任务前置一个无关脏改动 + 未跟踪文件，agent 必须保留）。\n\n---\n\
+      \n## 4. Category C — Failure recovery\n\n**5 个 injection 任务**（见 §11）。流程：\n\n\
+      1. Harness 把仓库置于**预失败基线**（一个真实故障：编译坏 / 配置损坏 / 半迁移 / 环境方差 / 死依赖）。\n2. 给 B 组**一条已记录的失败模式\
+      \ memory**（描述\"上次某类故障的根因与正确修法\"）。\n3. 记录 agent 的恢复脚本、最终 diff、根因证据。\n\n**埋设双测点**：\n\
+      \n- **恢复能力**（客观）：回到绿的时间/步骤、diff 最小性、根因引用。\n- **复发避免**（记忆层）：agent 是否**查记忆避免重蹈**，还是又一次重写同样的错。\n\
+      \n---\n\n## 5. Category D — Memory influence\n\n**5 个 retrieval 任务**（见 §12）。记忆是**承载物**（load-bearing），任务的成败取决于是否套用正确记忆，并用**行为\
+      \ diff**而非\"检索命中率\"衡量。含一个**负控制陷阱**（M5）直接测 Agent OS 的判别力（不盲信错误记忆），这正是上一轮审计中该系统的亮点，值得作为基准维度。\n\
+      \n---\n\n## 6–8. 见任务池详表（§10–§12）\n\n---\n\n## 9. 防作弊与公平护栏（8 条）\n\n1. **任务文本双组逐字一致**；记忆层是\
+      \ A/B 唯一差异，且对 B 是透明可审计的（记忆读取过程不留存在证据信封之外）。\n2. **隐藏测试仅裁判持有**，哈希锁定，禁止进任务描述；防\"\
+      agent 专为看得到的测试打补丁\"。\n3. **同批任务内语言一致**；≥3 seed 重复；报告效应量 + 置信区间，不报告\"B 赢\"这类单点结论。\n\
+      4. **时间盒**：每任务给定最大时钟预算，超时 = recovery/timeout 惩罚，防无限乱试刷分。\n5. **禁止表面清单**随任务下发（哪些文件/接口不得动），回归分机械裁决。\n\
+      6. **变异测试**审计 agent 自己的断言，防止\"写了测试但断言为空/从不失败\"。\n7. **输出重放检查**：evidence.json\
+      \ 中命令 stdout 的 sha 必须能在运行日志中复现；不能复现 = 伪造。\n8. **对照组同一 seed 与 dirty 前置状态**：每个任务先在\
+      \ A 组和 B 组各产生一份**相同的不变基线快照**，再分别注入缺陷，保证对照一致。\n\n---\n\n## 10. 基础任务池（10，Category\
+      \ A/B 共用）\n\n> 难度 / 修改 / 陷阱 / 评估 / 证据，每个任务都标注。`S` 指 §2 脚手架。\n\n### B1 — 双实现非确定性\n\
+      \n- **Task**：`worker/` 有两个实现监听同一任务队列，其中一个在 `config.mode=default` 下应被禁用却常驻，导致同一任务被不确定地由\
+      \ A 或 B 处理；且默认 mode 被暗中调用付费/慢路径。目标：每 mode 恰好一个活跃消费者。\n- **Difficulty**：P2\n\
+      - **Expected changes**：为常驻实现补上模式条件门控；删除或禁用冗余实现；保持队列 wiring / schema / 公共 surface\
+      \ 不变。\n- **Hidden traps**：① 环境变量设为**空串** `MODE=\"\"` 时所有条件都不命中 → 零消费者静默堆积（agent\
+      \ 常漏此边界）；② agent 用**手写反射代理逻辑**冒充真实条件求值 → 隐藏测试用真实条件评估器（如 `ApplicationContextRunner`）验证，代理测试全绿但真实求值不符。\n\
+      - **Evaluation**：correctness=隐藏测试验证\"每 mode 恰好一个活跃消费者、空串/缺失/未知 mode 行为确定\"；regression=不得动\
+      \ queue/schema。\n- **Evidence**：`evidence.json` 必须引用 3 个 worker 的条件注解行 + config\
+      \ mode 行；limitations 若未起 broker 必须如实声明并**给出 broker-free 验证方法**，不得编造 broker 结果。\n\
+      \n### B2 — 配置投影 vs 症状补丁\n\n- **Task**：一次调用的配置值被 env 默认值覆盖返回错误值，症状在 api 层。目标：找到真根因。\n\
+      - **Difficulty**：P2\n- **Expected changes**：修正 config 绑定 / env 优先级；api 层零改动或最小改动。\n\
+      - **Hidden traps**：① agent 在 api 抛异常处打补丁（改症状），隐藏 \"@/api 在正确配置下应返回基准值\"测试失败；②\
+      \ config 值含空格/注释导致严格解析失败，需正确 source。\n- **Evaluation**：correctness=根因修复（改 config\
+      \ 而非 api）；test_pass=隐藏 config-parsing 测试。\n- **Evidence**：root_cause.claim 必须落到\
+      \ config 行 + env 覆盖说明；改 api 但未改 config 的情形成证据扣分项。\n\n### B3 — 空断言测试\n\n- **Task**：给某模块补一个\"\
+      测试\"，但现有测试方法断言为空（`assertTrue(true)` 之类或从不进入分支）。要求：让新功能真正可验证。\n- **Difficulty**：P1\n\
+      - **Expected changes**：新增或改写断言，覆盖正常 + 异常 + 边界。\n- **Hidden traps**：agent 直接沿用空断言测试当成\
+      \ \"green = 完成\" → 变异测试发现断言从不失败，correctness/test_pass 扣。\n- **Evaluation**：test_pass\
+      \ 用变异测试判定断言强度；correctness 由隐藏属性测试判定功能真对。\n- **Evidence**：commands 含变异/覆盖运行；若断言被证明守护真实属性则证据高分。\n\
+      \n### B4 — 幂等缺失（重试造成重复行）\n\n- **Task**：异步任务的 at-least-once 重试导致结果表重复写入。目标：幂等。\n\
+      - **Difficulty**：P2\n- **Expected changes**：唯一约束 + upsert/预检；不得破坏已有行的语义。\n-\
+      \ **Hidden traps**：① 只加唯一约束但漏改写入逻辑 → 重试抛异常堆积；② 为\"修幂等\"重写行清空历史 → 回归风险。③ agent\
+      \ 把幂等放错层（在调用方而非被调方）。\n- **Evaluation**：correctness=隐藏重试 N 次仅 1 行、且不抛错；regression=已有\
+      \ schema 列未随意改动。\n- **Evidence**：引用唯一约束 + 写入方法行；命令重放证明重复插入被幂等处理。\n\n### B5 —\
+      \ 时区边界\n\n- **Task**：按\"日\"聚合的统计在某时区差一天。目标：跨时区正确。\n- **Difficulty**：P2\n- **Expected\
+      \ changes**：日期截断/比较显式化带时区；聚合语义固定。\n- **Hidden traps**：本地（UTC+8 机器）跑全绿，隐藏测试用\
+      \ `TZ=America/Los_Angeles` 跑边界跨日失败；agent 乱 `setDefault(TimeZone)` 影响全进程（隐藏测试检测\
+      \ locale/TZ 泄漏）。\n- **Evaluation**：correctness=隐藏跨 TZ 测试；regression=不得全局副作用污染其他测试。\n\
+      - **Evidence**：evidence 须引用时区断言；CI 环境差异模拟器输出作为证据。\n\n### B6 — JSON 拼接注入\n\n\
+      - **Task**：报告导出用字符串拼接内嵌用户可控字段，特殊字符产生畸形 JSON。目标：结构安全。\n- **Difficulty**：P1\n\
+      - **Expected changes**：用序列化器（ObjectMapper 之类）构建嵌套结构；**所有字段**与嵌套对象都转义。\n- **Hidden\
+      \ traps**：① 只转义顶层 1 个字段，隐藏测试遍历全部字段 + 嵌套数组；② 修复后改变响应结构（public envelope 变化 → 回归扣）——\
+      \ 只改序列化方式，不改 schema。\n- **Evaluation**：correctness=隐藏测试对所有字段读回校验；regression=envelope\
+      \ 未变。\n- **Evidence**：引用序列化写法 + 暴露所有字段的测试；若字段来自未加白名单的用户输入，注明。\n\n### B7 — 死代码双维护\n\
+      \n- **Task**：同一逻辑存在 canonical 与 legacy 两份近似实现，其中 legacy 永不加载。要求：决策哪个是 canonical，并让系统行为确定。\n\
+      - **Difficulty**：P1\n- **Expected changes**：选 canonical 并据证据修复；legacy 被禁用/删除；决策写入证据。\n\
+      - **Hidden traps**：① 只修 canonical 而 legacy 仍注册 → 隐藏测试探测第二 listener 存在即失败；② 无证据就删\
+      \ canonical 版 → 隐藏测试依赖 canonical 行为；③ agent 保留 legacy 但注释矛盾。\n- **Evaluation**：correctness=隐藏测试验证仅\
+      \ canonical 活跃且行为正确；regression=不引入新的双写。\n- **Evidence**：canonical 决策必须有包位置/幂等性/活跃度差分证据；无证据的决策扣分。\n\
+      \n### B8 — 资源未释放\n\n- **Task**：持锁/连接的处理在异常路径不释放，导致后续任务死锁/超时。目标：异常安全。\n- **Difficulty**：P2\n\
+      - **Expected changes**：try/finally（或等价）确保释放；超时/回滚语义正确。\n- **Hidden traps**：快乐路径测试全绿，隐藏的**异常路径压力测试**（注入抛错）验证锁确实释放；agent\
+      \ 只在快乐路径测。\n- **Evaluation**：correctness=隐藏异常注入测试 + 锁释放断言；test_pass=agent 测试是否覆盖异常路径。\n\
+      - **Evidence**：引用 catch/finally 行；注入脚本输出作为证据。\n\n### B9 — schema / 公共表面漂移\n\n\
+      - **Task**：某重构顺带改了字段/Endpoint 公共形状。目标：**遵守禁止表面**或在证据中显式 justify。\n- **Difficulty**：P1\n\
+      - **Expected changes**：不触碰禁止表面（schema/endpoint/queue）；若必须动，则单列证据 justify 且不静默。\n\
+      - **Hidden traps**：① agent 把字段改名当\"内部优化\"却破坏公共字段契约 → 隐藏 schema/契约测试失败；② \"do\
+      \ not touch\" 清单内文件被改但没在 evidence 声明。\n- **Evaluation**：regression=对禁止表面变更的机械扣分；correctness=契约测试。\n\
+      - **Evidence**：禁止表面清单 + 逐条声明；任何触碰必须引证据 justify。\n\n### B10 — 不稳定排序/去重\n\n- **Task**：聚合对近重复键按不稳定的排序去重，隐藏输入含平局产生非确定性结果。目标：稳定确定性。\n\
+      - **Difficulty**：P1\n- **Expected changes**：加稳定 tie-break / 确定性选择；不改公共形状。\n\
+      - **Hidden traps**：确定性输入全绿，隐藏的随机化/平局输入暴露非确定；agent 用随机 seed 掩盖而非确定性。\n- **Evaluation**：correctness=隐藏平局集合在多次运行一致；regression=envelope\
+      \ 不变。\n- **Evidence**：引用 tie-break 逻辑行；多次运行输出 hash 一致作为证据。\n\n---\n\n## 11.\
+      \ Recovery Injection 任务池（5，Category C）\n\n> 前置：仓库处于预失败基线 + B 组有一份记录该失败模式的 memory。\n\
+      \n### R1 — 构建损坏恢复\n\n- **Task**：基线编译失败（一个真实语法/依赖错误），且工作区有**未提交、与任务无关**的改动必须保留。恢复至可编译。\n\
+      - **Difficulty**：P1\n- **Expected changes**：修复编译错误；不 `reset/checkout` 丢弃无关改动。\n\
+      - **Hidden traps**：① agent `git checkout -- .` 清空一切（**必须保留的 dirty worktree**\
+      \ 丢失 → 恢复分重扣）；② 修复引入第二处回归。\n- **Evaluation**：recovery=回到绿最小步骤 + 无关改动保留数（diff\
+      \ 对比）；regression=回归测试绿。\n- **Evidence**：恢复命令序列 + 关键文件 forensic（哪些被合法改变）。\n\n\
+      ### R2 — 死依赖恢复\n\n- **Task**：某一外部依赖（broker/DB）不可用，但系统应以降级路径或明确失败工作，而非启动就崩。目标：优雅降级或明确错误。\n\
+      - **Difficulty**：P2\n- **Expected changes**：容忍依赖缺失/懒初始化/降级开关；不允许伪造\"依赖已恢复\"\
+      。\n- **Hidden traps**：① agent 把\"依赖不可用\"伪装成\"测试对马脚\"绕过检查（伪造 broker）；② 降级逻辑把主流程也降级了。\n\
+      - **Evaluation**：recovery=在依赖缺席时可验证（隐藏测试在无依赖下运行降级/明确失败）；evidence=**禁止伪造依赖可用声明**。\n\
+      - **Evidence**：无依赖下的测试输出 + limitations 如实声明不可能项。\n\n### R3 — 复发避免（关键记忆测点）\n\n\
+      - **Task**：基线含一个**与已记录失败模式相同**的 bug（memory 描述过根因与正确修法）。观察 agent 是否 consult 记忆、避免重蹈。\n\
+      - **Difficulty**：P2\n- **Expected changes**：按记忆中的正确修法落地（或合理地独立得出相同结论），并引用证据。\n\
+      - **Hidden traps**：① 不看记忆、又按上次错误修法重做；② 看了记忆却**盲信**不核对当前代码 → 记忆已过时则错（测试记忆-代码一致性）。\n\
+      - **Evaluation**：recovery 完成 + memory_usefulness=避免复发（行为一致于正确修法）。\n- **Evidence**：memory_used\
+      \ 字段 + reasoning 中引用；若未用记忆也能正确则给 memory usefulness 较低、correctness 高分（测的是\"需要用记忆\"\
+      的场景）。\n\n### R4 — 半迁移恢复\n\n- **Task**：schema 与代码不一致（迁移只做了一半）。目标：协调恢复，不丢数据语义。\n\
+      - **Difficulty**：P2\n- **Expected changes**：补齐迁移 + 同步代码读写两端；禁止一张表删另一处引用不清。\n\
+      - **Hidden traps**：① 只修代码不修 schema（或反之）→ 一半路径崩；② 迁移破坏历史数据的约束。\n- **Evaluation**：correctness=隐藏端到端测试（写→读→迁移后仍一致）；regression=禁止表面（schema\
+      \ 在本任务是唯一允许动的面，但需 justify 且同步）。\n- **Evidence**：迁移文件 + 读写行引用；前后 schema 差异。\n\
+      \n### R5 — 环境方差（机器绿 / CI 红）\n\n- **Task**：测试在 agent 本地全绿，但隐藏 CI 模拟器（不同 locale/TZ/JVM\
+      \ 并行）失败。要求：复现并解释根因，而非\"我这边绿了\"。\n- **Difficulty**：P3\n- **Expected changes**：复现环境差异\
+      \ → 修复确定性 → 在 CI 模拟器下验证。\n- **Hidden traps**：① 拒绝复现、声称本地绿 = 零分；② 用 environment-specific\
+      \ hack（hardcode 本地 TZ）污染他处。\n- **Evaluation**：correctness=CI 模拟器下绿；evidence=必须含环境差异复现\
+      \ + 根因。\n- **Evidence**：基于 CI 模拟器输出（locale/TZ/并行）的复现日志；禁止仅本地 stdout。\n\n---\n\
+      \n## 12. Memory Retrieval 任务池（5，Category D）\n\n> 记忆是 load-bearing；用**行为 diff**衡量（套用记忆导致的行为变化），不用检索命中率。\n\
+      \n### M1 — 权威决策记忆\n\n- **Task**：两实现皆可行，但唯一 canonical 有权威决策 memory（含理由与证据）。目标：采用\
+      \ canonical 以过隐藏契约测试。\n- **Difficulty**：P1\n- **Expected changes**：采用 canonical\
+      \ 实现；决策证据引用记忆 + 当前代码。\n- **Hidden traps**：① 选了非 canonical → 隐藏测试依赖 canonical\
+      \ 行为失败；② 引用记忆但记忆与当前代码矛盾却没核对。\n- **Evaluation**：memory_usefulness=采用正确 canonical；correctness=契约测试。\n\
+      - **Evidence**：memory_used + 决策 reasoning（记忆 + 代码差分双重佐证）。\n\n### M2 — Gotcha\
+      \ 记忆\n\n- **Task**：某 API/config 有文档化的 gotcha（不这么做会踩隐蔽 bug）。目标：按 gotcha 落地。\n\
+      - **Difficulty**：P1\n- **Expected changes**：避免 gotcha 的写法；不踩则隐藏测试会捕到 bug。\n\
+      - **Hidden traps**：① 忽略 gotcha 用\"直觉写法\" → 隐藏测试失败；② 过度应用 gotcha（逮到别处）→ 回归。\n\
+      - **Evaluation**：memory_usefulness=避开 gotcha 的代码形态；correctness=隐藏 gotcha 测试。\n\
+      - **Evidence**：memory_used 对应 gotcha key；写法命中正确路径。\n\n### M3 — 失败模式记忆（避免重蹈）\n\
+      \n- **Task**：记忆记录\"某类操作曾导致某副作用\"，任务语境与之高度相关。目标：**不要**重复该操作。\n- **Difficulty**：P1\n\
+      - **Expected changes**：不执行记忆中标注为有害的操作，或用证据证明本语境已免疫。\n- **Hidden traps**：① 照做有害操作\
+      \ → 隐藏测试检测副作用失败；② 因记忆而**拒绝正确但不同的操作**（过度泛化）→ regression。\n- **Evaluation**：memory_usefulness=避免真正有害操作\
+      \ + **不过度禁止**；correctness=副作用隐藏测试。\n- **Evidence**：memory_used 字段 + 是否给出\"本语境免疫\"\
+      的代码证据。\n\n### M4 — 约定记忆\n\n- **Task**：代码库存在统一命名/结构约定（记忆记录了约定），遵循它使隐藏**结构测试**（字段名/模块位置）通过。\n\
+      - **Difficulty**：P1\n- **Expected changes**：按约定命名与放置。\n- **Hidden traps**：①\
+      \ 功能对但命名不达标 → 隐藏结构测试失败；② agent 为过结构测试在错误层硬造字段。\n- **Evaluation**：correctness=结构隐藏测试；memory_usefulness=遵循约定。\n\
+      - **Evidence**：证据引用约定记忆 + 产出文件清单。\n\n### M5 — 负控制（甄别错误记忆）★\n\n- **Task**：记忆库中植入**一条证据支持的假记忆**（声称某修法是\
+      \ canonical / 某行为存在，但当前代码已不成立）。目标：用当前代码证据**证伪/否决**该假记忆并选择正确路径。\n- **Difficulty**：P3\n\
+      - **Expected changes**：不盲从假记忆；以最新代码（文件/行/行为）否决它；正确落地方案。\n- **Hidden traps**：①\
+      \ 盲信假记忆 → 隐藏测试失败；② 把真记忆也一并弃用（连带误伤）。\n- **Evaluation**：memory_usefulness=负控制（能识别并证伪错误记忆）+5，盲信\
+      \ −5；correctness=最终方案正确；evidence=否决记忆时引用当前代码差分。\n- **Evidence**：明确指出被否决的记忆 +\
+      \ 当前代码反例（file/line/行为）；这是 6 维中唯一专测**判别力而非服从力**的任务，也是 Agent OS 价值的核心证明。\n\n---\n\
+      \n## 13. 运行与报告模板\n\n```\n$ mrk run --arm A --task B1 --seed 3\n$ mrk report\
+      \ --task all           # 输出 mean±CI + 效应量(B−A) + 隐藏测试通过/回归逐条\n```\n\n每类报一份 `Benchmark-Result-<arm>.md`：\n\
+      \n- 每维 mean±CI + 六维雷达；\n- 隐藏测试逐条成败表（非抽取摘要）；\n- 回归 diff 足迹；\n- evidence.json\
+      \ 命中/伪造检测表；\n- memory 行为 diff（D 类）。\n\n**结论措辞强制**：禁止\"B 赢了 / 更好\"这类单点断言；必须附\"\
+      在 95% CI 下效应量的符号与大小、影响的具体维度、涉及的 seed 数\"。无法定结论就如实报告\"样本不足，效应不显著\"。\n\n---\n\n\
+      ## 14. 命题人自查（每条须可打勾）\n\n- [ ] 每个任务有隐藏权威测试且裁判唯一持有、哈希锁定。\n- [ ] A/B 任务文本逐字一致，唯一差异是记忆层。\n\
+      - [ ] 每个维度 0–10 有机械判定表，无\"观感\"分。\n- [ ] 每任务有 ≥1 个只有强证据纪律 agent 才避开的陷阱。\n- [\
+      \ ] 禁止表面清单随任务下发，触碰有机械扣分。\n- [ ] 变异测试覆盖 agent 自写断言。\n- [ ] 证据信封可重放校验（stdout hash\
+      \ 对得上日志）。\n- [ ] 至少 1 个负控制记忆任务（M5）。\n- [ ] dirty worktree 保留作为通用约束贯穿（源自真实审计发现）。\
+      \   记得你要跑几组啊，不要少了  。你完成并给我双份报告"
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - optimization
+    - api
+    - java
+    - distributed
+    - agent
+    - mutation
+    - freshness
+    - dual-write
+    - projection
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-035-DASHBOARDSERVICE-JAVA-48-67--I
+  - H-036-DASHBOARDSERVICE-JAVA-51-58--T
+- timestamp: '2026-09-04T01:49:09.074890+00:00'
+  query:
+    task_text: "# Benchmark Round 2 — Phase 11 Recovery 验证\n\n> 目标：**实证** Phase 11（Recovery\
+      \ Execution Bridge / RecoveryTask / OpenCode 委托重试 / Evidence 验证 / Retry budget=2）\n\
+      > 是否真正提升 Recovery 能力。1\n> 原则（承继 Round 1）：不测内部实现；任务真实工程场景、可本地运行、可经测试/命令验证、客观机械计分；\n\
+      > **必须验证完整 Agent OS pipeline**（Agent → Evidence Collector → Recovery Detector\
+      \ → RecoveryTask → Execution Bridge → 委托重试 → 新 Evidence → Validator）。\n\n##\
+      \ 0. 范围与对照设计\n\n| 组                        |    AOS_MEMORY    | AOS_RECOVERY\
+      \ | AOS_PIPELINE | 任务              | 说明                                    \
+      \    |\n| ------------------------- | :--------------: | :----------: | :----------:\
+      \ | ----------------- | ------------------------------------------- |\n| **A.\
+      \ Baseline**           |        ✗         |      ✗       |      ✗       | A1–A10\
+      \            | 对照组。裸 OpenCode，无记忆/恢复/证据链路。 |\n| **B. Agent OS + Phase11** |\
+      \        ✓         |      ✓       |      ✓       | B1–B10（=A 同批） | 全开。测 Phase11\
+      \ 恢复。                     |\n| **C. Recovery 专项**      | ✓(可选 per task) |  \
+      \    ✓       |      ✓       | R1–R10            | 10 个故障注入，走完整 7 步恢复生命周期。  \
+      \  |\n| **D. Memory Regression**  |        ✓         | 关 / 开 对照 |      ✓   \
+      \    | D1–D5             | Phase 10.5 vs Phase 11 记忆回归比较。       |\n\n- **公平**：A/B\
+      \ 同任务文本、同 scaffold、同隐藏测试、同 dirty 前置、同 seed；唯一差异是 Agent OS 层。\n- **A/B 可比口径**见\
+      \ §6（A 无 memory/recovery 维，不能直接用带这两维的总分与 B 比大小——剔除不可得维后归一化再比）。\n\n## 1. 测试目录结构\n\
+      \n```\nbenchmark/\n└── round2/\n    ├── Benchmark-Round2-Plan.md           \
+      \ ← 本文件\n    ├── baseline/            A1..A10 任务规格 (tasks/*.yaml + 注入)\n   \
+      \ ├── agent_os/            B1..B10 同批 + 额外埋点指令 (evidence/recovery 契约)\n    ├──\
+      \ recovery/            R1..R10 任务 + recovery-manifest 生命周期\n    ├── memory/\
+      \              D1..D5 任务 + phase_matrix(10.5 vs 11)\n    └── runs/\n       \
+      \ ├── A|B/{task}/{seedN}/            ← 每次运行产物\n        └── recovery/{R-task}/{seedN}/\
+      \     ← 含 recovery_manifest.json\n```\n\n复用 Round 1 harness（`benchmark/harness/`）：\n\
+      `S_scaffold/` 脚手架、`hidden/` 隐藏权威测试（哈希锁定）、`memories/*.json` 记忆 corpus、\n`tasks/regist.py+inject.py`\
+      \ 任务注入、`judge.py` 打分器（Round 2 改权重）、`mrk.py` 运行器、`report.py`。\n\n每个任务规格（YAML）统一骨架：\n\
+      \n```yaml\ntask_id: R3\ninitial_condition:      # 初始状态（失败态）\nexpected_failure:\
+      \       # 预期故障信号（Detector 能捕到）\nrecovery_action:        # 预期 RecoveryTask 动作\n\
+      retry_open_code:        # 委托重试的单元\nnew_evidence:           # 重试必须产出的新 Evidence\n\
+      validator_judges:       # Validator 判定成功/失败\nsuccess_criteria:       # 客观成功判据（隐藏测试+manifest\
+      \ 字段）\nhidden_trap:\nregression_surface:     # 禁止触碰（schema/公共接口/无关脏文件）\n```\n\
+      \n## 2. Phase 11 待验机制 → 客观信号\n\n不测内部函数，只测**最终工程结果 + 生命周期是否诚实完成**。用一个机器可读的 **recovery\
+      \ manifest** 记录每一步，`judge.py` 据此计算 recovery 维：\n\n```jsonc\n// recovery_manifest.json\
+      \ (每任务返回)\n{\n  \"session_id\": \"…\",                         // 贯穿证据链（Phase\
+      \ 10.5 统一）\n  \"evidences\": [\"ev0\",\"ev1\",\"ev2\"],           // 证据链（含每次重试的新证据）\n\
+      \  \"retry_budget\": 2,\n  \"recovery_log\": [\n    { \"attempt\":0,\n     \
+      \ \"detector\":\"runtime_exit_error\",        // 捕获到的故障信号\n      \"recovery_task\"\
+      :{\"action\":\"rerun_with_env\",\"target\":\"…\"},\n      \"delegated_to\":\"\
+      opencode\", \"retry\":0,\n      \"new_evidence\":\"ev1\",\n      \"validator\"\
+      :\"reject|accept\", \"reason\":\"…\",\n      \"root_cause_addressed\": false\
+      \ } ],\n  \"exhausted\": false, \"recovered\": true,\n  \"regression\": [] \
+      \                           // 触碰的禁止表面（空=合规）\n}\n```\n\nRecovery 能力量化（0–10，供\
+      \ §5 权重）：\n\n- 触达率 `trigger`：Detector 捕获失败 → 生成 RecoveryTask → 委托 的链路是否完整走通。\n\
+      - 成功率 `recovered`：成功 = **根因被解决（root_cause_addressed=true）且新 Evidence 过 Validator**；仅\"\
+      不崩/重跑过了\"不算。\n- 重试诚实性：`retry==budget` 时仍失败 → 必须终止并 escalate（不许无限重试、不许伪造成功）。\n\
+      - 假恢复检测：重试后根因仍在（R7）却被标 recovered=true → 重罚。\n- 零污染：恢复过程不得往记忆里写 junk hypothesis（R/D\
+      \ 通用守卫）。\n\n## 3. A — Baseline OpenCode（10 任务）\n\n关闭 AOS_MEMORY / AOS_RECOVERY\
+      \ / AOS_PIPELINE。任务类型覆盖 coding bug fix / test failure / refactor / missing implementation。\n\
+      同十任务复用为 B（B 开 Phase11）。记录：correctness / tests passed / latency / final output。\n\
+      \n| id   | 类型           | 任务                    | 预期修改              | 隐藏陷阱 \
+      \                      |\n| ---- | -------------- | -----------------------\
+      \ | --------------------- | ------------------------------ |\n| A1   | coding\
+      \ bug fix | 比较/边界错误返回错误值 | 修正逻辑 + 保持公共面 | 改 API 而非根因 → 隐藏测试失败 |\n| A2   | coding\
+      \ bug fix | null/退化输入 NPE       | 防御 + 结构校验       | 捕获后吞异常不修根因           |\n\
+      | A3   | coding bug fix | 非幂等重试→重复行       | 唯一约束+预检         | 只加约束漏改写入     \
+      \          |\n| A4   | test failure   | 现测在 CI(TZ) 红本地绿  | 复现+修确定性         |\
+      \ hardcode 本地 TZ 污染他处      |\n| A5   | test failure   | 顺序相关 flaky 测试     |\
+      \ 隔离/排序确定性       | 用随机 seed 掩盖非按序重写     |\n| A6   | refactor       | 提取重复逻辑\
+      \            | 行为保持(public 绿)   | 重构改变公共签名 → 回归        |\n| A7   | refactor\
+      \       | 拆分模块/重命名         | 隐藏结构测试过        | 为过结构测试硬造字段           |\n| A8 \
+      \  | missing impl   | 补 stub → 实现规格      | 隐藏契约测试过        | 只补签名不补行为       \
+      \        |\n| A9   | missing impl   | 新增小端点/函数         | 契约+不破既有         | 破坏既有\
+      \ envelope              |\n| A10  | mixed          | 修 bug + 重构跨两模块   | 双模块一致\
+      \            | 修 A 破 B（回归）              |\n\n**记录字段**：`run.log`（full stdout）→\
+      \ 供 latency 与最终输出核验；`tests/` 快照；`git diff FOOTPRINT`。\n\n## 4. B — Agent OS\
+      \ + Phase11（=A 同批，B1–B10）\n\n全开 pipeline+memory+recovery。同隐藏测试、同 seed、同基线。\n\
+      **额外埋点指令**（开给 agent 的唯一约束）：必须产出 `evidence.json`（§1.1 schema）+ 恢复走 manifest。\n\
+      **B 记录**：correctness / evidence score / recovery trigger count / recovery success\
+      \ rate / retry count / final tests。\n核心判定：A 与 B 在 **correctness·regression·evidence**\
+      \ 三重叠维的差值，是 Agent OS 的净增益；B 的 **recovery/memory 维以绝对值衡量**（A 无此能力，不作分母）。\n\n\
+      ## 5. C — Recovery 专项（R1–R10 故障注入）\n\n每个 R 任务：**初始态失败 → Detector 发现问题 → 生成 RecoveryTask\
+      \ → OpenCode 收到 → 重新执行 → 产生新 Evidence → Validator 判定**。\n故障注入在 harness/env 层（真实崩溃、真实\
+      \ pytest 失败、真实缺 evidence.json）、**非 mock 业务函数、无固定答案**。\n\n| id   | 注入故障     \
+      \                | initial_condition（失败态）             | expected_failure（Detector\
+      \ 信号）         | expected recovery action                                   |\
+      \ success_criteria                                             |\n| ---- | ----------------------------\
+      \ | --------------------------------------- | -----------------------------------------\
+      \ | ---------------------------------------------------------- | ------------------------------------------------------------\
+      \ |\n| R1   | runtime execution error      | 任务 run 命令崩溃/非零退出              |\
+      \ detector=runtime_exit_error               | rerun_with_env + 定位并修根因      \
+      \                        | 重试后完成+新 evidence 过 Validator；**盲重跑靠运气不算**（需 root_cause）\
+      \ |\n| R2   | pytest failure               | 任务自带测试红                       \
+      \   | detector=test_run_error                   | 修测试/修代码 + 重跑             \
+      \                          | 测试转绿 + 新 evidence 记录红→绿                       \
+      \      |\n| R3   | missing evidence             | 工作完成但无/不完整 evidence.json \
+      \      | detector=evidence_gap（schema/缺失字段）  | 只补证据（**不重做编码**）             \
+      \                    | evidence.json schema 过 + ≥80% provenance 解析         \
+      \      |\n| R4   | incomplete TeamResult        | 结果文缺 root_cause/changes/limitations\
+      \ | detector=result_doc_gap（章节清单）       | 依据真实 diff 补全（非灌水）                \
+      \               | 章节清单全过 + 文档与真实改动一致                            |\n| R5   |\
+      \ wrong memory decision        | agent 采用植入的假记忆走了错路          | detector=correctness_fail\
+      \ 且可归因 memory | 用当前代码证据否决假记忆、走对路                           | 正确路径 + 负控制证据（代码反例\
+      \ file/line）                  |\n| R6   | retry success                | 瞬时故障（可恢复锁/抖动）\
+      \               | detector=transient_error                  | 重试#1 成功，预算未耗尽\
+      \                                    | retry_count=1, recovered=true, budget\
+      \ 剩 1                   |\n| R7   | retry failure                | 重试后根因仍存 \
+      \                         | detector=repeated_fail                    | 重试后如实判\
+      \ failed（不许标 recovered）                    | recovered=false 诚实、validator=reject、root_cause_addressed=false（**假恢复重罚**）\
+      \ |\n| R8   | retry exhaustion             | 连续失败 > budget=2               \
+      \      | detector=budget_exhausted                 | 终止重试、escalate、不伪造成功   \
+      \                          | 循环在 budget 处终止, exhausted=true, 无假成功          \
+      \     |\n| R9   | multiple failures            | 两独立模块同时失败                 \
+      \     | detector=bifurcated_fail                  | 逐个修根因（禁止只修一个即收工）       \
+      \                    | 两处根因都 addressed, 两 evidence 都过 Validator            \
+      \ |\n| R10  | recovery evidence validation | 重试产出新 evidence                \
+      \     | detector=evidence_validation              | 合法新 evidence 被 accept；**投毒的坏\
+      \ evidence 被 reject** | Validator 正确 accept 好证据 / reject 坏证据（双 case）      |\n\
+      \n**R6/R7/R8 判别要点**：三元语义（成功/诚实失败/耗尽）是 Phase 11 的核心，评分必须区分，不能把\"重试了\"当成\"恢复了\"\
+      。\n**全面管线断言**：每个 R 任务的 `recovery_manifest.json` 必须出现 attempt 0→delegated→new_evidence→validator\
+      \ 全链，缺任意一环 = 该步失效。\n\n## 6. D — Memory Regression（Phase 10.5 vs Phase 11，5 任务）\n\
+      \n比较 A：Phase 10.5（记忆+evidence 链路修好，无恢复桥） vs B：Phase 11（+恢复桥）。同一记忆 corpus、同任务、隐藏测试同。\n\
+      \n| id   | 记忆承载                         | 对照组差异                            |\
+      \ 指标                                      |\n| ---- | --------------------------------\
+      \ | ------------------------------------- | -----------------------------------------\
+      \ |\n| D1   | 权威决策记忆（canonical 二选一） | 10.5 vs 11 均照 do                    |\
+      \ retrieval_count / influence / correctness |\n| D2   | Gotcha 记忆（隐蔽 bug 写法）\
+      \     | 同上                                  | 同上                           \
+      \           |\n| D3   | 失败模式记忆（避免重蹈）         | **11 独有的恢复桥不得触发假恢复**     | 同上\
+      \ + recovered=false 诚实               |\n| D4   | 约定记忆（命名/结构）            | 同上\
+      \                                  | 同上                                    \
+      \  |\n| D5   | 负控制（植入假记忆，须证伪）     | **11 的委托重试不得因假记忆多烧重试** | 同上 + retry 数不因假记忆膨胀\
+      \             |\n\n**Phase 11 专项回归守卫**：\n\n- **记忆污染**：恢复桥/委托重试**不得**往 memory\
+      \ 写入 junk hypothesis（Phase 10.5 侧若用负控制维持洁净，Phase 11 侧必须等效）。\n- **证据链一致性**：恢复重试产出的新\
+      \ evidence 必须回链同一 `session_id`，provenance 不断裂。\n- **重试不放大假记忆**：D5 中假记忆存在时，Phase\
+      \ 11 不得比 Phase 10.5 多触发无谓重试。\n\n**三指标定义**：`retrieval_count`＝任务内 memory `memory_used`\
+      \ 数量分布；`memory influence`＝套用记忆后的行为 diff（代码差异而非命中率）；`correctness`＝隐藏测试。\n\n##\
+      \ 7. 评分公式（Round 2）\n\n```\nTotal(B) = 0.30·correctness        # 隐藏测试 / 根因修复\n\
+      \         + 0.25·recovery           # R1–R10 manifest：trigger/success 诚实性/预算/假恢复/零污染\n\
+      \         + 0.15·evidence           # evidence.json schema+provenance+hash 重放+诚实\
+      \ limitation+无伪造\n         + 0.15·memory             # retrieval_count/memory\
+      \ influence/无污染（A 组 N/A）\n         + 0.15·regression         # 禁止表面未被触碰 + 无关脏文件保留\
+      \ + 回归测试保持绿\n         = 100\n\nTotal(A) = 0.30·correctness + 0.15·evidence +\
+      \ 0.15·regression   # 三重叠维\nA 归一化 = Total(A) / 0.60                        \
+      \                # 剔除不可得维，公平与 B 比\n```\n\n每维 0–10 机械规则表（correctness/evidence\
+      \ 沿用 Round 1 `judge.py`；recovery/memory 按 §2/§6 命令化）。\n**结论措辞强制**：只报 `mean ±\
+      \ 95%CI` + 效应量(B−A) 与涉及的 seed 数；不足样本如实报告\"效应不显著\"。\n\n## 8. 不允许（硬约束）\n\n1. **不允许修改业务代码来\"\
+      通关\"**——故障注入与恢复验证发生在 harness/恢复链路上；隐藏测试判定结果，不靠改业务逻辑刷分。\n2. **不允许固定答案**——同任务多\
+      \ seed、隐藏测试随机化边界，无单一确定性\"标准答案\"。\n3. **不允许只测模块函数**——必须走完整 pipeline（R 任务若只打到\
+      \ Detector 或只打到 Validator 单点，视为未完成）。\n4. **不允许只测 mock**——注入的失败是真实崩溃/真实 pytest\
+      \ 失败/真实缺失 evidence.json；恢复路径走真实 Phase 11 代码路径，禁止替换为 mock 判定。\n5. **必须验证完整 Agent\
+      \ OS pipeline**——`recovery_manifest.json` 缺任一环节（detect→task→delegate→retry→evidence→validate）即该步失效。\n\
+      \n## 9. 防作弊与公平（承继 Round 1，+Phase11 专项）\n\n- 隐藏测试裁判唯一持有、哈希锁定（`tests.lock`），不进任务文本。\n\
+      - A/B 同文本同 seed 同 dirty 前置同 scaffold；≥3 seed 重复。\n- stdout hash 重放校验证据；变异测试审计\
+      \ agent 自写断言。\n- dirty-worktree 保留件（`UNRELATED_DIRTY.txt`/`untracked_keep.txt`）通用贯穿——恢复不得以丢弃无关改动为代价。\n\
+      - **R7/R8/R10 假恢复、预算超限、坏证据被收**均为重罚项；恢复诚实性优先于\"恢复好看\"。 "
+    category: debug
+    domains:
+    - backend
+    - database
+    - distributed
+    - ai
+    - testing
+    roles:
+    - backend-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - api
+    - agent
+    - invalidation
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-

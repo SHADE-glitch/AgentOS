@@ -3397,3 +3397,55 @@ model: ''
 runtime_mode: REAL_HOST
 timestamp: '2026-09-03T02:58:57.042813+00:00'
 ```
+
+## Task Event — 2026-09-04T01:09:45.039277+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788484185
+task_id: DRYRUN-001
+task_text: Create a test file
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T01:09:45.039277+00:00'
+```
+
+## Task Event — 2026-09-04T01:10:27.535017+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788484227
+task_id: DRYRUN-002
+task_text: Create a test file
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T01:10:27.535017+00:00'
+```
+
+## Task Event — 2026-09-04T01:13:33.830162+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788484413
+task_id: AUDIT-001
+task_text: Verify session unification
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T01:13:33.830162+00:00'
+```
+
+## Task Event — 2026-09-04T01:41:02.626567+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788486062
+task_id: DRYRUN-P11
+task_text: Create a test file
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T01:41:02.626567+00:00'
+```

@@ -52,6 +52,20 @@ from memory_state_reconciler import check_consistency, repair_index
 from project_preflight import run_preflight
 from code_validator import validate_code_changes
 
+# Phase 8.9: Audit layer integration
+sys.path.insert(0, os.path.join(BASE, "runtime", "audit"))
+from audit_integration import (
+    record_retrieval_audit,
+    collect_task_evidence_before,
+    collect_task_evidence_after,
+    validate_team_result_claims,
+    generate_provenance_artifact,
+)
+
+# Phase 10: Recovery loop integration
+sys.path.insert(0, os.path.join(BASE, "runtime", "recovery"))
+from recovery_integration import run_recovery_loop, run_recovery_loop_with_execution
+
 # Phase 5.7: Real Router, Skill, Telemetry
 from agent_router import route as router_route
 from skill_loader import build_skill_context as skill_load
@@ -119,7 +133,7 @@ def load_loop_state(loop_id):
             return _safe_yaml_load(f)
 
 
-def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, runtime_mode="REAL_HOST"):
+def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, runtime_mode="REAL_HOST", session_id=""):
     """Initialize a fresh loop state from the execution contract."""
     contract = load_contract()
     loop_exec = contract.get("loop_execution", {}) if contract else {}
@@ -132,6 +146,7 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, r
         "model": model,
         "provider": provider,
         "runtime_mode": runtime_mode,
+        "session_id": session_id,  # Phase 10.5: Unified session ID for audit/recovery
         "started_at": datetime.now(timezone.utc).isoformat(),
         "completed_at": "",
         "current_stage": "running",
@@ -248,6 +263,19 @@ def init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, r
             "completed_at": "",
         },
 
+        # Phase 10: Recovery loop state
+        "recovery": {
+            "status": "pending",
+            "recovery_attempted": False,
+            "recovery_success": False,
+            "failures_detected": 0,
+            "final_status": "skipped",
+            "errors": [],
+            "execution_result": None,
+            "started_at": "",
+            "completed_at": "",
+        },
+
         # Phase 7.4: Orchestrator + Collaboration state
         "orchestrator": {
             "status": "pending",
@@ -313,7 +341,12 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         dict with loop_id, final_status, and all stage results
     """
     loop_id = generate_loop_id()
-    state = init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, runtime_mode)
+    session_id = (os.environ.get("AOS_SESSION_ID", "")
+                  or datetime.now(timezone.utc).strftime("SESS-%Y%m%d-%H%M%S"))
+    state = init_loop_state(loop_id, task_id, task_text, memory_mode, model, provider, runtime_mode, session_id=session_id)
+
+    # Phase 10.5: Inject session_id into environment for subprocesses
+    os.environ["AOS_SESSION_ID"] = session_id
 
     # Phase 5.9: Cleanup old state/trace files (idempotent, once per execution)
     cleanup_old_files(STATE_DIR, max_age_days=30)
@@ -377,6 +410,19 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         state["retrieval"]["hypotheses"] = [h.get("memory_id", "") for h in decision_context.get("hypotheses", [])]
         print(f"  Retrieved: {state['retrieval']['retrieved_count']} memories, {len(state['retrieval']['hypotheses'])} hypotheses")
         print(f"  Memory IDs: {state['retrieval']['memory_ids']}")
+
+        # Phase 8.9: Audit — record retrieval event
+        try:
+            record_retrieval_audit(
+                query=decision_context.get("retrieval_raw", {}).get("query", {}),
+                raw_result=decision_context.get("retrieval_raw", {}),
+                decision_context=decision_context,
+                task_id=task_id,
+                loop_id=loop_id,
+                session_id=session_id,
+            )
+        except Exception:
+            pass  # Non-critical audit hook
     except Exception as e:
         mark_failed(state, "retrieval", e, critical=False)
         print(f"  FAILED: {e}")
@@ -584,6 +630,9 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
     # =====================================================================
     is_multi_agent = state["orchestrator"]["is_multi_agent"] and team_plan is not None
 
+    # Phase 10.5: Initialize team_result_data before branching (MINOR-1 fix)
+    team_result_data = None
+
     if is_multi_agent:
         print(f"\n{'─' * 70}")
         print(f"Stage 3.6/10: Collaboration Runtime (Phase 7.4)")
@@ -667,6 +716,28 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
             atomic_yaml_write(team_result_path, team_result_data)
             print(f"  TeamResult saved to: {team_result_path}")
 
+            # Phase 8.9: Audit — validate TeamResult claims
+            try:
+                validate_team_result_claims(
+                    team_result=team_result_data,
+                    task_id=task_id,
+                    loop_id=loop_id,
+                    session_id=session_id,
+                )
+            except Exception:
+                pass  # Non-critical
+
+            # Phase 10.5 (M-1): Generate provenance artifact
+            try:
+                generate_provenance_artifact(
+                    task_id=task_id,
+                    loop_id=loop_id,
+                    project_root=project_root,
+                    session_id=session_id,
+                )
+            except Exception:
+                pass  # Non-critical
+
             # Store collaboration result for subsequent stages
             exec_result = {
                 "execution_id": f"TEAM-{team_plan.team_id}",
@@ -736,6 +807,15 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         decision_context["entry_metadata"] = state.get("entry", {})
         decision_context["loop_id"] = loop_id
 
+        # Phase 8.9: Audit — collect pre-task evidence
+        before_evidence = {}
+        try:
+            before_evidence = collect_task_evidence_before(
+                task_id=task_id, project_root=project_root, loop_id=loop_id, session_id=session_id
+            )
+        except Exception:
+            pass  # Non-critical
+
         try:
             exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps, project_root=project_root, loop_id=loop_id)
             state["runtime"]["status"] = "completed"
@@ -761,6 +841,62 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
             if exec_result.get("status") != "success":
                 print(f"  WARNING: Runtime returned non-success status: {exec_result.get('status')}")
                 print(f"  Error: {exec_result.get('error', '')}")
+
+            # Phase 8.9: Audit — collect post-task evidence
+            try:
+                collect_task_evidence_after(
+                    task_id=task_id,
+                    before_evidence=before_evidence,
+                    project_root=project_root,
+                    loop_id=loop_id,
+                    test_command=exec_result.get("test_command", ""),
+                    test_stdout=exec_result.get("test_stdout", ""),
+                    test_stderr=exec_result.get("test_stderr", ""),
+                    test_exit_code=exec_result.get("test_exit_code"),
+                    session_id=session_id,
+                )
+            except Exception:
+                pass  # Non-critical
+
+            # Phase 10.5: Generate minimal TeamResult for single-agent path (M-3 fix)
+            team_result_data = {
+                "agent": provider,
+                "task_id": task_id,
+                "loop_id": loop_id,
+                "summary": exec_result.get("output", "")[:500] if exec_result.get("output") else "",
+                "evidence": f"evidence-{task_id}.json",
+                "validation_context": decision_context.get("task_classification", ""),
+                "model": model,
+                "provider": provider,
+                "execution_id": exec_result.get("execution_id", ""),
+                "trace_id": exec_result.get("trace_id", ""),
+                "status": exec_result.get("status", "unknown"),
+                "latency_ms": exec_result.get("latency_ms", 0),
+                "token_usage": exec_result.get("token_usage", {}),
+            }
+            state["collaboration"]["team_status"] = exec_result.get("status", "unknown")
+
+            # Phase 8.9: Validate single-agent TeamResult
+            try:
+                validate_team_result_claims(
+                    team_result=team_result_data,
+                    task_id=task_id,
+                    loop_id=loop_id,
+                    session_id=session_id,
+                )
+            except Exception:
+                pass  # Non-critical
+
+            # Phase 10.5 (M-1): Generate provenance artifact
+            try:
+                generate_provenance_artifact(
+                    task_id=task_id,
+                    loop_id=loop_id,
+                    project_root=project_root,
+                    session_id=session_id,
+                )
+            except Exception:
+                pass  # Non-critical
 
         except Exception as e:
             mark_failed(state, "runtime", e)
@@ -1095,6 +1231,54 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
         print(f"  FAILED: {e}")
 
     state["reconciliation"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+
+    # =====================================================================
+    # Stage 9.5: Recovery Loop (Phase 11 — Semi-Autonomous Recovery)
+    # =====================================================================
+    print(f"\n{'─' * 70}")
+    print(f"Stage 9.5/10: Recovery Loop (Phase 11)")
+    print(f"{'─' * 70}")
+
+    state["recovery"]["started_at"] = datetime.now(timezone.utc).isoformat()
+    state["recovery"]["status"] = "running"
+
+    try:
+        # Phase 11: Use execution bridge (detect → plan → execute → verify)
+        # runtime_execute is the runtime_adapter.execute function
+        recovery_result = run_recovery_loop_with_execution(
+            task_id=task_id,
+            loop_id=loop_id,
+            state=state,
+            exec_result=exec_result if is_multi_agent else state.get("runtime", {}),
+            team_result=team_result_data,
+            decision_context=decision_context,
+            runtime_executor=runtime_execute,  # Phase 11: delegate to OpenCode
+            retry_context={"project_root": project_root},
+            session_id=session_id,
+        )
+        state["recovery"]["status"] = "completed"
+        state["recovery"]["recovery_attempted"] = recovery_result.get("recovery_attempted", False)
+        state["recovery"]["recovery_success"] = recovery_result.get("recovery_success", False)
+        state["recovery"]["failures_detected"] = recovery_result.get("failures_detected", 0)
+        state["recovery"]["final_status"] = recovery_result.get("final_status", "completed")
+        state["recovery"]["execution_result"] = recovery_result.get("execution_result")
+
+        print(f"  Failures:     {state['recovery']['failures_detected']}")
+        print(f"  Attempted:    {state['recovery']['recovery_attempted']}")
+        print(f"  Success:      {state['recovery']['recovery_success']}")
+        print(f"  Final Status: {state['recovery']['final_status']}")
+
+        # If recovery detected critical failures and could not recover, mark as partial
+        if recovery_result.get("failures_detected", 0) > 0 and not recovery_result.get("recovery_success", False):
+            if state["final_status"] != "failed":
+                state["final_status"] = "partial"
+    except Exception as e:
+        state["recovery"]["status"] = "failed"
+        state["recovery"]["error"] = str(e)
+        state["recovery"]["errors"].append(str(e))
+        print(f"  FAILED: {e} (non-critical, pipeline continues)")
+
+    state["recovery"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
     # =====================================================================
     # Stage 10: Finalize & Telemetry

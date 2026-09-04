@@ -5825,3 +5825,88 @@ started_at: '2026-09-03T02:59:01.017250+00:00'
 completed_at: '2026-09-03T02:59:01.017673+00:00'
 timestamp: '2026-09-03T02:59:01.017721+00:00'
 ```
+
+## Route Event — 2026-09-04T01:09:45.068713+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788484185
+task_id: DRYRUN-001
+intent: testing
+domains:
+- testing
+lead_skill: testing-engineer
+support_skills:
+- code-reviewer
+confidence: high
+memory_influence: none
+rules_applied:
+- Domain 'testing' → lead testing-engineer
+started_at: '2026-09-04T01:09:45.068275+00:00'
+completed_at: '2026-09-04T01:09:45.068631+00:00'
+timestamp: '2026-09-04T01:09:45.068713+00:00'
+```
+
+## Route Event — 2026-09-04T01:10:27.554576+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788484227
+task_id: DRYRUN-002
+intent: testing
+domains:
+- testing
+lead_skill: testing-engineer
+support_skills:
+- code-reviewer
+confidence: high
+memory_influence: none
+rules_applied:
+- Domain 'testing' → lead testing-engineer
+started_at: '2026-09-04T01:10:27.554217+00:00'
+completed_at: '2026-09-04T01:10:27.554507+00:00'
+timestamp: '2026-09-04T01:10:27.554576+00:00'
+```
+
+## Route Event — 2026-09-04T01:13:33.858709+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788484413
+task_id: AUDIT-001
+intent: coding
+domains:
+- backend
+lead_skill: backend-architect
+support_skills:
+- frontend-architect
+- system-architect
+confidence: high
+memory_influence: none
+rules_applied:
+- Domain 'backend' → lead backend-architect
+started_at: '2026-09-04T01:13:33.858457+00:00'
+completed_at: '2026-09-04T01:13:33.858632+00:00'
+timestamp: '2026-09-04T01:13:33.858709+00:00'
+```
+
+## Route Event — 2026-09-04T01:41:02.649249+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788486062
+task_id: DRYRUN-P11
+intent: testing
+domains:
+- testing
+lead_skill: testing-engineer
+support_skills:
+- code-reviewer
+confidence: high
+memory_influence: none
+rules_applied:
+- Domain 'testing' → lead testing-engineer
+started_at: '2026-09-04T01:41:02.648802+00:00'
+completed_at: '2026-09-04T01:41:02.649152+00:00'
+timestamp: '2026-09-04T01:41:02.649249+00:00'
+```

@@ -9097,3 +9097,653 @@ DO NOT:
     injection_status: "success"
     aos_status: "completed"
     lead_agent: "general"
+  - event_id: "EVT-9VCP5OVC"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T12:56:40.379Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在运行在 Agent OS Runtime 环境。
+
+执行以下任务：
+
+Task Name
+
+Make interview completion idempotent and keep Dashboard aggregates fresh
+
+
+
+Background
+
+You are working in the real repository /home/shade/Public/test,"
+    prompt_length: 11337
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-BHZ4DPDR"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T12:56:40.379Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SF72J0CY"
+    prompt_summary: "你现在运行在 Agent OS Runtime 环境。
+
+执行以下任务：
+
+Task Name
+
+Make interview completion idempotent and keep Dashboard aggregates fresh
+
+
+
+Background
+
+You are working in the real repository /home/shade/Public/test,"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-2R5KH2FD"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T12:56:44.669Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SF72J0CY"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4290
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QXDC9MT0"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T12:56:45.231Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SF72J0CY"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-7SWQ92PW"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T12:57:06.120Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Thoroughly explore the Aiview interview platform at /home/shade/Public/test. Read these files completely and report key findings for each:
+
+- backend/src/main/java/com/aiview/interview/service/Intervi"
+    prompt_length: 1139
+    session_id: "ses_f98a7db5effe862I8o25Axwdt9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9TQAMG4M"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T12:57:06.120Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-STVDKYLC"
+    prompt_summary: "Thoroughly explore the Aiview interview platform at /home/shade/Public/test. Read these files completely and report key findings for each:
+
+- backend/src/main/java/com/aiview/interview/service/Intervi"
+    session_id: "ses_f98a7db5effe862I8o25Axwdt9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-Y19UPETG"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T12:57:10.844Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-STVDKYLC"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4724
+    session_id: "ses_f98a7db5effe862I8o25Axwdt9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6PUHSAXK"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T12:57:10.991Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-STVDKYLC"
+    session_id: "ses_f98a7db5effe862I8o25Axwdt9"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-78EYCY55"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T12:58:12.341Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Explore frontend and remaining backend pieces at /home/shade/Public/test:
+
+- frontend/src/pages/Dashboard.vue and Interview.vue - how they trigger completion, how they refresh dashboard, SSE consumpti"
+    prompt_length: 743
+    session_id: "ses_f98a6d68affez3SpvNz4PAKfA8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-EBW8Q345"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T12:58:12.342Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-404PE3QR"
+    prompt_summary: "Explore frontend and remaining backend pieces at /home/shade/Public/test:
+
+- frontend/src/pages/Dashboard.vue and Interview.vue - how they trigger completion, how they refresh dashboard, SSE consumpti"
+    session_id: "ses_f98a6d68affez3SpvNz4PAKfA8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-QMRPOYKZ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T12:58:17.037Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-404PE3QR"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4695
+    session_id: "ses_f98a6d68affez3SpvNz4PAKfA8"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-H274C56D"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T12:58:17.167Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-404PE3QR"
+    session_id: "ses_f98a6d68affez3SpvNz4PAKfA8"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-X9VS5RRW"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T13:00:53.262Z"
+    evidence_type: "host_integration"
+    prompt_summary: "开始执行，1. Confirm option A: Please implement idempotent API behavior by returning the existing feedback/message on repeated FINISHED requests.
+2. Confirm: DashboardService.evict failure should remain lo"
+    prompt_length: 301
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-BNTVX6CC"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T13:00:53.263Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-C8XDTMH2"
+    prompt_summary: "开始执行，1. Confirm option A: Please implement idempotent API behavior by returning the existing feedback/message on repeated FINISHED requests.
+2. Confirm: DashboardService.evict failure should remain lo"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-G84W5KG1"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T13:00:57.677Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-C8XDTMH2"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4414
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KKN5BBMR"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T13:00:58.342Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-C8XDTMH2"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-TN4GTHN6"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T13:04:45.480Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在运行在 Agent OS Runtime 环境。
+
+执行以下任务：
+
+Task Name
+
+Make interview completion idempotent and keep Dashboard aggregates fresh
+
+
+
+Background
+
+You are working in the real repository /home/shade/Public/test,"
+    prompt_length: 11337
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LL0S2P2F"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T13:04:45.480Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-A6LFY430"
+    prompt_summary: "你现在运行在 Agent OS Runtime 环境。
+
+执行以下任务：
+
+Task Name
+
+Make interview completion idempotent and keep Dashboard aggregates fresh
+
+
+
+Background
+
+You are working in the real repository /home/shade/Public/test,"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WF8ED4HY"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T13:04:49.627Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-A6LFY430"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4147
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-THWT4EJI"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T13:04:50.313Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-A6LFY430"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-6H1SGY12"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T13:07:45.509Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -1357.2K removed, +4.3K summary
+
+│████████████████████████████████░░░░░░░░░░░░░░░░⣿█│
+▣ Compression #11 -59.3K removed, +4.3K summary
+→ Topic: Idempotent completion discovery
+→ Items: 37 messa"
+    prompt_length: 227
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-E7IDV36H"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T13:07:45.509Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-L3VTDK1D"
+    prompt_summary: "▣ DCP | -1357.2K removed, +4.3K summary
+
+│████████████████████████████████░░░░░░░░░░░░░░░░⣿█│
+▣ Compression #11 -59.3K removed, +4.3K summary
+→ Topic: Idempotent completion discovery
+→ Items: 37 messa"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-EHO937YM"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T13:07:50.171Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-L3VTDK1D"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4662
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-XS89HB6U"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T13:07:50.995Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-L3VTDK1D"
+    session_id: "ses_f9f15c99affeZBc38Ny1CZcsF4"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-SGUVJK96"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T13:26:14.438Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Second Agent OS Benchmark: Memory-Guided Interview Resume Reliability
+
+## Task
+
+Improve the reliability of interview resume/recovery after Redis session state is missing or expires, while preserving"
+    prompt_length: 8732
+    session_id: "ses_f988d2f55ffesow2ZdGkj2GZRN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-2MU7MT13"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T13:26:14.439Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-PU3NQH0N"
+    prompt_summary: "# Second Agent OS Benchmark: Memory-Guided Interview Resume Reliability
+
+## Task
+
+Improve the reliability of interview resume/recovery after Redis session state is missing or expires, while preserving"
+    session_id: "ses_f988d2f55ffesow2ZdGkj2GZRN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7BCLJAAJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T13:26:18.674Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-PU3NQH0N"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4235
+    session_id: "ses_f988d2f55ffesow2ZdGkj2GZRN"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-OIN672SE"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T13:26:18.765Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-PU3NQH0N"
+    session_id: "ses_f988d2f55ffesow2ZdGkj2GZRN"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-5S7HEGE1"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-03T13:45:26.490Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在进入 Agent OS Phase 8.9 Real Operation Validation。
+
+不要进入 Phase 9。
+Phase 9 暂缓数月。
+
+目标：
+验证 Agent OS 在真实软件工程任务中的完整闭环能力。
+
+工作目录：
+
+/home/shade/Public/test
+
+
+任务来源：
+由 Grok 根据当前项目实际代码提出工程任务。
+不要自己选择简单任务。
+
+如下：
+ "
+    prompt_length: 3021
+    session_id: "ses_f987ba0c7ffe6CoKuY8fXn86gb"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-6PVHDQ0W"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-03T13:45:26.491Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0TLT7CXC"
+    prompt_summary: "你现在进入 Agent OS Phase 8.9 Real Operation Validation。
+
+不要进入 Phase 9。
+Phase 9 暂缓数月。
+
+目标：
+验证 Agent OS 在真实软件工程任务中的完整闭环能力。
+
+工作目录：
+
+/home/shade/Public/test
+
+
+任务来源：
+由 Grok 根据当前项目实际代码提出工程任务。
+不要自己选择简单任务。
+
+如下：
+ "
+    session_id: "ses_f987ba0c7ffe6CoKuY8fXn86gb"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ITSIS1ER"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-03T13:45:30.610Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0TLT7CXC"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4119
+    session_id: "ses_f987ba0c7ffe6CoKuY8fXn86gb"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-FJKD2VPX"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-03T13:45:30.675Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0TLT7CXC"
+    session_id: "ses_f987ba0c7ffe6CoKuY8fXn86gb"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-ICI1FZUG"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T01:21:33.247Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Agent OS Fair Benchmark Specification (A/B 对照)
+
+> 目的：公平比较 **A = 裸 OpenCode** 与 **B = OpenCode + Agent OS** 的**最终工程能力**。
+> 原则：不测 Agent OS 内部实现（retrieval 打分、memory schema、prompt 内部机制一律不测）；
+> 只测最终结果能否通"
+    prompt_length: 14362
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CZM5B09R"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T01:21:33.247Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Z8C5W1U1"
+    prompt_summary: "# Agent OS Fair Benchmark Specification (A/B 对照)
+
+> 目的：公平比较 **A = 裸 OpenCode** 与 **B = OpenCode + Agent OS** 的**最终工程能力**。
+> 原则：不测 Agent OS 内部实现（retrieval 打分、memory schema、prompt 内部机制一律不测）；
+> 只测最终结果能否通"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9O24KXIC"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T01:21:37.560Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Z8C5W1U1"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4313
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-YMH26UNJ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T01:21:37.624Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-Z8C5W1U1"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-9IZKE8O1"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T01:22:44.406Z"
+    evidence_type: "host_integration"
+    prompt_summary: "开始执行"
+    prompt_length: 4
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-O6JWP6WD"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T01:22:44.406Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-O3O948YM"
+    prompt_summary: "开始执行"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VM6QR68T"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T01:22:48.575Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-O3O948YM"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4169
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-C25CZOU9"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T01:22:48.784Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-O3O948YM"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-O8MQJ7XE"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T01:26:47.293Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -73.1K removed, +2.2K summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███████████████████████│
+▣ Compression #1 -70.9K removed, +2.2K summary
+→ Topic: Benchmark Harness Implementation
+→ Items: 25 message"
+    prompt_length: 225
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3215HPVV"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T01:26:47.293Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-T5S2UHIN"
+    prompt_summary: "▣ DCP | -73.1K removed, +2.2K summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿███████████████████████│
+▣ Compression #1 -70.9K removed, +2.2K summary
+→ Topic: Benchmark Harness Implementation
+→ Items: 25 message"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-2JNHUMOU"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T01:26:51.457Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-T5S2UHIN"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4164
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CVY7OT9C"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T01:26:52.173Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-T5S2UHIN"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-7IYW53ZR"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T01:29:30.623Z"
+    evidence_type: "host_integration"
+    prompt_summary: "继续"
+    prompt_length: 2
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3OB2FHFW"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T01:29:30.623Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-V4WQA9TJ"
+    prompt_summary: "继续"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CKD7INP4"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T01:29:34.777Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-V4WQA9TJ"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4154
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-0TKGK1HQ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T01:29:35.075Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-V4WQA9TJ"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-7PIJ00CX"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T01:30:49.339Z"
+    evidence_type: "host_integration"
+    prompt_summary: " # Agent OS Fair Benchmark Specification (A/B 对照)
+
+> 目的：公平比较 **A = 裸 OpenCode** 与 **B = OpenCode + Agent OS** 的**最终工程能力**。
+> 原则：不测 Agent OS 内部实现（retrieval 打分、memory schema、prompt 内部机制一律不测）；
+> 只测最终结果能否"
+    prompt_length: 14376
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-UP60CPSM"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T01:30:49.339Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-B0MK86Y8"
+    prompt_summary: " # Agent OS Fair Benchmark Specification (A/B 对照)
+
+> 目的：公平比较 **A = 裸 OpenCode** 与 **B = OpenCode + Agent OS** 的**最终工程能力**。
+> 原则：不测 Agent OS 内部实现（retrieval 打分、memory schema、prompt 内部机制一律不测）；
+> 只测最终结果能否"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-E7UN9NGJ"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T01:30:53.606Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-B0MK86Y8"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4267
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-2OKX7P7C"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T01:30:53.938Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-B0MK86Y8"
+    session_id: "ses_f95fe4c2dffeIJlPwmrOBjKVZE"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-XMENZ8OG"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T01:49:05.210Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Benchmark Round 2 — Phase 11 Recovery 验证
+
+> 目标：**实证** Phase 11（Recovery Execution Bridge / RecoveryTask / OpenCode 委托重试 / Evidence 验证 / Retry budget=2）
+> 是否真正提升 Recovery 能力。1
+> 原则（承继 Round 1）：不测内部实现"
+    prompt_length: 11238
+    session_id: "ses_f95e51a73ffecrQtk5ZtB29Mx3"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-R4P6S90T"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T01:49:05.210Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UY0KKTI9"
+    prompt_summary: "# Benchmark Round 2 — Phase 11 Recovery 验证
+
+> 目标：**实证** Phase 11（Recovery Execution Bridge / RecoveryTask / OpenCode 委托重试 / Evidence 验证 / Retry budget=2）
+> 是否真正提升 Recovery 能力。1
+> 原则（承继 Round 1）：不测内部实现"
+    session_id: "ses_f95e51a73ffecrQtk5ZtB29Mx3"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GVJFFVN1"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T01:49:09.513Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UY0KKTI9"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4303
+    session_id: "ses_f95e51a73ffecrQtk5ZtB29Mx3"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-T9F07IO6"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T01:49:09.563Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UY0KKTI9"
+    session_id: "ses_f95e51a73ffecrQtk5ZtB29Mx3"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"

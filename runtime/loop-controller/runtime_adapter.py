@@ -1130,6 +1130,49 @@ def build_trace(execution_id, trace_id, task_id, task_text, decision_context,
     return trace
 
 
+# ── Phase 10.5 (B-1): Test Evidence Collection Hook ──────────────
+
+def collect_test_evidence_from_project(project_root):
+    """
+    Attempt to collect test results from a project directory.
+
+    Phase 10.5 (B-1): This hook bridges the gap between OpenCode runtime
+    (which doesn't run tests) and the evidence collector (which needs test data).
+
+    It reads test results from a standard location in the project:
+      - AOS_TEST_RESULT env var (JSON string)
+      - {project_root}/.aos_test_result.json
+      - {project_root}/test_output.json
+
+    Returns:
+        dict or None — {test_command, test_exit_code, test_stdout, test_stderr}
+    """
+    import json as _json
+
+    # 1. Check environment variable (highest priority)
+    env_result = os.environ.get("AOS_TEST_RESULT", "")
+    if env_result:
+        try:
+            return _json.loads(env_result)
+        except _json.JSONDecodeError:
+            pass
+
+    # 2. Check project-level test result file
+    candidates = [
+        os.path.join(project_root, ".aos_test_result.json"),
+        os.path.join(project_root, "test_output.json"),
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            try:
+                with open(path) as f:
+                    return _json.load(f)
+            except Exception:
+                pass
+
+    return None
+
+
 # ── Legacy compatibility wrapper ─────────────────────────────────
 
 def execute(task_id, task_text, decision_context, model="", provider="opencode",
@@ -1173,6 +1216,19 @@ def execute(task_id, task_text, decision_context, model="", provider="opencode",
     ]
     atomic_yaml_write(trace_file, trace, header_lines=header_lines)
 
+    # Phase 10.5: Attempt to collect test results from project
+    test_command = ""
+    test_exit_code = None
+    test_stdout = ""
+    test_stderr = ""
+    if project_root and os.path.isdir(project_root):
+        test_result = collect_test_evidence_from_project(project_root)
+        if test_result:
+            test_command = test_result.get("test_command", "")
+            test_exit_code = test_result.get("test_exit_code")
+            test_stdout = test_result.get("test_stdout", "")
+            test_stderr = test_result.get("test_stderr", "")
+
     return {
         "execution_id": execution_id,
         "trace_id": trace_id,
@@ -1185,4 +1241,9 @@ def execute(task_id, task_text, decision_context, model="", provider="opencode",
         "error": exec_result.get("error", ""),
         "reliability": exec_result.get("reliability", {}),
         "cross_stack_warning": exec_result.get("cross_stack_warning", {}),
+        # Phase 10.5 (B-1): Test evidence fields
+        "test_command": test_command,
+        "test_exit_code": test_exit_code,
+        "test_stdout": test_stdout,
+        "test_stderr": test_stderr,
     }

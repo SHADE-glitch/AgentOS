@@ -1,0 +1,8 @@
+# Agent OS Benchmark Framework
+# Phase 10.5 — Created for final benchmark stage
+#
+# Directories:
+#   baseline/        — A: Bare OpenCode test (no AOS pipeline)
+#   agent_os/        — B: Agent OS + OpenCode test
+#   failure_recovery/ — C: Failure recovery test
+#   memory_test/     — D: Memory impact test
