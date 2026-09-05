@@ -5910,3 +5910,2780 @@ started_at: '2026-09-04T01:41:02.648802+00:00'
 completed_at: '2026-09-04T01:41:02.649152+00:00'
 timestamp: '2026-09-04T01:41:02.649249+00:00'
 ```
+
+## Route Event — 2026-09-04T10:50:50.367036+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519050
+task_id: INT-7.4-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:50.362727+00:00'
+completed_at: '2026-09-04T10:50:50.366942+00:00'
+timestamp: '2026-09-04T10:50:50.367036+00:00'
+```
+
+## Route Event — 2026-09-04T10:50:50.428347+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519050
+task_id: INT-7.4-B-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:50.427623+00:00'
+completed_at: '2026-09-04T10:50:50.428279+00:00'
+timestamp: '2026-09-04T10:50:50.428347+00:00'
+```
+
+## Route Event — 2026-09-04T10:50:50.471881+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519050
+task_id: INT-7.4-C-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:50.471360+00:00'
+completed_at: '2026-09-04T10:50:50.471808+00:00'
+timestamp: '2026-09-04T10:50:50.471881+00:00'
+```
+
+## Route Event — 2026-09-04T10:50:50.516728+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519050
+task_id: INT-7.4-D-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:50.516118+00:00'
+completed_at: '2026-09-04T10:50:50.516671+00:00'
+timestamp: '2026-09-04T10:50:50.516728+00:00'
+```
+
+## Route Event — 2026-09-04T10:50:59.522739+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519059
+task_id: INT-7.4-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:59.516552+00:00'
+completed_at: '2026-09-04T10:50:59.522601+00:00'
+timestamp: '2026-09-04T10:50:59.522739+00:00'
+```
+
+## Route Event — 2026-09-04T10:50:59.612963+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519059
+task_id: INT-7.4-B-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:59.612042+00:00'
+completed_at: '2026-09-04T10:50:59.612872+00:00'
+timestamp: '2026-09-04T10:50:59.612963+00:00'
+```
+
+## Route Event — 2026-09-04T10:50:59.663017+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519059
+task_id: INT-7.4-C-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:59.662510+00:00'
+completed_at: '2026-09-04T10:50:59.662959+00:00'
+timestamp: '2026-09-04T10:50:59.663017+00:00'
+```
+
+## Route Event — 2026-09-04T10:50:59.724449+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519059
+task_id: INT-7.4-D-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:50:59.723715+00:00'
+completed_at: '2026-09-04T10:50:59.724380+00:00'
+timestamp: '2026-09-04T10:50:59.724449+00:00'
+```
+
+## Route Event — 2026-09-04T10:51:07.617286+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519067
+task_id: INT-7.4-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:51:07.613095+00:00'
+completed_at: '2026-09-04T10:51:07.617201+00:00'
+timestamp: '2026-09-04T10:51:07.617286+00:00'
+```
+
+## Route Event — 2026-09-04T10:51:07.677876+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519067
+task_id: INT-7.4-B-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:51:07.677167+00:00'
+completed_at: '2026-09-04T10:51:07.677797+00:00'
+timestamp: '2026-09-04T10:51:07.677876+00:00'
+```
+
+## Route Event — 2026-09-04T10:51:07.720675+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519067
+task_id: INT-7.4-C-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:51:07.720161+00:00'
+completed_at: '2026-09-04T10:51:07.720619+00:00'
+timestamp: '2026-09-04T10:51:07.720675+00:00'
+```
+
+## Route Event — 2026-09-04T10:51:07.765933+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519067
+task_id: INT-7.4-D-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:51:07.765302+00:00'
+completed_at: '2026-09-04T10:51:07.765875+00:00'
+timestamp: '2026-09-04T10:51:07.765933+00:00'
+```
+
+## Route Event — 2026-09-04T10:53:18.595672+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519198
+task_id: FULL-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:53:18.591256+00:00'
+completed_at: '2026-09-04T10:53:18.595587+00:00'
+timestamp: '2026-09-04T10:53:18.595672+00:00'
+```
+
+## Route Event — 2026-09-04T10:53:18.652867+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519198
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T10:53:18.650490+00:00'
+completed_at: '2026-09-04T10:53:18.652756+00:00'
+timestamp: '2026-09-04T10:53:18.652867+00:00'
+```
+
+## Route Event — 2026-09-04T10:54:43.117387+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519283
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T10:54:43.115884+00:00'
+completed_at: '2026-09-04T10:54:43.117316+00:00'
+timestamp: '2026-09-04T10:54:43.117387+00:00'
+```
+
+## Route Event — 2026-09-04T10:55:42.722396+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788519342
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T10:55:42.720881+00:00'
+completed_at: '2026-09-04T10:55:42.722327+00:00'
+timestamp: '2026-09-04T10:55:42.722396+00:00'
+```
+
+## Route Event — 2026-09-04T10:56:50.339516+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T10:56:50.338983+00:00'
+completed_at: '2026-09-04T10:56:50.339492+00:00'
+timestamp: '2026-09-04T10:56:50.339516+00:00'
+```
+
+## Route Event — 2026-09-04T11:42:54.200182+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522169
+task_id: FULL-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:42:54.195653+00:00'
+completed_at: '2026-09-04T11:42:54.200094+00:00'
+timestamp: '2026-09-04T11:42:54.200182+00:00'
+```
+
+## Route Event — 2026-09-04T11:42:58.516776+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522174
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T11:42:58.514115+00:00'
+completed_at: '2026-09-04T11:42:58.516699+00:00'
+timestamp: '2026-09-04T11:42:58.516776+00:00'
+```
+
+## Route Event — 2026-09-04T11:44:28.197401+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522263
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T11:44:28.195872+00:00'
+completed_at: '2026-09-04T11:44:28.197327+00:00'
+timestamp: '2026-09-04T11:44:28.197401+00:00'
+```
+
+## Route Event — 2026-09-04T11:45:33.162399+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522328
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T11:45:33.160783+00:00'
+completed_at: '2026-09-04T11:45:33.162329+00:00'
+timestamp: '2026-09-04T11:45:33.162399+00:00'
+```
+
+## Route Event — 2026-09-04T11:46:40.354476+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:46:40.353945+00:00'
+completed_at: '2026-09-04T11:46:40.354455+00:00'
+timestamp: '2026-09-04T11:46:40.354476+00:00'
+```
+
+## Route Event — 2026-09-04T11:48:29.868053+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522505
+task_id: INT-7.4-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:48:29.867359+00:00'
+completed_at: '2026-09-04T11:48:29.867988+00:00'
+timestamp: '2026-09-04T11:48:29.868053+00:00'
+```
+
+## Route Event — 2026-09-04T11:48:34.329411+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522509
+task_id: INT-7.4-B-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:48:34.328744+00:00'
+completed_at: '2026-09-04T11:48:34.329342+00:00'
+timestamp: '2026-09-04T11:48:34.329411+00:00'
+```
+
+## Route Event — 2026-09-04T11:48:39.607777+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522514
+task_id: INT-7.4-C-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:48:39.607233+00:00'
+completed_at: '2026-09-04T11:48:39.607720+00:00'
+timestamp: '2026-09-04T11:48:39.607777+00:00'
+```
+
+## Route Event — 2026-09-04T11:48:43.987789+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522519
+task_id: INT-7.4-D-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:48:43.987164+00:00'
+completed_at: '2026-09-04T11:48:43.987731+00:00'
+timestamp: '2026-09-04T11:48:43.987789+00:00'
+```
+
+## Route Event — 2026-09-04T11:53:35.324632+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522810
+task_id: FULL-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:53:35.320152+00:00'
+completed_at: '2026-09-04T11:53:35.324550+00:00'
+timestamp: '2026-09-04T11:53:35.324632+00:00'
+```
+
+## Route Event — 2026-09-04T11:53:48.085884+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522823
+task_id: FULL-A-001
+intent: fallback
+domains: []
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:53:48.081323+00:00'
+completed_at: '2026-09-04T11:53:48.085785+00:00'
+timestamp: '2026-09-04T11:53:48.085884+00:00'
+```
+
+## Route Event — 2026-09-04T11:56:27.373659+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788522982
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T11:56:27.368415+00:00'
+completed_at: '2026-09-04T11:56:27.373570+00:00'
+timestamp: '2026-09-04T11:56:27.373659+00:00'
+```
+
+## Route Event — 2026-09-04T11:59:00.268904+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523135
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T11:59:00.264177+00:00'
+completed_at: '2026-09-04T11:59:00.268789+00:00'
+timestamp: '2026-09-04T11:59:00.268904+00:00'
+```
+
+## Route Event — 2026-09-04T12:00:13.443389+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523209
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T12:00:13.441032+00:00'
+completed_at: '2026-09-04T12:00:13.443308+00:00'
+timestamp: '2026-09-04T12:00:13.443389+00:00'
+```
+
+## Route Event — 2026-09-04T12:01:46.852230+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523302
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T12:01:46.850616+00:00'
+completed_at: '2026-09-04T12:01:46.852145+00:00'
+timestamp: '2026-09-04T12:01:46.852230+00:00'
+```
+
+## Route Event — 2026-09-04T12:02:55.376247+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523370
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T12:02:55.374689+00:00'
+completed_at: '2026-09-04T12:02:55.376181+00:00'
+timestamp: '2026-09-04T12:02:55.376247+00:00'
+```
+
+## Route Event — 2026-09-04T12:04:07.257396+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:04:07.256838+00:00'
+completed_at: '2026-09-04T12:04:07.257368+00:00'
+timestamp: '2026-09-04T12:04:07.257396+00:00'
+```
+
+## Route Event — 2026-09-04T12:04:11.662182+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523447
+task_id: INT-7.4-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:04:11.661616+00:00'
+completed_at: '2026-09-04T12:04:11.662119+00:00'
+timestamp: '2026-09-04T12:04:11.662182+00:00'
+```
+
+## Route Event — 2026-09-04T12:05:24.889476+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523520
+task_id: INT-7.4-B-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:05:24.888453+00:00'
+completed_at: '2026-09-04T12:05:24.889371+00:00'
+timestamp: '2026-09-04T12:05:24.889476+00:00'
+```
+
+## Route Event — 2026-09-04T12:06:35.706686+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523591
+task_id: INT-7.4-C-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:06:35.706124+00:00'
+completed_at: '2026-09-04T12:06:35.706624+00:00'
+timestamp: '2026-09-04T12:06:35.706686+00:00'
+```
+
+## Route Event — 2026-09-04T12:07:58.755434+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788523674
+task_id: INT-7.4-D-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:07:58.754767+00:00'
+completed_at: '2026-09-04T12:07:58.755366+00:00'
+timestamp: '2026-09-04T12:07:58.755434+00:00'
+```
+
+## Route Event — 2026-09-04T12:14:29.680447+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524064
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:14:29.675916+00:00'
+completed_at: '2026-09-04T12:14:29.680355+00:00'
+timestamp: '2026-09-04T12:14:29.680447+00:00'
+```
+
+## Route Event — 2026-09-04T12:16:00.470804+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524155
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T12:16:00.468517+00:00'
+completed_at: '2026-09-04T12:16:00.470731+00:00'
+timestamp: '2026-09-04T12:16:00.470804+00:00'
+```
+
+## Route Event — 2026-09-04T12:17:39.107216+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524254
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T12:17:39.105674+00:00'
+completed_at: '2026-09-04T12:17:39.107148+00:00'
+timestamp: '2026-09-04T12:17:39.107216+00:00'
+```
+
+## Route Event — 2026-09-04T12:18:45.334846+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524320
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T12:18:45.333098+00:00'
+completed_at: '2026-09-04T12:18:45.334756+00:00'
+timestamp: '2026-09-04T12:18:45.334846+00:00'
+```
+
+## Route Event — 2026-09-04T12:19:56.420001+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:19:56.419484+00:00'
+completed_at: '2026-09-04T12:19:56.419980+00:00'
+timestamp: '2026-09-04T12:19:56.420001+00:00'
+```
+
+## Route Event — 2026-09-04T12:21:46.849818+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524501
+task_id: INT-7.4-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:21:46.849144+00:00'
+completed_at: '2026-09-04T12:21:46.849762+00:00'
+timestamp: '2026-09-04T12:21:46.849818+00:00'
+```
+
+## Route Event — 2026-09-04T12:23:09.483526+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524584
+task_id: INT-7.4-B-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:23:09.482921+00:00'
+completed_at: '2026-09-04T12:23:09.483470+00:00'
+timestamp: '2026-09-04T12:23:09.483526+00:00'
+```
+
+## Route Event — 2026-09-04T12:24:29.128220+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524664
+task_id: INT-7.4-C-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:24:29.127667+00:00'
+completed_at: '2026-09-04T12:24:29.128158+00:00'
+timestamp: '2026-09-04T12:24:29.128220+00:00'
+```
+
+## Route Event — 2026-09-04T12:25:44.757334+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788524740
+task_id: INT-7.4-D-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:25:44.756686+00:00'
+completed_at: '2026-09-04T12:25:44.757270+00:00'
+timestamp: '2026-09-04T12:25:44.757334+00:00'
+```
+
+## Route Event — 2026-09-04T12:34:48.536576+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525283
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:34:48.532024+00:00'
+completed_at: '2026-09-04T12:34:48.536471+00:00'
+timestamp: '2026-09-04T12:34:48.536576+00:00'
+```
+
+## Route Event — 2026-09-04T12:35:59.270841+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525354
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T12:35:59.268207+00:00'
+completed_at: '2026-09-04T12:35:59.270749+00:00'
+timestamp: '2026-09-04T12:35:59.270841+00:00'
+```
+
+## Route Event — 2026-09-04T12:37:31.077756+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525446
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T12:37:31.076284+00:00'
+completed_at: '2026-09-04T12:37:31.077691+00:00'
+timestamp: '2026-09-04T12:37:31.077756+00:00'
+```
+
+## Route Event — 2026-09-04T12:38:37.939221+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525513
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T12:38:37.937603+00:00'
+completed_at: '2026-09-04T12:38:37.939141+00:00'
+timestamp: '2026-09-04T12:38:37.939221+00:00'
+```
+
+## Route Event — 2026-09-04T12:39:53.895813+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:39:53.895257+00:00'
+completed_at: '2026-09-04T12:39:53.895787+00:00'
+timestamp: '2026-09-04T12:39:53.895813+00:00'
+```
+
+## Route Event — 2026-09-04T12:41:43.802054+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525699
+task_id: INT-7.4-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:41:43.801361+00:00'
+completed_at: '2026-09-04T12:41:43.801982+00:00'
+timestamp: '2026-09-04T12:41:43.802054+00:00'
+```
+
+## Route Event — 2026-09-04T12:43:07.239378+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525782
+task_id: INT-7.4-B-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:43:07.238768+00:00'
+completed_at: '2026-09-04T12:43:07.239316+00:00'
+timestamp: '2026-09-04T12:43:07.239378+00:00'
+```
+
+## Route Event — 2026-09-04T12:44:28.856352+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525863
+task_id: INT-7.4-C-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:44:28.855795+00:00'
+completed_at: '2026-09-04T12:44:28.856288+00:00'
+timestamp: '2026-09-04T12:44:28.856352+00:00'
+```
+
+## Route Event — 2026-09-04T12:45:49.440586+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788525944
+task_id: INT-7.4-D-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:45:49.439953+00:00'
+completed_at: '2026-09-04T12:45:49.440521+00:00'
+timestamp: '2026-09-04T12:45:49.440586+00:00'
+```
+
+## Route Event — 2026-09-04T12:49:44.904794+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526179
+task_id: INT-7.4-D-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:49:44.900322+00:00'
+completed_at: '2026-09-04T12:49:44.904707+00:00'
+timestamp: '2026-09-04T12:49:44.904794+00:00'
+```
+
+## Route Event — 2026-09-04T12:51:26.756571+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526281
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:51:26.752114+00:00'
+completed_at: '2026-09-04T12:51:26.756475+00:00'
+timestamp: '2026-09-04T12:51:26.756571+00:00'
+```
+
+## Route Event — 2026-09-04T12:52:44.943251+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526360
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T12:52:44.940920+00:00'
+completed_at: '2026-09-04T12:52:44.943173+00:00'
+timestamp: '2026-09-04T12:52:44.943251+00:00'
+```
+
+## Route Event — 2026-09-04T12:54:18.170059+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526452
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T12:54:18.167874+00:00'
+completed_at: '2026-09-04T12:54:18.169964+00:00'
+timestamp: '2026-09-04T12:54:18.170059+00:00'
+```
+
+## Route Event — 2026-09-04T12:55:26.996048+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526522
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T12:55:26.994478+00:00'
+completed_at: '2026-09-04T12:55:26.995981+00:00'
+timestamp: '2026-09-04T12:55:26.996048+00:00'
+```
+
+## Route Event — 2026-09-04T12:56:38.286804+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:56:38.286306+00:00'
+completed_at: '2026-09-04T12:56:38.286781+00:00'
+timestamp: '2026-09-04T12:56:38.286804+00:00'
+```
+
+## Route Event — 2026-09-04T12:58:28.365999+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526703
+task_id: INT-7.4-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:58:28.365215+00:00'
+completed_at: '2026-09-04T12:58:28.365925+00:00'
+timestamp: '2026-09-04T12:58:28.365999+00:00'
+```
+
+## Route Event — 2026-09-04T12:59:44.971723+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526780
+task_id: INT-7.4-B-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T12:59:44.971133+00:00'
+completed_at: '2026-09-04T12:59:44.971665+00:00'
+timestamp: '2026-09-04T12:59:44.971723+00:00'
+```
+
+## Route Event — 2026-09-04T13:01:01.045319+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526856
+task_id: INT-7.4-C-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:01:01.044745+00:00'
+completed_at: '2026-09-04T13:01:01.045254+00:00'
+timestamp: '2026-09-04T13:01:01.045319+00:00'
+```
+
+## Route Event — 2026-09-04T13:02:18.903112+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788526933
+task_id: INT-7.4-D-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:02:18.902469+00:00'
+completed_at: '2026-09-04T13:02:18.903046+00:00'
+timestamp: '2026-09-04T13:02:18.903112+00:00'
+```
+
+## Route Event — 2026-09-04T13:22:17.334903+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528132
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:22:17.329978+00:00'
+completed_at: '2026-09-04T13:22:17.334799+00:00'
+timestamp: '2026-09-04T13:22:17.334903+00:00'
+```
+
+## Route Event — 2026-09-04T13:23:35.744853+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528210
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T13:23:35.742434+00:00'
+completed_at: '2026-09-04T13:23:35.744759+00:00'
+timestamp: '2026-09-04T13:23:35.744853+00:00'
+```
+
+## Route Event — 2026-09-04T13:25:17.303293+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528312
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T13:25:17.301709+00:00'
+completed_at: '2026-09-04T13:25:17.303224+00:00'
+timestamp: '2026-09-04T13:25:17.303293+00:00'
+```
+
+## Route Event — 2026-09-04T13:26:45.176956+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528399
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T13:26:45.175388+00:00'
+completed_at: '2026-09-04T13:26:45.176890+00:00'
+timestamp: '2026-09-04T13:26:45.176956+00:00'
+```
+
+## Route Event — 2026-09-04T13:28:04.746457+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:28:04.745953+00:00'
+completed_at: '2026-09-04T13:28:04.746436+00:00'
+timestamp: '2026-09-04T13:28:04.746457+00:00'
+```
+
+## Route Event — 2026-09-04T13:29:55.044898+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528589
+task_id: INT-7.4-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:29:55.044108+00:00'
+completed_at: '2026-09-04T13:29:55.044804+00:00'
+timestamp: '2026-09-04T13:29:55.044898+00:00'
+```
+
+## Route Event — 2026-09-04T13:31:20.303449+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528675
+task_id: INT-7.4-B-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:31:20.302813+00:00'
+completed_at: '2026-09-04T13:31:20.303385+00:00'
+timestamp: '2026-09-04T13:31:20.303449+00:00'
+```
+
+## Route Event — 2026-09-04T13:32:43.975428+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528758
+task_id: INT-7.4-C-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:32:43.974875+00:00'
+completed_at: '2026-09-04T13:32:43.975371+00:00'
+timestamp: '2026-09-04T13:32:43.975428+00:00'
+```
+
+## Route Event — 2026-09-04T13:34:08.457296+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788528843
+task_id: INT-7.4-D-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:34:08.456644+00:00'
+completed_at: '2026-09-04T13:34:08.457236+00:00'
+timestamp: '2026-09-04T13:34:08.457296+00:00'
+```
+
+## Route Event — 2026-09-04T13:42:00.526319+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788529315
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:42:00.521744+00:00'
+completed_at: '2026-09-04T13:42:00.526240+00:00'
+timestamp: '2026-09-04T13:42:00.526319+00:00'
+```
+
+## Route Event — 2026-09-04T13:43:29.206494+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788529403
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T13:43:29.204150+00:00'
+completed_at: '2026-09-04T13:43:29.206416+00:00'
+timestamp: '2026-09-04T13:43:29.206494+00:00'
+```
+
+## Route Event — 2026-09-04T13:45:07.292523+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788529501
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T13:45:07.291030+00:00'
+completed_at: '2026-09-04T13:45:07.292452+00:00'
+timestamp: '2026-09-04T13:45:07.292523+00:00'
+```
+
+## Route Event — 2026-09-04T13:46:20.970203+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788529575
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T13:46:20.968616+00:00'
+completed_at: '2026-09-04T13:46:20.970126+00:00'
+timestamp: '2026-09-04T13:46:20.970203+00:00'
+```
+
+## Route Event — 2026-09-04T13:47:36.851957+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:47:36.851432+00:00'
+completed_at: '2026-09-04T13:47:36.851935+00:00'
+timestamp: '2026-09-04T13:47:36.851957+00:00'
+```
+
+## Route Event — 2026-09-04T13:49:27.499609+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788529761
+task_id: INT-7.4-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:49:27.498922+00:00'
+completed_at: '2026-09-04T13:49:27.499549+00:00'
+timestamp: '2026-09-04T13:49:27.499609+00:00'
+```
+
+## Route Event — 2026-09-04T13:50:50.298003+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788529844
+task_id: INT-7.4-B-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:50:50.297376+00:00'
+completed_at: '2026-09-04T13:50:50.297943+00:00'
+timestamp: '2026-09-04T13:50:50.298003+00:00'
+```
+
+## Route Event — 2026-09-04T13:52:14.367912+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788529929
+task_id: INT-7.4-C-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:52:14.367354+00:00'
+completed_at: '2026-09-04T13:52:14.367850+00:00'
+timestamp: '2026-09-04T13:52:14.367912+00:00'
+```
+
+## Route Event — 2026-09-04T13:53:36.303909+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788530010
+task_id: INT-7.4-D-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T13:53:36.303257+00:00'
+completed_at: '2026-09-04T13:53:36.303850+00:00'
+timestamp: '2026-09-04T13:53:36.303909+00:00'
+```
+
+## Route Event — 2026-09-04T14:01:53.468991+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788530513
+task_id: SMOKE-TEST-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- refactor
+- bugfix
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 0.4}'
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T14:01:53.468143+00:00'
+completed_at: '2026-09-04T14:01:53.468930+00:00'
+timestamp: '2026-09-04T14:01:53.468991+00:00'
+```
+
+## Route Event — 2026-09-04T23:46:21.564816+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788565576
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T23:46:21.560143+00:00'
+completed_at: '2026-09-04T23:46:21.564697+00:00'
+timestamp: '2026-09-04T23:46:21.564816+00:00'
+```
+
+## Route Event — 2026-09-04T23:47:33.982584+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788565648
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-04T23:47:33.980249+00:00'
+completed_at: '2026-09-04T23:47:33.982509+00:00'
+timestamp: '2026-09-04T23:47:33.982584+00:00'
+```
+
+## Route Event — 2026-09-04T23:49:05.860769+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788565740
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-04T23:49:05.859265+00:00'
+completed_at: '2026-09-04T23:49:05.860704+00:00'
+timestamp: '2026-09-04T23:49:05.860769+00:00'
+```
+
+## Route Event — 2026-09-04T23:50:12.750319+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788565807
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-04T23:50:12.748749+00:00'
+completed_at: '2026-09-04T23:50:12.750252+00:00'
+timestamp: '2026-09-04T23:50:12.750319+00:00'
+```
+
+## Route Event — 2026-09-04T23:51:29.097513+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-04T23:51:29.096973+00:00'
+completed_at: '2026-09-04T23:51:29.097490+00:00'
+timestamp: '2026-09-04T23:51:29.097513+00:00'
+```
+
+## Route Event — 2026-09-05T00:02:51.438451+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788566565
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-05T00:02:51.433791+00:00'
+completed_at: '2026-09-05T00:02:51.438334+00:00'
+timestamp: '2026-09-05T00:02:51.438451+00:00'
+```
+
+## Route Event — 2026-09-05T00:04:04.270262+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788566638
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-05T00:04:04.267835+00:00'
+completed_at: '2026-09-05T00:04:04.270166+00:00'
+timestamp: '2026-09-05T00:04:04.270262+00:00'
+```
+
+## Route Event — 2026-09-05T00:05:35.867872+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788566730
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-05T00:05:35.866341+00:00'
+completed_at: '2026-09-05T00:05:35.867805+00:00'
+timestamp: '2026-09-05T00:05:35.867872+00:00'
+```
+
+## Route Event — 2026-09-05T00:06:42.892950+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788566797
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-05T00:06:42.891349+00:00'
+completed_at: '2026-09-05T00:06:42.892881+00:00'
+timestamp: '2026-09-05T00:06:42.892950+00:00'
+```
+
+## Route Event — 2026-09-05T00:07:51.408185+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-05T00:07:51.407592+00:00'
+completed_at: '2026-09-05T00:07:51.408160+00:00'
+timestamp: '2026-09-05T00:07:51.408185+00:00'
+```
+
+## Route Event — 2026-09-05T00:29:46.569232+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788568180
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-05T00:29:46.564607+00:00'
+completed_at: '2026-09-05T00:29:46.569136+00:00'
+timestamp: '2026-09-05T00:29:46.569232+00:00'
+```
+
+## Route Event — 2026-09-05T00:31:00.623003+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788568254
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-05T00:31:00.620619+00:00'
+completed_at: '2026-09-05T00:31:00.622921+00:00'
+timestamp: '2026-09-05T00:31:00.623003+00:00'
+```
+
+## Route Event — 2026-09-05T00:32:40.279522+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788568354
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-05T00:32:40.277942+00:00'
+completed_at: '2026-09-05T00:32:40.279444+00:00'
+timestamp: '2026-09-05T00:32:40.279522+00:00'
+```
+
+## Route Event — 2026-09-05T00:33:47.522257+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788568421
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-05T00:33:47.520656+00:00'
+completed_at: '2026-09-05T00:33:47.522186+00:00'
+timestamp: '2026-09-05T00:33:47.522257+00:00'
+```
+
+## Route Event — 2026-09-05T00:34:55.611872+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-05T00:34:55.611312+00:00'
+completed_at: '2026-09-05T00:34:55.611848+00:00'
+timestamp: '2026-09-05T00:34:55.611872+00:00'
+```
+
+## Route Event — 2026-09-05T00:46:55.324574+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788569209
+task_id: FULL-A-001
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-05T00:46:55.320046+00:00'
+completed_at: '2026-09-05T00:46:55.324481+00:00'
+timestamp: '2026-09-05T00:46:55.324574+00:00'
+```
+
+## Route Event — 2026-09-05T00:48:16.459091+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788569290
+task_id: FULL-B-001
+intent: refactor
+domains:
+- refactor
+lead_skill: refactor
+support_skills: []
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=refactor
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''refactor'': 1.0}'
+- confidence_calibrated=1.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=partial_known'
+started_at: '2026-09-05T00:48:16.456749+00:00'
+completed_at: '2026-09-05T00:48:16.459007+00:00'
+timestamp: '2026-09-05T00:48:16.459091+00:00'
+```
+
+## Route Event — 2026-09-05T00:49:48.187964+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788569382
+task_id: FULL-C-001
+intent: test
+domains:
+- test
+lead_skill: test
+support_skills:
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=test
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''test'': 1.0, ''report'': 1.0}'
+- confidence_calibrated=0.6157 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=semantic reason=low_separation'
+started_at: '2026-09-05T00:49:48.186394+00:00'
+completed_at: '2026-09-05T00:49:48.187895+00:00'
+timestamp: '2026-09-05T00:49:48.187964+00:00'
+```
+
+## Route Event — 2026-09-05T00:51:00.959160+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-1788569455
+task_id: FULL-D-001
+intent: performance
+domains:
+- performance
+lead_skill: performance
+support_skills:
+- data_model
+- report
+confidence: high
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=performance
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- 'domain_signal={''performance'': 3.0, ''data_model'': 1.3, ''report'': 1.0}'
+- confidence_calibrated=0.6916 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=lexical reason=None'
+started_at: '2026-09-05T00:51:00.957562+00:00'
+completed_at: '2026-09-05T00:51:00.959072+00:00'
+timestamp: '2026-09-05T00:51:00.959160+00:00'
+```
+
+## Route Event — 2026-09-05T00:52:12.176987+00:00
+
+```yaml
+event_type: route
+execution_id: EXEC-TEST-002
+task_id: TASK-002
+intent: fallback
+domains:
+- fallback
+lead_skill: fallback
+support_skills:
+- bugfix
+- refactor
+confidence: low
+memory_influence: none
+rules_applied:
+- semantic_features.intent_core=fallback
+- semantic_features.lure_terms=[]
+- semantic_features.contradiction=False
+- domain_signal={}
+- confidence_calibrated=0.0 (entropy+separation+ambiguity+unknown_penalty)
+- 'escalation_gate: route_mode=planner reason=domain_unrecognized'
+started_at: '2026-09-05T00:52:12.176425+00:00'
+completed_at: '2026-09-05T00:52:12.176962+00:00'
+timestamp: '2026-09-05T00:52:12.176987+00:00'
+```

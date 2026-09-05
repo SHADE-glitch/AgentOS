@@ -9747,3 +9747,1240 @@ Phase 9 暂缓数月。
     injection_status: "success"
     aos_status: "completed"
     lead_agent: "backend-architect"
+  - event_id: "EVT-RBSXCZ3K"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:03:10.877Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Benchmark Phase 12 — Capability 能力边界 Benchmark
+
+> 命题：Agent OS（含 Phase 10/10.5/11）**是否真正提升 Agent 能力，而非只提升恢复能力**。
+> 现状基线（Recovery Benchmark）：recovery A 3.20→B 8.90、correctness A 3.75→B 9.25、total A 6."
+    prompt_length: 12504
+    session_id: "ses_f95d84437ffegffxNHdOKKrhMo"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-X6P9S1EG"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:03:10.879Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-559NH65B"
+    prompt_summary: "# Benchmark Phase 12 — Capability 能力边界 Benchmark
+
+> 命题：Agent OS（含 Phase 10/10.5/11）**是否真正提升 Agent 能力，而非只提升恢复能力**。
+> 现状基线（Recovery Benchmark）：recovery A 3.20→B 8.90、correctness A 3.75→B 9.25、total A 6."
+    session_id: "ses_f95d84437ffegffxNHdOKKrhMo"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LSJSO8DP"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:03:15.194Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-559NH65B"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4315
+    session_id: "ses_f95d84437ffegffxNHdOKKrhMo"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3J3CO2OC"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:03:15.270Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-559NH65B"
+    session_id: "ses_f95d84437ffegffxNHdOKKrhMo"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-UMN7AA7R"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:08:49.452Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Phase 12 Adversarial Benchmark Spec
+
+> 命题：**寻找 Agent OS 架构漏洞**，不是测试功能。
+> 被测对象：Phase 10/10.5/11（detect→plan→execute→verify、RecoveryTask、OpenCode 委托、retry budget=max 2、evidence pipeline、session 统一、pro"
+    prompt_length: 14813
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MSPX1UW5"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:08:49.452Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-W5168CHP"
+    prompt_summary: "# Phase 12 Adversarial Benchmark Spec
+
+> 命题：**寻找 Agent OS 架构漏洞**，不是测试功能。
+> 被测对象：Phase 10/10.5/11（detect→plan→execute→verify、RecoveryTask、OpenCode 委托、retry budget=max 2、evidence pipeline、session 统一、pro"
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-27KYNEK5"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:08:53.831Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-W5168CHP"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4379
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TLWSND4W"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:08:53.899Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-W5168CHP"
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-ZG9MG0RU"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:12:10.160Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -79.2K removed, +265 summary
+
+│██⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████│
+▣ Compression #1 -79.2K removed, +265 summary
+→ Topic: Adversarial Benchmark Implementation
+→ Items: 15 messa"
+    prompt_length: 227
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7ESX2HU3"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:12:10.160Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-VNHU8OPQ"
+    prompt_summary: "▣ DCP | -79.2K removed, +265 summary
+
+│██⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████│
+▣ Compression #1 -79.2K removed, +265 summary
+→ Topic: Adversarial Benchmark Implementation
+→ Items: 15 messa"
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8S2K8SU1"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:12:14.676Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-VNHU8OPQ"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4516
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LGVSGP71"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:12:15.609Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-VNHU8OPQ"
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-IT6KWJKX"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:13:08.348Z"
+    evidence_type: "host_integration"
+    prompt_summary: "给我生成一个报告"
+    prompt_length: 8
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9GB6QBV6"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:13:08.349Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0ZDAZXDN"
+    prompt_summary: "给我生成一个报告"
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-PSDR9NZU"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:13:12.608Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0ZDAZXDN"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4259
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-X5II1OPY"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:13:13.129Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-0ZDAZXDN"
+    session_id: "ses_f95d30412ffepnGA4i8hYLmvFJ"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-9NSN61L5"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:22:59.834Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在进入 Agent OS Phase13 架构升级阶段。
+
+身份：
+Runtime Architect / Implementer
+
+目标：
+根据 Phase12.5 Architecture Audit 修复架构缺陷。
+
+禁止：
+1. 不修改 benchmark 代码
+2. 不降低 hidden test 标准
+3. 不绕过失败案例
+4. 不修改业务项目
+5. 不删除已有 evidence/"
+    prompt_length: 1051
+    session_id: "ses_f95c61036ffeVyICGtBAD3S4XJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-0T7VXQX2"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:22:59.835Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8QBWXM4C"
+    prompt_summary: "你现在进入 Agent OS Phase13 架构升级阶段。
+
+身份：
+Runtime Architect / Implementer
+
+目标：
+根据 Phase12.5 Architecture Audit 修复架构缺陷。
+
+禁止：
+1. 不修改 benchmark 代码
+2. 不降低 hidden test 标准
+3. 不绕过失败案例
+4. 不修改业务项目
+5. 不删除已有 evidence/"
+    session_id: "ses_f95c61036ffeVyICGtBAD3S4XJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DAXQZ2QY"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:23:04.060Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8QBWXM4C"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+    memory_count: 5
+    latency_ms: 4225
+    session_id: "ses_f95c61036ffeVyICGtBAD3S4XJ"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-8Q0KTNNJ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:23:04.124Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8QBWXM4C"
+    session_id: "ses_f95c61036ffeVyICGtBAD3S4XJ"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+  - event_id: "EVT-5FDYQ0JK"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:41:51.542Z"
+    evidence_type: "host_integration"
+    prompt_summary: "执行 Phase13.2 Router Attack Benchmark。
+
+约束：
+
+不要修改 ~/.agents/runtime 任何代码。
+
+只运行benchmark。
+
+验证：
+
+1. router输出artifact
+2. selected skill
+3. confidence
+4. fallback_reason
+5. support skills
+6. evidence链是否完整
+"
+    prompt_length: 6289
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-GBRWIDGL"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:41:51.542Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KKVGNPUP"
+    prompt_summary: "执行 Phase13.2 Router Attack Benchmark。
+
+约束：
+
+不要修改 ~/.agents/runtime 任何代码。
+
+只运行benchmark。
+
+验证：
+
+1. router输出artifact
+2. selected skill
+3. confidence
+4. fallback_reason
+5. support skills
+6. evidence链是否完整
+"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-EDAMOVMU"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:41:55.813Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KKVGNPUP"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+    memory_count: 4
+    latency_ms: 4271
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-F5HMS7KM"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:41:55.861Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KKVGNPUP"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+  - event_id: "EVT-Z84RLCBQ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:51:21.010Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在作为 Agent OS Runtime Tester。
+
+执行 Phase13 Regression Benchmark。
+
+禁止修改 runtime 代码。
+
+只允许：
+
+- 创建 benchmark 文件
+- 运行测试
+- 收集 evidence
+- 输出报告
+
+
+执行：
+
+benchmark/phase13/
+
+
+要求：
+
+运行：
+
+python3 benchmark/phase13/"
+    prompt_length: 5806
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WQXFSO2X"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:51:21.011Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HSSZEYJS"
+    prompt_summary: "你现在作为 Agent OS Runtime Tester。
+
+执行 Phase13 Regression Benchmark。
+
+禁止修改 runtime 代码。
+
+只允许：
+
+- 创建 benchmark 文件
+- 运行测试
+- 收集 evidence
+- 输出报告
+
+
+执行：
+
+benchmark/phase13/
+
+
+要求：
+
+运行：
+
+python3 benchmark/phase13/"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-T23FOJQO"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:51:25.244Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HSSZEYJS"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4233
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-HTT2EYTY"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:51:25.730Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HSSZEYJS"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-7S9KONXK"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T02:53:04.240Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -70.3K removed, +318 summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████████████│
+▣ Compression #1 -70.2K removed, +318 summary
+→ Topic: Phase13.2 Router Attack
+→ Items: 21 messages and 29 to"
+    prompt_length: 214
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7P6U8HVR"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T02:53:04.240Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HZK2L22J"
+    prompt_summary: "▣ DCP | -70.3K removed, +318 summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████████████│
+▣ Compression #1 -70.2K removed, +318 summary
+→ Topic: Phase13.2 Router Attack
+→ Items: 21 messages and 29 to"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-46JBTGJF"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T02:53:08.785Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HZK2L22J"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4545
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KDH0RE1B"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T02:53:09.726Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-HZK2L22J"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-G8H6U7YI"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T03:06:38.611Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在是 Agent OS Benchmark Executor。
+
+不要修改 ~/.agents/runtime 任何代码。
+
+执行 Phase13 Capability Regression Benchmark。
+
+输入:
+benchmark/phase13/
+
+要求：
+
+1. 使用三变体：
+
+A:
+cap-ON
+(Phase13.1 router + Phase11 recovery)
+
+B"
+    prompt_length: 4726
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7Z4KGEQ7"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T03:06:38.612Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-7QTDS0PJ"
+    prompt_summary: "你现在是 Agent OS Benchmark Executor。
+
+不要修改 ~/.agents/runtime 任何代码。
+
+执行 Phase13 Capability Regression Benchmark。
+
+输入:
+benchmark/phase13/
+
+要求：
+
+1. 使用三变体：
+
+A:
+cap-ON
+(Phase13.1 router + Phase11 recovery)
+
+B"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-4KKC37TB"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T03:06:42.901Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-7QTDS0PJ"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+    memory_count: 5
+    latency_ms: 4289
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JLWNJFGI"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T03:06:43.461Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-7QTDS0PJ"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "system-architect"
+  - event_id: "EVT-UESHDKNJ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T03:07:42.238Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -155.4K removed, +699 summary
+
+│░░░░░░░░░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+▣ Compression #2 -85.1K removed, +381 summary
+→ Topic: Phase13 Regression Exec
+→ Items: 32 messages and 32 t"
+    prompt_length: 215
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5IOI9V0R"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T03:07:42.238Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JWDVEEFL"
+    prompt_summary: "▣ DCP | -155.4K removed, +699 summary
+
+│░░░░░░░░░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+▣ Compression #2 -85.1K removed, +381 summary
+→ Topic: Phase13 Regression Exec
+→ Items: 32 messages and 32 t"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-TW4B29Y7"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T03:07:46.894Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JWDVEEFL"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4656
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-T113C8H0"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T03:07:47.813Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-JWDVEEFL"
+    session_id: "ses_f95b4c6ddffe6hMK2zL04OB2uF"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-JD6G8DWA"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T03:15:59.256Z"
+    evidence_type: "host_integration"
+    prompt_summary: "# Phase 13.5 Architecture Audit — Candidate Ranking Router 的 F3/F5 残留
+
+> 角色：首席架构审计师。**不提供代码 patch、不改 runtime、不降 benchmark 标准。** 纯架构分析。
+> 分析输入：Phase13 benchmark 结果（TOTAL 83.5 / routing 0.647 / Phase12 "
+    prompt_length: 8816
+    session_id: "ses_f9595b35effeWgR4JABz46mXfC"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-UVVVJEGY"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T03:15:59.257Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4C6J7DLO"
+    prompt_summary: "# Phase 13.5 Architecture Audit — Candidate Ranking Router 的 F3/F5 残留
+
+> 角色：首席架构审计师。**不提供代码 patch、不改 runtime、不降 benchmark 标准。** 纯架构分析。
+> 分析输入：Phase13 benchmark 结果（TOTAL 83.5 / routing 0.647 / Phase12 "
+    session_id: "ses_f9595b35effeWgR4JABz46mXfC"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5LNV9QMS"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T03:16:03.685Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4C6J7DLO"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4428
+    session_id: "ses_f9595b35effeWgR4JABz46mXfC"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-4MGWN7D5"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T03:16:03.739Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4C6J7DLO"
+    session_id: "ses_f9595b35effeWgR4JABz46mXfC"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-M3EIRFHE"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-04T09:49:45.870Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 945537
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-K49M8405"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T10:05:53.912Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你是 Final Blind Benchmark Executor。
+
+当前执行 Aiview Final Blind Benchmark 的：
+
+## ARM A — Bare OpenCode
+
+实验目标：
+
+测量没有 Agent OS Runtime 时，原生 OpenCode 在真实工程任务上的实际表现。
+
+========================================="
+    prompt_length: 2772
+    session_id: "ses_f941e4090ffezH61d2T182qr6g"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-COZFCKYN"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T10:05:53.913Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MDXRBHA8"
+    prompt_summary: "你是 Final Blind Benchmark Executor。
+
+当前执行 Aiview Final Blind Benchmark 的：
+
+## ARM A — Bare OpenCode
+
+实验目标：
+
+测量没有 Agent OS Runtime 时，原生 OpenCode 在真实工程任务上的实际表现。
+
+========================================="
+    session_id: "ses_f941e4090ffezH61d2T182qr6g"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9HHDR9C3"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T10:05:58.427Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MDXRBHA8"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+    memory_count: 5
+    latency_ms: 4514
+    session_id: "ses_f941e4090ffezH61d2T182qr6g"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-OK1E7TVF"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T10:05:58.596Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MDXRBHA8"
+    session_id: "ses_f941e4090ffezH61d2T182qr6g"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "backend-architect"
+  - event_id: "EVT-KQVIIR2V"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T10:11:44.798Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你是 Final Blind Benchmark Executor。
+
+当前执行：
+
+# ARM B — OpenCode + Agent OS
+
+这是 Aiview Final Blind Benchmark 的第二实验臂。
+
+==================================================
+一、实验目标
+======
+
+测量：
+
+OpenCode + Age"
+    prompt_length: 4565
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-VTDPFG3E"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T10:11:44.798Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DUY2K67L"
+    prompt_summary: "你是 Final Blind Benchmark Executor。
+
+当前执行：
+
+# ARM B — OpenCode + Agent OS
+
+这是 Aiview Final Blind Benchmark 的第二实验臂。
+
+==================================================
+一、实验目标
+======
+
+测量：
+
+OpenCode + Age"
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3XZ3AFKS"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T10:11:49.184Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DUY2K67L"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+    memory_count: 5
+    latency_ms: 4386
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DYQ42RCN"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T10:11:49.241Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-DUY2K67L"
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+  - event_id: "EVT-7AVQ7SQI"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T10:12:49.952Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Thoroughly inspect the aiview repository at /home/shade/Public/test for the Final Blind Benchmark FB tasks.
+
+Tasks list (from benchmark/final/tasks.json):
+FB-01 QuestionBank dedup
+FB-02 KeywordKnowled"
+    prompt_length: 2675
+    session_id: "ses_f9417e373ffeROFc3h2c24kLnT"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WY0JA2XF"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T10:12:49.952Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WRRGD4JX"
+    prompt_summary: "Thoroughly inspect the aiview repository at /home/shade/Public/test for the Final Blind Benchmark FB tasks.
+
+Tasks list (from benchmark/final/tasks.json):
+FB-01 QuestionBank dedup
+FB-02 KeywordKnowled"
+    session_id: "ses_f9417e373ffeROFc3h2c24kLnT"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-CZAM87R5"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T10:12:54.906Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WRRGD4JX"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+    memory_count: 5
+    latency_ms: 4954
+    session_id: "ses_f9417e373ffeROFc3h2c24kLnT"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-MKOWZP5C"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T10:12:55.248Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-WRRGD4JX"
+    session_id: "ses_f9417e373ffeROFc3h2c24kLnT"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "database-engineer"
+  - event_id: "EVT-85SE6D5A"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T10:18:40.382Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -90.9K removed, +9.6K summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #1 -90.9K removed, +9.6K summary
+→ Topic: Benchmark Execution
+→ Items: 56 messages and 70 tool"
+    prompt_length: 212
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-9MYFQQLR"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T10:18:40.382Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SZCRKJGZ"
+    prompt_summary: "▣ DCP | -90.9K removed, +9.6K summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+▣ Compression #1 -90.9K removed, +9.6K summary
+→ Topic: Benchmark Execution
+→ Items: 56 messages and 70 tool"
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-KN0KQCG9"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T10:18:45.004Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SZCRKJGZ"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 5
+    latency_ms: 4622
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ZFUUQNFF"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T10:18:46.197Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-SZCRKJGZ"
+    session_id: "ses_f9418e338ffeVryiG4qHV4xXO6"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-AZXOJ2OT"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-04T14:10:18.123Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.2.0"
+    pid: 1676970
+    cwd: "/home/shade/Public/test"
+    session_id: ""
+  - event_id: "EVT-GP4MS6B7"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T14:21:54.911Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Batch generated from real code reading of  /home/shade/Public/test  @  56788e5  — no invented architecture problems, no Agent OS content in the tasks. I read the full interview/scoring/dashboard/rag/a"
+    prompt_length: 5303
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-I0W5XWS0"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T14:21:54.912Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KMB81W4C"
+    prompt_summary: "Batch generated from real code reading of  /home/shade/Public/test  @  56788e5  — no invented architecture problems, no Agent OS content in the tasks. I read the full interview/scoring/dashboard/rag/a"
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-Z034FEES"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T14:21:55.017Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KMB81W4C"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+    memory_count: 0
+    latency_ms: 105
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-RGB4BFX8"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T14:21:55.141Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-KMB81W4C"
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+  - event_id: "EVT-DQY0WFWV"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T14:22:20.991Z"
+    evidence_type: "host_integration"
+    prompt_summary: "开始执行"
+    prompt_length: 4
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-O62ZKYTK"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T14:22:20.991Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-O8ESU6V9"
+    prompt_summary: "开始执行"
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-AVW08GG3"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T14:22:21.084Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-O8ESU6V9"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 0
+    latency_ms: 93
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-96WKHGH9"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T14:22:21.522Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-O8ESU6V9"
+    session_id: "ses_f9333e3a5ffemxoj8UHcFgMcn9"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-LJNAWJPX"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T14:22:42.195Z"
+    evidence_type: "host_integration"
+    prompt_summary: "Quickly explore /home/shade/Public/test repo at commit 56788e5. Need to find and summarize key files for PO-01..10 tasks:
+
+- backend/src/main/resources/db/schema.sql and data.sql
+- backend/src/main/ja"
+    prompt_length: 1283
+    session_id: "ses_f933339e4ffecAB3GrLNID21KA"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-WKC0F5QQ"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T14:22:42.195Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CAH8E4LN"
+    prompt_summary: "Quickly explore /home/shade/Public/test repo at commit 56788e5. Need to find and summarize key files for PO-01..10 tasks:
+
+- backend/src/main/resources/db/schema.sql and data.sql
+- backend/src/main/ja"
+    session_id: "ses_f933339e4ffecAB3GrLNID21KA"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-JST54U75"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T14:22:42.285Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CAH8E4LN"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+    memory_count: 0
+    latency_ms: 90
+    session_id: "ses_f933339e4ffecAB3GrLNID21KA"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-DO2K80BJ"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T14:22:42.626Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-CAH8E4LN"
+    session_id: "ses_f933339e4ffecAB3GrLNID21KA"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+  - event_id: "EVT-VRL8W0FI"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T14:26:53.624Z"
+    evidence_type: "host_integration"
+    prompt_summary: "完成下面的任务：Task set (Easy1 / Medium5 / Hard3 / VeryHard1):
+
+┌──────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────"
+    prompt_length: 3979
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-HFA6XHRI"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T14:26:53.624Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZA3MIHQN"
+    prompt_summary: "完成下面的任务：Task set (Easy1 / Medium5 / Hard3 / VeryHard1):
+
+┌──────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────"
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-D24YP20T"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T14:26:53.720Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZA3MIHQN"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+    memory_count: 0
+    latency_ms: 96
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-AIJ47P8M"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T14:26:53.796Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-ZA3MIHQN"
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "security-engineer"
+  - event_id: "EVT-QVRNH2ZQ"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T14:31:51.141Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -88.9K removed, +1.1K summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█████████████████│
+▣ Compression #1 -85.9K removed, +1.1K summary
+→ Topic: Early exploration
+→ Items: 20 messages and 55 tools "
+    prompt_length: 210
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-25WM8D00"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T14:31:51.141Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MCINR6US"
+    prompt_summary: "▣ DCP | -88.9K removed, +1.1K summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█████████████████│
+▣ Compression #1 -85.9K removed, +1.1K summary
+→ Topic: Early exploration
+→ Items: 20 messages and 55 tools "
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-7ZJNTEMS"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T14:31:51.240Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MCINR6US"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 0
+    latency_ms: 99
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-3JUB41RH"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T14:31:53.107Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-MCINR6US"
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-UPLJ0MMB"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-04T14:37:44.538Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -171K removed, +2.4K summary
+
+│░░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+▣ Compression #2 -80.2K removed, +1.3K summary
+→ Topic: fixes progress
+→ Items: 57 messages and 71 tools comp"
+    prompt_length: 206
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5Z6BU60N"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-04T14:37:44.538Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8HP4SVLK"
+    prompt_summary: "▣ DCP | -171K removed, +2.4K summary
+
+│░░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+▣ Compression #2 -80.2K removed, +1.3K summary
+→ Topic: fixes progress
+→ Items: 57 messages and 71 tools comp"
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-5D1IRKIW"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-04T14:37:44.625Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8HP4SVLK"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 0
+    latency_ms: 87
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-BEIQFYZD"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-04T14:37:45.699Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-8HP4SVLK"
+    session_id: "ses_f932f4c54ffecOmL4aJQzCwWm6"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-D0AHPS6Q"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-05T00:14:45.727Z"
+    evidence_type: "host_integration"
+    prompt_summary: "你现在进行一次：
+
+# Native OpenCode + Agent OS Final Smoke Test
+
+目的不是修改 Agent OS，也不是跑 benchmark。
+
+目的只有一个：
+
+验证你当前正常启动的 OpenCode 是否真的自动经过 Agent OS Runtime。
+
+==================================================
+一、"
+    prompt_length: 2211
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-S9V9KMUC"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-05T00:14:45.728Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4Y432J5D"
+    prompt_summary: "你现在进行一次：
+
+# Native OpenCode + Agent OS Final Smoke Test
+
+目的不是修改 Agent OS，也不是跑 benchmark。
+
+目的只有一个：
+
+验证你当前正常启动的 OpenCode 是否真的自动经过 Agent OS Runtime。
+
+==================================================
+一、"
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-2GN9RU6S"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-05T00:14:45.831Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4Y432J5D"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+    memory_count: 0
+    latency_ms: 103
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-0TU36SYL"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-05T00:14:45.910Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-4Y432J5D"
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "frontend-architect"
+  - event_id: "EVT-5T71X625"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-05T00:19:58.940Z"
+    evidence_type: "host_integration"
+    prompt_summary: "▣ DCP | -103.8K removed, +435 summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+▣ Compression #1 -102.9K removed, +435 summary
+→ Topic: Smoke Pre-Check
+→ Items: 32 messages and 49 tools co"
+    prompt_length: 208
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-LEFREWR7"
+    event_type: "host_adapter_called"
+    timestamp: "2026-09-05T00:19:58.941Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UEZZ6M9F"
+    prompt_summary: "▣ DCP | -103.8K removed, +435 summary
+
+│⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+▣ Compression #1 -102.9K removed, +435 summary
+→ Topic: Smoke Pre-Check
+→ Items: 32 messages and 49 tools co"
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-ZWYN0HMN"
+    event_type: "host_adapter_completed"
+    timestamp: "2026-09-05T00:19:59.056Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UEZZ6M9F"
+    aos_status: "completed"
+    lead_agent: "general"
+    memory_count: 0
+    latency_ms: 115
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    cwd: "/home/shade/Public/test"
+  - event_id: "EVT-FJHTQYAL"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-05T00:20:00.489Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-UEZZ6M9F"
+    session_id: "ses_f911513a7ffe997RopseMqzs3d"
+    injection_status: "success"
+    aos_status: "completed"
+    lead_agent: "general"
+  - event_id: "EVT-FR5OQAUA"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-05T00:45:50.843Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.3.0"
+    pid: 2086143
+    cwd: "/tmp/opencode-e2e-test"
+    session_id: ""
+  - event_id: "EVT-MYXZJTCX"
+    event_type: "host_prompt_received"
+    timestamp: "2026-09-05T00:45:54.216Z"
+    evidence_type: "host_integration"
+    prompt_summary: ""say hello""
+    prompt_length: 11
+    session_id: "ses_f90f89a6effealjv1TWVSZjbtJ"
+    cwd: "/tmp/opencode-e2e-test"
+  - event_id: "EVT-7U5ADKEX"
+    event_type: "governance_preflight_called"
+    timestamp: "2026-09-05T00:45:54.216Z"
+    evidence_type: "host_integration"
+    prompt_summary: ""say hello""
+    session_id: "ses_f90f89a6effealjv1TWVSZjbtJ"
+    cwd: "/tmp/opencode-e2e-test"
+  - event_id: "EVT-LU04C1IP"
+    event_type: "governance_preflight_completed"
+    timestamp: "2026-09-05T00:46:00.193Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-D11C5789"
+    loop_id: "LOOP-20260905004554-40ED"
+    session_id: "ses_f90f89a6effealjv1TWVSZjbtJ"
+    aos_status: "completed"
+    router_intent: "fallback"
+    lead_skill: "fallback"
+    memory_count: 5
+    latency_ms: 5977
+    cwd: "/tmp/opencode-e2e-test"
+  - event_id: "EVT-JRFZVYV9"
+    event_type: "host_context_injected"
+    timestamp: "2026-09-05T00:46:00.353Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-D11C5789"
+    loop_id: "LOOP-20260905004554-40ED"
+    session_id: "ses_f90f89a6effealjv1TWVSZjbtJ"
+    injection_status: "success"
+    aos_status: "completed"
+    router_intent: "fallback"
+    lead_skill: "fallback"
+    memory_count: 5
+  - event_id: "EVT-2BKAX6LE"
+    event_type: "governance_postflight_called"
+    timestamp: "2026-09-05T00:46:04.785Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-D11C5789"
+    loop_id: "LOOP-20260905004554-40ED"
+    session_id: "ses_f90f89a6effealjv1TWVSZjbtJ"
+    cwd: "/tmp/opencode-e2e-test"
+  - event_id: "EVT-CV1X78HC"
+    event_type: "governance_postflight_completed"
+    timestamp: "2026-09-05T00:46:04.961Z"
+    evidence_type: "host_integration"
+    task_id: "HOST-D11C5789"
+    loop_id: "LOOP-20260905004554-40ED"
+    session_id: "ses_f90f89a6effealjv1TWVSZjbtJ"
+    final_status: "completed"
+    failures_detected: 0
+    evidence_path: "/home/shade/.agents/reports/ses_f90f89a6effealjv1TWVSZjbtJ/evidence-HOST-D11C5789.json"
+    latency_ms: 176
+  - event_id: "EVT-VUR34353"
+    event_type: "host_plugin_loaded"
+    timestamp: "2026-09-05T00:54:25.895Z"
+    evidence_type: "host_integration"
+    plugin_name: "opencode-aos-host"
+    plugin_version: "0.3.0"
+    pid: 2115274
+    cwd: "/home/shade/Public/test"
+    session_id: ""

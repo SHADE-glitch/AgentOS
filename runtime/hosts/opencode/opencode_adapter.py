@@ -27,13 +27,16 @@ Constraints:
 import sys
 import os
 import json
+import re
 import subprocess
+import yaml
 from datetime import datetime, timezone
 
 # ── Constants ───────────────────────────────────────────────────
 BASE = "/home/shade/.agents"
 LOOP_CONTROLLER = os.path.join(BASE, "runtime", "loop-controller", "loop_controller.py")
 RUNTIME_ADAPTER = os.path.join(BASE, "runtime", "loop-controller", "runtime_adapter.py")
+STATE_DIR = os.path.join(BASE, "runtime", "loop-controller", "state")
 
 # Resolved from environment, never hardcoded
 DEFAULT_PROVIDER = os.environ.get("AOS_RUNTIME_PROVIDER", "opencode")
@@ -80,6 +83,7 @@ def resolve_task_from_cli(args):
     model = DEFAULT_MODEL
     provider = DEFAULT_PROVIDER
     cwd = os.getcwd()
+    session_id = ""
 
     i = 1
     while i < len(args):
@@ -95,6 +99,9 @@ def resolve_task_from_cli(args):
         elif args[i] == "--cwd" and i + 1 < len(args):
             cwd = args[i + 1]
             i += 2
+        elif args[i] == "--session" and i + 1 < len(args):
+            session_id = args[i + 1]
+            i += 2
         else:
             i += 1
 
@@ -104,14 +111,48 @@ def resolve_task_from_cli(args):
         "model": model,
         "provider": provider,
         "working_directory": cwd,
+        "session_id": session_id,
     }
+
+
+def _extract_loop_state(stdout: str) -> dict:
+    """
+    Extract the loop_id / session_id from loop_controller stdout.
+
+    loop_controller prints `Loop ID:` and (Phase 10.5) records session_id in
+    state/<loop_id>.yaml. We prefer the state file for authoritative data and
+    fall back to stdout parsing for resilience.
+    """
+    loop_id = ""
+    session_id = ""
+
+    m = re.search(r"Loop ID:\s*(LOOP-\d+)", stdout)
+    if m:
+        loop_id = m.group(1)
+
+    # Authoritative session_id lives in the persisted loop state file
+    if loop_id:
+        state_path = os.path.join(STATE_DIR, f"{loop_id}.yaml")
+        if os.path.exists(state_path):
+            try:
+                state = yaml.safe_load(open(state_path)) or {}
+                session_id = state.get("session_id", "")
+            except Exception:
+                session_id = ""
+
+    if not session_id:
+        m = re.search(r"Session:\s*(\S+)", stdout)
+        if m:
+            session_id = m.group(1)
+
+    return {"loop_id": loop_id, "session_id": session_id}
 
 
 def invoke_aos(task_spec):
     """
     Invoke the AOS loop controller with the resolved task.
-    
-    Returns: dict with AOS result
+
+    Returns: dict with AOS result (including loop_id / session_id).
     """
     import uuid
 
@@ -121,6 +162,7 @@ def invoke_aos(task_spec):
     model = task_spec["model"]
     provider = task_spec["provider"]
     cwd = task_spec["working_directory"]
+    session_id = task_spec.get("session_id", "")
 
     # Build entry metadata for AOS
     entry_metadata = {
@@ -156,11 +198,16 @@ def invoke_aos(task_spec):
                 **os.environ,
                 "AGENT_OS_ROOT": BASE,
                 "AOS_ENTRY_METADATA": json.dumps(entry_metadata),
+                # Phase: propagate host session ID into the loop_controller so it
+                # becomes the canonical AOS session id (no more orphaned telemetry).
+                "AOS_SESSION_ID": session_id,
             },
             capture_output=True,
             text=True,
             timeout=600,
         )
+
+        loop_state = _extract_loop_state(result.stdout)
 
         return {
             "status": "success" if result.returncode == 0 else "error",
@@ -168,6 +215,8 @@ def invoke_aos(task_spec):
             "exit_code": result.returncode,
             "stdout": result.stdout,
             "stderr": result.stderr,
+            "loop_id": loop_state.get("loop_id", ""),
+            "session_id": loop_state.get("session_id", "") or session_id,
         }
 
     except subprocess.TimeoutExpired:
@@ -177,6 +226,8 @@ def invoke_aos(task_spec):
             "exit_code": -1,
             "stdout": "",
             "stderr": "AOS pipeline timed out after 600s",
+            "loop_id": "",
+            "session_id": session_id,
         }
     except Exception as e:
         return {
@@ -185,6 +236,8 @@ def invoke_aos(task_spec):
             "exit_code": -1,
             "stdout": "",
             "stderr": str(e),
+            "loop_id": "",
+            "session_id": session_id,
         }
 
 
@@ -201,6 +254,8 @@ def main():
         print("  --model MODEL       Model override (default: AOS_RUNTIME_MODEL env)")
         print("  --provider PROVIDER Provider override (default: opencode)")
         print("  --cwd DIR           Working directory (default: current)")
+        print("  --session ID        Host session ID (mapped to AOS session)")
+        print("  --json              Emit machine-readable JSON result")
         print()
         print("Environment variables:")
         print("  AOS_TASK            Task description")
@@ -209,8 +264,11 @@ def main():
         print("  AOS_PROVIDER        Provider override")
         sys.exit(0)
 
+    json_mode = "--json" in sys.argv
+    args = [a for a in sys.argv[1:] if a != "--json"]
+
     # Resolve task from CLI
-    task_spec = resolve_task_from_cli(sys.argv[1:])
+    task_spec = resolve_task_from_cli(args)
     if not task_spec or not task_spec["task"]:
         print("Error: no task specified", file=sys.stderr)
         sys.exit(1)
@@ -218,9 +276,15 @@ def main():
     # Invoke AOS
     result = invoke_aos(task_spec)
 
+    if json_mode:
+        print(json.dumps(result, ensure_ascii=False))
+        sys.exit(0 if result["status"] == "success" else 1)
+
     # Output result
     print(f"\n[adapter] status={result['status']}")
     print(f"[adapter] task_id={result['task_id']}")
+    print(f"[adapter] loop_id={result.get('loop_id', '')}")
+    print(f"[adapter] session_id={result.get('session_id', '')}")
 
     if result["status"] != "success":
         print(f"[adapter] error={result['stderr'][:200]}")

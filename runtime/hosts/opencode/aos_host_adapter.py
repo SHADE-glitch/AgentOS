@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-AOS Host Adapter — Phase 6.0.2
+AOS Host Adapter — Phase 15 (Runtime Integration Repair)
 
-Provides decision context to OpenCode Host via the plugin system.
+Provides decision context AND runtime entry to OpenCode Host via the plugin system.
 
-Pipeline:
+Two modes:
+  1. Advisory (default): Returns decision context for prompt injection
+  2. Runtime (--runtime): Invokes loop_controller for full pipeline execution
+
+Pipeline (advisory):
   OpenCode Plugin
     ↓ (task context)
   AOS Host Adapter
@@ -15,8 +19,17 @@ Pipeline:
     ↓ (injects into system prompt)
   OpenCode Model
 
+Pipeline (runtime):
+  OpenCode Plugin / CLI
+    ↓ (task context)
+  AOS Host Adapter
+    ↓ (invokes loop_controller with host_delegate provider)
+  loop_controller → retrieval → HybridRouter → skill → evidence → loop state
+    ↓ (returns governance context)
+  OpenCode Plugin / CLI
+
 CRITICAL CONSTRAINTS:
-  - Does NOT call runtime_adapter (would cause recursion)
+  - Runtime mode uses host_delegate provider (no recursive opencode run)
   - Does NOT start new OpenCode instances
   - Does NOT duplicate Router/Memory/Orchestrator logic
   - Only CALLS existing components and returns context
@@ -26,12 +39,15 @@ import os
 import sys
 import json
 import uuid
+import subprocess
 from datetime import datetime, timezone
 
 # ── Path Setup ────────────────────────────────────────────────────
 BASE = "/home/shade/.agents"
 sys.path.insert(0, os.path.join(BASE, "runtime", "memory-feedback", "retrieval"))
 sys.path.insert(0, os.path.join(BASE, "runtime", "loop-controller"))
+
+LOOP_CONTROLLER = os.path.join(BASE, "runtime", "loop-controller", "loop_controller.py")
 
 # ── Recursion Guard ───────────────────────────────────────────────
 # If AOS_HOST_ADAPTER is already set, we're in recursion — abort
@@ -419,13 +435,99 @@ def _generate_warnings(task_text: str, context: dict) -> list:
     return warnings
 
 
+# ── Runtime Entry (Phase 15) ──────────────────────────────────────
+def invoke_loop_controller(
+    task_text: str,
+    session_id: str = "",
+    working_directory: str = "",
+    model: str = "",
+    provider: str = "host_delegate",
+    memory_mode: str = "enabled",
+    task_id: str = "",
+) -> dict:
+    """
+    Invoke the loop_controller for full runtime entry.
+
+    Uses host_delegate provider to avoid spawning recursive opencode run.
+    The loop_controller runs: retrieval → HybridRouter → skill → evidence → loop state.
+    Returns governance context with loop_id, session_id, router decision, etc.
+    """
+    import uuid as _uuid
+
+    task_id = task_id if task_id else f"HOST-{_uuid.uuid4().hex[:6].upper()}"
+    session_id = session_id or datetime.now(timezone.utc).strftime("SESS-%Y%m%d-%H%M%S")
+
+    cmd = [
+        sys.executable,
+        LOOP_CONTROLLER,
+        task_id,
+        task_text,
+        memory_mode,
+        model,
+        provider,
+        "HOST_DELEGATED",
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=working_directory or os.getcwd(),
+            env={
+                **os.environ,
+                "AGENT_OS_ROOT": BASE,
+                "AOS_SESSION_ID": session_id,
+                "AOS_HOST_PLUGIN_ACTIVE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+        # Extract loop_id from stdout
+        import re
+        loop_id = ""
+        m = re.search(r"Loop ID:\s*(LOOP-\S+)", result.stdout)
+        if m:
+            loop_id = m.group(1)
+
+        return {
+            "task_id": task_id,
+            "loop_id": loop_id,
+            "session_id": session_id,
+            "aos_status": "completed" if result.returncode == 0 else "error",
+            "exit_code": result.returncode,
+            "stdout": result.stdout[-500:] if result.stdout else "",
+            "stderr": result.stderr[:500] if result.stderr else "",
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "task_id": task_id,
+            "loop_id": "",
+            "session_id": session_id,
+            "aos_status": "timeout",
+            "exit_code": -1,
+            "stdout": "",
+            "stderr": "Loop controller timed out after 60s",
+        }
+    except Exception as e:
+        return {
+            "task_id": task_id,
+            "loop_id": "",
+            "session_id": session_id,
+            "aos_status": "error",
+            "exit_code": -1,
+            "stdout": "",
+            "stderr": str(e),
+        }
+
+
 # ── CLI Interface ─────────────────────────────────────────────────
 def main():
-    """CLI entry point for testing."""
+    """CLI entry point."""
     import argparse
 
     parser = argparse.ArgumentParser(description="AOS Host Adapter")
-    parser.add_argument("task", help="Task description")
+    parser.add_argument("task", nargs="?", help="Task description")
     parser.add_argument("--session", default="", help="Session ID")
     parser.add_argument("--cwd", default="", help="Working directory")
     parser.add_argument("--model", default="", help="Model name")
@@ -433,8 +535,35 @@ def main():
     parser.add_argument("--memory", default="enabled", help="Memory mode")
     parser.add_argument("--task-id", default="", help="Task ID from plugin (for correlation)")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
+    parser.add_argument("--runtime", action="store_true", help="Invoke loop_controller for full runtime entry")
 
     args = parser.parse_args()
+
+    if args.runtime:
+        if not args.task:
+            print("Error: --runtime requires a task description", file=sys.stderr)
+            sys.exit(1)
+        result = invoke_loop_controller(
+            task_text=args.task,
+            session_id=args.session,
+            working_directory=args.cwd,
+            model=args.model,
+            provider=args.provider or "host_delegate",
+            memory_mode=args.memory,
+            task_id=args.task_id,
+        )
+        if args.json:
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+        else:
+            print(f"AOS Status:   {result['aos_status']}")
+            print(f"Task ID:      {result['task_id']}")
+            print(f"Loop ID:      {result.get('loop_id', '?')}")
+            print(f"Session ID:   {result.get('session_id', '?')}")
+        sys.exit(0 if result["aos_status"] == "completed" else 1)
+
+    if not args.task:
+        print("Error: task description required", file=sys.stderr)
+        sys.exit(1)
 
     context = get_decision_context(
         task_text=args.task,

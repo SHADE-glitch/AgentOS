@@ -818,6 +818,61 @@ def run_loop(task_id, task_text, memory_mode="enabled", model="", provider="open
 
         try:
             exec_result = runtime_execute(task_id, task_text, decision_context, model=model, provider=provider, pipeline_timestamps=pipeline_timestamps, project_root=project_root, loop_id=loop_id)
+
+            exec_status = exec_result.get("status", "error")
+
+            # Phase 15: Handle host_delegated execution
+            if exec_status == "host_delegated":
+                state["runtime"]["status"] = "host_delegated"
+                state["runtime"]["execution_id"] = exec_result["execution_id"]
+                state["runtime"]["trace_id"] = exec_result["trace_id"]
+                state["runtime"]["session_id"] = exec_result.get("session_id", "")
+                state["runtime"]["status_code"] = "host_delegated"
+                state["runtime"]["executor"] = {
+                    "type": "host_delegated",
+                    "note": "Execution delegated to host (OpenCode). Postflight will complete the loop.",
+                }
+                state["trace"]["status"] = "delegated"
+                state["trace"]["trace_file"] = exec_result.get("trace_file", "")
+                print(f"  Execution ID: {exec_result['execution_id']}")
+                print(f"  Status:       HOST_DELEGATED (execution delegated to OpenCode host)")
+                print(f"  Session ID:   {exec_result.get('session_id', '?')}")
+
+                # Skip post-execution stages for host_delegated — they will run in postflight
+                state["code_validation"] = {"status": "skipped", "error": "host_delegated"}
+                state["runtime"]["completed_at"] = datetime.now(timezone.utc).isoformat()
+                state["trace"]["started_at"] = state["runtime"]["started_at"]
+                state["trace"]["completed_at"] = state["runtime"]["completed_at"]
+                state["current_stage"] = "host_delegated"
+                state["final_status"] = "completed"
+                pipeline_timestamps["agent_completed"] = datetime.now(timezone.utc).isoformat()
+                save_loop_state(loop_id, state)
+
+                # Skip to final stages
+                print(f"\n  Stages 5-10: DEFERRED (host_delegated — postflight will complete)")
+                print(f"{'=' * 70}")
+                print(f"Pipeline: HOST_DELEGATED")
+                print(f"Loop ID:  {loop_id}")
+                print(f"Session:  {session_id}")
+                print(f"Status:   completed (delegated to host)")
+                print(f"{'=' * 70}")
+
+                # Phase 5.7: Emit execution event
+                try:
+                    emit_execution_event(execution_id, task_id, exec_result)
+                    state["telemetry"]["events"].append("execution")
+                except Exception:
+                    pass
+
+                # Phase 5.7: Emit outcome event
+                try:
+                    emit_outcome_event(execution_id, task_id, "completed", "host_delegated")
+                    state["telemetry"]["events"].append("outcome")
+                except Exception:
+                    pass
+
+                return state
+
             state["runtime"]["status"] = "completed"
             state["runtime"]["execution_id"] = exec_result["execution_id"]
             state["runtime"]["trace_id"] = exec_result["trace_id"]

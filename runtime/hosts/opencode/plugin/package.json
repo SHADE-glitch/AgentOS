@@ -1,6 +1,6 @@
 {
   "name": "opencode-aos-host",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Agent OS Host Integration for OpenCode",
   "main": "./index.js",

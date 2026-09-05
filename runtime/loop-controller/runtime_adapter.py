@@ -451,9 +451,38 @@ def _invoke_opencode_provider(prompt, model, timeout_seconds=600):
     }
 
 
+# ── Host Delegate Provider (Phase 15) ─────────────────────────────
+def _invoke_host_delegate_provider(prompt, model, timeout_seconds=600):
+    """
+    Host delegate provider: returns the execution prompt and metadata
+    without spawning a subprocess. The host (OpenCode) is the executor.
+
+    This is used when the loop_controller is invoked from the OpenCode
+    host plugin — the actual execution is delegated back to the OpenCode
+    model running in the current session.
+    """
+    import time as _time
+    start_time = _time.time()
+
+    return {
+        "session_id": os.environ.get("AOS_SESSION_ID", ""),
+        "response_text": "",
+        "tokens": {"total": 0, "input": 0, "output": 0},
+        "cost": 0,
+        "latency_ms": 0,
+        "status": "host_delegated",
+        "error": "",
+        "provider": "host_delegate",
+        "model": model,
+        "execution_prompt": prompt,
+        "note": "Execution delegated to host (OpenCode). The host must execute this prompt.",
+    }
+
+
 # Provider dispatch table
 PROVIDER_DISPATCH = {
     "opencode": _invoke_opencode_provider,
+    "host_delegate": _invoke_host_delegate_provider,
 }
 
 

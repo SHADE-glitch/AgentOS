@@ -1,27 +1,29 @@
 /**
  * opencode-aos-host — OpenCode Host Integration for Agent OS
- * 
- * Phase 6.0.7
- * 
+ *
+ * Phase 15 — Runtime Integration Repair
+ *
  * This plugin integrates Agent OS with OpenCode as a Host.
- * It does NOT start a new OpenCode instance. It provides context to the current one.
- * 
- * Pipeline:
- *   OpenCode Plugin (this file)
- *     ↓ (calls adapter)
- *   AOS Host Adapter (Python)
- *     ↓ (calls existing AOS components)
- *   Router / Memory / Orchestrator
- *     ↓ (returns decision context)
- *   OpenCode Plugin
+ * It does NOT start a new OpenCode instance. It provides governance context
+ * and delegates execution to the OpenCode model.
+ *
+ * Pipeline (REPAIRED):
+ *   OpenCode user message
+ *     ↓
+ *   Host Plugin (this file)
+ *     ↓ (governance_bridge.py --preflight)
+ *   Agent OS Runtime (session, loop_id, retrieval, HybridRouter, skill, evidence_before)
+ *     ↓ (governance context)
+ *   Host Plugin
  *     ↓ (injects into system prompt)
- *   OpenCode Model (continues execution)
- * 
+ *   OpenCode Model (executes task with governance context)
+ *     ↓
+ *   Host Plugin (next message)
+ *     ↓ (governance_bridge.py --postflight)
+ *   Agent OS Runtime (evidence_after, failure detection, recovery, loop finalize)
+ *
  * CRITICAL: No recursion. No new OpenCode instances.
- * 
- * Evidence Types:
- *   - host_integration: Events from Host Plugin → AOS Adapter → Router/Memory/Orchestrator
- *   - runtime_execution: Events from AOS → Runtime Adapter → Agent/Model (NOT USED HERE)
+ * Runtime stage is HOST_DELEGATED — OpenCode itself is the executor.
  */
 
 import { execFile } from "node:child_process";
@@ -33,7 +35,8 @@ const execFileAsync = promisify(execFile);
 
 // ── Configuration ────────────────────────────────────────────────
 const AOS_ROOT = process.env.AGENT_OS_ROOT || "/home/shade/.agents";
-const ADAPTER_PATH = `${AOS_ROOT}/runtime/hosts/opencode/aos_host_adapter.py`;
+const GOVERNANCE_BRIDGE = `${AOS_ROOT}/runtime/hosts/opencode/governance_bridge.py`;
+const FALLBACK_ADAPTER = `${AOS_ROOT}/runtime/hosts/opencode/aos_host_adapter.py`;
 const PYTHON = process.env.PYTHON || "python3";
 const TELEMETRY_DIR = join(AOS_ROOT, "runtime", "telemetry");
 const HOST_EVENTS_FILE = join(TELEMETRY_DIR, "host-events.yaml");
@@ -79,15 +82,14 @@ function emitTelemetry(event) {
 
     appendFileSync(HOST_EVENTS_FILE, yamlLine);
   } catch (err) {
-    console.error("[aos-host] Telemetry write failed:", err.message);
+    console.error("[aos-host] Telemetry write failed:", err?.message);
   }
 
   return eventWithMeta;
 }
 
-// ── Adapter Call ─────────────────────────────────────────────────
-async function callAOSAdapter(task, options = {}) {
-  // Recursion guard
+// ── Governance Bridge Call (Preflight) ───────────────────────────
+async function callGovernancePreflight(task, options = {}) {
   if (process.env[RECURSION_ENV]) {
     console.error("[aos-host] Recursion detected, skipping AOS call");
     emitTelemetry({
@@ -98,34 +100,29 @@ async function callAOSAdapter(task, options = {}) {
     return null;
   }
 
-  const taskId = `HOST-${generateId()}`;
   const startTime = Date.now();
 
   try {
     process.env[RECURSION_ENV] = "1";
 
+    const payload = JSON.stringify({
+      task: task,
+      session_id: options.sessionId || "",
+      cwd: options.cwd || "",
+    });
+
     emitTelemetry({
-      event_type: "host_adapter_called",
-      task_id: taskId,
+      event_type: "governance_preflight_called",
       prompt_summary: task.slice(0, 200),
       session_id: options.sessionId || "",
       cwd: options.cwd || ""
     });
 
-    const args = [
-      ADAPTER_PATH,
-      task,
-      "--json",
-      "--task-id", taskId,
-    ];
-
-    if (options.sessionId) args.push("--session", options.sessionId);
-    if (options.cwd) args.push("--cwd", options.cwd);
-    if (options.model) args.push("--model", options.model);
-    if (options.provider) args.push("--provider", options.provider);
-    if (options.memoryMode) args.push("--memory", options.memoryMode);
-
-    const { stdout, stderr } = await execFileAsync(PYTHON, args, {
+    const { stdout, stderr } = await execFileAsync(PYTHON, [
+      GOVERNANCE_BRIDGE,
+      "--preflight",
+      "--payload", payload,
+    ], {
       timeout: 30_000,
       env: {
         ...process.env,
@@ -134,35 +131,111 @@ async function callAOSAdapter(task, options = {}) {
     });
 
     if (stderr) {
-      console.error("[aos-host] Adapter stderr:", stderr.slice(0, 200));
+      console.error("[aos-host] Governance bridge stderr:", stderr.slice(0, 200));
     }
 
     const context = JSON.parse(stdout.trim());
     const latencyMs = Date.now() - startTime;
 
     emitTelemetry({
-      event_type: "host_adapter_completed",
-      task_id: taskId,
+      event_type: "governance_preflight_completed",
+      task_id: context.task_id || "",
+      loop_id: context.loop_id || "",
+      session_id: context.session_id || "",
       aos_status: context.aos_status || "unknown",
-      lead_agent: context.orchestration?.lead_agent || "general",
+      router_intent: context.router?.intent || "",
+      lead_skill: context.router?.lead_skill || "general",
       memory_count: context.memory?.retrieved || 0,
       latency_ms: latencyMs,
-      session_id: options.sessionId || "",
       cwd: options.cwd || ""
     });
 
     return context;
   } catch (err) {
-    console.error("[aos-host] Adapter call failed:", err);
+    console.error("[aos-host] Governance preflight failed:", err);
     const latencyMs = Date.now() - startTime;
 
     emitTelemetry({
-      event_type: "host_fallback_triggered",
-      task_id: taskId,
-      fallback_reason: err.message || "adapter_error",
+      event_type: "governance_preflight_failed",
+      fallback_reason: err?.message || "preflight_error",
       latency_ms: latencyMs,
       session_id: options.sessionId || "",
       cwd: options.cwd || ""
+    });
+
+    return null;
+  } finally {
+    delete process.env[RECURSION_ENV];
+  }
+}
+
+// ── Governance Bridge Call (Postflight) ──────────────────────────
+async function callGovernancePostflight(taskId, loopId, options = {}) {
+  if (process.env[RECURSION_ENV]) {
+    return null;
+  }
+
+  const startTime = Date.now();
+
+  try {
+    process.env[RECURSION_ENV] = "1";
+
+    const payload = JSON.stringify({
+      task_id: taskId,
+      loop_id: loopId,
+      session_id: options.sessionId || "",
+      cwd: options.cwd || "",
+    });
+
+    emitTelemetry({
+      event_type: "governance_postflight_called",
+      task_id: taskId,
+      loop_id: loopId,
+      session_id: options.sessionId || "",
+      cwd: options.cwd || ""
+    });
+
+    const { stdout, stderr } = await execFileAsync(PYTHON, [
+      GOVERNANCE_BRIDGE,
+      "--postflight",
+      "--payload", payload,
+    ], {
+      timeout: 30_000,
+      env: {
+        ...process.env,
+        AOS_HOST_PLUGIN_ACTIVE: "1",
+      },
+    });
+
+    if (stderr) {
+      console.error("[aos-host] Postflight stderr:", stderr.slice(0, 200));
+    }
+
+    const context = JSON.parse(stdout.trim());
+    const latencyMs = Date.now() - startTime;
+
+    emitTelemetry({
+      event_type: "governance_postflight_completed",
+      task_id: context.task_id || "",
+      loop_id: context.loop_id || "",
+      session_id: context.session_id || "",
+      final_status: context.final_status || "",
+      failures_detected: context.recovery?.failures_detected || 0,
+      evidence_path: context.evidence_path || "",
+      latency_ms: latencyMs,
+    });
+
+    return context;
+  } catch (err) {
+    console.error("[aos-host] Governance postflight failed:", err);
+    const latencyMs = Date.now() - startTime;
+
+    emitTelemetry({
+      event_type: "governance_postflight_failed",
+      task_id: taskId,
+      loop_id: loopId,
+      fallback_reason: err?.message || "postflight_error",
+      latency_ms: latencyMs,
     });
 
     return null;
@@ -176,49 +249,66 @@ function buildSystemInjection(context) {
   const lines = [];
 
   lines.push("");
-  lines.push("## Agent OS Decision Context");
+  lines.push("## Agent OS Runtime Context");
   lines.push("");
 
-  const cls = context.decision?.classification;
+  // Session identity
+  lines.push(`Session: ${context.session_id || "N/A"} | Loop: ${context.loop_id || "N/A"}`);
+  lines.push("");
+
+  // Task classification
+  const cls = context.classification;
   if (cls) {
-    lines.push(`**Task Category**: ${cls.category}`);
-    lines.push(`**Difficulty**: ${cls.difficulty}`);
-    if (cls.roles?.length > 0) {
-      lines.push(`**Recommended Role**: ${cls.roles[0]}`);
+    lines.push(`**Task Category**: ${cls.category || "unknown"}`);
+    lines.push(`**Difficulty**: ${cls.difficulty || "medium"}`);
+    if (cls.roles && cls.roles.length > 0) {
+      lines.push(`**Recommended Roles**: ${cls.roles.join(", ")}`);
     }
   }
 
-  if (context.memory?.retrieved > 0) {
+  // Router decision
+  const router = context.router;
+  if (router) {
+    if (router.lead_skill && router.lead_skill !== "general") {
+      lines.push(`**Lead Role**: ${router.lead_skill}`);
+    }
+    if (router.support_skills && router.support_skills.length > 0) {
+      lines.push(`**Support Roles**: ${router.support_skills.join(", ")}`);
+    }
+    if (router.intent) {
+      lines.push(`**Intent**: ${router.intent}`);
+    }
+    if (router.confidence) {
+      lines.push(`**Confidence**: ${router.confidence}`);
+    }
+  }
+
+  // Memory
+  if (context.memory && context.memory.retrieved > 0) {
     lines.push("");
     lines.push(`**Relevant Memories**: ${context.memory.retrieved} retrieved`);
     for (const mem of (context.memory.memories || []).slice(0, 3)) {
-      lines.push(`- ${mem.memory_id}: ${(mem.content || "no content").slice(0, 100)}`);
+      lines.push(`- ${mem.memory_id}: ${(mem.content || "").slice(0, 100) || "no content"}`);
     }
   }
 
-  if (context.orchestration?.lead_agent && context.orchestration.lead_agent !== "general") {
+  // Skills loaded
+  if (context.skill && context.skill.skills_loaded && context.skill.skills_loaded.length > 0) {
     lines.push("");
-    lines.push(`**Lead Agent Role**: ${context.orchestration.lead_agent}`);
+    lines.push(`**Skills Loaded**: ${context.skill.skills_loaded.join(", ")}`);
   }
 
-  if (context.warnings?.length > 0) {
+  // Warnings
+  if (context.warnings && context.warnings.length > 0) {
     lines.push("");
     lines.push("**Warnings**:");
     for (const w of context.warnings) {
-      lines.push(`- ⚠ ${w}`);
-    }
-  }
-
-  if (context.instructions?.length > 0) {
-    lines.push("");
-    lines.push("**AOS Recommendations**:");
-    for (const i of context.instructions) {
-      lines.push(`- ${i}`);
+      lines.push(`- ${w}`);
     }
   }
 
   lines.push("");
-  lines.push("Use this context to inform your approach. AOS does not execute tasks — it provides decision support.");
+  lines.push("Agent OS runs as a governance/runtime layer. You remain the single tool executor (Read/Edit/Grep/Shell). Use the routing, memory, and role context above to inform your approach.");
   lines.push("");
 
   return lines.join("\n");
@@ -229,20 +319,48 @@ export const AosHostPlugin = async (ctx) => {
   emitTelemetry({
     event_type: "host_plugin_loaded",
     plugin_name: "opencode-aos-host",
-    plugin_version: "0.2.0",
+    plugin_version: "0.3.0",
     pid: process.pid,
     cwd: ctx.directory || process.cwd(),
     session_id: ctx.sessionID || ""
   });
 
-  console.log("[aos-host] Plugin loaded successfully");
+  console.log("[aos-host] Plugin loaded (Phase 15 — governance bridge)");
 
   let lastContext = null;
-  let lastPrompt = "";
+  let lastTaskId = "";
+  let lastLoopId = "";
   let lastSessionId = "";
+
+  // Track previous task for postflight on next message
+  let prevTaskId = "";
+  let prevLoopId = "";
+  let prevSessionId = "";
 
   return {
     "chat.message": async (input, output) => {
+      // ── Postflight for previous task ──
+      if (prevTaskId && prevLoopId) {
+        console.log(`[aos-host] Running postflight for previous task: ${prevTaskId}`);
+        callGovernancePostflight(prevTaskId, prevLoopId, {
+          sessionId: prevSessionId,
+          cwd: ctx.directory,
+        }).then((postResult) => {
+          if (postResult) {
+            console.log(
+              `[aos-host] Postflight complete: status=${postResult.final_status}, ` +
+              `failures=${postResult.recovery?.failures_detected || 0}, ` +
+              `evidence=${postResult.evidence_path || "none"}`
+            );
+          }
+        }).catch((err) => {
+          console.error("[aos-host] Postflight error:", err);
+        });
+        prevTaskId = "";
+        prevLoopId = "";
+        prevSessionId = "";
+      }
+
       const userParts = output.parts.filter(
         (p) => p.type === "text" && p.text?.trim()
       );
@@ -262,17 +380,29 @@ export const AosHostPlugin = async (ctx) => {
         cwd: ctx.directory || ""
       });
 
-      const context = await callAOSAdapter(userText, {
+      // ── Preflight: Governance Bridge ──
+      const context = await callGovernancePreflight(userText, {
         sessionId: input.sessionID,
         cwd: ctx.directory,
       });
 
       if (context) {
         lastContext = context;
-        lastPrompt = userText;
-        lastSessionId = input.sessionID || "";
+        lastTaskId = context.task_id || "";
+        lastLoopId = context.loop_id || "";
+        lastSessionId = context.session_id || "";
+
+        // Set up for postflight on next message
+        prevTaskId = lastTaskId;
+        prevLoopId = lastLoopId;
+        prevSessionId = lastSessionId;
+
         console.log(
-          `[aos-host] Task ${context.task_id}: status=${context.aos_status}, role=${context.orchestration?.lead_agent}`
+          `[aos-host] Preflight: task=${context.task_id}, loop=${context.loop_id}, ` +
+          `session=${context.session_id}, status=${context.aos_status}, ` +
+          `router=${context.router?.intent || "?"}, ` +
+          `lead=${context.router?.lead_skill || "?"}, ` +
+          `memory=${context.memory?.retrieved || 0}`
         );
       }
     },
@@ -292,14 +422,16 @@ export const AosHostPlugin = async (ctx) => {
       emitTelemetry({
         event_type: "host_context_injected",
         task_id: lastContext.task_id || "",
-        session_id: lastSessionId || "",
+        loop_id: lastContext.loop_id || "",
+        session_id: lastContext.session_id || "",
         injection_status: "success",
         aos_status: lastContext.aos_status,
-        lead_agent: lastContext.orchestration?.lead_agent || "general"
+        router_intent: lastContext.router?.intent || "",
+        lead_skill: lastContext.router?.lead_skill || "general",
+        memory_count: lastContext.memory?.retrieved || 0,
       });
 
       lastContext = null;
-      lastPrompt = "";
     },
 
     event: async ({ event }) => {
@@ -309,9 +441,18 @@ export const AosHostPlugin = async (ctx) => {
     },
 
     dispose: async () => {
+      // Run postflight for the last task on dispose
+      if (prevTaskId && prevLoopId) {
+        console.log(`[aos-host] Running postflight on dispose: ${prevTaskId}`);
+        await callGovernancePostflight(prevTaskId, prevLoopId, {
+          sessionId: prevSessionId,
+          cwd: ctx.directory,
+        });
+      }
       lastContext = null;
-      lastPrompt = "";
-      lastSessionId = "";
+      prevTaskId = "";
+      prevLoopId = "";
+      prevSessionId = "";
     },
   };
 };

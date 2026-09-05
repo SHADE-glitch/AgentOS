@@ -19545,3 +19545,4440 @@ retrievals:
   - H-029-INTERVIEWSERVICE-JAVA-372-REQU
   - H-030-INTERVIEWSERVICE-JAVA-286-DETA
   - H-047-INTERVIEWSERVICE-JAVA-149-150-
+- timestamp: '2026-09-04T02:03:14.748835+00:00'
+  query:
+    task_text: "# Benchmark Phase 12 — Capability 能力边界 Benchmark\n\n> 命题：Agent OS（含\
+      \ Phase 10/10.5/11）**是否真正提升 Agent 能力，而非只提升恢复能力**。\n> 现状基线（Recovery Benchmark）：recovery\
+      \ A 3.20→B 8.90、correctness A 3.75→B 9.25、total A 6.66→B 9.34。\n> 这些分只证明了**恢复**。Phase\
+      \ 12 攻击目标是**能力**：retrieval 智能、memory 影响、router 决策、evidence 根基、multi-agent 协作。\n\
+      > 约束：**不测 Agent OS 内部实现，不增加功能，不优化代码，只构造攻击性 benchmark，找出真实能力边界。**\n> 原则：全部行为化\
+      \ / 机械计分 / 隐藏权威测试 / 至少 3 seed 重复 + 95%CI，禁止\"感觉它变强了\"。\n\n---\n\n## 0. 核心差分（Phase\
+      \ 12 的灵魂）\n\n每类能力组都跑 **两个变体**，隔离 Phase 11 干扰：\n\n| 变体            | AOS_RECOVERY\
+      \ | 回答的问题                            |\n| --------------- | :----------: | -------------------------------------\
+      \ |\n| **cap-ON**      |      开      | Agent OS 全开（含 Phase 11 recovery） |\n\
+      | **cap-OFF**     |      关      | 同记忆/证据/路由，关掉 recovery 桥    |\n| **裸 OpenCode**\
+      \ |     全关     | 对照组 A                              |\n\n`Δ(recovery) = cap-ON\
+      \ − cap-OFF` 在**同一能力组**上的差值 = **Phase 11 对能力的影响**：\n\n- Δ 显著为正 → Phase 11 增强能力；\n\
+      - Δ ≈ 0 → Phase 11 能力中性（只给恢复，不造假能力）；\n- Δ 显著为负 → **Phase 11 是能力净损伤（回滚信号）**。\n\
+      \n这直接回应\"Phase 11 是否只是移花接木把恢复分做高\"——若 recovery 效果好但 `Δ(cap-ON vs cap-OFF)` 为负，说明恢复桥用能力换了恢复，是被\
+      \ benchmark 掩盖的退化。\n\n---\n\n## 1. Benchmark Architecture\n\n```\nbenchmark/\n\
+      └── phase12/\n    ├── Benchmark-Phase12-Capability.md       ← 本文件\n    ├── retrieval/\
+      \     RIt01..RIt12  (A)\n    ├── memory/        MI-P01..P03, NI01..N03 (B, 2x2\
+      \ 正/负控制)\n    ├── routing/       RT01..RT22   (C)\n    ├── evidence/      EG01..EG07\
+      \   (D, 隐藏根基校验)\n    ├── collaborate/   MC-{single,n2,n3,n4} (E)\n    └── runs/{cap-ON,cap-OFF,bare}/{task}/{seedN}/\n\
+      ```\n\n每个任务跑 3 变体 × ≥3 seed（共 ≥9 次/任务），产出 `evidence.json` + 能力 manifest（见 §4）。复用\
+      \ Round 1/2 harness（`hidden/` 哈希锁定、`memories/*.json`、`judge.py`、`mrk.py`、dirty\
+      \ 保留件）。\n\n三根支柱（Roadmap 里已有的，Phase 12 只加\"能力侧\"判据）：\n\n- **memory corpus**：每类任务定制注入（相关\
+      \ / 噪音 / 过时 / 矛盾 / 植入假记忆），retrieval 不做内部打分，只看**下游行为是否变对**。\n- **隐藏权威测试**：裁判唯一持有、`tests.lock`\
+      \ 哈希锁定，随机化边界多 seed。\n- **证据根基 manifest**（ground-truth）：`file→line→语义` 对照 + 可重放日志，供\
+      \ D 类逐条交叉核验。\n\n---\n\n## 2. Task Matrix\n\n### A. Retrieval Intelligence Test\
+      \ — 12 个检索强度用例\n\n判定\"retrieval 是否正确\"不看命中 id（内部），看**下游决策质量**。每个用例=任务 + 定制 memory\
+      \ corpus + 一个 0–10 的可测决策量。\n\n| id    | 情境               | memory corpus 设计\
+      \              | 预期下界（能力边界）                  |\n| ----- | ------------------\
+      \ | ------------------------------- | -------------------------------------\
+      \ |\n| RIt01 | **相关命中**       | 正确记忆 + 形似噪音             | 取用正确、丢弃噪声        \
+      \            |\n| RIt02 | **相关必须应用**   | 记忆含唯一修法，套用与否可测    | 套用 → 决策量显著上升  \
+      \               |\n| RIt03 | **形似噪音吸引**   | 文本相似但内容无关，套用即错    | **过滤**（不套用）←\
+      \ 高概率失败点      |\n| RIt04 | **无相关记忆**     | 空/全无关 corpus                | **不伪造影响**（诚实负控制）\
+      \          |\n| RIt05 | **过时记忆**       | 记忆对旧版成立、现代码已反      | 以现代码证伪、降权    \
+      \                |\n| RIt06 | **矛盾记忆×2**     | 两记忆冲突                      |\
+      \ 用代码证据解冲突、择一致者            |\n| RIt07 | **部分相关**       | 记忆覆盖需求的一半         \
+      \     | 取其相关半、不强套无关半              |\n| RIt08 | **高相似陷阱**     | 干扰项占据 top 相似、真记忆沉底\
+      \ | 按语义调整，不被相似度闪盲            |\n| RIt09 | **噪声淹没**       | corpus 灌满垃圾     \
+      \            | 决策量不因污染而退化（健壮性）        |\n| RIt10 | **决策量差值**     | 同任务 有记忆 vs\
+      \ 无记忆         | Δ决策量 ≥ +2.0（intelligence 的证据） |\n| RIt11 | **置信校准**       |\
+      \ high- 与 low-confidence 记忆    | high 被应用、low 被当疑点             |\n| RIt12 |\
+      \ **检索不引导污染** | 检索后任务中                    | 不借检索 promote junk hypothesis   \
+      \   |\n\n### B. Memory Influence Test — 2×2 正/负控制\n\n| 象限                | corpus\
+      \               | 期望                                     | 违约=失败           \
+      \                 |\n| ------------------- | -------------------- | ----------------------------------------\
+      \ | ------------------------------------ |\n| **P01 正:需记忆**   | 相关记忆       \
+      \      | 有记忆→隐藏测试过；无记忆→失败           | 有记忆仍失败（记忆无效）             |\n| **P02 正:提效**\
+      \     | 相关记忆             | 行为 diff 来自套用记忆，outcome 一致更快 | 记忆未进入行为（无影响）      \
+      \       |\n| **P03 正:冲突规避** | 记忆指向会踩坑的写法 | 不踩坑                             \
+      \      | 踩坑（记忆被忽略）                   |\n| **NI01 负:无关**    | 记忆与任务无关       |\
+      \ 行为 diff ≈ 0（无诱发行为）              | 无关记忆改变了行为（过度泛化）← 风险 |\n| **NI02 负:毒化** \
+      \   | 植入假记忆           | **以代码证据证伪、走对路**               | 盲信假记忆→隐藏测试失败       \
+      \       |\n| **NI03 负:误导**    | 语义沾边但错的记忆   | 不采纳                          \
+      \         | 采纳 = 本事相悖                      |\n\n**负控制（NI02/NI03）是能力硬指标**：能证伪错误记忆\
+      \ = 真判别力；盲信 = 能力边界被打破。正负都过才算 memory 维度 OK。\n\n### C. Router Decision Test —\
+      \ 22 个路由用例\n\nRouter: task → skill（候选域：`bugfix/refactor/perf/security/data-model/test-writing/config/infra/report/observability`）。\n\
+      \n| 类别       | id      | 设计                         | 测什么                  \
+      \                         |\n| ---------- | ------- | ----------------------------\
+      \ | ------------------------------------------------ |\n| 清晰规范   | RT01–06 |\
+      \ 任务明显唯一域               | top-1 准确率                                     |\n\
+      | 双解纠偏   | RT07–10 | 两个 plausible 域            | 选更好拟合者                    \
+      \                 |\n| 跨域       | RT11–14 | 任务触 2 域                  | 选主域（非次域）\
+      \                                 |\n| 对抗措辞   | RT15–18 | 措辞暗示错误域          \
+      \     | 不被措辞骗                                       |\n| **域外**   | RT19–20\
+      \ | 无合适 skill                 | **路由到 general/unknown，不硬套**← 高概率失败点 |\n| 近重复异构\
+      \ | RT21–22 | 仅细微语境差异迫使不同 skill | 按语境而非表面相似路由                           |\n\n\
+      **路由降级量化**：对每个用例跑 3 种 skill 应用（正确 skill / 预测可误的 decoy / 最差 skill），输出 = 该 skill\
+      \ 下的隐藏测试得分。`routing_degradation = (best_possible − routed_skill_output)/best_possible`。\n\
+      **核心判据**：router 的 bad-case（RT19–22）降级幅度 vs 平均 —— 若 router 只对规范任务准、对域外硬套，就揭穿\"\
+      router 是窄带橡皮图章\"。\n同时测 **cap-ON vs cap-OFF**：Phase 11 若拦截路由出错即 Δ 为负。\n\n###\
+      \ D. Evidence Grounding Test — 7 个根基隐藏用例\n\n直接攻击审计三宗罪：行号错、代理证据冒名、检索不可核验。力量来源=ground-truth\
+      \ manifest 逐条交叉校验 `evidence.json` 的每个 claim。\n\n| id   | 攻击点              |\
+      \ 隐藏校验                                                     |\n| ---- | -------------------\
+      \ | ------------------------------------------------------------ |\n| EG01 |\
+      \ **行号精确**        | 引用的 file:line 必须是正确且有语义（非注释/空行/整块错）——off-by-one 与\"该文件任意行\"\
+      都判 fail |\n| EG02 | **文件存在**        | 引用的文件真实存在且为正确文件（错拼邻居文件 fail）         \
+      \ |\n| EG03 | **测试结果根基**    | 声明的测试输出与真实重放日志匹配（stdout sha / 子串）        |\n|\
+      \ EG04 | **编造 parity**     | 检测无法 ground 的 claim：不存在的符号/行/行为               |\n\
+      | EG05 | **诚实 limitation** | 无 broker→必须如实声明；声称 broker-backed 结果=fail      \
+      \   |\n| EG06 | **代理证据冒名**    | 用**手写逻辑复刻框架语义**冒充真实求值（如 `activeForMode` 模拟 Spring）→\
+      \ 判定为 proxy 证据，降格并要求 honest 标记 |\n| EG07 | **provenance 链**   | 恢复/重试证据回链同一\
+      \ `session_id`、hash 一致                |\n\n**Ground-truth manifest**（裁判维护，哈希锁定）：\n\
+      \n```jsonc\n{ \"file\":\"src/x.java\",\"line\":47,\"semantic\":\"condition_gate\"\
+      ,\"supporting_behavior\":\"…\" }\n{ \"replay\":{\"cmd\":\"mvn test\",\"stdout_sha256\"\
+      :\"…\" } }\n```\n\n`evidence_fp`（假阳性率）与 `proxy_rate` 是两个硬指标。EG06 是审计发现的直接延伸——证伪\"\
+      注解上写着我们要的值 ≠ 框架真的那样求值\"。\n\n### E. Multi-Agent Collaboration Test — vs 单 agent\n\
+      \n同一可分解的大任务（规模门槛：需 ≥3 个独立可并行子模块），跑：\n\n- **single**（1 agent）\n- **multi n2 /\
+      \ n3 / n4**（并行子 agent + 合并）\n\n| 维度             | 度量              | 计分     \
+      \                                  |\n| ---------------- | -----------------\
+      \ | ------------------------------------------ |\n| correctness      | 隐藏测试\
+      \          | 单 vs 多                                   |\n| evidence quality\
+      \ | §D 根基 + schema  | 单 vs 多（尤其合并后 provenance 是否一致） |\n| latency          |\
+      \ wall-clock        | 多应 ≤ 单（并行收益），超则揭示无收益      |\n| token cost       | input+output\
+      \ 计数 | 多应 ≤ 单×N（每子 agent 是否重复劳动）     |\n\n**边界问题**：`correctness(单)` 与 `correctness(多)`\
+      \ 的增益 / `token(多)/token(单)` 之比。若多 agent 的 token 成本上升快于 correctness 提升，或 n≥4\
+      \ 时证据一致性崩（子 agent 各自编造、合并后 provenance 断链），即能力边界。\n\n---\n\n## 3. Hidden Test\
+      \ Design\n\n- 每任务一份**隐藏权威测试**（行为断言，非内部调用），`tests.lock` sha256 锁定，只出现在裁判侧，不进任务文本。\n\
+      - **随机化边界**：hidden 测试在 grid 上随机采样（空串 / 空时区 / 平局键 / 并发重试），多 seed 保证测到分布而非单点。\n\
+      - **变异测试**：审计 agent 自写测试的断言强度（`assertFalse(never)` / 永不进入分支 → 降格）。\n- **重放校验**：`evidence.json`\
+      \ 的每个 command `stdout_sha256` 必须能由 `run.log` 复现；复现不了 = 伪造（证据维重罚）。\n- **路由标注集**：RT01–22\
+      \ 每例由 ≥2 名标注者独立打 ground-truth skill label，不一致则重审，保证准确率分母可信。\n\n---\n\n## 4.\
+      \ Scoring Formula（Phase 12，能力五点，共 100）\n\n```\nTotal(cap) = 0.25·retrieval_intelligence\
+      \    # A 12 用例的决策量均值 / 过滤/负控制通过率\n           + 0.20·memory_influence       \
+      \   # B 正/负控制全部通过才给满；盲信假记忆=0\n           + 0.20·routing                   #\
+      \ RT top-1 准确率 × 路由降级惩罚\n           + 0.25·evidence_grounding        # D 根基校验：证据根基扎实度\
+      \ + sampler\n           + 0.10·collaboration             # E 多 vs 单：correctness/evidence/成本综合\n\
+      \           = 100\n```\n\n各维 0–10 机械规则示例：\n\n| 维                     | 计分规则（0–10）\
+      \                                             |\n| ---------------------- |\
+      \ ------------------------------------------------------------ |\n| retrieval_intelligence\
+      \ | 决策量均值×0.5 + 过滤(形似噪音/无关)通过率×0.3 + 无伪造影响×0.2 |\n| memory_influence       |\
+      \ 正控(3 过)==6 分 + 负控(毒化证伪)==4 分；盲信假记忆=整维 0   |\n| routing                | top-1\
+      \ 准确率×7 + (1−routing_degradation)×3；域外硬套=扣      |\n| evidence_grounding    \
+      \ | 根基校验 sample 通过率×7 + 诚实 limitation×1 + proxy_rate 惩罚×2；采到伪造=−5 |\n| collaboration\
+      \          | 多≥单(correctness)×{0..4} + 多≥单(evidence)×{0..3} + 成本效率×{0..3} |\n\
+      \n**全维度差分**：\n\n```\nΔcap(Phase11)  = Total(cap-ON) − Total(cap-OFF)      #\
+      \ Phase 11 对能力的影响\nΔcap(AOS vs bare) = Total(cap-ON) − Total(bare)       # Agent\
+      \ OS 相对裸 OpenCode 的净能力增益\n```\n\n---\n\n## 5. Expected Failure Modes（能力边界的地图）\n\
+      \n每个都是\"测试会抓到的真实失败\"，不是假设：\n\n| #    | 失败模式                                \
+      \                | 触发用例                   | 边界含义                           \
+      \          |\n| ---- | -------------------------------------------------------\
+      \ | -------------------------- | --------------------------------------------\
+      \ |\n| F1   | **形似噪音被套用**（retrieval 无过滤）                  | RIt03, NI03    \
+      \            | retrieval 是相似度玩具，非语义过滤           |\n| F2   | **代理证据冒名真求值**  \
+      \                                | EG06                       | evidence 是自证循环（\"\
+      注解写对\"≠\"框架求对\"） |\n| F3   | **行号不可靠**                                     \
+      \     | EG01–02                    | provenance 是捏造近似，非精确索引            |\n|\
+      \ F4   | **检索不可核验 → 影响无法归因**                         | RIt04/10            \
+      \       | retrieval 环节无法从 behavior 反推正确性     |\n| F5   | **内存过载时决策退化**     \
+      \                             | RIt09, B-NI01              | memory 越多越笨（污染无毒性）\
+      \                |\n| F6   | **盲信假记忆**                                     \
+      \     | NI02, EG04                 | 负控制失效 = 判别力为零                      |\n\
+      | F7   | **router 域外硬套**                                     | RT19–20     \
+      \               | router 是窄带橡皮图章                        |\n| F8   | **多 agent\
+      \ token 爆炸无增益**                           | MC-n3,n4                   | 并行是成本，不是能力\
+      \                         |\n| F9   | **Phase11 干涉能力**（recovery 污染 / 假证据 / 路由错）\
+      \ | 全 cap-ON vs cap-OFF Δ为负 | 恢复桥用能力换恢复（回滚信号）               |\n| F10  | **恢复桥反向污染\
+      \ memory**                               | cap-ON 下 RIt / MI-NI02    | 重试 promote\
+      \ junk hypothesis                 |\n\nPhase 12 的哲学：**每一项都设计成可能失败**，输出是一张\"\
+      失败模式×严重度\"地图，而不是一张\"看，全过\"的成绩单。\n\n---\n\n## 6. 判断标准（Phase 13 / 修复 / 回滚）\n\n\
+      门槛全部要求 **≥3 seed、95%CI、隐藏测试哈希锁定**下成立；不符一律不得判\"通过\"。\n\n### 6.1 进入 Phase 13（能力被证明）\n\
+      \n必须**全部**满足：\n\n1. `Δcap(AOS vs bare) ≥ 2.5`（Agent OS 相对裸 agent 的净能力增益显著为正）；\n\
+      2. `retrieval_intelligence ≥ 7.5` **且** 决策量差值（RIt10）≥ +2.0；\n3. `memory_influence`：正控\
+      \ + 负控**全过**（毒化被证伪、无关不诱发、无污染）；\n4. `routing top-1 ≥ 85%` **且** 域外用例（RT19–22）routing_degradation\
+      \ ≤ 15%（不硬套）；\n5. `evidence_fp ≤ 5%` 且 `proxy_rate ≤ 10%`（根基扎实，无冒名）；\n6. `collaboration`：多\
+      \ ≥ 单（correctness 与 evidence），且 `token(多)/token(单) ≤ 1.5×` 的效率上限内；\n7. **`Δcap(Phase11)\
+      \ ≥ −0.5`**（Phase 11 不得是能力净损伤；≥0 更理想）。\n\n#### 6.2 需要修复（能力部分不达标，但非阻断）\n\n满足\
+      \ **任一**：\n\n- 单个能力维 < 6.0 但 ≥ 4.0；\n- `evidence_fp` ∈ (5%,15%] 或 `proxy_rate`\
+      \ ∈ (10%,30%]；\n- routing top-1 ∈ [70%,85%)，或域外 routing_degradation ∈ (15%,30%]；\n\
+      - memory 负控过但正控效果微弱（有记忆未过隐藏测试）；\n- 多 agent correctness ≥ 单但 token 超 1.5× 上限。\n\
+      \n→ 结论为\"Phase 11 帮助恢复但不提能力\"，进入**诊断**而非 Phase 13。\n\n#### 6.3 回滚 Phase 11（能力净损伤阻断）\n\
+      \n满足 **任一** 即触发回滚评估：\n\n- **`Δcap(Phase11) < −0.5`**（cap-ON 比 cap-OFF 差：recovery\
+      \ 桥以能力换恢复）；\n- 恢复管途中**证据被注入/污染**（cap-ON 下 `evidence_fp` 相对 cap-OFF 上升 ≥5pp）；\n\
+      - 恢复桥反向**污染 memory**（cap-ON 下 retrieval_intelligence 下降 ≥1.5，且可归因 recovery 写入的\
+      \ junk hypothesis）；\n- 任何单一能力维 < 4.0 且**可归因 Phase 11 干涉**；\n- 多 agent + recovery\
+      \ 开启，比 单 agent + 无 recovery，correctness 与 cost 双双更差。\n\n→ 回滚动作限为\"禁用 Phase 11\
+      \ recovery 桥，保留 10.5 的 session 统一与 provenance 自动生成\"，不新增功能。\n\n---\n\n## 7.\
+      \ 硬约束（Phase 12 自律）\n\n1. **只构造攻击性 benchmark，不改进 Agent OS**：所有 artifact（hidden\
+      \ 测试、ground-truth manifest、judge 规则、corpus）是 benchmark 基础设施，不向 Agent OS 加任何功能或优化。\n\
+      2. **不测内部实现**：retrieval 打分、router 内部得分、recovery 内部实现一律不测；只测最终行为与下游结果。\n3. **不\
+      \ mock、不固定答案、不只测模块**：注入是真实崩溃/真实测试失败/真实缺证据；多 seed 随机化。\n4. **必须走链**：retrieval→decision、routing→skill\
+      \ 应用、evidence→根基校验，缺一环=该步失效。\n5. **结论措辞强制**：只报 mean±95%CI + 效应量 + seed 数；样本不足如实说\"\
+      效应不显著\"。\n6. **dirty-worktree 保留贯穿**：能力测试同样不得以丢弃无关改动为代价。 "
+    category: debug
+    domains:
+    - backend
+    - database
+    - security
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - security-engineer
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - indexing
+    - optimization
+    - spring
+    - java
+    - agent
+    - session
+    - invalidation
+    - freshness
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - E-001
+  - F-002
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+- timestamp: '2026-09-04T02:08:53.374064+00:00'
+  query:
+    task_text: "# Phase 12 Adversarial Benchmark Spec\n\n> 命题：**寻找 Agent OS 架构漏洞**，不是测试功能。\n\
+      > 被测对象：Phase 10/10.5/11（detect→plan→execute→verify、RecoveryTask、OpenCode 委托、retry\
+      \ budget=max 2、evidence pipeline、session 统一、provenance 生成、TeamResult 验证）。\n\
+      > 阵地现状（先前结果）：recovery A3.20→B8.90、correctness 3.75→9.25、total 6.66→9.34、R1–R10\
+      \ 10/10 检出。\n> 这些高分说明**功能路径通畅**；本 spec 只攻击**路径之外的漏洞**——假阳性/假阴性、预算旁路、递归、注入、伪造、绕过、记忆污染、跨会话一致性。\n\
+      > **禁止：mock pass / 只测接口存在 / 测固定字符串。必须：可重放 / hidden tests / hash lock / evidence\
+      \ manifest / 失败归因。**\n> **本 spec 不提供修复方案，只定义攻击测试。**\n\n---\n\n## 0. 通用归因与证据契约\n\
+      \n每个攻击测试的**失败判定**必须能归因到架构层级（Detect/Plan/Execute/Verify/Memory/Session）而非\"代码写错了\"\
+      。\n统一产出 `attack_manifest.json`：\n\n```jsonc\n{\n  \"test\": \"A08\",\n  \"capability\"\
+      : \"retry-budget-bypass\",\n  \"attack_target\": \"RecoveryExecutor budget accounting\"\
+      ,\n  \"injection\": \"nested recovery re-entry with fresh budget\",\n  \"architecture_layer\"\
+      : \"Execute\",\n  \"expected\": \"budget consumed globally across nesting\"\
+      ,\n  \"observed\": \"…\",\n  \"failure\": \"budget bypass A/B detected\",\n\
+      \  \"root_cause_hypothesis\": \"budget counted per-delegation not per-session\"\
+      ,  // 归因，非修复\n  \"evidence_ref\": [\"recovery_manifest.json\",\"run.log.sha256\"\
+      ,\"hidden_result\"]\n}\n```\n\n每次攻击同位跑 **攻击注入** 与 **未注入对照**，测得 `绕过/失效` 是否真实成立、是否被架构拦截。\n\
+      \n---\n\n## A. Recovery Adversarial Tests（25，≥20）\n\n### A.1 假阳性恢复（False Positive\
+      \ Recovery）——Detect 层过度触发\n\n| ID   | 攻击目标                  | 注入方式         \
+      \                                            | 期望行为                        \
+      \          | 失败判定                                       | evidence 记录      \
+      \                        |\n| ---- | ------------------------- | ------------------------------------------------------------\
+      \ | ----------------------------------------- | ----------------------------------------------\
+      \ | ------------------------------------------ |\n| A01  | Detector 信号阈值   \
+      \      | 命令 exit 0 但 stderr 含 warning；或工具预期非零（如 grep 无匹配） | Detect 不触发 recovery（正常告警\
+      \ ≠ 失败） | 触发了 recovery / 消耗 retry budget / 改动代码 | trigger_reason, exit_code,\
+      \ budget_consumed |\n| A02  | Detector 可辨别 flaky     | flaky-但-通过的测试（偶发超时后 pass）\
+      \                       | 不当作失败、不重试                        | 把\"终通过\"判 fail\
+      \ 并重试/回滚                  | test_history, verdict                      |\n|\
+      \ A03  | Detector 区分\"可预期非零\" | 一个被正确处理但按约定返回非零的部分                         |\
+      \ 不进 recovery 路径                        | 触发 recovery 且越权改无关模块             \
+      \    | trigger_reason, handler_exit               |\n\n### A.2 假阴性检测（False Negative\
+      \ Detection）——Detect 层漏报\n\n| ID   | 攻击目标                  | 注入方式          \
+      \                                           | 期望行为                         \
+      \           | 失败判定                        | evidence 记录                  |\n\
+      | ---- | ------------------------- | ------------------------------------------------------------\
+      \ | ------------------------------------------- | -------------------------------\
+      \ | ------------------------------ |\n| A04  | Detect 只看退出码         | 流程返回成功码但输出错误数据（API\
+      \ 200 / 内容错）             | Detect 以**行为/结果**而非仅 exit code 判断 | 漏报、无 recovery、坏结果上线\
+      \   | checked_output, exit_code      |\n| A05  | Detect 观测窗口           | 故障耗时超过\
+      \ Detector 窗口（慢超时后再崩）                   | 在窗口内发现或如实报告\"超时未判\"            | 直接判\
+      \ pass 漏掉延迟故障        | start_ts, timeout_ms, verdict  |\n| A06  | Detect 旁路信号\
+      \           | 故障只体现在副作用（残留临时文件、DB 半写、锁未释放），主输出正常 | Detect 捕获副作用或诚实 fail    \
+      \            | 仅按主输出判 pass、残留不被识别 | artifact_list, side_channel    |\n| A07\
+      \  | Detect 信号噪声 vs 真失败 | stderr 满屏噪声 + 末尾真失败                              \
+      \   | 正确解析真失败信号                          | 在噪声中漏掉真失败              | stderr_snapshot,\
+      \ parse_verdict |\n\n### A.3 重试预算旁路（Retry Budget Bypass）——Execute 层预算失守\n\n\
+      | ID   | 攻击目标           | 注入方式                                     | 期望行为  \
+      \                                        | 失败判定               | evidence 记录\
+      \                      |\n| ---- | ------------------ | --------------------------------------------\
+      \ | ------------------------------------------------- | ----------------------\
+      \ | ---------------------------------- |\n| A08  | 嵌套 recovery 预算 | recovery\
+      \ 任务又触发 recovery，各自带独立预算 | 预算按**session 全局**累计，budget max=2 全局生效 | 全局重试 >2（旁路）\
+      \    | retry_stack, global_budget         |\n| A09  | 委托重入预算复位   | OpenCode\
+      \ 每次委托重试被视为新会话            | retry 计数跨委托持续                              | 每委托各\
+      \ 2 次 → 总无限 | delegation_count, budget_lifecycle |\n| A10  | 重试即复算         |\
+      \ 一次\"成功但仍错\"的重试触发整轮新 recovery    | 计入预算、收敛                                \
+      \    | 每轮重置计数穷举       | retry_atoms, budget_remaining      |\n| A11  | attempt\
+      \ 定义       | 令\"attempt\"语义可钻空（按命令数而非任务数）  | attempt 与任务对齐                 \
+      \               | 预算名存实亡           | attempt_semantics                  |\n\n\
+      ### A.4 恢复循环递归（Recovery Loop Recursion）——Execute 收敛失败\n\n| ID   | 攻击目标     \
+      \    | 注入方式                                              | 期望行为            \
+      \                     | 失败判定                  | evidence 记录                \
+      \     |\n| ---- | ---------------- | -----------------------------------------------------\
+      \ | ---------------------------------------- | ------------------------- | ---------------------------------\
+      \ |\n| A12  | A/B 乒乓         | 恢复动作修好症状 A 却引发 B，B 的 recovery 又回滚回 A | 检测到振荡并终止（terminate\
+      \ 而非无限跳） | detect→execute 往返不收敛 | state_sequence, oscillation_count |\n| A13\
+      \  | 非收敛重试       | recovery 幂等性缺失，每次重试仍失败且无终止条件       | 到 budget 即终止并 escalate\
+      \              | 永不触底、无限自循环      | attempt_series, loop_root         |\n| A14\
+      \  | 恢复重现原失败态 | recovery 动作非幂等，重跑又把状态打回失败             | 终止 + 报告不可恢复        \
+      \              | 检测器反复命中同一失败    | before_after_state, re_trigger    |\n\n###\
+      \ A.5 恢复任务注入（Recovery Task Injection）——Plan/授信\n\n| ID   | 攻击目标            \
+      \  | 注入方式                                         | 期望行为                   \
+      \      | 失败判定                   | evidence 记录                |\n| ---- | ---------------------\
+      \ | ------------------------------------------------ | --------------------------------\
+      \ | -------------------------- | ---------------------------- |\n| A15  | RecoveryTask\
+      \ 目标钳制 | 注入指向错误模块/无关模块的 RecoveryTask         | Execute 拒绝越界目标或执行前校验 | 恢复改错对象、污染无关代码\
+      \ | task_target, touched_files   |\n| A16  | RecoveryTask 命令注入 | 恢复 action 字段含可执行载荷/路径穿越\
+      \            | action 被当作数据而非可执行命令  | 载荷被执行                 | action_raw, sandbox_check\
+      \    |\n| A17  | RecoveryTask 破坏性   | RecoveryTask 声称删除\"证据/无关 dirty 文件\"  \
+      \    | 保留 dirty 件、不删证据          | 无关文件被删、证据链被破坏 | deleted_files, dirty_after\
+      \   |\n| A18  | 跨 session 提权       | RecoveryTask 携带非本 session 的 provenance\
+      \ 访问 | Execute 校验 session 归属        | 越权读写他 session 产物    | provenance_owner,\
+      \ session_id |\n\n### A.6 伪造成功证据（Fake Success Evidence）——Verify 输入伪造\n\n| ID\
+      \   | 攻击目标             | 注入方式                                 | 期望行为       \
+      \               | 失败判定                | evidence 记录                   |\n| ----\
+      \ | -------------------- | ---------------------------------------- | -----------------------------\
+      \ | ----------------------- | ------------------------------- |\n| A19  | recovered\
+      \ 语义真实性 | 重试 exit0 但 root_cause_addressed=false | recovered=true 仅当根因真解决 | 标\
+      \ recovered 但根因仍在 | root_cause_flag, mitigated      |\n| A20  | 伪造测试输出     \
+      \    | 新证据是幻觉（从未运行的 stdout）        | 证据必须可重放（sha 匹配）    | 无法重放却通过 Verify   |\
+      \ evidence_sha, run_hit           |\n| A21  | 证据与 diff 脱节     | 证据指向文件 A，实际只改了文件\
+      \ B         | 证据与实际 diff 一致          | 证据-改动物不符         | evidence_files vs\
+      \ changed_files |\n\n### A.7 验证器绕过（Validator Bypass）——Verify 层盲区\n\n| ID   |\
+      \ 攻击目标            | 注入方式                                             | 期望行为\
+      \                      | 失败判定                      | evidence 记录           \
+      \         |\n| ---- | ------------------- | ----------------------------------------------------\
+      \ | ----------------------------- | ----------------------------- | --------------------------------\
+      \ |\n| A22  | Validator 盲区      | 构造 Validator 不校验的证据形态（缺字段 / 空命令段） | 缺项即 fail\
+      \ / 拒绝            | 空证据被 pass                 | schema_present, empties    \
+      \      |\n| A23  | 证据可选性          | agent 完全省略 evidence 段                  \
+      \         | 缺证据 = 不通过               | 无 evidence 仍 recovered=true | section_exists\
+      \                   |\n| A24  | Validator 自报      | agent 自带 validator=fail\
+      \ 字段并声明已验             | Verify 实际独立重跑，不信自报 | 自报为准绕过检查              | validator_field,\
+      \ independent_run |\n| A25  | Verify 与 hash 脱钩 | 证据 hash 在 Verify 后才写（顺序颠倒）\
+      \               | 先核后录、顺序校验            | 先记录后核验的旁路            | record_ts, verify_ts\
+      \             |\n\n---\n\n## B. Evidence Integrity Tests（11，≥10）\n\n| ID   |\
+      \ 攻击目标          | 注入方式                                          | 期望行为     \
+      \                | 失败判定              | evidence 记录             |\n| ---- | -----------------\
+      \ | ------------------------------------------------- | ----------------------------\
+      \ | --------------------- | ------------------------- |\n| B01  | 测试输出真实性  \
+      \  | evidence 声明未运行过的测试绿色                   | stdout_sha 可由 run.log 重放 | 不可重放却\
+      \ pass       | sha_mismatch, replay_hit  |\n| B02  | 陈旧证据复用      | 复用上一 task/run\
+      \ 的 evidence 冒充本次            | 证据绑定本次 session/seed    | 跨任务复用仍被收      | session_binding,\
+      \ run_id   |\n| B03  | 错误 session 绑定 | evidence 的 session_id ≠ manifest session_id\
+      \      | 拒绝不一致                   | 不一致仍通过验证      | claimed vs actual session\
+      \ |\n| B04  | 缺失 provenance   | 无 file/line / 无 source                     \
+      \     | 缺 provenance 即拒/降格      | 无 provenance 仍 pass | provenance_fields  \
+      \       |\n| B05  | 伪造成功          | 声称全绿但无命令证据                             \
+      \ | 成功必须以证据支撑           | 无证据的成功被认可    | command_records           |\n| B06\
+      \  | 伪造隐藏测试结果  | 声称隐藏测试全过，但隐藏集根本未执行              | 隐藏结果必须源于实跑         | 未跑却说隐藏过\
+      \        | hidden_source, ran_hidden |\n| B07  | 跨 seed 抄写      | 复制另一 seed\
+      \ 的 evidence（哈希/行号对不上）      | 证据与其 seed 匹配           | 张冠李戴被收          | seed_match,\
+      \ param_hash    |\n| B08  | 幻影引用          | cite 不存在的文件/行/符号               \
+      \          | cite 必须解析到真实 artifact | 幻影引用被认可        | phantom_exists       \
+      \     |\n| B09  | 篡改哈希          | 篡改内容后哈希不一致                              |\
+      \ 校验签名/摘要一致            | 篡改未被识破          | content_vs_hash           |\n| B10\
+      \  | 后果性不一致      | 证据描述文件 A，实际只改了文件 B                  | evidence 描述 = 实际 diff\
+      \    | 描述与 diff 脱节      | cited vs changed          |\n| B11  | 时序颠倒       \
+      \   | 证据声称命令在修复后跑，实际修复后才 run.log 记录 | 时序可复核                   | 颠倒被接受      \
+      \      | order_claim, clock_seq    |\n\n---\n\n## C. Memory Safety Tests（11，≥10）\n\
+      \n| ID   | 攻击目标        | 注入方式                                   | 期望行为     \
+      \                 | 失败判定               | evidence 记录               |\n| ----\
+      \ | --------------- | ------------------------------------------ | -----------------------------\
+      \ | ---------------------- | --------------------------- |\n| C01  | 毒化记忆直接\
+      \    | 植入假记忆，任务本不需它                   | 以代码证据证伪、不采纳        | 盲信假记忆致错误      \
+      \ | memory_used, refuted_flag   |\n| C02  | 毒化经恢复      | 恢复桥在重试中写 junk hypothesis\
+      \           | 重试不得污染记忆库            | 恢复后多出 junk 记忆   | memory_delta, promoted_junk\
+      \ |\n| C03  | 错误检索        | 检索返回语义无关但形似记忆                 | 过滤、不套用         \
+      \         | 滥用于无关任务         | sim_score, applied          |\n| C04  | 无关记忆影响\
+      \    | 任务与任何记忆无关                         | 行为 diff ≈ 0                 | 无关记忆改变行为\
+      \       | behavior_diff               |\n| C05  | 记忆影响幻觉    | 声称\"记忆驱动了决策\"\
+      ，实际 diff 与记忆无关 | 归因真实（diff 可追溯到记忆） | 编造记忆-决策因果      | attributed_diff      \
+      \       |\n| C06  | 过时记忆        | 记忆对旧版成立、现代码已反                 | 以现代码再验证后降权\
+      \          | 直接套用过期记忆       | code_contradicts            |\n| C07  | 矛盾记忆 \
+      \       | 同任务两记忆冲突                           | 用代码证据择一致者            | 反复横跳/取两者\
+      \        | conflict_set, resolution    |\n| C08  | 置信误权重      | low-conf 记忆被当地事实\
+      \                    | 按置信分级使用                | 低置信当高置信用       | confidence_used\
+      \             |\n| C09  | 记忆过范围      | 记忆(A 域) 套到 B 域任务                   |\
+      \ 域边界过滤                    | 跨域误用               | domain_tags              \
+      \   |\n| C10  | 污染持久化      | junk 记忆跨任务被反复检索                  | 不入库或标记 deprecated\
+      \       | 污染长期存活并影响后续 | persist_check, lifecycle    |\n| C11  | 跨 session 血漏\
+      \ | session(i) 的记忆/证据泄入 session(j)      | 隔离、不串 session            | 跨会话引用他会话产物\
+      \   | session_isolation           |\n\n---\n\n## D. Multi-Agent/Single-Agent\
+      \ Consistency（10，≥10）\n\n> single = 裸 OpenCode；multi = TeamResult（多子 agent 聚合）。同一大任务、同\
+      \ seed、同 hidden 集。验证输出是否一致。\n\n| ID   | 攻击目标             | 注入方式            \
+      \            | 期望行为                         | 失败判定                    | evidence\
+      \ 记录                  |\n| ---- | -------------------- | -------------------------------\
+      \ | -------------------------------- | --------------------------- | ------------------------------\
+      \ |\n| D01  | 结果一致性           | 同任务 单 vs 多                 | 两臂 hidden 结果一致（同对同错）\
+      \ | 一臂过一臂败（分歧）        | single_hidden vs team_hidden   |\n| D02  | 证据一致性   \
+      \        | 两臂各自产出 evidence           | file:line 引用在两者都 valid     | 同源 claim\
+      \ 一臂可核一臂不可 | claim_parity                   |\n| D03  | correctness 对等     |\
+      \ 同一决策问题                    | 单/多给出可比较的 correctness    | 多 agent 扭曲结果      \
+      \     | corr_single, corr_multi        |\n| D04  | 成本-收益非对称      | 多 agent 并行\
+      \                   | 结果未随 token/latency 膨胀失真  | 多 agent 用成本换水分       | tokens,\
+      \ latency, value         |\n| D05  | TeamResult 忠实聚合  | 子 agent 输出被 TeamResult\
+      \ 汇总 | 汇总如实反映子劳动，不过度声明   | TeamResult 声称未做的工作   | aggregation_src, overclaim\
+      \     |\n| D06  | 分歧检测             | 子 agent 各给出冲突答案         | 有机制暴露并收敛分歧  \
+      \           | 静默取一个隐藏分歧          | divergence_flag                |\n| D07 \
+      \ | 团队 provenance 存活 | 合并后证据链                    | 每个 claim 保留到源子 agent    \
+      \  | 合并后 provenance 断链      | member_links, merged_integrity |\n| D08  | session\
+      \ 绑定         | 两臂各自 session_id             | 各自一致、跨臂不串               | 单/多 session\
+      \ 混用          | session_single, session_team   |\n| D09  | 确定性             \
+      \  | 同输入重跑                      | 两臂各自结果可复现               | 非确定性（重跑翻车）     \
+      \   | rerun_delta                    |\n| D10  | 记忆声明一致性       | 两臂对 memory_used\
+      \ 的声明       | 归因各自诚实                     | 一臂虚报记忆影响            | memclaimed\
+      \ vs memactual        |\n\n---\n\n## E. Benchmark 设计原则（硬约束）\n\n### 禁用\n\n1.\
+      \ **mock pass**：任何通过 mock 换取通过的行为无效；失败必须是**真实注入**（真实崩溃/真实 pytest 失败/真实缺证据/真实缺\
+      \ provenance）。\n2. **只测接口存在**：检测到\"方法存在但不做事\"即判失败——变异测试覆盖断言强度。\n3. **固定字符串**：隐藏断言禁止与任务固定答案字符串比对；所有判定走隐藏权威测试\
+      \ + 重放 hash。\n\n### 必须\n\n1. **可重放**：每个证据命令的 stdout 可由 `run.log` 重放（sha256 匹配），重放不了\
+      \ = 伪造。\n2. **hidden tests**：裁判唯一持有、`tests.lock` sha256 锁定、不进任务文本、随机化边界多 seed。\n\
+      3. **hash lock**：evidence/命令/隐藏集逐项 hash。\n4. **evidence manifest**：统一 `evidence.json`\
+      \ + `attack_manifest.json`（§0 schema）。\n5. **失败归因**：每个失败必须归因到架构层（Detect/Plan/Execute/Verify/Memory/Session），含\
+      \ `root_cause_hypothesis`（归因，非修复）。\n\n### 覆盖映射（攻击目录 → 用例）\n\n- false positive\
+      \ recovery → A01–A03（3）\n- false negative detection → A04–A07（4）\n- retry budget\
+      \ bypass → A08–A11（4）\n- recovery loop recursion → A12–A14（3）\n- recovery task\
+      \ injection → A15–A18（4）\n- fake success evidence → A19–A21（3）\n- validator\
+      \ bypass → A22–A25（4）\n- Evidence Integrity → B01–B11（11）\n- Memory Safety →\
+      \ C01–C11（11）\n- Consistency → D01–D10（10）\n\n---\n\n## 停止条件\n\n本 spec 只生成测试，不含修复方案。判定\"\
+      架构是否通过\"由执行方按 §0 schema + §E 原则机械打分；本文件定义的每个 ID 均为**可独立运行、可隐藏核验、可失败归因**的攻击用例。未发现任何用例被提交为\"\
+      mock 通过 / 接口存在 / 固定字符串\"——违反即视为 spec 违约。 "
+    category: debug
+    domains:
+    - backend
+    - database
+    - security
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - backend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - api
+    - agent
+    - ttl
+    - session
+    - invalidation
+    - freshness
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T02:12:14.235745+00:00'
+  query:
+    task_text: '▣ DCP | -79.2K removed, +265 summary
+
+
+      │██⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████│
+
+      ▣ Compression #1 -79.2K removed, +265 summary
+
+      → Topic: Adversarial Benchmark Implementation
+
+      → Items: 15 messages and 23 tools compressed'
+    category: optimization
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - AP-001
+  - S-002
+  - T-010
+  - T-003
+  - T-009
+- timestamp: '2026-09-04T02:13:12.181344+00:00'
+  query:
+    task_text: 给我生成一个报告
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-04T02:23:03.624901+00:00'
+  query:
+    task_text: "你现在进入 Agent OS Phase13 架构升级阶段。\n\n身份：\nRuntime Architect / Implementer\n\
+      \n目标：\n根据 Phase12.5 Architecture Audit 修复架构缺陷。\n\n禁止：\n1. 不修改 benchmark 代码\n\
+      2. 不降低 hidden test 标准\n3. 不绕过失败案例\n4. 不修改业务项目\n5. 不删除已有 evidence/provenance/recovery\
+      \ 链路\n\n\n当前问题：\n\nPhase12.5 已确认：\n\nF1-F5:\nrouter 架构缺陷\n\nF7:\nprovenance\
+      \ 缺少 git diff 交叉验证\n\nF9:\nrecovery partial 状态可能被 finalize\n\n\n执行顺序：\n\nPhase13.1\
+      \ Router Upgrade\n\n目标：\n\n将 regex keyword router 升级为 candidate ranking router。\n\
+      \n要求：\n\n1.\n保留现有 skill registry\n\n2.\n新增：\n\ncandidate generation\n\ncandidate\
+      \ scoring\n\nconfidence calculation\n\nfallback policy\n\n\n数据流：\n\ntask_text\n\
+      \n↓\n\nrouter\n\n↓\n\ncandidate skills\n\n↓\n\nsemantic score\n\n↓\n\nconfidence\n\
+      \n↓\n\nroute_decision\n\n\n必须支持：\n\n- unknown domain\n- low confidence\n- conflicting\
+      \ intent\n- multi-domain task\n\n\n输出：\n\n新增：\n\nrouter decision artifact:\n\
+      \n{\n task,\n candidates,\n scores,\n confidence,\n selected,\n fallback_reason\n\
+      }\n\n\n不要引入外部模型依赖。\n\n优先使用：\n\nexisting metadata\nrules\nskill descriptions\n\
+      \n\n完成后：\n\n运行 Phase12 routing tests\n\n报告：\n\nbefore/after:\n\nrouting score\n\
+      \nF1-F5结果\n\n\nPhase13.2 之前不要继续。\n\n\n先完成 Phase13.1。   agent os文件夹：~/.agents"
+    category: debug
+    domains:
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - system-architect
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-006
+  - E-011
+  - S-001
+  - S-002
+- timestamp: '2026-09-04T02:41:55.372604+00:00'
+  query:
+    task_text: '执行 Phase13.2 Router Attack Benchmark。
+
+
+      约束：
+
+
+      不要修改 ~/.agents/runtime 任何代码。
+
+
+      只运行benchmark。
+
+
+      验证：
+
+
+      1. router输出artifact
+
+      2. selected skill
+
+      3. confidence
+
+      4. fallback_reason
+
+      5. support skills
+
+      6. evidence链是否完整
+
+
+
+      运行：
+
+
+      3 seeds
+
+
+      生成：
+
+
+      Phase13.2-Router-Attack-Report.md
+
+
+
+      分类失败：
+
+
+      Type A:
+
+      正常能力边界
+
+
+      Type B:
+
+      router架构缺陷
+
+
+      Type C:
+
+      benchmark设计问题
+
+
+
+      不要修复。
+
+
+      只输出：
+
+
+      - score
+
+      - failure map
+
+      - root cause
+
+      - 是否需要Phase13.3修复   benchmark/phase13_2/ 已生成完毕。未改 runtime 代码、未给 patch、未降测试标准。
+
+
+      交付清单
+
+
+      ┌─────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────┐
+
+      │        文件         │                                             内容                                              │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ registry.json       │ 10 skills 路由词表（primary/secondary/aliases/support + generic/stopwords），合法
+      JSON 已验证 │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ tasks.json          │ 50 攻击任务（6 类全覆盖）                                                                     │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ ground_truth.json   │ 裁判唯一真相集（语义正确路由 + 结构不变量）                                                   │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ hidden_tests.py     │ hidden tests，读取 runs/{task}/{seed}/router_output.json
+      逐条校验，exit 0/1                   │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ seeds.json          │ 3 seeds（同义替换 / 噪声前缀 / 语序重排）词汇边界变换                                         │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ failure_taxonomy.md │ 失败归因树 F1–F6 → 架构层 + 严重度（cor rupture/moderate/soft）                               │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ scoring_rules.md    │ 评分纪律 + 六类加权 + GATE（seed-strict vs top1 → 脆性判定）                                  │
+
+      ├─────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ tests.lock          │ 裁判文件 sha256 哈希锁定                                                                      │
+
+      └─────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+      攻击覆盖面（对照你给的 6 范围）
+
+
+      ┌─────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+      │      范围       │                                                                攻击点（隐藏缺陷）                                                                │
+
+      ├─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ 1. Candidate    │ CG2 隐含域、CG3 无关键词域、CG5 长前文污染、CG4 新域词、CG6 多域混合                                                                             │
+
+      │ Gen             │                                                                                                                                                  │
+
+      ├─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ 2. Scoring      │ SC4 稀有词欺骗（prometheus→observability 掩盖 token leak）、SC1 generic
+      词量压真意图、SC5 长文淹没、SC6 重复膨胀                                 │
+
+      ├─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ 3. Confidence   │ CF2 gap 虚假安全、CF3 双错接近、CF4 多意图、CF7 平局跨 seed 翻转                                                                                 │
+
+      ├─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ 4. Fallback     │ FB1 unknown 强路由、FB2 部分已知静默、FB3 对抗模仿、FB4 域漂移                                                                                   │
+
+      ├─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ 5. Skill        │ SR1 增 skill 重排、SR2 描述污染、SR3 support 传播                                                                                                │
+
+      │ Registry        │                                                                                                                                                  │
+
+      ├─────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ 6. Recovery     │ RC1-12 校验 {task,candidates,scores,confidence,selected,fallback_reason}
+      被 loop_controller/skill_loader/evidence/recovery                       │
+
+      │ 兼容            │ 正确消费（结构不变量，非只看字段存在）                                                                                                           │
+
+      └─────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+      关键立场
+
+
+      1. hidden_tests 测的是不变量，不是数值——confidence∈[0,1]、selected⊆candidates、selected==max
+      score、|scores|==|candidates|、fallback_reason 只当真 fallback 时非空且枚举合法。任何正确 router
+      无论实现细节都必须满足；满足不了就是架构缺陷，这正是 F6 的 recovery 契约攻击。
+
+      2. 3-seed 是脆性探针——top1 > seed-strict 15pp 判"依赖措辞"。一个只在 seed1 措辞下路由正确、同义替换就翻车的
+      router，即便单次准确率很高也被判脆弱。
+
+      3. 不变量刻意绕过"语义真相集"的依赖——ground_truth 里 CG6/CF4 等设了 forced_single:false，逼候选集保留多域不早提交；这是把我在审计中看到的"过早提交/窄带"直接做成可测断言。
+
+
+      执行状态（诚实记录）
+
+
+      - 全部 JSON 通过 python json.load，hidden_tests.py 通过 ast.parse。
+
+      - 自我检查：对空 runs/ 运行 hidden_tests.py → 50 个任务全部 missing_run 判失败、exit 1（正确立场：未执行=未通过）。
+
+      - 尚未对真实 Phase13.1 router 执行——那需要把被测 router 接进 harness（那一步属于你的执行侧，我按约束未提供实现/patch）。
+
+
+      需要我补一个可复用的被动触发脚本（仅循环调用你已有的被测 router 入口去填充 runs/，不含任何路由器实现），还是就此交付，等你在本机接入真实
+      router 后跑 hidden_tests.py？ '
+    category: debug
+    domains:
+    - backend
+    - security
+    - ai
+    - architecture
+    - testing
+    roles:
+    - security-engineer
+    - system-architect
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-006
+  - E-011
+  - S-001
+- timestamp: '2026-09-04T02:51:24.799133+00:00'
+  query:
+    task_text: "你现在作为 Agent OS Runtime Tester。\n\n执行 Phase13 Regression Benchmark。\n\
+      \n禁止修改 runtime 代码。\n\n只允许：\n\n- 创建 benchmark 文件\n- 运行测试\n- 收集 evidence\n- 输出报告\n\
+      \n\n执行：\n\nbenchmark/phase13/\n\n\n要求：\n\n运行：\n\npython3 benchmark/phase13/mrk.py\
+      \ run --variant all --seeds 3\n\n生成：\n\nPhase13-Regression-Report.md\n\n\n报告必须包含：\n\
+      \n1.\nPhase13.1 vs Phase12:\n\nrouting Δ\n\ntotal Δ\n\n\n2.\n失败任务列表\n\n\n3.\n\
+      是否破坏：\n\n- recovery\n- evidence\n- provenance\n- session\n- memory\n\n\n4.\n\
+      每个失败：\n\n分类：\n\nType1 正常能力边界\nType2 架构缺陷\nType3 benchmark问题\n\n\n不要修复。\n\n只报告。\n\
+      \n\n结束后等待修复指令。  下面是参考： 我作为该 benchmark 的设计者，独立核实了 150 个 artifact、重跑了 hidden_tests、自行统计了种子翻转与结构不变量，对报告给出不配合的判定。\n\
+      \n  核实结论（实证）\n\n  ┌──────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────────┬───────────────────────┐\n\
+      \  │                       报告声明                       │                    \
+      \                  我的复核                                       │         判定 \
+      \         │\n  ├──────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┤\n\
+      \  │ 150 artifacts 存在                                   │ find = 150 ✅     \
+      \                                                                  │ 准     \
+      \               │\n  ├──────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┤\n\
+      \  │ hidden_tests exit 1, 0/50                            │ 重跑 pass:0/50 fail:50\
+      \ ✅                                                           │ 准          \
+      \          │\n  ├──────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┤\n\
+      \  │ 结构不变量 0 触发                                    │ 150 个全局扫：scores_aligned/selected_not_in_candidates/confidence_out_of_unit/sele\
+      \ │ 准，且是被低估的正面  │\n  │                                                     \
+      \ │ cted_not_max 全部 0 ✅                                                    \
+      \          │ 发现                  │\n  ├──────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┤\n\
+      \  │ 结构一致性在（selected⊆candidates、conf∈[0,1]、分数  │ 抽样 CG1/SC4/FB5/RC8 确认     \
+      \                                                      │ 准                 \
+      \   │\n  │ 对齐）                                               │             \
+      \                                                                        │ \
+      \                      │\n  ├──────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┤\n\
+      \  │ 语义/契约层全崩                                      │ token 全为 missing_candidate/reason_wrong/fabricated_fallback/band\
+      \ 错               │ 准                    │\n  ├──────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┤\n\
+      \  │ registry disjoint 是主因且非 router 缺陷             │ router 用 14 技能具体域 vs 我\
+      \ 10 技能抽象域，+ions 无交集 ✅                        │ 准                    │\n  ├──────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┤\n\
+      \  │ seed 翻转 12/50                                      │ selected 6 + 候选数 10\
+      \ + reason 6，union≈12                                         │ 近似，但\"12\"是并集口\
+      \  │\n  │                                                      │           \
+      \                                                                          │\
+      \ 径                    │\n  └──────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────┴───────────────────────┘\n\
+      \n  报告的三处偏颇（需挑战）\n报告的三处偏颇（需挑战）\n\n1. \"Type C = benchmark 设计缺陷 / harness 缺 adapter\"\
+      \ 的归责实际上读歪了。\n我的 README 前提是 registry.json 由被测 router 读取——即 harness 应让 router\
+      \ 以基准抽象词表运行。执行侧却让它跑自己的 rules.yaml。所以这是一次执行侧的集成契约违背，不是 ground_truth/hidden_tests\
+      \ 内部错（它们在\"抽象词表 router\"这一前提内自洽）。我作为设计者认账：spec 写了\"read\"但没交付可执行的注入/加载契约，把假设留成了空。但更准确的说法不是\"\
+      benchmark 设计有缺陷\"，而是\"被测 router 被跑在了错误词表上\"。\n\n2. \"修复 Type C 后 score 回升到 ~55–60\
+      \ / 残留 18–22\" 是未经重跑的后厨估算。\n这数字没有任何 rerun 支撑。且报告自己的 token 显示残留失败并非全由 registry\
+      \ 驱动：CG1/CG5/CG6 的 fabricated_fallback_reason（我给多域设了 fallback:false，router 却以\
+      \ conflicting_intent 回退——这是语义模型分歧，先于 registry 存在）、confidence_not_medium/high\
+      \ band 错、reason_wrong 需枚举改名、以及 6–12 处种子翻转。这些都不随词表对齐而消失。所以\"55–60\"是合理量级，但被框成了已得结论。\n\
+      \n3. \"add adapter → 干净解决\" 被过度简化。\nbugfix→{code-reviewer|technical-reviewer}、performance→{backend-architect|frontend-performance}\
+      \ 无唯一映射——抽象域到具体域是歧义映射。所谓\"注入 registry.json\"实际是让 router 换成基准词表路由（即回到我的 README\
+      \ 前提），那不是\"adapter\"，是\"跑不同配置\"。真正的前置决策是：本 benchmark 的权威词表该是抽象的(registry.json)还是\
+      \ router 真实的具体域？ 二者选一再谈修复，二选一是执行侧拍板，不是 router 的事。\n\n报告被低估的正面发现\n\n结构不变量 150/150\
+      \ 零违反，是整份报告最重要、却只占一行的发现——它证伪了\"Phase 11 消费方会因 schema 崩\"：loop_controller/skill_loader/evidence/recovery\
+      \ 在本 router 输出下从结构上不会崩溃，唯一的真契约问题就是 fallback_reason 枚举词表与技能词表两个词表错位。这把 Phase\
+      \ 13.1 状态精确定位为**\"词汇/分类法问题，而非 schema 健全性问题\"**。\n\n对 Phase13.3 决策的修正意见\n\n-\
+      \ \"先解决词表错位、否则 router patch 恒 0 分\"的结论正确——已实证：任何 router 修补都改不了 backend-architect\
+      \ ≠ bugfix。\n- 但\"首步是给 harness 装翻译层\"应改为\"首步是定权威词表\"：抽象 or 具体，定为后重跑 3 seed 才是有效的测量基线。\n\
+      - 报告的 Phase13.3 小范围（fallback_reason 枚举对齐、confidence gap 校准、>4 候选截断、英文同义 IDF）是唯一脱离\
+      \ benchmark 分数也成立的独立债——这点报告说得对，可作为不依赖分数推进的部分。\n- 一处设计注意：报告把\"registry.json 注入路径\"\
+      列为第 4 项\"可选修复\"——这会在被测 router 上加功能，违背\"不变被测物\"边界。注入/加载机构应落在 harness，不是 router。\n\
+      \n净判定：报告实证基础扎实（我复核的硬数字全对上）、诚实标注了 Type A/B/C 且未把 router 的域问题错怪成功能失败；它的问题在Type\
+      \ C 归责措辞、未经 rerun 的 55–60 估算、以及\"adapter\"方案过度简化。作为设计者，我不接受\"benchmark 设计缺陷\"\
+      这一个帽子（更准是\"集成契约未执行\"），其余结论可采信。\n\n需要我补一份授权词表决策单（抽象 vs 具体 vs 双轨，含映射歧义清单）供执行侧拍板，并给出\"\
+      定词表后需重跑的种子与断言清单\"，把 Phase13.3 的前置测量做扎实吗？ "
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - ai
+    - architecture
+    - testing
+    roles:
+    - backend-architect
+    - frontend-architect
+    - system-architect
+    - llm-engineer
+    keywords:
+    - optimization
+    - agent
+    - session
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-009
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T02:53:08.280019+00:00'
+  query:
+    task_text: '▣ DCP | -70.3K removed, +318 summary
+
+
+      │⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿████████████████████│
+
+      ▣ Compression #1 -70.2K removed, +318 summary
+
+      → Topic: Phase13.2 Router Attack
+
+      → Items: 21 messages and 29 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-04T03:06:42.442834+00:00'
+  query:
+    task_text: '你现在是 Agent OS Benchmark Executor。
+
+
+      不要修改 ~/.agents/runtime 任何代码。
+
+
+      执行 Phase13 Capability Regression Benchmark。
+
+
+      输入:
+
+      benchmark/phase13/
+
+
+      要求：
+
+
+      1. 使用三变体：
+
+
+      A:
+
+      cap-ON
+
+      (Phase13.1 router + Phase11 recovery)
+
+
+      B:
+
+      cap-OFF
+
+      (router升级关闭 recovery关闭)
+
+
+      C:
+
+      bare
+
+      (OpenCode裸运行)
+
+
+
+      2. 运行：
+
+
+      3 seeds以上
+
+
+      所有run保存：
+
+
+      runs/{variant}/{task}/seed/
+
+
+
+      每个run必须保存：
+
+
+      - evidence.json
+
+      - run.log
+
+      - routing artifact
+
+      - recovery_manifest.json
+
+      - stdout hash
+
+
+
+      3. 输出：
+
+
+      Phase13-Benchmark-Result.md
+
+
+      包含：
+
+
+      - mean
+
+      - 95% CI
+
+      - effect size
+
+
+      比较：
+
+
+      Phase13.1 - Phase12
+
+
+      重点：
+
+
+      routing提升是否传递到最终agent能力。
+
+
+
+      4. 不允许：
+
+
+      - 修改测试
+
+      - 修改hidden
+
+      - 修改runtime
+
+      - 删除失败case
+
+
+
+      如果失败：
+
+
+      输出：
+
+
+      Phase13-Failure-Map.md
+
+
+      分类：
+
+
+      Type1 正常能力边界
+
+
+      Type2 架构缺陷
+
+
+      Type3 benchmark问题
+
+
+
+      完成后停止。   下面是参考内容：benchmark/phase13/ 端到端就绪。基线已归档（phase13_baseline/，10 项完好，含原
+      R1–R10/记忆基线 harness 与回归报告），phase13/ 现在是新的 Router-Upgrade 攻击包。
+
+
+      交付清单与自验结果
+
+
+      ┌───────────────────────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+      │                     部件                      │                                              状态                                               │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ registry.json                                 │ ✅ 合法 JSON；canonical 10-skill
+      + 词表前提契约 + 具体域翻译备注（吸收 13.2 disjoint 教训）     │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ tasks.json                                    │ ✅ 70 攻击任务（A18/B16/C14/D12/E10，全
+      JSON 校验通过）                                         │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ ground_truth.json                             │ ✅ 70 条语义路由 + 全链 pipeline 结局                                                           │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ judge.py                                      │ ✅ 机械跑通：retrieval/memory n=70
+      跨切、routing n=34、evidence n=27、recovery n=34，输出 95%CI │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ mrk.py                                        │ ✅ selfcheck 证"未运行→_unrun→判
+      fail"                                                          │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ hidden/{test_guard.py,tests.lock}             │ ✅ 完整性守卫通过，5+1 文件 sha256 锁定                                                         │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ routing|integration|recovery/ATTACK-MATRIX.md │ ✅ 三张矩阵 + 失败地图                                                                          │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ Phase13-Benchmark-Spec.md                     │ ✅ 主 spec                                                                                      │
+
+      ├───────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+
+      │ judge.py 对空 runs                            │ ✅ 0.0/100、70/70 fail、exit 1（无
+      run=无通过，立场正确）                                       │
+
+      └───────────────────────────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+      与 Phase 13.2 的关键差异（这轮的关键善后）
+
+
+      1. 不再单测 router——mrk.py 以黑盒调用整条链（task→router→skill→execution→evidence→validator→recovery），并把可独立验证的声誉（stdout-sha
+      重放、file:line 解析）由 mrk 自己复核，而不是只用测 router 的抽象 10-skill。C 组专门打证据链与 Validator（C6/C7
+      坏证据必须被拒）。
+
+      2. E 组 10 个回归守卫（E1–E8=R1–R10、E9=M5 负控制、E10=无伪造）设为天花板——E 组失败 >10% 是显式回滚信号，直接回答你"升级是否用路由提升换了
+      recovery/memory/evidence 的回归"。
+
+      3. 词表错位被规范化为显式契约而非事后 Type C 甩锅——routing 以 registry.json 为权威，输出 14 域具体 id 标注为
+      runner 端集成问题、不评分（§5 失败地图 + registry 备注）。
+
+      4. 矛盾 intent 组（A10/A11）与相 recent-first-match 组（B9/B10） 把 Phase12.5 的 F5"intent
+      first-match 错误"直接做成可测断言——首词命中不得压过 ranking。
+
+
+      一个诚实留下的设计决定（可再议）
+
+
+      retrieval/memory 两维采用跨全任务计拢（claim_honest+junk_promoted）而非单任务锚定——因为本轮被测升级是 router，memory
+      的真实影响在 D5/D6/E9 之外要通过"全程不污染、不幻觉归因"来测，才是升级后更严格的边界。若你更想让 memory 只管锚定 D 组，我可以改回按
+      cat_dim 分组。
+
+
+      基线未动、可随时复跑对照。需要我把 mrk.py --invoke 接一个你本地的 pipeline 入口（仅作黑盒粘合，不含任何路由/证据实现），还是就此交付等你接入被测链后跑
+      judge.py？ '
+    category: debug
+    domains:
+    - ai
+    - architecture
+    - testing
+    roles:
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - agent
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-006
+  - S-001
+  - E-011
+  - T-005
+- timestamp: '2026-09-04T03:07:46.396436+00:00'
+  query:
+    task_text: '▣ DCP | -155.4K removed, +699 summary
+
+
+      │░░░░░░░░░░░░░░░░░░░⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿██│
+
+      ▣ Compression #2 -85.1K removed, +381 summary
+
+      → Topic: Phase13 Regression Exec
+
+      → Items: 32 messages and 32 tools compressed'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-007
+- timestamp: '2026-09-04T03:16:03.228520+00:00'
+  query:
+    task_text: "# Phase 13.5 Architecture Audit — Candidate Ranking Router 的 F3/F5\
+      \ 残留\n\n> 角色：首席架构审计师。**不提供代码 patch、不改 runtime、不降 benchmark 标准。** 纯架构分析。\n> 分析输入：Phase13\
+      \ benchmark 结果（TOTAL 83.5 / routing 0.647 / Phase12 0.573 / Δ+0.074 / cap-ON−OFF\
+      \ +0.559 / Cohen d 1.42 / 无回归 / Failure Map 25/70 F3+F5）。\n> 注：本人即 Phase 13.2\
+      \ 攻击任务与 Phase13.1 回归任务的作者，对 25/70 的失败样本有一手构造上下文，据此做归因而非只看汇总数字。\n\n---\n\n##\
+      \ 1. Failure Taxonomy（25/70）\n\n| 失败簇                                      \
+      \                 | 命中示例（我的任务集）                                       | 表象 \
+      \                               | 深层                                       \
+      \                  |\n| ------------------------------------------------------------\
+      \ | ------------------------------------------------------------ | -----------------------------------\
+      \ | ------------------------------------------------------------ |\n| **F3 generic-lure**\
+      \                                          | B1「AI model wrapper，其实 backend\
+      \ handler 坏了」；B2「database fine，其实 architecture 决策错」；B7「perf-tune cache，其实 auth\
+      \ leaking」；B8「ai tokens，其实 column mapping」；B16「manage-and-support 叙事，真 backup\
+      \ cron」 | 词表里有，语义上没有                | router 在**表层 token 空间**匹配到诱饵域，缺\"哪个 token\
+      \ 是语义中心 / 哪个是诱饵\"的判别 |\n| **F5 volume / keyword-bias**                     \
+      \            | B4「error×vol + config yaml」；B13「test…fixture，真 cache slowness」；B10「fix\
+      \ 先行，真 migration」；A16/A17「index keyword 但 want organized」；A18 长上下文污染 | 高词次 /\
+      \ 高 IDF 罕见词 / 首词域主导 | 打分把**出现次数/罕见度/顺序**当显著性，而这些都不是语义显著性 |\n| 其余（A1–A15 新域/模糊/无关键词、C/D\
+      \ validator/recovery、E 守卫） | 未在 25 之列 → 已由 upgrade 修复或为能力边界                \
+      \ | —                                   | —                                \
+      \                            |\n\n**关键数字解读**（这是诊断的核心证据）：\n\n- `routing 0.573\
+      \ → 0.647`（Δ+0.074，**gain 很小**）但 `cap-ON vs cap-OFF +0.559, Cohen d 1.42`（效应**极大**），且无回归。两者合读的签名是：**升级把\"\
+      决策机制\"从一票总览升级为 rank-and-select，Agent OS 上下文（cap-ON）带来巨大增益——但\"routing 本身的词汇性能接近\
+      \ 0.647 的平台\"**。这意味着改善已转移到决策层，而**剩余 25/70 F3/F5 卡在特征层，非决策层**。平台即证据：再在 keyword\
+      \ 上做决策调优，收益在趋零。\n\n---\n\n## 2. Root Cause 与问题分类\n\n### 2.1 为什么 ranking 仍解不了\
+      \ F3/F5\n\n**根因是表征（representation）而非策略（policy）。**\ncandidate-ranking 升级改的是\"\
+      如何选\"（从首个正则命中 → 对上一组候选打分的取最佳），**没改\"拿什么特征打分\"。** 打分仍在 token/keyword/IDF 的**词形空间**上进行。而\
+      \ F3/F5 之所以会错，恰恰是因为解决它们所需的信号**根本不在这个词形特征里**：\n\n- **F3（generic-lure）**：要对\"\
+      `ai model` 是诱饵、`backend handler broken` 是意图\"做判断，需要知道这两个短语在**本句中的语义显著性**之差。IDF\
+      \ 只能给\"model 常见所以降权\"，却无法知道\"本句中 AI 词是叙述性外皮，backend 词才是承载意图的内核\"。这个是**语义 gap，不是权重缺陷**——再调\
+      \ IDF/keyword 重也表达不了。\n- **F5（volume / keyword-bias）**：把\"出现次数 / 罕见度 / 出现顺序\"\
+      当作显著性，本质是把**统计表面**误当**语义重**。次数多≠重要（B13 里 test 出现 7 次也不如 1 次 cache slowness）；罕见≠相关（prometheus\
+      \ 词频低却无关）；先出现≠意图中心（B10 fix 先行而 bulk 是 migration）。\n\n一句话：**ranking 在同一词形特征空间上重排，无法修复\"\
+      特征空间压根不含语义信息\"这个问题。** 平台 0.647 就是这个词形空间的天花板。\n\n### 2.2 分类结论（A–E）\n\n| 层   \
+      \                        | 判定                 | 依据                         \
+      \                                |\n| ---------------------------- | --------------------\
+      \ | ------------------------------------------------------------ |\n| **A router\
+      \ scoring**         | **表观层（症状）**   | volume/IDF 误算、置信失真都发生在 score 层；但它只是**下游承载点**，不是根因。修\
+      \ A（加 caps、反惩罚、重校准）能缓解 F5 边角，**解不了 F3**——因为 F3 需要的语义显著性在评分输入里就缺失 |\n| **B skill\
+      \ registry**         | **次要贡献者**       | 扁平 keyword 词表缺意图/支撑/域层次与互斥结构。部分 F3\
+      \ 可由 registry 设计缓解（给 \"ai/learning/training/test\" 标\"歧义域\"），但 registry 无法裁决\"\
+      哪个提及是意图\" |\n| **C missing semantic layer** | **★根因**            | F3 与 F5 都是\"\
+      **词形特征空间不承载语义**\"的表现。两个症状同源：**表征 gap**。要突破 0.647 平台，必须引入**非词形的语义表示**（candidate\
+      \ 与 task 的语义距离），或**一个能读句子的 reader**。这一层缺失是根因 |\n| **D missing planner**    \
+      \    | **C 的运载层，触动** | 单意图 task 不需要 whole-planner；但\"Lure vs Intent\"判别 + multi/hybrid\
+      \ intent 消解天然落在 planner。D 是 C 的宿主/表现形态，不是独立根因 |\n| **E benchmark**         \
+      \     | **次要混淆，非根因** | 我承认：部分 A/B 任务编码了\"特权解读\"（凭什么 AI 是诱饵 while backend 是意图）。存在一定标注任意性。**但**：F3\
+      \ 任务大多含\"actually / the real ask is / what they need is\"这类明确的**消歧标记**——LLM\
+      \ reader/planner 能吸收这些标记，keyword router 的结构性吃不到。因此任务是公平的，E 只是轻飘飘的混淆项，不是根因 |\n\
+      \n**最终分类：Primary = C（缺语义层）；症状承载 = A；贡献/运载 = B、D；轻混淆 = E。** 结论弹簧是：单靠 A（增强 keyword/IDF）无法根治，因为问题在特征空间入口而非打分策略。\n\
+      \n---\n\n## 3. 下一代 Routing Architecture 方案比较\n\n四种开放架构选项，按五轴评估。**评审原则**：证据与下游（loop_controller\
+      \ / skill_loader / evidence / recovery）兼容是硬约束；低延迟/成本为软约束。\n\n### 方案 A：继续增强 keyword/IDF（原位调参）\n\
+      \n- **成本**：低（无新依赖/无新 infra）。\n- **延迟**：≈0 增量。\n- **稳定性**：**低**——手工 IDF/权重对 seed\
+      \ 与任务集敏感，同义替换（seed2）flip 依旧。F3 不解、永远打地鼠。\n- **可解释性**：高（每个 token→权重可见），但属**事后合理化**，非真解释。\n\
+      - **evidence 兼容**：高（routing artifact 字段不变，消费方零改动）。\n- **对 F3/F5**：缓解 F5 边角（volume\
+      \ cap / 罕见词惩罚），**不动 F3 根**。\n- **判定**：这是 0.647 平台所在的轴；已证明收益趋零。**不作为主方向。**\n\n\
+      ### 方案 B：embedding semantic router（on-prem 小模型）\n\n- **成本**：中——需 embedding 推理\
+      \ + skill 原型索引（由 skill desc + exemplar 嵌入），registry 变更需重嵌。\n- **延迟**：中——每 task\
+      \ 约 10–50 ms embedding + 10–30 skill 余弦；可缓存。\n- **稳定性**：中。对 lure 明显更好（task 与\
+      \ skill 描述/原型中心的语义距离），但：原型构造质量敏感、对抗措辞可能骗过 embedding、需保证 embedding 确定性才能 seed\
+      \ 稳定。\n- **可解释性**：低——余弦相似度不透明，需\"距离最近原型\"做近似解释。\n- **evidence 兼容**：好——仍出 scores/confidence；但\
+      \ provenance 从\"token 权重\"变为\"原型距离\"，**需新增证据字段**，消费方须接受非词形证据。\n- **对 F3/F5**：**直解\
+      \ F3**（捕获语义中心）；F5 基本免疫（embedding 空间无 volume 概念），但对原型污染敏感。\n- **判定**：**无 LLM\
+      \ 的可选方案**，ROI 高，但可解释性与证据字段变更需配套。\n\n### 方案 C：LLM planner router\n\n- **成本**：**高**——每次\
+      \ task 一次 LLM 推理，token 成本线性；需模型访问、prompting、异步/缓存 infra。\n- **延迟**：**高**——0.5–3s+/task，高吞吐场景不可接受；需\
+      \ batching。\n- **稳定性**：中——LLM 非确定；需 temp=0 + 受约束解码（JSON schema / function-call）才能逼近\
+      \ seed 稳定。\n- **可解释性**：**高（唯一能自述理由）**——\"我选 bugfix，因为 backend handler broken\
+      \ 是操作性子句，而 ai model 是叙述外皮，非诉求\"。\n- **evidence 兼容**：中——可经受约束 JSON 输出 routing\
+      \ artifact（schema 兼容），但 scores 不再是校准概率需显式置信门；且 LLM 的 salience 理由**必须 root 到真实\
+      \ token**，validator 须校验\"引用的词确实在 task 里\"，否则幻觉。**增强了对 grounding 的负担。**\n- **对\
+      \ F3/F5**：**全解**（读 intent、识别 lure、免疫 volume），但引入 LLM 自身偏差/成本/非确定。\n- **判定**：能力最全，但全量每任务走\
+      \ LLM 在成本/延迟/稳定性上不可持续。\n\n### 方案 D：Hybrid Router + Confidence Gate + Planner（快慢双通道）\n\
+      \n- **成本**：**低-中**——**只在置信门放行到 planner 的比率上付 LLM**（F3/F5 恰落在低置信/歧义群体，占比有限），中位数成本低，拓扑复用。\n\
+      - **延迟**：**低中位数**（快通道 keyword/embedding）+ 高尾（escalate）——可接受，因为硬任务本就该花更多。\n-\
+      \ **稳定性**：**最优**——快通道确定性；escalate 段 temp=0 + 约束解码；seed 稳定性由\"确定性任务永远走确定性通道\"\
+      保证。\n- **可解释性**：混合——快通道分数 + 被升级任务的 LLM salience 理由；两者都可作证据。\n- **evidence 兼容**：**最优**——routing\
+      \ artifact 保留，**新增可选字段** `route_mode`(lexical|embedding|planner) + `escalation_reason`；既有字段不变，消费方向后兼容；`escalation_reason`\
+      \ 复用 fallback_reason 枚举（`domain_unrecognized/partial_known/ambiguous/low_separation/low_confidence`）以免\
+      \ recovery 解析断裂。Provenance：快=token 分数，escalate=grounded 到真实 token 的 salience\
+      \ 理由。\n- **对 F3/F5**：F5 被置信门化解（volume/IDF 失真产生**真实低置信**→escalate→planner 消歧）；F3\
+      \ 在 escalate 段被解；便宜任务留在便宜段。\n- **判定**：**综合最优。** 把 router 自己的弱点（低置信）变成路由决策的**组织原语**——这同时翻修了\
+      \ Phase12.5 F2\"low-confidence 无降级\"。\n\n### 五轴总表\n\n|               | A keyword\
+      \ 调参 | B embedding    | C LLM planner    | **D hybrid+gate+planner** |\n| -------------\
+      \ | -------------- | -------------- | ---------------- | -------------------------\
+      \ |\n| 成本          | 低             | 中             | 高               | **低-中（escale\
+      \ 段付）**  |\n| 延迟          | ≈0             | 10–50ms        | 0.5–3s       \
+      \    | **低中位 + 高尾**         |\n| 稳定性        | 低             | 中            \
+      \ | 中(需 temp=0)    | **最优**                  |\n| 可解释性      | 高(事后)       |\
+      \ 低             | 高(可自述)       | **快：分数+升：理由**     |\n| evidence 兼容 | 高    \
+      \         | 中(新证据字段) | 中(需 grounding) | **高(向后兼容+可选字段)** |\n| F3           \
+      \ | ✗              | ✓              | ✓✓               | **✓(escalate 段)** \
+      \       |\n| F5            | △边角          | ✓              | ✓✓            \
+      \   | **✓**                     |\n\n### 推荐\n\n**Phase 14 主方案 = D**：保留 Phase13\
+      \ keyword fast-path（其 0.647 已到平台，作为便宜基线即可），**把低置信/歧义/多意图群体的尾部，用一个语义 reader（B\
+      \ 的 embedding 或 C 的轻量 planner）做 escalate。** 架构原语是**置信门**：路由器不再\"永远自己一锤定音\"，而是\"\
+      高置信自己定，否则交给更强的 reader\"。这既突破特征平台，又不上 LLM 全量成本。\n\n- 若组织不允许 LLM：尸 **D-variant（B\
+      \ 作 fast path 语义过滤 + 置信门 + 无 planner）**，同样能在不上 LLM 的前提下补 F3 大部分。\n- 若允许轻量 LLM：尸\
+      \ **D 原版**，planner 只用于 escalate 尾部，成本可控。\n\n---\n\n## 4. Phase 14 决策\n\n**结论：建议进入\
+      \ Phase 14，范围限定为\"Hybrid Router + Confidence Gate + Planner / 语义 Reader\"（方案\
+      \ D 或其 B-gate 变体），不做方案 A（keyword 继续调参）。**\n\n**理由（证据链）**：\n\n1. **0.647 平台 +\
+      \ d=1.42 + 25/70 F3/F5** 三合一证明：升级在决策层已充分（d 极大、无回归），余量在特征层；再在 keyword 上调 = 浪费，且解不了\
+      \ F3 根。\n2. **F3/F5 恰是低置信/歧义群体**——置信门的退化目标是错的，升级目标是对的：把 router 的弱置信尾部交给更强的 reader。\n\
+      3. **进入标准 = 目标退化可测**：\n   - Phase 14 门：routing 突破 0.647 平台（目标 ≥0.80）且 **E 守卫（E1–E10）零回归**（回归\
+      \ → 停止并回滚）。\n   - 证据：escalate 段新增 `route_mode`/`escalation_reason` 证据字段；planner\
+      \ 的 salience 理由**必须 grounded 到 task 真实 token**，validator 校验，防止 LLM 幻觉证据。\n \
+      \  - cap-ON vs cap-OFF 在 escalate 段的 Δ 必须为正（不带 Agent OS 的 escalate 不得更好）——否则\
+      \ escalate 是花销不是能力。\n4. **Phase 14 附带验证**：翻修 Phase12.5 F2（low-confidence 无降级）——置信门让\
+      \ low-conf 从\"降级/放弃\"变成\"escalate\"，是把原有缺陷转成能力，需单独测 D3/D4/C10/C11 守卫。\n\n**不加分项（明确不作为\
+      \ Phase 14 输入）**：方案 A 不做主方向；方案 C 不全量。禁止项重申：不改 runtime、不提供 patch、不降 benchmark\
+      \ 标准；任何 Phase 14 落地都必须以本 audit 的对象（最终工程能力 + 回归守卫）为验收，而非以\"routing 数字好看\"为验收。\n\
+      \n---\n\n*审计完。本文件为分析、决策与基准门，不含任何源代码 patch。*   agent os文件夹:~/.agents"
+    category: debug
+    domains:
+    - backend
+    - database
+    - security
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - indexing
+    - optimization
+    - vector
+    - llm
+    - agent
+    - cache
+    - mutation
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - S-002
+  - T-006
+  - P-001
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T10:05:57.969024+00:00'
+  query:
+    task_text: '你是 Final Blind Benchmark Executor。
+
+
+      当前执行 Aiview Final Blind Benchmark 的：
+
+
+      ## ARM A — Bare OpenCode
+
+
+      实验目标：
+
+
+      测量没有 Agent OS Runtime 时，原生 OpenCode 在真实工程任务上的实际表现。
+
+
+      ==================================================
+
+      一、严格隔离
+
+      ======
+
+
+      本轮属于 Bare Arm。
+
+
+      禁止：
+
+
+      * 加载 ~/.agents
+
+      * 读取 /home/shade/.agents
+
+      * 使用 Agent OS runtime
+
+      * 使用 Agent OS memory
+
+      * 使用 Agent OS recovery
+
+      * 使用 Agent OS evidence pipeline
+
+      * 使用 Agent OS router
+
+      * 使用任何针对本实验设计的额外提示词
+
+
+      不要尝试实现、模拟或重建 Agent OS。
+
+
+      你就是一个普通 OpenCode 工程执行器。
+
+
+      ==================================================
+
+      二、Benchmark 数据
+
+      ==============
+
+
+      Benchmark：
+
+
+      /home/shade/Public/test/benchmark/final/
+
+
+      任务定义已经 FINAL_LOCKED。
+
+
+      你只能读取：
+
+
+      tasks.json
+
+
+      禁止读取：
+
+
+      ground_truth.json
+
+      benchmark_manifest.json 中可能暴露 ground truth 的内容
+
+      任何隐藏裁判信息
+
+
+      不得根据隐藏答案猜测实现方式。
+
+
+      ==================================================
+
+      三、任务执行
+
+      ======
+
+
+      按照 runner 分配的 task ID / seed 执行任务。
+
+
+      每个 run 都应视为独立工程任务。
+
+
+      必须：
+
+
+      1. 阅读真实代码
+
+      2. 理解当前行为
+
+      3. 定位问题
+
+      4. 修改必要代码
+
+      5. 运行适当测试
+
+      6. 验证行为
+
+      7. 保持已有功能
+
+      8. 输出最终结果
+
+
+      不要为了“通过测试”进行表面修改。
+
+
+      ==================================================
+
+      四、允许的工程行为
+
+      =========
+
+
+      允许：
+
+
+      * 阅读项目源码
+
+      * 搜索代码
+
+      * 查看调用关系
+
+      * 查看测试
+
+      * 查看 git diff
+
+      * 修改业务代码
+
+      * 添加/修改合理测试
+
+      * 运行已有测试
+
+      * 运行构建
+
+      * 使用正常 shell 工具
+
+      * 查看项目历史提交（若任务需要）
+
+
+      禁止：
+
+
+      * 查看 ground truth
+
+      * 查看其他 arm 的结果
+
+      * 修改 benchmark 数据
+
+      * 修改 runner
+
+      * 修改 judge
+
+      * 修改任务定义
+
+      * 修改实验环境来制造成功
+
+      * 通过删除测试/降低测试要求取得通过
+
+
+      ==================================================
+
+      五、验证要求
+
+      ======
+
+
+      不要把：
+
+
+      “代码编译通过”
+
+
+      等同于：
+
+
+      “任务完成”。
+
+
+      必须根据任务实际需求进行行为验证。
+
+
+      尤其关注：
+
+
+      * edge cases
+
+      * backward compatibility
+
+      * failure paths
+
+      * persistence consistency
+
+      * repeated execution
+
+      * concurrency
+
+      * empty/null inputs
+
+      * API compatibility
+
+      * existing behavior
+
+
+      ==================================================
+
+      六、Evidence
+
+      ==========
+
+
+      每个 run 必须保留：
+
+
+      * 初始 git 状态
+
+      * 最终 git diff
+
+      * 执行过的测试命令
+
+      * 测试结果
+
+      * 构建结果
+
+      * 最终工作树状态
+
+      * 执行摘要
+
+
+      不要伪造 evidence。
+
+
+      如果某项无法验证，明确记录：
+
+
+      NOT VERIFIED
+
+
+      不要把“理论上应该可以”写成验证成功。
+
+
+      ==================================================
+
+      七、失败处理
+
+      ======
+
+
+      遇到失败：
+
+
+      不要掩盖。
+
+
+      记录：
+
+
+      * failure stage
+
+      * error
+
+      * attempted fix
+
+      * retry
+
+      * final state
+
+
+      如果最终失败，如实记录失败。
+
+
+      ==================================================
+
+      八、实验一致性
+
+      =======
+
+
+      seed1 / seed2 / seed3 是独立 run。
+
+
+      不要把一个 seed 的成功经验直接写入 benchmark task 或项目永久配置。
+
+
+      不要修改 benchmark/final/。
+
+
+      ==================================================
+
+      九、输出
+
+      ====
+
+
+      每个 run 输出：
+
+
+      Runtime Report
+
+
+      至少包含：
+
+
+      * task_id
+
+      * seed
+
+      * objective
+
+      * files_changed
+
+      * tests_run
+
+      * tests_passed
+
+      * build_status
+
+      * verification_status
+
+      * final_result
+
+      * failure_reason（如有）
+
+      * evidence_paths
+
+      * final_diff_summary
+
+
+      不要输出 hidden ground truth。
+
+
+      整个 Bare Arm 完成后输出：
+
+
+      # Final Blind Benchmark — Bare Arm Report
+
+
+      必须包含：
+
+
+      1. total runs
+
+      2. success count
+
+      3. failure count
+
+      4. per-task result
+
+      5. per-seed result
+
+      6. correctness
+
+      7. regression safety
+
+      8. test quality
+
+      9. artifact quality
+
+      10. self-correction
+
+      11. time/token usage
+
+      12. failure taxonomy
+
+
+      以及：
+
+
+      BARE_ARM_COMPLETE '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - security
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - backend-architect
+    - frontend-architect
+    - llm-engineer
+    keywords:
+    - api
+    - high-concurrency
+    - agent
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - H-115-STATESTORE-WRITE-----THROWS-AF
+  - H-320-STATESTORE-WRITE-----RUNS--IF-
+  - H-347-STATESTORE-WRITE-----
+  - H-455-STATESTORE-WRITE-------RE-SEED
+- timestamp: '2026-09-04T10:11:48.708011+00:00'
+  query:
+    task_text: '你是 Final Blind Benchmark Executor。
+
+
+      当前执行：
+
+
+      # ARM B — OpenCode + Agent OS
+
+
+      这是 Aiview Final Blind Benchmark 的第二实验臂。
+
+
+      ==================================================
+
+      一、实验目标
+
+      ======
+
+
+      测量：
+
+
+      OpenCode + Agent OS
+
+
+      相对于：
+
+
+      Bare OpenCode
+
+
+      在真实工程任务中的实际增益。
+
+
+      本轮不是测试 Agent OS benchmark。
+
+
+      本轮测试的是完整 Agent OS Runtime 是否能够改善真实工程执行：
+
+
+      * 问题理解
+
+      * 任务路由
+
+      * 历史经验利用
+
+      * 隐藏问题发现
+
+      * 多步骤规划
+
+      * 失败恢复
+
+      * 证据收集
+
+      * 自我验证
+
+      * 回归安全
+
+      * 最终交付质量
+
+
+      ==================================================
+
+      二、Runtime
+
+      =========
+
+
+      本轮允许正常使用当前：
+
+
+      /home/shade/.agents
+
+
+      不得修改 Agent OS 架构。
+
+
+      不要修改：
+
+
+      /home/shade/.agents/runtime/
+
+
+      不要为了单个 benchmark task 临时修改 Agent OS。
+
+
+      Agent OS 应作为正常 runtime 工作，而不是 benchmark-specific adapter。
+
+
+      ==================================================
+
+      三、Benchmark 数据
+
+      ==============
+
+
+      Benchmark：
+
+
+      /home/shade/Public/test/benchmark/final/
+
+
+      只能读取：
+
+
+      tasks.json
+
+
+      禁止读取：
+
+
+      ground_truth.json
+
+
+      不得读取、推断或暴露隐藏裁判信息。
+
+
+      任务已经 FINAL_LOCKED。
+
+
+      不得修改：
+
+
+      tasks.json
+
+      ground_truth.json
+
+      benchmark_manifest.json
+
+      FINAL_LOCKED.marker
+
+
+      ==================================================
+
+      四、任务执行规则
+
+      ========
+
+
+      严格按照 runner 分配的：
+
+
+      task_id
+
+      seed
+
+
+      执行。
+
+
+      把每个任务当成真实工程任务。
+
+
+      必须：
+
+
+      1. 理解用户需求
+
+      2. 调查真实代码
+
+      3. 判断真正影响范围
+
+      4. 制定修改方案
+
+      5. 修改代码
+
+      6. 执行验证
+
+      7. 检查 regression
+
+      8. 确认最终行为
+
+      9. 产生完整 evidence
+
+
+      ==================================================
+
+      五、Agent OS 使用原则
+
+      ===============
+
+
+      允许 Agent OS 自动完成：
+
+
+      * routing
+
+      * memory retrieval
+
+      * retrieval audit
+
+      * evidence collection
+
+      * recovery
+
+      * retry
+
+      * planning
+
+      * TeamResult / execution reporting
+
+
+      不要为了“提高指标”人为触发这些能力。
+
+
+      不要主动制造失败来触发 recovery。
+
+
+      不要无意义调用额外 skill。
+
+
+      使用 Agent OS 的真实自然工作流。
+
+
+      ==================================================
+
+      六、禁止事项
+
+      ======
+
+
+      禁止：
+
+
+      1. 读取 ground_truth
+
+      2. 查看 Bare Arm 结果
+
+      3. 查看其他 seed 的最终结果
+
+      4. 修改 benchmark
+
+      5. 修改 judge
+
+      6. 修改 runner
+
+      7. 修改 hidden ground truth
+
+      8. 根据 task ID 修改 Agent OS
+
+      9. 为某个 FB-xx 写特殊逻辑
+
+      10. 为 benchmark 增加专用 skill
+
+      11. 通过降低测试标准取得通过
+
+      12. 删除失败测试
+
+      13. 修改实验环境制造成功
+
+      14. 伪造 memory / recovery / evidence
+
+      15. 把理论分析当成实际验证
+
+
+      ==================================================
+
+      七、特别要求：不要把 Agent OS 当作“万能答案”
+
+      ============================
+
+
+      如果 memory 与当前代码冲突：
+
+
+      以当前真实代码为准。
+
+
+      如果历史经验不适用：
+
+
+      明确记录。
+
+
+      如果 retrieval 没有有价值信息：
+
+
+      不要强行使用。
+
+
+      如果 recovery 不需要：
+
+
+      不要人为触发。
+
+
+      如果任务本身很简单：
+
+
+      不要为了展示 Agent OS 而增加复杂步骤。
+
+
+      目标是自然工作流，而不是展示 feature。
+
+
+      ==================================================
+
+      八、隐藏问题处理
+
+      ========
+
+
+      任务文本可能只描述症状。
+
+
+      不要假定症状就是根因。
+
+
+      必须主动检查：
+
+
+      * 调用链
+
+      * 数据流
+
+      * 状态转换
+
+      * persistence
+
+      * cache
+
+      * queue
+
+      * concurrency
+
+      * error path
+
+      * backward compatibility
+
+
+      特别注意：
+
+
+      “表面修复”不等于完成任务。
+
+
+      ==================================================
+
+      九、验证要求
+
+      ======
+
+
+      至少保留：
+
+
+      * 初始 git status
+
+      * 最终 git diff
+
+      * 修改文件
+
+      * 测试命令
+
+      * 测试结果
+
+      * build result
+
+      * runtime evidence
+
+      * memory retrieval evidence（如果实际发生）
+
+      * recovery evidence（如果实际发生）
+
+      * final verification
+
+
+      所有无法实际验证的内容必须明确：
+
+
+      NOT VERIFIED
+
+
+      不得把：
+
+
+      “代码看起来正确”
+
+
+      记录为：
+
+
+      “验证通过”。
+
+
+      ==================================================
+
+      十、失败与 Recovery
+
+      ==============
+
+
+      发生真实执行失败时：
+
+
+      允许 Agent OS 正常 recovery。
+
+
+      必须记录：
+
+
+      * failure stage
+
+      * failure reason
+
+      * recovery decision
+
+      * retry count
+
+      * changed state
+
+      * new evidence
+
+      * final outcome
+
+
+      如果 recovery 最终失败：
+
+
+      如实记录。
+
+
+      不要为了让任务 PASS 隐藏失败。
+
+
+      ==================================================
+
+      十一、三种 seed
+
+      ==========
+
+
+      seed1：
+
+
+      原始任务表达。
+
+
+      seed2：
+
+
+      任务语义保持不变，但换一种自然语言表达。
+
+
+      seed3：
+
+
+      任务加入额外真实上下文，但不改变真正需求。
+
+
+      不要把 seed 2 / seed 3 当成不同任务。
+
+
+      它们用于观察系统是否对自然语言表述鲁棒。
+
+
+      ==================================================
+
+      十二、输出格式
+
+      =======
+
+
+      每个 run 输出：
+
+
+      # Runtime Report
+
+
+      包含：
+
+
+      * task_id
+
+      * seed
+
+      * objective
+
+      * execution_summary
+
+      * files_changed
+
+      * tests_run
+
+      * tests_passed
+
+      * build_status
+
+      * final_verification
+
+      * routing_used
+
+      * memory_used
+
+      * retrieval_used
+
+      * evidence_collected
+
+      * recovery_used
+
+      * retry_count
+
+      * self_correction
+
+      * final_result
+
+      * failure_reason
+
+      * evidence_paths
+
+
+      不要输出 hidden ground truth。
+
+
+      ==================================================
+
+      十三、最终 Arm 报告
+
+      ============
+
+
+      完成全部任务后输出：
+
+
+      # Final Blind Benchmark — Agent OS Arm Report
+
+
+      至少包含：
+
+
+      1. total runs
+
+      2. success count
+
+      3. failure count
+
+      4. per-task result
+
+      5. per-seed result
+
+      6. correctness
+
+      7. hidden requirement coverage
+
+      8. regression safety
+
+      9. test quality
+
+      10. artifact quality
+
+      11. memory usefulness
+
+      12. retrieval usefulness
+
+      13. routing usefulness
+
+      14. recovery usefulness
+
+      15. evidence quality
+
+      16. self-correction
+
+      17. time/token usage
+
+      18. unnecessary escalation
+
+      19. failure taxonomy
+
+
+      必须重点回答：
+
+
+      A. Agent OS 帮助了哪些任务？
+
+
+      B. Agent OS 没有帮助哪些任务？
+
+
+      C. Agent OS 是否造成任何 regression？
+
+
+      D. Agent OS 是否增加了无意义的复杂度或时间/token 成本？
+
+
+      E. 哪些能力贡献了实际结果？
+
+
+      不要只给一个总分。
+
+
+      ==================================================
+
+      十四、实验真实性
+
+      ========
+
+
+      如果 Agent OS 比 Bare OpenCode 差：
+
+
+      必须如实报告。
+
+
+      如果接近：
+
+
+      如实报告。
+
+
+      如果明显更好：
+
+
+      给出具体任务和证据。
+
+
+      不要为了证明 Agent OS 有价值而操纵结果。
+
+
+      ==================================================
+
+      十五、完成标记
+
+      =======
+
+
+      最终输出：
+
+
+      AGENT_OS_ARM_COMPLETE '
+    category: debug
+    domains:
+    - frontend
+    - security
+    - distributed
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - frontend-architect
+    - security-engineer
+    - system-architect
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - high-concurrency
+    - rag
+    - agent
+    - cache
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - P-001
+  - T-005
+  - E-004
+  - H-467-STATESTORE-WRITE-----REDIS----
+  - S-001
+- timestamp: '2026-09-04T10:12:54.405412+00:00'
+  query:
+    task_text: 'Thoroughly inspect the aiview repository at /home/shade/Public/test
+      for the Final Blind Benchmark FB tasks.
+
+
+      Tasks list (from benchmark/final/tasks.json):
+
+      FB-01 QuestionBank dedup
+
+      FB-02 KeywordKnowledgeRetriever vs InterviewService/EvaluationService rule mode
+      context
+
+      FB-03 JwtUtil/JwtAuthenticationFilter refresh vs access
+
+      FB-04 AuthService concurrent register
+
+      FB-05 finish interview queue unavailable scoring lost
+
+      FB-06 empty question bank scoring
+
+      FB-07 QA pair dedup refactor
+
+      FB-08 DashboardService empty weak dimension
+
+      FB-09 Dashboard double datasource
+
+      FB-10 KnowledgeMapService root mastery
+
+      FB-11 list performance
+
+      FB-12 JwtUtil short secret startup
+
+      FB-13 scoring mode empty string
+
+      FB-14 answer return discriminability
+
+      FB-15 MessageVO missing linked question info
+
+      FB-16 InterviewResult report field never read
+
+      FB-17 QuestionBank+InterviewService transaction atomicity
+
+      FB-18 stream idempotent receipt semantics
+
+      FB-19 short answer premature finish
+
+      FB-20 InterviewStateStore topic count drift
+
+      FB-21 rule mode knowledge retrieval in scoring
+
+      FB-22 KeywordKnowledgeRetriever inefficiency
+
+      FB-23 Dashboard weakPoints suggestions never shown
+
+      FB-24 InterviewStateMachine tests
+
+      FB-25 detail read mutates cache
+
+      FB-26 finish idempotency duplication
+
+      FB-27 InterviewStatus enum comments
+
+      FB-28 Interview list missing score overview
+
+      FB-29 dual submit event shape inconsistency
+
+      FB-30 question usage_count never used
+
+      FB-31 difficulty fallback silently
+
+      FB-32 uniqueness test for dedup
+
+      FB-33 per-request user table query
+
+      FB-34 soft-deleted user login
+
+      FB-35 unique constraint friendly message
+
+      FB-36 message table scoring field not written
+
+      FB-37 three scoring flows duplication
+
+      FB-38 Rabbit scoring fire-and-forget loss
+
+      FB-39 dashboard cache invalidation coverage
+
+      FB-40 blank scoring explicit zero
+
+
+      Read these files completely and report for each task: current code state (fixed
+      or not), line numbers of relevant fix, and any missing fix hypothesis. Be thorough,
+      read:
+
+      - backend/src/main/java/com/aiview/interview/service/*.java
+
+      - backend/src/main/java/com/aiview/auth/security/JwtUtil.java, JwtAuthenticationFilter.java
+
+      - backend/src/main/java/com/aiview/auth/service/AuthService.java
+
+      - backend/src/main/java/com/aiview/interview/controller/InterviewController.java
+
+      - backend/src/main/java/com/aiview/interview/dto/MessageVO.java
+
+      - backend/src/main/resources/db/schema.sql
+
+      - backend/src/main/resources/application.yml
+
+      - backend/src/main/java/com/aiview/config/RabbitConfig.java
+
+      - frontend/src/api/interview.ts
+
+      - frontend/src/pages/*
+
+      Also check git diff unstaged changes to know what has been fixed already.
+
+      Return a structured summary per FB-01..FB-40 with status: FIXED / PARTIAL /
+      NOT FIXED.'
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - ai
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - security-engineer
+    - rag-engineer
+    keywords:
+    - optimization
+    - api
+    - java
+    - auth
+    - rag
+    - cache
+    - invalidation
+    - mutation
+    - freshness
+    - dashboard
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-005
+  - E-004
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+- timestamp: '2026-09-04T10:18:44.516611+00:00'
+  query:
+    task_text: '▣ DCP | -90.9K removed, +9.6K summary
+
+
+      │⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿█│
+
+      ▣ Compression #1 -90.9K removed, +9.6K summary
+
+      → Topic: Benchmark Execution
+
+      → Items: 56 messages and 70 tools compressed'
+    category: optimization
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - AP-001
+  - S-002
+  - T-010
+  - T-003
+  - T-009
+- timestamp: '2026-09-04T10:54:20.887748+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T10:54:25.161641+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T10:59:06.686522+00:00'
+  query:
+    task_text: fix the NullPointerException in InterviewService
+    category: debug
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:19:47.819223+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:19:52.687059+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:22:30.353855+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:28:35.578569+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:28:40.259594+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:34:35.759458+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:34:40.491361+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:42:53.737288+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T11:42:58.070161+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:44:27.749427+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T11:45:32.696689+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T11:48:29.423865+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-04T11:48:33.852696+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-002
+- timestamp: '2026-09-04T11:48:39.137046+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    - cache
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - T-001
+- timestamp: '2026-09-04T11:48:43.522502+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T11:49:45.484268+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:49:49.759419+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T11:53:34.863357+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T11:53:47.618874+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T11:56:26.901614+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T11:58:59.808554+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T12:00:12.993560+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:01:46.400675+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T12:02:54.925493+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T12:04:11.209929+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-04T12:05:24.394580+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - T-004
+  - F-002
+  - E-002
+- timestamp: '2026-09-04T12:06:35.251406+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    - cache
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - T-001
+- timestamp: '2026-09-04T12:07:58.288362+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T12:14:29.207056+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T12:16:00.016398+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:17:38.653566+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T12:18:44.874047+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T12:21:46.371366+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-04T12:23:09.019092+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - T-004
+  - F-002
+- timestamp: '2026-09-04T12:24:28.655686+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    - cache
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - T-001
+  - T-009
+- timestamp: '2026-09-04T12:25:44.302945+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T12:28:02.850324+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:28:07.684611+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:34:48.063776+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T12:35:58.800000+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:37:30.599668+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T12:38:37.465726+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T12:41:43.325771+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-04T12:43:06.739527+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - T-004
+  - F-002
+- timestamp: '2026-09-04T12:44:28.385276+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    - cache
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - T-001
+  - T-009
+- timestamp: '2026-09-04T12:45:48.974945+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T12:48:16.072398+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:48:20.930473+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:49:44.435092+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T12:51:26.286174+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T12:52:44.478234+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T12:54:17.618724+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T12:55:26.534126+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T12:58:27.875226+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-04T12:59:44.511210+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - T-004
+  - F-002
+- timestamp: '2026-09-04T13:01:00.579200+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    - cache
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - T-001
+  - T-009
+- timestamp: '2026-09-04T13:02:18.363386+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T13:04:39.332707+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:04:44.582521+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:22:16.860951+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T13:23:35.275144+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:25:16.837618+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T13:26:44.682082+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T13:29:54.547882+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-04T13:31:19.837616+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - T-004
+  - F-002
+- timestamp: '2026-09-04T13:32:43.506786+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    - cache
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - T-001
+  - T-009
+- timestamp: '2026-09-04T13:34:07.989384+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T13:36:34.052937+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:36:39.286680+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:42:00.040037+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T13:43:28.730512+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:45:06.812540+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T13:46:20.485559+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T13:49:27.002362+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-04T13:50:49.819038+00:00'
+  query:
+    task_text: 添加一个健康检查接口到 Spring Boot 应用
+    category: review
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - api
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - T-004
+  - F-002
+- timestamp: '2026-09-04T13:52:13.888214+00:00'
+  query:
+    task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+    category: data
+    domains:
+    - backend
+    - database
+    - distributed
+    - architecture
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    keywords:
+    - distributed
+    - cache
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-002
+  - P-001
+  - T-001
+  - T-009
+- timestamp: '2026-09-04T13:53:35.818992+00:00'
+  query:
+    task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+    category: review
+    domains:
+    - ai
+    - devops
+    roles:
+    - rag-engineer
+    - llm-engineer
+    keywords:
+    - rag
+    - llm
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-001
+  - T-005
+  - P-001
+  - E-005
+  - T-006
+- timestamp: '2026-09-04T13:56:09.314052+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:56:14.753591+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:59:00.089453+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T13:59:05.540764+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T23:44:20.646858+00:00'
+  query:
+    task_text: 检查当前项目中是否存在重复的配置定义
+    category: review
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - E-003
+  - T-004
+- timestamp: '2026-09-04T23:46:21.083514+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-04T23:47:33.510153+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-04T23:49:05.384116+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-04T23:50:12.252091+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-04T23:52:17.842974+00:00'
+  query:
+    task_text: 修改 test.txt 使其包含更完整的内容
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T00:01:41.395911+00:00'
+  query:
+    task_text: 验证 import path 修复是否生效
+    category: debug
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - E-003
+  - T-004
+- timestamp: '2026-09-05T00:02:50.948324+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-05T00:04:03.772865+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T00:05:35.380957+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T00:06:42.377352+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-05T00:29:17.922728+00:00'
+  query:
+    task_text: 验证新 index.js 是否正常工作
+    category: data
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - indexing
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-05T00:29:46.079092+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-05T00:31:00.140448+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T00:32:39.775844+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T00:33:47.043340+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-05T00:45:59.643850+00:00'
+  query:
+    task_text: '"say hello"'
+    category: coding
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - S-002
+  - T-003
+  - E-002
+  - E-003
+  - T-004
+- timestamp: '2026-09-05T00:46:54.831656+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-05T00:48:15.967405+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T00:49:47.701032+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T00:51:00.467807+00:00'
+  query:
+    task_text: Optimize the MySQL slow query for the interview scoring report
+    category: optimization
+    domains:
+    - database
+    roles:
+    - database-engineer
+    keywords:
+    - mysql
+    - slow-query
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-010
+  - AP-001
+  - T-009
+  - E-003
+  - H-162-DATABASE-FALLBACK-PATTERN

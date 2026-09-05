@@ -3449,3 +3449,1368 @@ model: ''
 runtime_mode: TEST_PROVIDER
 timestamp: '2026-09-04T01:41:02.626567+00:00'
 ```
+
+## Task Event — 2026-09-04T10:50:50.359249+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519050
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:50.359249+00:00'
+```
+
+## Task Event — 2026-09-04T10:50:50.426729+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519050
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:50.426729+00:00'
+```
+
+## Task Event — 2026-09-04T10:50:50.470470+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519050
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:50.470470+00:00'
+```
+
+## Task Event — 2026-09-04T10:50:50.515236+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519050
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:50.515236+00:00'
+```
+
+## Task Event — 2026-09-04T10:50:59.512368+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519059
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:59.512368+00:00'
+```
+
+## Task Event — 2026-09-04T10:50:59.610765+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519059
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:59.610765+00:00'
+```
+
+## Task Event — 2026-09-04T10:50:59.661676+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519059
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:59.661676+00:00'
+```
+
+## Task Event — 2026-09-04T10:50:59.722609+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519059
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:50:59.722609+00:00'
+```
+
+## Task Event — 2026-09-04T10:51:07.610275+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519067
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:51:07.610275+00:00'
+```
+
+## Task Event — 2026-09-04T10:51:07.676291+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519067
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:51:07.676291+00:00'
+```
+
+## Task Event — 2026-09-04T10:51:07.719298+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519067
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:51:07.719298+00:00'
+```
+
+## Task Event — 2026-09-04T10:51:07.764431+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519067
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:51:07.764431+00:00'
+```
+
+## Task Event — 2026-09-04T10:53:18.588344+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519198
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:53:18.588344+00:00'
+```
+
+## Task Event — 2026-09-04T10:53:18.649606+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519198
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:53:18.649606+00:00'
+```
+
+## Task Event — 2026-09-04T10:54:43.115017+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519283
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:54:43.115017+00:00'
+```
+
+## Task Event — 2026-09-04T10:55:42.720019+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788519342
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:55:42.720019+00:00'
+```
+
+## Task Event — 2026-09-04T10:56:50.341168+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T10:56:50.341168+00:00'
+```
+
+## Task Event — 2026-09-04T11:42:49.858075+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522169
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:42:49.858075+00:00'
+```
+
+## Task Event — 2026-09-04T11:42:54.244171+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522174
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:42:54.244171+00:00'
+```
+
+## Task Event — 2026-09-04T11:44:23.957075+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522263
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:44:23.957075+00:00'
+```
+
+## Task Event — 2026-09-04T11:45:28.848469+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522328
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:45:28.848469+00:00'
+```
+
+## Task Event — 2026-09-04T11:46:40.356064+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:46:40.356064+00:00'
+```
+
+## Task Event — 2026-09-04T11:48:25.459592+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522505
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:48:25.459592+00:00'
+```
+
+## Task Event — 2026-09-04T11:48:29.910093+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522509
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:48:29.910093+00:00'
+```
+
+## Task Event — 2026-09-04T11:48:34.376066+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522514
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:48:34.376066+00:00'
+```
+
+## Task Event — 2026-09-04T11:48:39.648655+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522519
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:48:39.648655+00:00'
+```
+
+## Task Event — 2026-09-04T11:53:30.969951+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522810
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:53:30.969951+00:00'
+```
+
+## Task Event — 2026-09-04T11:53:43.207481+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522823
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:53:43.207481+00:00'
+```
+
+## Task Event — 2026-09-04T11:56:22.813422+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788522982
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:56:22.813422+00:00'
+```
+
+## Task Event — 2026-09-04T11:58:55.851568+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523135
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T11:58:55.851568+00:00'
+```
+
+## Task Event — 2026-09-04T12:00:09.153194+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523209
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:00:09.153194+00:00'
+```
+
+## Task Event — 2026-09-04T12:01:42.473912+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523302
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:01:42.473912+00:00'
+```
+
+## Task Event — 2026-09-04T12:02:50.760066+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523370
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:02:50.760066+00:00'
+```
+
+## Task Event — 2026-09-04T12:04:07.259039+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:04:07.259039+00:00'
+```
+
+## Task Event — 2026-09-04T12:04:07.271545+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523447
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:04:07.271545+00:00'
+```
+
+## Task Event — 2026-09-04T12:05:20.428914+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523520
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:05:20.428914+00:00'
+```
+
+## Task Event — 2026-09-04T12:06:31.197492+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523591
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:06:31.197492+00:00'
+```
+
+## Task Event — 2026-09-04T12:07:54.240548+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788523674
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:07:54.240548+00:00'
+```
+
+## Task Event — 2026-09-04T12:14:24.913567+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524064
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:14:24.913567+00:00'
+```
+
+## Task Event — 2026-09-04T12:15:55.750872+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524155
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:15:55.750872+00:00'
+```
+
+## Task Event — 2026-09-04T12:17:34.560869+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524254
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:17:34.560869+00:00'
+```
+
+## Task Event — 2026-09-04T12:18:40.443625+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524320
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:18:40.443625+00:00'
+```
+
+## Task Event — 2026-09-04T12:19:56.421476+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:19:56.421476+00:00'
+```
+
+## Task Event — 2026-09-04T12:21:41.579357+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524501
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:21:41.579357+00:00'
+```
+
+## Task Event — 2026-09-04T12:23:04.582801+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524584
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:23:04.582801+00:00'
+```
+
+## Task Event — 2026-09-04T12:24:24.356914+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524664
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:24:24.356914+00:00'
+```
+
+## Task Event — 2026-09-04T12:25:40.023952+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788524740
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:25:40.023952+00:00'
+```
+
+## Task Event — 2026-09-04T12:34:43.760303+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525283
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:34:43.760303+00:00'
+```
+
+## Task Event — 2026-09-04T12:35:54.482792+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525354
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:35:54.482792+00:00'
+```
+
+## Task Event — 2026-09-04T12:37:26.355879+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525446
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:37:26.355879+00:00'
+```
+
+## Task Event — 2026-09-04T12:38:33.056316+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525513
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:38:33.056316+00:00'
+```
+
+## Task Event — 2026-09-04T12:39:53.897594+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:39:53.897594+00:00'
+```
+
+## Task Event — 2026-09-04T12:41:39.008778+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525699
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:41:39.008778+00:00'
+```
+
+## Task Event — 2026-09-04T12:43:02.385053+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525782
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:43:02.385053+00:00'
+```
+
+## Task Event — 2026-09-04T12:44:23.987744+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525863
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:44:23.987744+00:00'
+```
+
+## Task Event — 2026-09-04T12:45:44.519123+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788525944
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:45:44.519123+00:00'
+```
+
+## Task Event — 2026-09-04T12:49:39.939240+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526179
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:49:39.939240+00:00'
+```
+
+## Task Event — 2026-09-04T12:51:21.774024+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526281
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:51:21.774024+00:00'
+```
+
+## Task Event — 2026-09-04T12:52:40.081791+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526360
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:52:40.081791+00:00'
+```
+
+## Task Event — 2026-09-04T12:54:12.886295+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526452
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:54:12.886295+00:00'
+```
+
+## Task Event — 2026-09-04T12:55:22.128936+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526522
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:55:22.128936+00:00'
+```
+
+## Task Event — 2026-09-04T12:56:38.288339+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:56:38.288339+00:00'
+```
+
+## Task Event — 2026-09-04T12:58:23.398728+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526703
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:58:23.398728+00:00'
+```
+
+## Task Event — 2026-09-04T12:59:40.012667+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526780
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T12:59:40.012667+00:00'
+```
+
+## Task Event — 2026-09-04T13:00:56.086125+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526856
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:00:56.086125+00:00'
+```
+
+## Task Event — 2026-09-04T13:02:13.744938+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788526933
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:02:13.744938+00:00'
+```
+
+## Task Event — 2026-09-04T13:22:12.055691+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528132
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:22:12.055691+00:00'
+```
+
+## Task Event — 2026-09-04T13:23:30.612859+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528210
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:23:30.612859+00:00'
+```
+
+## Task Event — 2026-09-04T13:25:12.210111+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528312
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:25:12.210111+00:00'
+```
+
+## Task Event — 2026-09-04T13:26:39.978861+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528399
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:26:39.978861+00:00'
+```
+
+## Task Event — 2026-09-04T13:28:04.748025+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:28:04.748025+00:00'
+```
+
+## Task Event — 2026-09-04T13:29:49.858740+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528589
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:29:49.858740+00:00'
+```
+
+## Task Event — 2026-09-04T13:31:15.193566+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528675
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:31:15.193566+00:00'
+```
+
+## Task Event — 2026-09-04T13:32:38.782409+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528758
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:32:38.782409+00:00'
+```
+
+## Task Event — 2026-09-04T13:34:03.177375+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788528843
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:34:03.177375+00:00'
+```
+
+## Task Event — 2026-09-04T13:41:55.255696+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788529315
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:41:55.255696+00:00'
+```
+
+## Task Event — 2026-09-04T13:43:23.880929+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788529403
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:43:23.880929+00:00'
+```
+
+## Task Event — 2026-09-04T13:45:01.964657+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788529501
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:45:01.964657+00:00'
+```
+
+## Task Event — 2026-09-04T13:46:15.561082+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788529575
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:46:15.561082+00:00'
+```
+
+## Task Event — 2026-09-04T13:47:36.853552+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:47:36.853552+00:00'
+```
+
+## Task Event — 2026-09-04T13:49:21.962192+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788529761
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:49:21.962192+00:00'
+```
+
+## Task Event — 2026-09-04T13:50:44.994267+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788529844
+task_id: INT-7.4-B-001
+task_text: 添加一个健康检查接口到 Spring Boot 应用
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:50:44.994267+00:00'
+```
+
+## Task Event — 2026-09-04T13:52:09.019380+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788529929
+task_id: INT-7.4-C-001
+task_text: 设计一个分布式缓存系统，需要数据库分片和微服务架构
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:52:09.019380+00:00'
+```
+
+## Task Event — 2026-09-04T13:53:30.806245+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788530010
+task_id: INT-7.4-D-001
+task_text: 构建一个 AI 驱动的代码审查系统，包含 RAG 检索和 LLM 推理
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T13:53:30.806245+00:00'
+```
+
+## Task Event — 2026-09-04T14:01:53.467233+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788530513
+task_id: SMOKE-TEST-001
+task_text: Investigate the import structure of the router module
+provider: opencode
+model: ''
+runtime_mode: REAL_HOST
+timestamp: '2026-09-04T14:01:53.467233+00:00'
+```
+
+## Task Event — 2026-09-04T23:46:16.079006+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788565576
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T23:46:16.079006+00:00'
+```
+
+## Task Event — 2026-09-04T23:47:28.411799+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788565648
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T23:47:28.411799+00:00'
+```
+
+## Task Event — 2026-09-04T23:49:00.170593+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788565740
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T23:49:00.170593+00:00'
+```
+
+## Task Event — 2026-09-04T23:50:07.167514+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788565807
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T23:50:07.167514+00:00'
+```
+
+## Task Event — 2026-09-04T23:51:29.099211+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-04T23:51:29.099211+00:00'
+```
+
+## Task Event — 2026-09-05T00:02:45.817748+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788566565
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:02:45.817748+00:00'
+```
+
+## Task Event — 2026-09-05T00:03:58.618116+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788566638
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:03:58.618116+00:00'
+```
+
+## Task Event — 2026-09-05T00:05:30.230666+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788566730
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:05:30.230666+00:00'
+```
+
+## Task Event — 2026-09-05T00:06:37.151398+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788566797
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:06:37.151398+00:00'
+```
+
+## Task Event — 2026-09-05T00:07:51.409796+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:07:51.409796+00:00'
+```
+
+## Task Event — 2026-09-05T00:29:40.581424+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788568180
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:29:40.581424+00:00'
+```
+
+## Task Event — 2026-09-05T00:30:54.885730+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788568254
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:30:54.885730+00:00'
+```
+
+## Task Event — 2026-09-05T00:32:34.346020+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788568354
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:32:34.346020+00:00'
+```
+
+## Task Event — 2026-09-05T00:33:41.639278+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788568421
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:33:41.639278+00:00'
+```
+
+## Task Event — 2026-09-05T00:34:55.613536+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:34:55.613536+00:00'
+```
+
+## Task Event — 2026-09-05T00:46:49.431209+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788569209
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:46:49.431209+00:00'
+```
+
+## Task Event — 2026-09-05T00:48:10.719977+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788569290
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:48:10.719977+00:00'
+```
+
+## Task Event — 2026-09-05T00:49:42.475906+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788569382
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:49:42.475906+00:00'
+```
+
+## Task Event — 2026-09-05T00:50:55.194639+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788569455
+task_id: FULL-D-001
+task_text: Optimize the MySQL slow query for the interview scoring report
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:50:55.194639+00:00'
+```
+
+## Task Event — 2026-09-05T00:52:12.178806+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-TEST-001
+task_id: TASK-001
+task_text: Test task
+provider: test_provider
+model: test-model
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T00:52:12.178806+00:00'
+```
