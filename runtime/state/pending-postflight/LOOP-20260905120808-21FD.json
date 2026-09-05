@@ -1,0 +1,15 @@
+{
+  "task_id": "HOST-CC6223C2",
+  "loop_id": "LOOP-20260905120808-21FD",
+  "session_id": "ses_f8e87f5baffe8nXUCKFRh8B8Yo",
+  "cwd": "/home/shade/Public/aiview-runs-v2/batch-2026-09-05-rebuilt",
+  "status": "completed",
+  "attempts": 0,
+  "created_at": "2026-09-05T12:13:11.227Z",
+  "updated_at": "2026-09-05T12:13:11.417Z",
+  "last_error": null,
+  "final_status": "completed",
+  "evidence_path": "/home/shade/.agents/reports/ses_f8e87f5baffe8nXUCKFRh8B8Yo/evidence-HOST-CC6223C2.json",
+  "pid": null,
+  "started_at": null
+}

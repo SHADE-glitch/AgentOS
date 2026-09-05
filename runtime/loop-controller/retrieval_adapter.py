@@ -109,6 +109,24 @@ def adapt(task_id, task_text, memory_mode):
     except Exception:
         pass  # Non-critical
 
+    # Relevance filter: drop memories whose score falls below the minimum
+    # threshold to avoid contaminating the system prompt with truly irrelevant
+    # entries. NOTE: the current retrieval_optimizer scores on historical
+    # success-rate rather than task-specific relevance, so typical scores
+    # cluster around 0.15-0.18 regardless of task domain. A threshold higher
+    # than ~0.18 would filter everything. The default 0.15 acts as a safety
+    # net for zero-score entries only. A deeper fix requires improving the
+    # scorer's domain-relevance signal.
+    # Configurable via AOS_MIN_MEMORY_SCORE env var.
+    min_score = float(os.environ.get("AOS_MIN_MEMORY_SCORE", "0.15"))
+    def _above_threshold(m):
+        return (
+            m.get("final_score", 0) >= min_score
+            or m.get("static_relevance", 0) >= min_score
+        )
+    memories = [m for m in memories if _above_threshold(m)]
+    hypotheses = [h for h in hypotheses if _above_threshold(h)]
+
     return {
         "task_id": task_id,
         "task_text": task_text,
@@ -116,7 +134,7 @@ def adapt(task_id, task_text, memory_mode):
         "retrieved": True,
         "memories": memories,
         "hypotheses": hypotheses,
-        "total_retrieved": raw_result.get("top_k", 0),
+        "total_retrieved": len(memories) + len(hypotheses),
         "total_considered": raw_result.get("total_considered", 0),
         "after_filter": raw_result.get("after_filter", 0),
         "ranking": [m["memory_id"] for m in memories],
