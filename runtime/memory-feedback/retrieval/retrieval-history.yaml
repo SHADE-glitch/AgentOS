@@ -23982,3 +23982,3194 @@ retrievals:
   - T-009
   - E-003
   - H-162-DATABASE-FALLBACK-PATTERN
+- timestamp: '2026-09-05T01:47:08.163244+00:00'
+  query:
+    task_text: '# OpenCode Execution Prompts — batch-2026-09-05
+
+
+      Purpose: the batch operator feeds the prompts below to OpenCode one task at
+      a time (Agent OS is frozen and treated as infrastructure).
+
+      How to run: start OpenCode in the task''s worktree directory (`/home/shade/Public/aiview-runs/batch-2026-09-05/TASK-PO-xx`),
+      paste the
+
+      [General Prefix] followed by the [Task Content] for that task, and nothing else.
+      Do not give OpenCode any file paths, root causes,
+
+      judging criteria, or Agent OS information beyond this prompt.
+
+
+      ---
+
+
+      ## General Prefix (prepend to every task)
+
+
+      You are a senior engineer working on this repository. The repository is an AI
+      interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      [Task Content]
+
+
+      ---
+
+
+      ## PO-11: Deleting chunks from a knowledge base no longer decreases its reported
+      chunk count
+
+
+      User report: after adding a long piece of content to a knowledge base (it gets
+      split into multiple chunks) and then deleting some of those chunks, the knowledge
+      base list still shows the chunk count from before the deletion — it never decreases.
+      After several add/delete cycles the number keeps growing and no longer matches
+      the real chunk count.
+
+
+      Goal: make the reported chunk count stay consistent with the actual number of
+      chunks after deletions.
+
+
+      Verification criteria:
+
+
+      - After deleting a chunk, the chunk count returned by the knowledge base list
+      decreases by exactly one per deletion (never negative).
+
+      - The chunk counting behavior for adding content must not regress.
+
+
+      ---
+
+
+      ## PO-12: Answering briefly once ends the interview immediately
+
+
+      User report: during an interview, if an answer is very short (e.g., just "I
+      don''t know" or a few characters), the interview immediately shows as finished
+      and moves to the summary before the next question appears. Expected: one occasional
+      short answer should not end the interview; early termination should only happen
+      after several consecutive short/frivolous answers.
+
+
+      Goal: fix the termination behavior so a normal interview reaches at least the
+      configured number of questions.
+
+
+      Verification criteria:
+
+
+      - After a single short answer, the interview continues and the next question
+      appears.
+
+      - Reaching the configured question count, or several consecutive short answers,
+      still ends the interview normally.
+
+
+      ---
+
+
+      ## PO-13: Submitting an answer always fails with "answer must not be empty"
+
+
+      User report: typing an answer on the interview page and hitting send always
+      returns an "answer must not be empty" error; the answer can never be submitted.
+      Refreshing and retrying does not help.
+
+
+      Goal: allow a normal non-empty answer to be submitted and to advance the interview.
+
+
+      Verification criteria:
+
+
+      - A normal non-empty answer submits successfully and advances the interview
+      flow.
+
+      - A genuinely empty submission still returns a clear parameter error.
+
+
+      ---
+
+
+      ## PO-14: The exact same question appears twice in one interview
+
+
+      User report: during a single interview, the same question (identical text) can
+      appear again, and may repeat even more times. Expected: each question appears
+      at most once per interview.
+
+
+      Goal: fix per-interview question deduplication.
+
+
+      Verification criteria:
+
+
+      - Within one interview, no question is drawn twice.
+
+      - Topic/difficulty filtering and question-count semantics must not regress.
+
+
+      ---
+
+
+      ## PO-15: A user can delete chunks from a knowledge base they do not own
+
+
+      User report (security test): user A can delete a chunk from user B''s knowledge
+      base just by knowing (or guessing) the chunk ID, and B''s statistics are affected
+      as well. Expected: a user may only operate on chunks of their own knowledge
+      bases; unauthorized operations must be rejected.
+
+
+      Goal: fix the unauthorized deletion issue.
+
+
+      Verification criteria:
+
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally.
+
+
+      ---
+
+
+      ## PO-16: Users get forcibly logged out after a while; refreshing the login
+      also reports "invalid token"
+
+
+      User report: after using the app for a while (once the access token expires),
+      the automatic token refresh fails, the page kicks the user back to the login
+      page, and manually calling the refresh endpoint also returns "invalid token"
+      — even when using a just-issued, valid refresh token.
+
+
+      Goal: make valid refresh tokens renew properly.
+
+
+      Verification criteria:
+
+
+      - Calling the refresh endpoint with a valid refresh token returns new tokens.
+
+      - Forged/expired/wrong-type tokens are still rejected.
+
+
+      ---
+
+
+      ## PO-17: Selecting junior/senior difficulty still draws only medium-difficulty
+      questions
+
+
+      User report: when creating an interview, no matter whether "Junior" or "Senior"
+      is selected, the questions drawn are all medium difficulty (e.g., a junior beginner
+      gets HashMap internals and generics-erasure questions). The page shows the selected
+      level correctly, but the actual question difficulty does not match the selection.
+
+
+      Goal: make the drawn question difficulty match the selected level.
+
+
+      Verification criteria:
+
+
+      - Selecting junior/medium/senior draws questions with difficulty 1/2/3 respectively.
+
+      - The level recorded on the session matches the user''s selection.
+
+
+      ---
+
+
+      ## PO-18: Validation failures return 500 instead of a clear 400 parameter error
+
+
+      User report (integration testing): when required parameters are missing (e.g.,
+      creating an interview without a topic), the backend returns 500 Internal Server
+      Error instead of the expected 400 validation failure, so the client cannot show
+      a friendly "parameter missing" message.
+
+
+      Goal: make validation-failed requests return a clear 4xx parameter-error response.
+
+
+      Verification criteria:
+
+
+      - Missing required parameters return 400 with a clear parameter-error message.
+
+      - Other error semantics (business errors, 500s, etc.) must not regress.
+
+
+      ---
+
+
+      ## PO-19: Under default deployment, an interview never produces a score result
+
+
+      User report: on a fresh machine, starting the whole stack the default way (no
+      extra environment variables), the Q&A flow works perfectly, but after the interview
+      ends and the page shows "AI is scoring…", it stays there forever — refreshing
+      repeatedly never shows a score report or result.
+
+
+      Goal: make the default deployment produce score results after an interview finishes.
+
+
+      Verification criteria:
+
+
+      - Under the default configuration, a finished interview produces a score result
+      (score/dimensions/report).
+
+      - The existing semantics of explicitly enabling AI scoring mode must not regress.
+
+
+      ---
+
+
+      ## PO-20: Register/login endpoints all return 500; logs mention a missing database
+      table
+
+
+      User report: after a recent deployment, register and login both return 500,
+      and the backend logs show a clear SQL error about a table that does not exist,
+      while other features (e.g., viewing the topic list) work fine.
+
+
+      Goal: restore register/login to normal operation.
+
+
+      Verification criteria:
+
+
+      - Register, login, and fetching the current user all work again.
+
+      - Database schema and code mappings are consistent, with no similar omissions.
+
+
+      ---
+
+
+      ## Operator notes (for you — do not paste to OpenCode)
+
+
+      - Run each task in its own worktree; do not copy code across worktrees.
+
+      - The task IDs (PO-xx) are for observation records only; do not explain them
+      to OpenCode.
+
+      - Do not give OpenCode: affected files, root causes, fix approaches, judging
+      criteria, or anything about Agent OS.
+
+      - After a run, save: the worktree''s final diff, test output, session/loop identity,
+      then judge per judge-only/validation.json. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - security-engineer
+    - llm-engineer
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - agent
+    - docker
+    - deploy
+    - redis
+    - ttl
+    - session
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T01:53:15.410705+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).  ## PO-11: Deleting chunks from a knowledge base no longer decreases its
+      reported chunk count
+
+
+      User report: after adding a long piece of content to a knowledge base (it gets
+      split into multiple chunks) and then deleting some of those chunks, the knowledge
+      base list still shows the chunk count from before the deletion — it never decreases.
+      After several add/delete cycles the number keeps growing and no longer matches
+      the real chunk count.
+
+
+      Goal: make the reported chunk count stay consistent with the actual number of
+      chunks after deletions.
+
+
+      Verification criteria:
+
+
+      - After deleting a chunk, the chunk count returned by the knowledge base list
+      decreases by exactly one per deletion (never negative).
+
+      - The chunk counting behavior for adding content must not regress. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T05:08:56.732278+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).  during an interview, if an answer is very short (e.g., just "I don''t
+      know" or a few characters), the interview immediately shows as finished and
+      moves to the summary before the next question appears. Expected: one occasional
+      short answer should not end the interview; early termination should only happen
+      after several consecutive short/frivolous answers.
+
+
+      Goal: fix the termination behavior so a normal interview reaches at least the
+      configured number of questions.
+
+
+      Verification criteria:
+
+
+      - After a single short answer, the interview continues and the next question
+      appears.
+
+      - Reaching the configured question count, or several consecutive short answers,
+      still ends the interview normally. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T05:13:44.613291+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).   typing an answer on the interview page and hitting send always returns
+      an "answer must not be empty" error; the answer can never be submitted. Refreshing
+      and retrying does not help.
+
+
+      Goal: allow a normal non-empty answer to be submitted and to advance the interview.
+
+
+      1Verification criteria:
+
+
+      - A normal non-empty answer submits successfully and advances the interview
+      flow.
+
+      - A genuinely empty submission still returns a clear parameter error. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T05:30:51.819664+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix). during a single interview, the same question (identical text) can appear
+      again, and may repeat even more times. Expected: each question appears at most
+      once per interview.
+
+
+      Goal: fix per-interview question deduplication.
+
+
+      Verification criteria:
+
+
+      - Within one interview, no question is drawn twice.
+
+      - Topic/difficulty filtering and question-count semantics must not regress. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T05:36:54.055007+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).  user A can delete a chunk from user B''s knowledge base just by knowing
+      (or guessing) the chunk ID, and B''s statistics are affected as well. Expected:
+      a user may only operate on chunks of their own knowledge bases; unauthorized
+      operations must be rejected.
+
+
+      Goal: fix the unauthorized deletion issue.
+
+
+      Verification criteria:
+
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T05:42:33.822665+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally. after using the
+      app for a while (once the access token expires), the automatic token refresh
+      fails, the page kicks the user back to the login page, and manually calling
+      the refresh endpoint also returns "invalid token" — even when using a just-issued,
+      valid refresh token.
+
+
+      Goal: make valid refresh tokens renew properly.
+
+
+      Verification criteria:
+
+
+      - Calling the refresh endpoint with a valid refresh token returns new tokens.
+
+      - Forged/expired/wrong-type tokens are still rejected. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    - ttl
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-039-REDISSONCONFIG-JAVA-22-28----R
+  - H-041-REDISSONCONFIG-JAVA-22-28--CON
+  - H-044-REDISSONCONFIG-JAVA-22-28---RE
+  - H-087-REDISSONCONFIG-JAVA-22-28-
+  - H-209-REDISSONCONFIG-JAVA-22-29---CO
+- timestamp: '2026-09-05T06:08:27.311193+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally.  when creating an
+      interview, no matter whether "Junior" or "Senior" is selected, the questions
+      drawn are all medium difficulty (e.g., a junior beginner gets HashMap internals
+      and generics-erasure questions). The page shows the selected level correctly,
+      but the actual question difficulty does not match the selection.
+
+
+      Goal: make the drawn question difficulty match the selected level.
+
+
+      Verification criteria:
+
+
+      - Selecting junior/medium/senior draws questions with difficulty 1/2/3 respectively.
+
+      - The level recorded on the session matches the user''s selection.
+
+
+      ---
+
+
+      ## '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    - session
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T06:20:31.189118+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally. when required parameters
+      are missing (e.g., creating an interview without a topic), the backend returns
+      500 Internal Server Error instead of the expected 400 validation failure, so
+      the client cannot show a friendly "parameter missing" message.
+
+
+      Goal: make validation-failed requests return a clear 4xx parameter-error response.
+
+
+      Verification criteria:
+
+
+      - Missing required parameters return 400 with a clear parameter-error message.
+
+      - Other error semantics (business errors, 500s, etc.) must not regress. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T06:28:38.278329+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally.  on a fresh machine,
+      starting the whole stack the default way (no extra environment variables), the
+      Q&A flow works perfectly, but after the interview ends and the page shows "AI
+      is scoring…", it stays there forever — refreshing repeatedly never shows a score
+      report or result.
+
+
+      Goal: make the default deployment produce score results after an interview finishes.
+
+
+      Verification criteria:
+
+
+      - Under the default configuration, a finished interview produces a score result
+      (score/dimensions/report).
+
+      - The existing semantics of explicitly enabling AI scoring mode must not regress. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - deploy
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T06:34:38.171867+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally. after a recent deployment,
+      register and login both return 500, and the backend logs show a clear SQL error
+      about a table that does not exist, while other features (e.g., viewing the topic
+      list) work fine.
+
+
+      Goal: restore register/login to normal operation.
+
+
+      Verification criteria:
+
+
+      - Register, login, and fetching the current user all work again.
+
+      - Database schema and code mappings are consistent, with no similar omissions. '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - deploy
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T07:47:19.111321+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Deleting chunks from a knowledge base no longer decreases its reported chunk
+      count
+
+
+      User report: after adding a long piece of content to a knowledge base (it gets
+      split into multiple chunks) and then deleting some of those chunks, the knowledge
+      base list still shows the chunk count from before the deletion — it never decreases.
+      After several add/delete cycles the number keeps growing and no longer matches
+      the real chunk count.
+
+
+      Goal: make the reported chunk count stay consistent with the actual number of
+      chunks after deletions.
+
+
+      Verification criteria:
+
+      - After deleting a chunk, the chunk count returned by the knowledge base list
+      decreases by exactly one per deletion (never negative).
+
+      - The chunk counting behavior for adding content must not regress.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T08:03:49.497233+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Answering briefly once ends the interview immediately
+
+
+      User report: during an interview, if an answer is very short (e.g., just "I
+      don''t know" or a few characters), the interview immediately shows as finished
+      and moves to the summary before the next question appears. Expected: one occasional
+      short answer should not end the interview; early termination should only happen
+      after several consecutive short/frivolous answers.
+
+
+      Goal: fix the termination behavior so a normal interview reaches at least the
+      configured number of questions.
+
+
+      Verification criteria:
+
+      - After a single short answer, the interview continues and the next question
+      appears.
+
+      - Reaching the configured question count, or several consecutive short answers,
+      still ends the interview normally.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:04:53.346014+00:00'
+  query:
+    task_text: "You are a senior engineer working on this repository. The repository\
+      \ is an AI interview coaching and feedback platform\n\t(backend: Spring Boot\
+      \ 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL; frontend: Vue3\
+      \ + TypeScript). Below is a\n\treal production issue reported by users. Please\
+      \ handle it like an engineering task.\n\n\tRequirements:\n\t1. Reproduce and\
+      \ locate the root cause first — by reading code, inspecting data, and running\
+      \ tests — and form/validate your engineering hypothesis;\n\t2. Apply the minimal\
+      \ fix; do not expand the scope of changes;\n\t3. Add or run reasonable regression\
+      \ tests and make sure the existing test suite stays green;\n\t4. When done,\
+      \ report: your root-cause analysis, the files changed and what changed, the\
+      \ tests you ran and their results, and how you verified the fix.\n\n\tEnvironment\
+      \ notes:\n\t- Backend build requires JDK 21 (the machine default is JDK 17):\
+      \ `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`; the backend lives in\
+      \ `backend/`.\n\t- For full-stack verification you can start dependencies with\
+      \ `docker compose up -d mysql redis rabbitmq` from the repo root (the ollama\
+      \ service has been removed from the repo; ignore it).\n\t- The frontend is in\
+      \ `frontend/` (Vue3 + TS), with the dev server proxying to `http://localhost:8080`.\n\
+      \t- Existing tests: `cd backend && mvn -q test` (must remain green after your\
+      \ fix).\n\n\t# Answering briefly once ends the interview immediately\n\n\tUser\
+      \ report: during an interview, if an answer is very short (e.g., just \"I don't\
+      \ know\" or a few characters), the interview immediately shows as finished and\
+      \ moves to the summary before the next question appears. Expected: one occasional\
+      \ short answer should not end the interview; early termination should only happen\
+      \ after several consecutive short/frivolous answers.\n\n\tGoal: fix the termination\
+      \ behavior so a normal interview reaches at least the configured number of questions.\n\
+      \n\tVerification criteria:\n\t- After a single short answer, the interview continues\
+      \ and the next question appears.\n\t- Reaching the configured question count,\
+      \ or several consecutive short answers, still ends the interview normally.\n\
+      \n\t--- "
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:12:45.831170+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Submitting an answer always fails with "answer must not be empty"
+
+
+      User report: typing an answer on the interview page and hitting send always
+      returns an "answer must not be empty" error; the answer can never be submitted.
+      Refreshing and retrying does not help.
+
+
+      Goal: allow a normal non-empty answer to be submitted and to advance the interview.
+
+
+      Verification criteria:
+
+      - A normal non-empty answer submits successfully and advances the interview
+      flow.
+
+      - A genuinely empty submission still returns a clear parameter error.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:15:27.091596+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # The exact same question appears twice in one interview
+
+
+      User report: during a single interview, the same question (identical text) can
+      appear again, and may repeat even more times. Expected: each question appears
+      at most once per interview.
+
+
+      Goal: fix per-interview question deduplication.
+
+
+      Verification criteria:
+
+      - Within one interview, no question is drawn twice.
+
+      - Topic/difficulty filtering and question-count semantics must not regress.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: easy
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:21:11.049089+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # A user can delete chunks from a knowledge base they do not own
+
+
+      User report (security test): user A can delete a chunk from user B''s knowledge
+      base just by knowing (or guessing) the chunk ID, and B''s statistics are affected
+      as well. Expected: a user may only operate on chunks of their own knowledge
+      bases; unauthorized operations must be rejected.
+
+
+      Goal: fix the unauthorized deletion issue.
+
+
+      Verification criteria:
+
+      - User A deleting a chunk of user B must be rejected, and B''s data must remain
+      unchanged.
+
+      - The owner deleting their own chunks still works normally.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - security-engineer
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:26:34.317068+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Users get forcibly logged out after a while; refreshing the login also reports
+      "invalid token"
+
+
+      User report: after using the app for a while (once the access token expires),
+      the automatic token refresh fails, the page kicks the user back to the login
+      page, and manually calling the refresh endpoint also returns "invalid token"
+      — even when using a just-issued, valid refresh token.
+
+
+      Goal: make valid refresh tokens renew properly.
+
+
+      Verification criteria:
+
+      - Calling the refresh endpoint with a valid refresh token returns new tokens.
+
+      - Forged/expired/wrong-type tokens are still rejected.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - security
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    - ttl
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-039-REDISSONCONFIG-JAVA-22-28----R
+  - H-041-REDISSONCONFIG-JAVA-22-28--CON
+  - H-044-REDISSONCONFIG-JAVA-22-28---RE
+  - H-087-REDISSONCONFIG-JAVA-22-28-
+  - H-209-REDISSONCONFIG-JAVA-22-29---CO
+- timestamp: '2026-09-05T09:29:28.174313+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Selecting junior/senior difficulty still draws only medium-difficulty questions
+
+
+      User report: when creating an interview, no matter whether "Junior" or "Senior"
+      is selected, the questions drawn are all medium difficulty (e.g., a junior beginner
+      gets HashMap internals and generics-erasure questions). The page shows the selected
+      level correctly, but the actual question difficulty does not match the selection.
+
+
+      Goal: make the drawn question difficulty match the selected level.
+
+
+      Verification criteria:
+
+      - Selecting junior/medium/senior draws questions with difficulty 1/2/3 respectively.
+
+      - The level recorded on the session matches the user''s selection.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    - session
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:35:00.015639+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Validation failures return 500 instead of a clear 400 parameter error
+
+
+      User report (integration testing): when required parameters are missing (e.g.,
+      creating an interview without a topic), the backend returns 500 Internal Server
+      Error instead of the expected 400 validation failure, so the client cannot show
+      a friendly "parameter missing" message.
+
+
+      Goal: make validation-failed requests return a clear 4xx parameter-error response.
+
+
+      Verification criteria:
+
+      - Missing required parameters return 400 with a clear parameter-error message.
+
+      - Other error semantics (business errors, 500s, etc.) must not regress.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:42:43.031176+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Under default deployment, an interview never produces a score result
+
+
+      User report: on a fresh machine, starting the whole stack the default way (no
+      extra environment variables), the Q&A flow works perfectly, but after the interview
+      ends and the page shows "AI is scoring…", it stays there forever — refreshing
+      repeatedly never shows a score report or result.
+
+
+      Goal: make the default deployment produce score results after an interview finishes.
+
+
+      Verification criteria:
+
+      - Under the default configuration, a finished interview produces a score result
+      (score/dimensions/report).
+
+      - The existing semantics of explicitly enabling AI scoring mode must not regress.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - deploy
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T09:45:15.016863+00:00'
+  query:
+    task_text: 'You are a senior engineer working on this repository. The repository
+      is an AI interview coaching and feedback platform
+
+      (backend: Spring Boot 3.3.5 / Java 21 / MyBatis-Plus / Redis / RabbitMQ / MySQL;
+      frontend: Vue3 + TypeScript). Below is a
+
+      real production issue reported by users. Please handle it like an engineering
+      task.
+
+
+      Requirements:
+
+      1. Reproduce and locate the root cause first — by reading code, inspecting data,
+      and running tests — and form/validate your engineering hypothesis;
+
+      2. Apply the minimal fix; do not expand the scope of changes;
+
+      3. Add or run reasonable regression tests and make sure the existing test suite
+      stays green;
+
+      4. When done, report: your root-cause analysis, the files changed and what changed,
+      the tests you ran and their results, and how you verified the fix.
+
+
+      Environment notes:
+
+      - Backend build requires JDK 21 (the machine default is JDK 17): `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`;
+      the backend lives in `backend/`.
+
+      - For full-stack verification you can start dependencies with `docker compose
+      up -d mysql redis rabbitmq` from the repo root (the ollama service has been
+      removed from the repo; ignore it).
+
+      - The frontend is in `frontend/` (Vue3 + TS), with the dev server proxying to
+      `http://localhost:8080`.
+
+      - Existing tests: `cd backend && mvn -q test` (must remain green after your
+      fix).
+
+
+      # Register/login endpoints all return 500; logs mention a missing database table
+
+
+      User report: after a recent deployment, register and login both return 500,
+      and the backend logs show a clear SQL error about a table that does not exist,
+      while other features (e.g., viewing the topic list) work fine.
+
+
+      Goal: restore register/login to normal operation.
+
+
+      Verification criteria:
+
+      - Register, login, and fetching the current user all work again.
+
+      - Database schema and code mappings are consistent, with no similar omissions.
+
+
+      --- '
+    category: debug
+    domains:
+    - frontend
+    - backend
+    - database
+    - distributed
+    - ai
+    - devops
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - backend-architect
+    - frontend-architect
+    - devops-engineer
+    keywords:
+    - mysql
+    - spring
+    - java
+    - typescript
+    - docker
+    - deploy
+    - redis
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T11:24:42.862122+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-05T11:26:41.279797+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T11:27:45.225808+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T11:29:47.539065+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-05T11:32:45.232003+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T11:36:09.618668+00:00'
+  query:
+    task_text: Add a Python script to generate test data for the Java backend
+    category: testing
+    domains:
+    - backend
+    - testing
+    - data
+    roles:
+    - backend-architect
+    keywords:
+    - java
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16
+- timestamp: '2026-09-05T11:37:59.467563+00:00'
+  query:
+    task_text: 'regression smoke: verify governance bridge active path after plugin
+      rebuild'
+    category: coding
+    domains:
+    - frontend
+    roles:
+    - frontend-architect
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-007
+  - T-008
+  - E-008
+  - E-009
+  - E-012
+- timestamp: '2026-09-05T11:41:28.625008+00:00'
+  query:
+    task_text: Add a health check endpoint to the Spring Boot InterviewController
+    category: coding
+    domains:
+    - backend
+    roles:
+    - backend-architect
+    keywords:
+    - spring
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  - H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  - H-047-INTERVIEWSERVICE-JAVA-149-150-
+  - H-055-INTERVIEWSERVICE-JAVA-372-382-
+- timestamp: '2026-09-05T11:42:18.510990+00:00'
+  query:
+    task_text: Refactor the scoring service to use async processing
+    category: architecture
+    domains:
+    - backend
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-026-INTERVIEWSERVICE-JAVA-383-389-
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T11:43:31.652616+00:00'
+  query:
+    task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+    category: optimization
+    domains:
+    - backend
+    - database
+    - security
+    - distributed
+    - data
+    roles:
+    - database-engineer
+    - security-engineer
+    - system-architect
+    keywords:
+    - optimization
+    - high-concurrency
+    difficulty: hard
+    exclude_hypothesis: false
+  retrieved_memories:
+  - T-009
+  - T-010
+  - AP-001
+  - T-002
+  - E-003
+- timestamp: '2026-09-05T11:45:41.321248+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T11:45:47.884731+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T11:48:36.554073+00:00'
+  query:
+    task_text: Test task for decision influence
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T11:48:43.251801+00:00'
+  query:
+    task_text: Test task for hypothesis separation
+    category: testing
+    domains:
+    - testing
+    roles: []
+    keywords: []
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-095-TESTPATTERNPROMO
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+- timestamp: '2026-09-05T12:08:14.663323+00:00'
+  query:
+    task_text: '当前进入：
+
+
+      PRODUCTION OBSERVATION — TARGETED REGRESSION
+
+
+      不要运行 PO-12、PO-13、PO-15、PO-16、PO-18、PO-19、PO-20。
+
+
+      本轮只验证刚刚修复的两个 Agent OS 真实缺陷：
+
+
+      PO-14
+
+      PO-17
+
+
+      当前状态：
+
+
+      NATIVE_FULL_INTEGRATION = VERIFIED
+
+      NATIVE_OPENCODE_E2E_SMOKE = PASS
+
+      AGENT_OS_REPAIR = PASS
+
+      AGENT_OS_ARCHITECTURE = FROZEN
+
+
+      刚修复：
+
+
+      1. evidence_collector linked-worktree root bug
+
+      2. durable/idempotent Native postflight
+
+
+      现在必须用真实 fault-injected PO-14 / PO-17 做 targeted regression。
+
+
+      ==================================================
+
+      一、先确认旧记录全部 INVALID
+
+      ==================================================
+
+
+      确认：
+
+
+      旧 PO-14 execution = INVALID
+
+      旧 PO-17 execution = INVALID
+
+
+      不得覆盖旧记录。
+
+
+      不得复用旧 session。
+
+
+      不得复用旧 run。
+
+
+      不得复用旧 worktree。
+
+
+      不得复用旧 database。
+
+
+      ==================================================
+
+      二、重新 provision PO-14
+
+      ==================================================
+
+
+      必须：
+
+
+      Golden ff236b6
+
+      → NEW worktree
+
+      → PO-14 fault injection
+
+      → commit fault
+
+      → freeze
+
+
+      执行前验证：
+
+
+      HEAD == PO-14 expected fault_commit
+
+      parent == ff236b6
+
+      fault markers == PASS
+
+      git status == clean
+
+
+      记录：
+
+
+      task_id
+
+      worktree
+
+      fault_commit
+
+      tree_sha
+
+      database
+
+      prompt_hash
+
+
+      ==================================================
+
+      三、重新 provision PO-17
+
+      ==================================================
+
+
+      完全独立于 PO-14：
+
+
+      Golden ff236b6
+
+      → NEW worktree
+
+      → PO-17 fault injection
+
+      → commit fault
+
+      → freeze
+
+
+      禁止：
+
+
+      PO-14 → copy → PO-17
+
+
+      禁止：
+
+
+      rsync
+
+      copy
+
+      shared mutable workspace
+
+
+      ==================================================
+
+      四、每个 task 独立 database
+
+
+      PO-14：
+
+
+      aiview_po_14_targeted
+
+
+      PO-17：
+
+
+      aiview_po_17_targeted
+
+
+      或等价独立 DB。
+
+
+      禁止共享。
+
+
+      ==================================================
+
+      五、Run Gate
+
+
+      每个 task 启动 OpenCode 前执行：
+
+
+      RUN_GATE
+
+
+      必须：
+
+
+      PASS
+
+
+      并验证：
+
+
+      - expected fault commit
+
+      - actual HEAD
+
+      - parent == golden
+
+      - fault markers
+
+      - clean worktree
+
+      - prompt hash
+
+      - database identity
+
+      - hidden truth isolation
+
+      - worktree identity
+
+
+      任何失败：
+
+
+      立即 INVALID
+
+
+      禁止启动 OpenCode。
+
+
+      ==================================================
+
+      六、Prompt Binding
+
+
+      PO-14 只能收到：
+
+
+      General Prefix
+
+      +
+
+      PO-14 task content
+
+
+      PO-17 只能收到：
+
+
+      General Prefix
+
+      +
+
+      PO-17 task content
+
+
+      不要添加任何其他说明。
+
+
+      不要复制其他 task 的输出。
+
+
+      必须使用：
+
+
+      verify_prompt_binding.py
+
+
+      确认：
+
+
+      PO-14 PROMPT_BINDING = PASS
+
+      PO-17 PROMPT_BINDING = PASS
+
+
+      ==================================================
+
+      七、Native OpenCode
+
+
+      每个 task：
+
+
+      全新 OpenCode session。
+
+
+      要求：
+
+
+      1 task
+
+      =
+
+      1 worktree
+
+      =
+
+      1 session
+
+      =
+
+      1 run
+
+      =
+
+      1 AOS loop
+
+      =
+
+      1 database
+
+
+      OpenCode 是 sole executor。
+
+
+      不得启动第二个 OpenCode。
+
+
+      不得：
+
+
+      opencode run --pure
+
+
+      ==================================================
+
+      八、PO-14 重点验证
+
+
+      PO-14 fault：
+
+
+      QuestionBank 的 per-interview deduplication 被注入破坏。
+
+
+      OpenCode 正常完成 PO-14。
+
+
+      重点观察：
+
+
+      A. preflight
+
+      B. context injection
+
+      C. OpenCode execution
+
+      D. session.idle
+
+      E. postflight
+
+      F. evidence_after
+
+
+      必须出现：
+
+
+      governance_preflight_called
+
+      governance_preflight_completed
+
+      governance_postflight_called
+
+      governance_postflight_completed
+
+
+      并且：
+
+
+      evidence_before
+
+      evidence_after
+
+
+      都必须存在。
+
+
+      特别确认：
+
+
+      project_root == PO-14 worktree
+
+
+      不是：
+
+
+      /home/shade
+
+
+      同时确认 git snapshot 非空、真实来自 PO-14 worktree。
+
+
+      ==================================================
+
+      九、PO-17 重点验证
+
+
+      PO-17 fault：
+
+
+      difficulty mapping 被破坏，导致所有等级 fallback 到 medium。
+
+
+      OpenCode 正常完成任务。
+
+
+      同样检查：
+
+
+      preflight
+
+      router
+
+      memory
+
+      context injection
+
+      session.idle
+
+      postflight
+
+      evidence_before
+
+      evidence_after
+
+
+      特别验证：
+
+
+      project_root == PO-17 worktree
+
+
+      并且：
+
+
+      evidence git state
+
+      来自 PO-17 worktree。
+
+
+      ==================================================
+
+      十、Postflight durability 测试
+
+
+      PO-14 或 PO-17 至少选择一个做一次真实 interruption test。
+
+
+      在：
+
+
+      postflight 已开始
+
+      但 completed 尚未产生
+
+
+      时模拟：
+
+
+      terminal/process interruption
+
+
+      要求：
+
+
+      不能永久丢失。
+
+
+      重新加载 plugin/runtime 后：
+
+
+      pending postflight
+
+      → resume
+
+      → evidence_after
+
+      → final_status
+
+      → governance_postflight_completed
+
+
+      同一个：
+
+
+      task_id + loop_id
+
+
+      不得重复 finalization。
+
+
+      ==================================================
+
+      十一、注意不要制造新的协议故障
+
+
+      当前禁止：
+
+
+      - 手工调用 governance_bridge 代替 Native OpenCode
+
+      - 手工补写 governance events
+
+      - 手工制造 evidence_after
+
+      - 修改 loop state 假装完成
+
+      - 手工修改 telemetry
+
+      - 使用旧 execution record
+
+
+      所有结果必须来自真实 Native execution。
+
+
+      ==================================================
+
+      十二、执行结束后不要自动进入下一题
+
+
+      完成：
+
+
+      PO-14
+
+      PO-17
+
+
+      后立即停止。
+
+
+      不要继续 PO-18。
+
+
+      不要批量运行。
+
+
+      等待独立 Trae audit。
+
+
+      ==================================================
+
+      十三、归档
+
+
+      每个 task 保存：
+
+
+      task_id
+
+      session_id
+
+      run_id
+
+      loop_id
+
+      worktree
+
+      fault_commit
+
+      database_id
+
+      prompt_binding
+
+      preflight events
+
+      router result
+
+      memory result
+
+      evidence_before
+
+      evidence_after
+
+      postflight result
+
+      final diff
+
+      test output
+
+
+      旧 INVALID records 与新 VALID candidate records 必须完全分开。
+
+
+      ==================================================
+
+      十四、成功条件
+
+
+      PO-14：
+
+
+      TARGETED_REGRESSION_PO14 = PASS
+
+
+      PO-17：
+
+
+      TARGETED_REGRESSION_PO17 = PASS
+
+
+      同时：
+
+
+      EVIDENCE_WORKTREE_ROOT = PASS
+
+      POSTFLIGHT_COMPLETION = PASS
+
+      POSTFLIGHT_DURABILITY = PASS
+
+      NO_DOUBLE_EXECUTION = PASS
+
+      PROMPT_BINDING = PASS
+
+      FAULT_STATE = PASS
+
+      SESSION_ISOLATION = PASS
+
+      DATABASE_ISOLATION = PASS
+
+
+      如果任何关键条件失败：
+
+
+      对应 task = INVALID
+
+
+      立即停止。
+
+
+      最终只输出：
+
+
+      TARGETED_REGRESSION = PASS / FAIL
+
+
+      PO14 = PASS / FAIL
+
+      PO17 = PASS / FAIL
+
+
+      不要修改 Agent OS。
+
+      不要修改 task definition。
+
+      不要进入下一 task。 '
+    category: debug
+    domains:
+    - database
+    - ai
+    - architecture
+    - testing
+    - data
+    roles:
+    - database-engineer
+    - system-architect
+    - llm-engineer
+    keywords:
+    - agent
+    - session
+    difficulty: medium
+    exclude_hypothesis: false
+  retrieved_memories:
+  - H-023-INTERVIEWSTATESTORE-JAVA-37-44
+  - H-024-INTERVIEWSTATESTORE-JAVA-48-51
+  - H-025-INTERVIEWSTATESTORE-JAVA-36-38
+  - H-027-INTERVIEWSTATESTORE-JAVA-34-39
+  - H-031-INTERVIEWSTATESTORE-JAVA-14-16

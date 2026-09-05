@@ -58,16 +58,49 @@ def _run(cmd, cwd=None, timeout=30):
 
 
 def _git_root(project_root=None):
-    """Find the git root for the project."""
+    """
+    Resolve the git repository root that owns ``project_root``.
+
+    Supports BOTH regular repositories (``.git`` is a directory) and Git
+    linked worktrees (``.git`` is a *file* pointing at the real gitdir).
+    The previous implementation only recognized ``.git`` directories, so a
+    linked worktree was never detected: the walk-up climbed past the worktree
+    and could stop on an unrelated ancestor that happened to contain a ``.git``
+    directory (e.g. a home-directory marker), returning the WRONG project_root
+    and producing empty git snapshots.
+
+    Behaviour:
+      - When the caller explicitly passes ``project_root`` it is honored: if
+        the path (or any path below it) is a valid repository or worktree
+        root, that root is returned — we never search ABOVE it for a
+        different ``.git``.
+      - Git itself is asked for the answer (``rev-parse --show-toplevel``), so
+        ``.git`` files / gitdir pointers are handled exactly as git handles
+        them. If ``project_root`` is already a repo/worktree root, git returns
+        it unchanged.
+      - If no repository can be found at or below the given path, ``None`` is
+        returned (no silent fallback to an arbitrary ancestor).
+
+    Returns:
+        str or None — absolute path to the repository root that contains the
+        given path, or None when the path is not inside a git repository.
+    """
     d = project_root or os.getcwd()
-    for _ in range(10):
-        if os.path.isdir(os.path.join(d, ".git")):
-            return d
-        parent = os.path.dirname(d)
-        if parent == d:
-            break
-        d = parent
-    return project_root or os.getcwd()
+    d = os.path.abspath(d)
+    if not os.path.isdir(d):
+        return None
+
+    # Ask git itself. Handles: normal repos (.git dir), linked worktrees
+    # (.git file -> gitdir pointer), nested subdirectories of either.
+    rc, out, _ = _run(["git", "-C", d, "rev-parse", "--show-toplevel"], timeout=15)
+    if rc == 0 and out.strip():
+        return os.path.abspath(out.strip())
+
+    # Fallback only for a path that is itself a repo root but git is missing/
+    # unavailable (keeps non-git environments working as before).
+    if os.path.isdir(os.path.join(d, ".git")):
+        return d
+    return None
 
 
 def collect_before(task_id, project_root=None, loop_id="", session_id=""):
@@ -84,6 +117,23 @@ def collect_before(task_id, project_root=None, loop_id="", session_id=""):
         dict with before evidence
     """
     root = _git_root(project_root)
+    if root is None:
+        # Explicit failure: never fall back to an arbitrary ancestor repo or the
+        # process cwd. The evidence shell records that no repo was resolvable.
+        return {
+            "task_id": task_id,
+            "loop_id": loop_id,
+            "phase": "before",
+            "timestamp": _now_iso(),
+            "project_root": os.path.abspath(project_root) if project_root else "",
+            "repo_resolved": False,
+            "branch": "",
+            "last_commit": "",
+            "last_commit_msg": "",
+            "git_status": "",
+            "working_tree_dirty": False,
+        }
+
     branch = ""
     last_commit = ""
     last_commit_msg = ""
@@ -113,6 +163,7 @@ def collect_before(task_id, project_root=None, loop_id="", session_id=""):
         "phase": "before",
         "timestamp": _now_iso(),
         "project_root": root,
+        "repo_resolved": True,
         "branch": branch,
         "last_commit": last_commit,
         "last_commit_msg": last_commit_msg,
@@ -142,6 +193,26 @@ def collect_after(task_id, before_evidence, project_root=None, loop_id="",
         dict with after evidence
     """
     root = _git_root(project_root)
+    if root is None:
+        return {
+            "task_id": task_id,
+            "loop_id": loop_id,
+            "phase": "after",
+            "timestamp": _now_iso(),
+            "project_root": os.path.abspath(project_root) if project_root else "",
+            "repo_resolved": False,
+            "diff_stat": "",
+            "diff_summary": "",
+            "files_changed": [],
+            "new_files": [],
+            "test_command": test_command,
+            "test_stdout": test_stdout[:5000] if test_stdout else "",
+            "test_stderr": test_stderr[:2000] if test_stderr else "",
+            "test_exit_code": test_exit_code,
+            "test_passed": test_exit_code == 0 if test_exit_code is not None else None,
+            "branch": before_evidence.get("branch", ""),
+            "before_commit": before_evidence.get("last_commit", ""),
+        }
 
     # Git diff (staged + unstaged)
     rc, diff_out, _ = _run(["git", "diff", "--stat"], cwd=root)
@@ -164,6 +235,7 @@ def collect_after(task_id, before_evidence, project_root=None, loop_id="",
         "phase": "after",
         "timestamp": _now_iso(),
         "project_root": root,
+        "repo_resolved": True,
         "diff_stat": diff_stat,
         "diff_summary": diff_full[:2000],
         "files_changed": files_changed,

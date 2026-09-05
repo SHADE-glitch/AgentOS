@@ -47,6 +47,10 @@ STATE_DIR = os.path.join(LOOP_DIR, "state")
 ROUTER_DIR = os.path.join(BASE, "runtime")  # parent of router/ — needed for `from router.router import`
 AUDIT_DIR = os.path.join(BASE, "runtime", "audit")
 RECOVERY_DIR = os.path.join(BASE, "runtime", "recovery")
+# Durable pending-postflight markers (written by the host plugin BEFORE the
+# postflight bridge is spawned, so a process death mid-postflight can be
+# resumed on the next plugin load).
+PENDING_DIR = os.path.join(BASE, "runtime", "state", "pending-postflight")
 
 for _p in (LOOP_DIR, ROUTER_DIR, AUDIT_DIR, RECOVERY_DIR):
     if _p not in sys.path:
@@ -89,6 +93,135 @@ def _atomic_yaml_write(path, data):
         except OSError:
             pass
         raise
+
+
+# ── Durable pending-postflight markers ───────────────────────────
+
+def _marker_path(loop_id):
+    return os.path.join(PENDING_DIR, f"{loop_id}.json")
+
+
+def _marker_defaults(task_id="", loop_id="", session_id="", cwd=""):
+    return {
+        "task_id": task_id,
+        "loop_id": loop_id,
+        "session_id": session_id,
+        "cwd": cwd,
+        "status": "pending",
+        "attempts": 0,
+        "created_at": _now_iso(),
+        "updated_at": _now_iso(),
+        "last_error": None,
+        "final_status": None,
+        "evidence_path": None,
+        "pid": None,
+        "started_at": None,
+    }
+
+
+def read_pending_marker(loop_id):
+    """Read a pending-postflight marker, or None when absent/invalid."""
+    path = _marker_path(loop_id)
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def upsert_pending_marker(task_id="", loop_id="", session_id="", cwd="", status=None, attempts=None):
+    """
+    Create or update the durable pending-postflight marker for a loop.
+
+    Never downgrades a completed marker to pending unless it is already
+    terminal — this keeps recovery idempotent across duplicate triggers.
+    """
+    os.makedirs(PENDING_DIR, exist_ok=True)
+    existing = read_pending_marker(loop_id)
+    if existing is None:
+        marker = _marker_defaults(task_id, loop_id, session_id, cwd)
+    else:
+        marker = existing
+        if marker.get("task_id"):
+            task_id = marker["task_id"]
+        if marker.get("loop_id"):
+            loop_id = marker["loop_id"]
+        if marker.get("session_id"):
+            session_id = marker["session_id"]
+        if marker.get("cwd"):
+            cwd = marker["cwd"]
+        # Only completed is terminal. A failed marker may be retried (reset to
+        # running/pending); a completed marker stays completed unless reset.
+        if marker.get("status") == "completed" and status not in ("completed", "reset"):
+            return marker
+    marker.update({
+        "task_id": task_id or marker.get("task_id", ""),
+        "loop_id": loop_id or marker.get("loop_id", ""),
+        "session_id": session_id or marker.get("session_id", ""),
+        "cwd": cwd or marker.get("cwd", ""),
+        "updated_at": _now_iso(),
+    })
+    if status == "reset":
+        marker["status"] = "pending"
+        marker["pid"] = None
+        marker["started_at"] = None
+    elif status is not None and status in ("pending", "running", "completed", "failed"):
+        marker["status"] = status
+        if status == "running":
+            marker["pid"] = os.getpid()
+            marker["started_at"] = _now_iso()
+        elif status in ("pending", "completed", "failed"):
+            marker["pid"] = None
+            marker["started_at"] = None
+    if attempts is not None:
+        marker["attempts"] = attempts
+    marker["updated_at"] = _now_iso()
+    path = _marker_path(loop_id)
+    tmp = ""
+    try:
+        import tempfile
+        fd, tmp = tempfile.mkstemp(dir=PENDING_DIR, prefix=f".{loop_id}.", suffix=".tmp")
+        with os.fdopen(fd, "w") as f:
+            json.dump(marker, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            if tmp:
+                os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+    return marker
+
+
+def list_pending_markers():
+    """List all pending-postflight markers (best-effort; skips temp files)."""
+    if not os.path.isdir(PENDING_DIR):
+        return []
+    markers = []
+    for fname in sorted(os.listdir(PENDING_DIR)):
+        if not fname.endswith(".json") or fname.startswith("."):
+            continue
+        try:
+            with open(os.path.join(PENDING_DIR, fname)) as f:
+                m = json.load(f)
+            if isinstance(m, dict) and m.get("loop_id"):
+                markers.append(m)
+        except Exception:
+            continue
+    return markers
+
+
+def is_loop_finalized(state):
+    """Idempotency guard: has this loop already been finalized by postflight?"""
+    return (
+        isinstance(state, dict)
+        and state.get("current_stage") == "postflight"
+        and bool(state.get("completed_at"))
+        and state.get("final_status") in ("completed", "partial")
+    )
 
 
 def _emit(telemetry_writer, name, *args):
@@ -288,7 +421,145 @@ def run_preflight(task_text, session_id, cwd):
 
 # ── Postflight ────────────────────────────────────────────────────
 
+MAX_POSTFLIGHT_ATTEMPTS = 3
+RUNNING_STALE_SECONDS = 300
+
+
+def _pid_alive(pid):
+    if not pid:
+        return False
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def _marker_active_elsewhere(marker):
+    """True when the marker is currently being handled by a live process."""
+    return (
+        marker.get("status") == "running"
+        and _pid_alive(marker.get("pid"))
+        and marker.get("started_at")
+    )
+
+
 def run_postflight(task_id, loop_id, session_id, cwd):
+    """
+    Idempotent, durable postflight entrypoint used by the host plugin.
+
+    Marker lifecycle (survives process death):
+      pending  → written by the host plugin BEFORE spawning the bridge
+      running  → this process owns the finalization attempt (pid recorded)
+      completed → loop finalized (see loop state yaml for details)
+      failed   → an attempt raised; retryable via --postflight-resume
+
+    The core finalization lives in _do_postflight(), which refuses to
+    finalize an already-finalized loop, so duplicate triggers and crash
+    recovery can never double-finalize a task.
+    """
+    aos_session = session_id or os.environ.get("AOS_SESSION_ID", "")
+    os.environ["AOS_SESSION_ID"] = aos_session
+    upsert_pending_marker(
+        task_id=task_id, loop_id=loop_id, session_id=aos_session, cwd=cwd,
+        status="running", attempts=None,
+    )
+    try:
+        result = _do_postflight(task_id, loop_id, aos_session, cwd)
+        upsert_pending_marker(
+            task_id=task_id, loop_id=loop_id, session_id=aos_session, cwd=cwd,
+            status="completed",
+            attempts=None,
+        )
+        marker = read_pending_marker(loop_id)
+        if marker is not None:
+            marker["final_status"] = result.get("final_status", "")
+            marker["evidence_path"] = result.get("evidence_path", "")
+            marker["updated_at"] = _now_iso()
+            _write_marker(loop_id, marker)
+        return result
+    except Exception as e:
+        upsert_pending_marker(
+            task_id=task_id, loop_id=loop_id, session_id=aos_session, cwd=cwd,
+            status="failed", attempts=None,
+        )
+        marker = read_pending_marker(loop_id)
+        if marker is not None:
+            marker["attempts"] = int(marker.get("attempts", 0) or 0) + 1
+            marker["last_error"] = str(e)[:500]
+            marker["updated_at"] = _now_iso()
+            _write_marker(loop_id, marker)
+        raise
+
+
+def _write_marker(loop_id, marker):
+    """Atomic JSON write of a marker dict (used for post-state enrichment)."""
+    os.makedirs(PENDING_DIR, exist_ok=True)
+    path = _marker_path(loop_id)
+    tmp = ""
+    try:
+        import tempfile
+        fd, tmp = tempfile.mkstemp(dir=PENDING_DIR, prefix=f".{loop_id}.", suffix=".tmp")
+        with os.fdopen(fd, "w") as f:
+            json.dump(marker, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            if tmp:
+                os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+    return path
+
+
+def resume_pending_postflights():
+    """
+    Complete any postflight left pending by a crashed/interrupted process.
+
+    Called by the host plugin on startup (--postflight-resume). Only markers
+    that are not completed and are not currently owned by a live process are
+    claimed; _do_postflight() guarantees an already-finalized loop is never
+    finalized twice.
+    """
+    results = []
+    for marker in list_pending_markers():
+        loop_id = marker.get("loop_id")
+        status = marker.get("status")
+        if status == "completed":
+            continue
+        if _marker_active_elsewhere(marker):
+            results.append({"loop_id": loop_id, "status": "skipped_active", "replayed": False})
+            continue
+        attempts = int(marker.get("attempts", 0) or 0)
+        if attempts >= MAX_POSTFLIGHT_ATTEMPTS:
+            results.append({"loop_id": loop_id, "status": "skipped_max_attempts", "replayed": False})
+            continue
+        try:
+            result = run_postflight(
+                marker.get("task_id", ""),
+                loop_id,
+                marker.get("session_id", ""),
+                marker.get("cwd", ""),
+            )
+            results.append({
+                "loop_id": loop_id,
+                "status": "completed",
+                "final_status": result.get("final_status", ""),
+                "replayed": bool(result.get("replayed", False)),
+                "evidence_path": result.get("evidence_path", ""),
+            })
+        except Exception as e:
+            results.append({
+                "loop_id": loop_id,
+                "status": "failed",
+                "error": str(e)[:500],
+                "replayed": False,
+            })
+    return results
+
+
+def _do_postflight(task_id, loop_id, session_id, cwd):
     from audit_integration import collect_task_evidence_after
     from evidence_collector import collect_before as _before  # noqa: F401
     from failure_detector import detect_failures
@@ -307,6 +578,24 @@ def run_postflight(task_id, loop_id, session_id, cwd):
             state = yaml.safe_load(open(state_path)) or {}
         except Exception:
             state = {}
+
+    # ── Idempotency guard ────────────────────────────────────────────
+    # If this loop was already finalized by a previous postflight (e.g. a
+    # duplicate trigger, a resume after a process crash, or a retry), do NOT
+    # re-run evidence collection / failure detection / finalization. Return
+    # the existing final state so the same task_id+loop_id can never be
+    # finalized twice.
+    if is_loop_finalized(state):
+        return {
+            "task_id": task_id,
+            "loop_id": loop_id,
+            "session_id": aos_session,
+            "aos_status": "completed",
+            "evidence_path": state.get("evidence_after_path", ""),
+            "recovery": state.get("recovery", {}),
+            "final_status": state.get("final_status", "completed"),
+            "replayed": True,
+        }
 
     before = state.get("evidence_before", {})
 
@@ -367,6 +656,7 @@ def run_postflight(task_id, loop_id, session_id, cwd):
         "evidence_path": evidence_path,
         "recovery": recovery,
         "final_status": state["final_status"],
+        "replayed": False,
     }
 
 
@@ -405,6 +695,14 @@ def main():
             print(json.dumps({"aos_status": "fallback", "reason": "no task_id/loop_id"}, ensure_ascii=False))
             sys.exit(0)
         result = run_postflight(task_id, loop_id, session_id, cwd)
+
+    elif mode == "--postflight-resume":
+        # Called by the host plugin on startup: complete any postflight left
+        # pending by a crashed/interrupted process.
+        result = {
+            "aos_status": "completed",
+            "resume": resume_pending_postflights(),
+        }
 
     else:
         print(f"unknown mode: {mode}", file=sys.stderr)

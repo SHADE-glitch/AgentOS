@@ -28,7 +28,15 @@
 
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { appendFileSync, mkdirSync, existsSync } from "node:fs";
+import {
+  appendFileSync,
+  mkdirSync,
+  existsSync,
+  writeFileSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+} from "node:fs";
 import { join } from "node:path";
 
 const execFileAsync = promisify(execFile);
@@ -40,6 +48,7 @@ const FALLBACK_ADAPTER = `${AOS_ROOT}/runtime/hosts/opencode/aos_host_adapter.py
 const PYTHON = process.env.PYTHON || "python3";
 const TELEMETRY_DIR = join(AOS_ROOT, "runtime", "telemetry");
 const HOST_EVENTS_FILE = join(TELEMETRY_DIR, "host-events.yaml");
+const PENDING_POSTFLIGHT_DIR = join(AOS_ROOT, "runtime", "state", "pending-postflight");
 
 // Ensure telemetry directory exists
 if (!existsSync(TELEMETRY_DIR)) {
@@ -244,6 +253,145 @@ async function callGovernancePostflight(taskId, loopId, options = {}) {
   }
 }
 
+// ── Durable pending postflight (survives process death) ─────────
+function ensurePendingDir() {
+  if (!existsSync(PENDING_POSTFLIGHT_DIR)) {
+    mkdirSync(PENDING_POSTFLIGHT_DIR, { recursive: true });
+  }
+}
+
+function pendingMarkerPath(loopId) {
+  return join(PENDING_POSTFLIGHT_DIR, `${loopId}.json`);
+}
+
+function writeJsonAtomic(loopId, data) {
+  ensurePendingDir();
+  const tmp = `${pendingMarkerPath(loopId)}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(data, null, 2));
+  renameSync(tmp, pendingMarkerPath(loopId));
+}
+
+function writePendingMarker(taskId, loopId, sessionId, cwd) {
+  const now = new Date().toISOString();
+  const marker = {
+    task_id: taskId,
+    loop_id: loopId,
+    session_id: sessionId,
+    cwd,
+    status: "running",
+    attempts: 0,
+    created_at: now,
+    updated_at: now,
+    last_error: null,
+    final_status: null,
+    evidence_path: null,
+    pid: process.pid,
+    started_at: now,
+  };
+  writeJsonAtomic(loopId, marker);
+}
+
+function readPendingMarkers() {
+  ensurePendingDir();
+  const markers = [];
+  for (const fname of readdirSync(PENDING_POSTFLIGHT_DIR)) {
+    if (!fname.endsWith(".json") || fname.includes(".tmp")) continue;
+    try {
+      const raw = readFileSync(join(PENDING_POSTFLIGHT_DIR, fname), "utf-8");
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.loop_id) markers.push(parsed);
+    } catch {
+      // skip unreadable marker
+    }
+  }
+  return markers;
+}
+
+function updatePendingMarker(loopId, patch) {
+  const path = pendingMarkerPath(loopId);
+  if (!existsSync(path)) return;
+  try {
+    const current = JSON.parse(readFileSync(path, "utf-8"));
+    writeJsonAtomic(loopId, { ...current, ...patch, updated_at: new Date().toISOString() });
+  } catch {
+    // ignore update failures; the python side also owns the marker lifecycle
+  }
+}
+
+const inflightPostflights = new Set();
+
+async function runPostflightDurable(taskId, loopId, sessionId, cwd) {
+  if (!taskId || !loopId) return null;
+  if (inflightPostflights.has(loopId)) return null;
+  inflightPostflights.add(loopId);
+  try {
+    writePendingMarker(taskId, loopId, sessionId, cwd);
+    const result = await callGovernancePostflight(taskId, loopId, { sessionId, cwd });
+    if (result) {
+      updatePendingMarker(loopId, {
+        status: "completed",
+        final_status: result.final_status || "",
+        evidence_path: result.evidence_path || "",
+      });
+    } else {
+      updatePendingMarker(loopId, {
+        status: "failed",
+        last_error: "governance_bridge returned no result",
+      });
+    }
+    return result;
+  } catch (err) {
+    updatePendingMarker(loopId, {
+      status: "failed",
+      last_error: err?.message || "postflight_error",
+    });
+    return null;
+  } finally {
+    inflightPostflights.delete(loopId);
+  }
+}
+
+function pidAlive(pid) {
+  if (!pid) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err?.code === "EPERM";
+  }
+}
+
+async function resumePendingPostflights() {
+  let markers = [];
+  try {
+    markers = readPendingMarkers();
+  } catch {
+    return;
+  }
+  for (const m of markers) {
+    if (m.status === "completed") continue;
+    if (m.status === "running" && pidAlive(m.pid)) continue;
+    console.log(`[aos-host] Resuming pending postflight: ${m.loop_id}`);
+    try {
+      await runPostflightDurable(m.task_id, m.loop_id, m.session_id, m.cwd);
+    } catch (err) {
+      console.error(`[aos-host] Resume failed for ${m.loop_id}:`, err);
+    }
+  }
+}
+
+let resumeScheduledForProcess = false;
+
+function scheduleResumePendingPostflights() {
+  if (resumeScheduledForProcess) return;
+  resumeScheduledForProcess = true;
+  setTimeout(() => {
+    resumePendingPostflights().catch((err) => {
+      console.error("[aos-host] Pending-postflight resume failed:", err);
+    });
+  }, 3000);
+}
+
 // ── System Prompt Builder ────────────────────────────────────────
 function buildSystemInjection(context) {
   const lines = [];
@@ -332,34 +480,30 @@ export const AosHostPlugin = async (ctx) => {
   let lastLoopId = "";
   let lastSessionId = "";
 
-  // Track previous task for postflight on next message
+  // The task whose postflight is still pending (set at preflight, cleared
+  // once finalization has run or been durably queued).
   let prevTaskId = "";
   let prevLoopId = "";
   let prevSessionId = "";
 
+  const finalizeCurrentTask = async (eventSessionId) => {
+    if (!prevTaskId || !prevLoopId) return;
+    if (eventSessionId && prevSessionId && eventSessionId !== prevSessionId) return;
+    const taskId = prevTaskId;
+    const loopId = prevLoopId;
+    const sessionId = prevSessionId;
+    prevTaskId = "";
+    prevLoopId = "";
+    prevSessionId = "";
+    console.log(`[aos-host] Finalizing task ${taskId} (loop ${loopId})`);
+    await runPostflightDurable(taskId, loopId, sessionId, ctx.directory);
+  };
+
+  scheduleResumePendingPostflights();
+
   return {
     "chat.message": async (input, output) => {
-      // ── Postflight for previous task ──
-      if (prevTaskId && prevLoopId) {
-        console.log(`[aos-host] Running postflight for previous task: ${prevTaskId}`);
-        callGovernancePostflight(prevTaskId, prevLoopId, {
-          sessionId: prevSessionId,
-          cwd: ctx.directory,
-        }).then((postResult) => {
-          if (postResult) {
-            console.log(
-              `[aos-host] Postflight complete: status=${postResult.final_status}, ` +
-              `failures=${postResult.recovery?.failures_detected || 0}, ` +
-              `evidence=${postResult.evidence_path || "none"}`
-            );
-          }
-        }).catch((err) => {
-          console.error("[aos-host] Postflight error:", err);
-        });
-        prevTaskId = "";
-        prevLoopId = "";
-        prevSessionId = "";
-      }
+      await finalizeCurrentTask(input.sessionID);
 
       const userParts = output.parts.filter(
         (p) => p.type === "text" && p.text?.trim()
@@ -392,7 +536,6 @@ export const AosHostPlugin = async (ctx) => {
         lastLoopId = context.loop_id || "";
         lastSessionId = context.session_id || "";
 
-        // Set up for postflight on next message
         prevTaskId = lastTaskId;
         prevLoopId = lastLoopId;
         prevSessionId = lastSessionId;
@@ -438,17 +581,13 @@ export const AosHostPlugin = async (ctx) => {
       if (event.type === "session.created") {
         console.log(`[aos-host] Session created: ${event.properties?.sessionID}`);
       }
+      if (event.type === "session.idle") {
+        await finalizeCurrentTask(event.properties?.sessionID);
+      }
     },
 
     dispose: async () => {
-      // Run postflight for the last task on dispose
-      if (prevTaskId && prevLoopId) {
-        console.log(`[aos-host] Running postflight on dispose: ${prevTaskId}`);
-        await callGovernancePostflight(prevTaskId, prevLoopId, {
-          sessionId: prevSessionId,
-          cwd: ctx.directory,
-        });
-      }
+      await finalizeCurrentTask();
       lastContext = null;
       prevTaskId = "";
       prevLoopId = "";

@@ -4814,3 +4814,120 @@ model: test-model
 runtime_mode: TEST_PROVIDER
 timestamp: '2026-09-05T00:52:12.178806+00:00'
 ```
+
+## Task Event — 2026-09-05T11:24:36.181762+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788607476
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:24:36.181762+00:00'
+```
+
+## Task Event — 2026-09-05T11:26:35.431763+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788607595
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:26:35.431763+00:00'
+```
+
+## Task Event — 2026-09-05T11:27:39.211023+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788607659
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:27:39.211023+00:00'
+```
+
+## Task Event — 2026-09-05T11:29:41.301345+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788607781
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:29:41.301345+00:00'
+```
+
+## Task Event — 2026-09-05T11:32:38.675235+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788607958
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:32:38.675235+00:00'
+```
+
+## Task Event — 2026-09-05T11:36:03.285292+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788608163
+task_id: FULL-C-001
+task_text: Add a Python script to generate test data for the Java backend
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:36:03.285292+00:00'
+```
+
+## Task Event — 2026-09-05T11:41:22.726763+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788608482
+task_id: FULL-A-001
+task_text: Add a health check endpoint to the Spring Boot InterviewController
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:41:22.726763+00:00'
+```
+
+## Task Event — 2026-09-05T11:42:12.587854+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788608532
+task_id: FULL-B-001
+task_text: Refactor the scoring service to use async processing
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:42:12.587854+00:00'
+```
+
+## Task Event — 2026-09-05T11:43:25.660183+00:00
+
+```yaml
+event_type: task
+execution_id: EXEC-1788608605
+task_id: INT-7.4-A-001
+task_text: 设计一个高并发订单系统，需要数据库优化和安全审计
+provider: test_provider
+model: ''
+runtime_mode: TEST_PROVIDER
+timestamp: '2026-09-05T11:43:25.660183+00:00'
+```

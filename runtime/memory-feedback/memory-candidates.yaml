@@ -1,168 +1,172 @@
 version: '1.0'
 phase: 5.8.2.2
-loop_id: LOOP-20260905005055
-generated_at: '2026-09-05T00:51:05Z'
+loop_id: LOOP-20260905114325
+generated_at: '2026-09-05T11:43:37Z'
 generated_by: collector.py (Phase 5.8.2.2 Loop Controller)
 source_executions:
-- EXEC-1788337576
-- EXEC-1788522333
-- LOOP-20260902231436
-- EXEC-1788526938
-- EXEC-1788523140
-- EXEC-1788359671
-- EXEC-1788524325
-- LOOP-20260901071754
-- EXEC-1788246664
-- LOOP-20260902005829
-- EXEC-1788566802
-- LOOP-20260901071051
-- EXEC-1788523375
-- LOOP-20260901071410
-- LOOP-20260902080708
-- EXEC-1788246853
-- EXEC-1788526286
-- LOOP-20260903025857
-- EXEC-1788239096
-- LOOP-20260902081413
-- EXEC-1788239014
-- LOOP-20260901071221
-- EXEC-1788337415
-- LOOP-20260902122617
-- LOOP-20260901071750
-- LOOP-20260902223136
-- EXEC-1788239264
-- LOOP-20260901071414
-- LOOP-20260901071047
-- EXEC-1788345400
-- EXEC-1788523678
-- EXEC-1788566571
-- EXEC-1788525868
-- EXEC-1788569215
-- EXEC-1788524069
-- EXEC-1788528595
-- EXEC-1788246883
-- EXEC-1788239176
-- EXEC-1788528848
-- EXEC-1788239003
-- EXEC-1788526708
-- EXEC-1788526184
-- LOOP-20260902080011
-- LOOP-20260902121842
-- LOOP-20260902140341
-- LOOP-20260902111508
-- EXEC-1788359771
-- LOOP-20260902132921
-- EXEC-1788337761
-- LOOP-20260902092649
-- LOOP-20260902141336
-- EXEC-1788352798
-- EXEC-1788344935
 - EXEC-1788353031
-- EXEC-1788529767
-- EXEC-1788528764
-- EXEC-1788525288
-- EXEC-1788229160
-- EXEC-1788246964
-- LOOP-20260901080640
-- EXEC-1788352884
-- EXEC-1788392617
-- EXEC-1788526785
-- EXEC-1788229111
-- EXEC-1788524669
-- EXEC-1788522987
-- EXEC-1788526861
-- LOOP-20260902222150
-- LOOP-20260902001553
-- LOOP-20260902095511
-- LOOP-20260903022811
-- EXEC-1788239184
-- EXEC-1788345495
-- EXEC-1788568186
-- EXEC-1788524589
-- EXEC-1788353108
-- EXEC-1788524506
-- EXEC-1788229112
-- EXEC-1788528680
-- EXEC-1788360127
-- LOOP-20260902142311
-- EXEC-1788402190
-- EXEC-1788402259
-- EXEC-1788523451
-- EXEC-1788352695
-- EXEC-1788337912
-- EXEC-1788241726
-- LOOP-20260902075326
-- LOOP-20260903002013
-- EXEC-1788392684
-- EXEC-1788525703
-- LOOP-20260902015820
-- EXEC-1788525787
-- LOOP-20260902010717
-- LOOP-20260902101502
-- EXEC-1788359887
-- LOOP-20260902110425
 - LOOP-20260902072653
-- LOOP-20260902091226
-- EXEC-1788524744
-- EXEC-1788525949
-- LOOP-20260903000849
-- LOOP-20260902100412
-- LOOP-20260902134230
-- EXEC-1788565581
-- LOOP-20260902232558
-- EXEC-1788530016
-- LOOP-20260903024415
-- LOOP-20260902015047
-- LOOP-20260902070525
-- EXEC-1788529320
-- EXEC-1788246650
-- EXEC-1788569460
-- EXEC-1788247073
-- EXEC-1788335958
-- LOOP-20260901071601
-- EXEC-1788525517
-- LOOP-20260902224128
-- LOOP-20260901071053
-- EXEC-1788565812
-- EXEC-1788239058
-- EXEC-1788359975
-- EXEC-1788529581
-- LOOP-20260902071607
-- EXEC-1788529850
-- EXEC-1788337506
-- LOOP-20260902021032
-- LOOP-20260902225916
-- EXEC-1788238924
+- EXEC-1788524325
 - EXEC-1788523524
+- EXEC-1788239176
 - EXEC-1788345072
-- EXEC-1788360045
-- EXEC-1788345201
-- LOOP-20260902085830
-- LOOP-20260902120948
-- EXEC-1788528137
-- LOOP-20260903025113
-- EXEC-1788392551
-- EXEC-1788229083
-- LOOP-20260901071756
-- LOOP-20260901071416
-- LOOP-20260902021703
-- LOOP-20260901082231
-- EXEC-1788402339
-- EXEC-1788228162
-- EXEC-1788523595
-- EXEC-1788568427
+- EXEC-1788239058
+- EXEC-1788525787
+- LOOP-20260902081413
+- LOOP-20260902100412
+- EXEC-1788246650
 - LOOP-20260902002514
+- LOOP-20260902111508
+- EXEC-1788526527
+- EXEC-1788526184
+- LOOP-20260902121842
+- EXEC-1788529850
+- EXEC-1788524669
+- EXEC-1788359771
+- LOOP-20260902091226
+- EXEC-1788525517
 - EXEC-1788528405
+- EXEC-1788239096
+- EXEC-1788568427
+- EXEC-1788337912
+- LOOP-20260901071221
+- LOOP-20260903025113
+- LOOP-20260902021032
+- LOOP-20260901071053
+- EXEC-1788526286
+- LOOP-20260903022811
+- LOOP-20260902110425
+- EXEC-1788566571
+- EXEC-1788526938
+- LOOP-20260903000849
+- EXEC-1788526861
+- EXEC-1788523451
+- EXEC-1788337761
+- EXEC-1788530016
+- EXEC-1788345495
+- EXEC-1788522987
+- EXEC-1788229083
+- EXEC-1788352798
+- LOOP-20260902075326
+- EXEC-1788238924
+- EXEC-1788528680
+- EXEC-1788246883
 - EXEC-1788345295
+- LOOP-20260902134230
+- LOOP-20260902224128
+- EXEC-1788529767
+- LOOP-20260902085830
+- LOOP-20260902223136
+- EXEC-1788246664
+- EXEC-1788337576
+- LOOP-20260901071416
+- EXEC-1788360127
+- LOOP-20260902140341
+- EXEC-1788392551
+- EXEC-1788229160
+- EXEC-1788524069
+- EXEC-1788247073
+- EXEC-1788528137
+- EXEC-1788565812
+- EXEC-1788239003
+- EXEC-1788345201
+- LOOP-20260902222150
+- LOOP-20260902232558
+- EXEC-1788568186
+- LOOP-20260902071607
+- EXEC-1788359975
+- LOOP-20260902010717
+- EXEC-1788392617
+- LOOP-20260902141336
+- EXEC-1788525868
+- EXEC-1788566802
+- LOOP-20260902231436
+- LOOP-20260902122617
+- EXEC-1788522333
+- LOOP-20260902015047
+- EXEC-1788353108
 - EXEC-1788246744
-- EXEC-1788337850
-- LOOP-20260902112428
+- LOOP-20260902101502
+- LOOP-20260901082231
+- LOOP-20260901071754
+- EXEC-1788529320
+- EXEC-1788525949
 - EXEC-1788091469
+- LOOP-20260902015820
+- LOOP-20260902092649
+- EXEC-1788528764
+- EXEC-1788352943
+- EXEC-1788607483
+- EXEC-1788565581
+- EXEC-1788344935
+- LOOP-20260902005829
+- EXEC-1788402259
+- LOOP-20260902001553
+- EXEC-1788526708
+- EXEC-1788352884
+- EXEC-1788246964
+- EXEC-1788608489
+- EXEC-1788523375
+- LOOP-20260902132921
+- EXEC-1788523140
+- LOOP-20260901071410
+- EXEC-1788526785
 - EXEC-1788137999
+- EXEC-1788337415
+- EXEC-1788523678
+- EXEC-1788246853
 - EXEC-1788529934
 - LOOP-20260902131535
-- EXEC-1788352943
-- EXEC-1788526527
+- EXEC-1788524589
+- EXEC-1788528848
+- EXEC-1788607788
+- LOOP-20260902120948
+- EXEC-1788337506
+- EXEC-1788529581
+- LOOP-20260903024415
+- EXEC-1788241726
+- EXEC-1788229112
+- LOOP-20260901071750
+- LOOP-20260902112428
+- EXEC-1788524744
+- EXEC-1788392684
+- LOOP-20260901071047
+- LOOP-20260901080640
+- EXEC-1788239184
+- LOOP-20260902080708
+- LOOP-20260901071601
+- EXEC-1788359671
+- EXEC-1788569460
+- LOOP-20260902080011
+- LOOP-20260902142311
+- LOOP-20260901071051
+- EXEC-1788608612
+- LOOP-20260903025857
+- EXEC-1788335958
+- LOOP-20260902021703
+- EXEC-1788360045
+- LOOP-20260901071756
+- EXEC-1788352695
+- EXEC-1788239014
+- EXEC-1788524506
+- LOOP-20260902095511
+- EXEC-1788402190
+- EXEC-1788525288
+- EXEC-1788229111
+- EXEC-1788239264
+- LOOP-20260903002013
+- EXEC-1788528595
+- EXEC-1788228162
+- LOOP-20260902225916
+- LOOP-20260901071414
+- EXEC-1788345400
+- EXEC-1788402339
+- EXEC-1788359887
+- LOOP-20260902070525
+- EXEC-1788569215
+- EXEC-1788337850
+- EXEC-1788523595
+- EXEC-1788525703
 candidates:
 - candidate_id: CAND-EXEC-1788137999-E-004
   source_execution: EXEC-1788137999
@@ -35402,12 +35406,906 @@ candidates:
   env_fingerprint: *id840
   observation_id: OBS-EXEC-1788569460-E-003
   loop_id: LOOP-20260905005055
+- candidate_id: CAND-EXEC-1788607483-HYP-H-026-INTERVIEWSERVICE-JAVA-383-389-
+  source_execution: EXEC-1788607483
+  target_memory: H-026-INTERVIEWSERVICE-JAVA-383-389-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112436
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-026-INTERVIEWSERVICE-JAVA-383-389- engaged by agent in EXEC-1788607483
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_76518e038724
+    model: ''
+    tokens: &id842
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: &id841
+      python_version: 3.14.4
+      collector_version: '8.7'
+      model_family: unknown
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112436
+    source_loop: LOOP-20260905112436
+    observation_id: OBS-EXEC-1788607483-H-026-INTERVIEWSERVICE-JAVA-383-389-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607483-H-026-INTERVIEWSERVICE-JAVA-383-389-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607483
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id841
+  loop_id: LOOP-20260905112436
+  countable: false
+- candidate_id: CAND-EXEC-1788607483-HYP-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  source_execution: EXEC-1788607483
+  target_memory: H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112436
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-029-INTERVIEWSERVICE-JAVA-372-REQU engaged by agent in EXEC-1788607483
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_76518e038724
+    model: ''
+    tokens: *id842
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id841
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112436
+    source_loop: LOOP-20260905112436
+    observation_id: OBS-EXEC-1788607483-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607483-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607483
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id841
+  loop_id: LOOP-20260905112436
+  countable: false
+- candidate_id: CAND-EXEC-1788607483-HYP-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  source_execution: EXEC-1788607483
+  target_memory: H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112436
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-030-INTERVIEWSERVICE-JAVA-286-DETA engaged by agent in EXEC-1788607483
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_76518e038724
+    model: ''
+    tokens: *id842
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id841
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112436
+    source_loop: LOOP-20260905112436
+    observation_id: OBS-EXEC-1788607483-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607483-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607483
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id841
+  loop_id: LOOP-20260905112436
+  countable: false
+- candidate_id: CAND-EXEC-1788607483-HYP-H-047-INTERVIEWSERVICE-JAVA-149-150-
+  source_execution: EXEC-1788607483
+  target_memory: H-047-INTERVIEWSERVICE-JAVA-149-150-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112436
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-047-INTERVIEWSERVICE-JAVA-149-150- engaged by agent in EXEC-1788607483
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_76518e038724
+    model: ''
+    tokens: *id842
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id841
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112436
+    source_loop: LOOP-20260905112436
+    observation_id: OBS-EXEC-1788607483-H-047-INTERVIEWSERVICE-JAVA-149-150-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607483-H-047-INTERVIEWSERVICE-JAVA-149-150-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607483
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id841
+  loop_id: LOOP-20260905112436
+  countable: false
+- candidate_id: CAND-EXEC-1788607483-HYP-H-055-INTERVIEWSERVICE-JAVA-372-382-
+  source_execution: EXEC-1788607483
+  target_memory: H-055-INTERVIEWSERVICE-JAVA-372-382-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112436
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-055-INTERVIEWSERVICE-JAVA-372-382- engaged by agent in EXEC-1788607483
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_76518e038724
+    model: ''
+    tokens: *id842
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id841
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112436
+    source_loop: LOOP-20260905112436
+    observation_id: OBS-EXEC-1788607483-H-055-INTERVIEWSERVICE-JAVA-372-382-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607483-H-055-INTERVIEWSERVICE-JAVA-372-382-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607483
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id841
+  loop_id: LOOP-20260905112436
+  countable: false
+- candidate_id: CAND-EXEC-1788607788-HYP-H-026-INTERVIEWSERVICE-JAVA-383-389-
+  source_execution: EXEC-1788607788
+  target_memory: H-026-INTERVIEWSERVICE-JAVA-383-389-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112941
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-026-INTERVIEWSERVICE-JAVA-383-389- engaged by agent in EXEC-1788607788
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_748e1bb35bcc
+    model: ''
+    tokens: &id844
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: &id843
+      python_version: 3.14.4
+      collector_version: '8.7'
+      model_family: unknown
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112941
+    source_loop: LOOP-20260905112941
+    observation_id: OBS-EXEC-1788607788-H-026-INTERVIEWSERVICE-JAVA-383-389-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607788-H-026-INTERVIEWSERVICE-JAVA-383-389-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607788
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id843
+  loop_id: LOOP-20260905112941
+  countable: false
+- candidate_id: CAND-EXEC-1788607788-HYP-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  source_execution: EXEC-1788607788
+  target_memory: H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112941
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-029-INTERVIEWSERVICE-JAVA-372-REQU engaged by agent in EXEC-1788607788
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_748e1bb35bcc
+    model: ''
+    tokens: *id844
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id843
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112941
+    source_loop: LOOP-20260905112941
+    observation_id: OBS-EXEC-1788607788-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607788-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607788
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id843
+  loop_id: LOOP-20260905112941
+  countable: false
+- candidate_id: CAND-EXEC-1788607788-HYP-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  source_execution: EXEC-1788607788
+  target_memory: H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112941
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-030-INTERVIEWSERVICE-JAVA-286-DETA engaged by agent in EXEC-1788607788
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_748e1bb35bcc
+    model: ''
+    tokens: *id844
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id843
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112941
+    source_loop: LOOP-20260905112941
+    observation_id: OBS-EXEC-1788607788-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607788-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607788
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id843
+  loop_id: LOOP-20260905112941
+  countable: false
+- candidate_id: CAND-EXEC-1788607788-HYP-H-047-INTERVIEWSERVICE-JAVA-149-150-
+  source_execution: EXEC-1788607788
+  target_memory: H-047-INTERVIEWSERVICE-JAVA-149-150-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112941
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-047-INTERVIEWSERVICE-JAVA-149-150- engaged by agent in EXEC-1788607788
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_748e1bb35bcc
+    model: ''
+    tokens: *id844
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id843
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112941
+    source_loop: LOOP-20260905112941
+    observation_id: OBS-EXEC-1788607788-H-047-INTERVIEWSERVICE-JAVA-149-150-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607788-H-047-INTERVIEWSERVICE-JAVA-149-150-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607788
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id843
+  loop_id: LOOP-20260905112941
+  countable: false
+- candidate_id: CAND-EXEC-1788607788-HYP-H-055-INTERVIEWSERVICE-JAVA-372-382-
+  source_execution: EXEC-1788607788
+  target_memory: H-055-INTERVIEWSERVICE-JAVA-372-382-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905112941
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-055-INTERVIEWSERVICE-JAVA-372-382- engaged by agent in EXEC-1788607788
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_748e1bb35bcc
+    model: ''
+    tokens: *id844
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id843
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905112941
+    source_loop: LOOP-20260905112941
+    observation_id: OBS-EXEC-1788607788-H-055-INTERVIEWSERVICE-JAVA-372-382-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788607788-H-055-INTERVIEWSERVICE-JAVA-372-382-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788607788
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id843
+  loop_id: LOOP-20260905112941
+  countable: false
+- candidate_id: CAND-EXEC-1788608489-HYP-H-026-INTERVIEWSERVICE-JAVA-383-389-
+  source_execution: EXEC-1788608489
+  target_memory: H-026-INTERVIEWSERVICE-JAVA-383-389-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905114122
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-026-INTERVIEWSERVICE-JAVA-383-389- engaged by agent in EXEC-1788608489
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_015b90db3ff6
+    model: ''
+    tokens: &id846
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: &id845
+      python_version: 3.14.4
+      collector_version: '8.7'
+      model_family: unknown
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905114122
+    source_loop: LOOP-20260905114122
+    observation_id: OBS-EXEC-1788608489-H-026-INTERVIEWSERVICE-JAVA-383-389-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788608489-H-026-INTERVIEWSERVICE-JAVA-383-389-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788608489
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id845
+  loop_id: LOOP-20260905114122
+  countable: false
+- candidate_id: CAND-EXEC-1788608489-HYP-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  source_execution: EXEC-1788608489
+  target_memory: H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905114122
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-029-INTERVIEWSERVICE-JAVA-372-REQU engaged by agent in EXEC-1788608489
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_015b90db3ff6
+    model: ''
+    tokens: *id846
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id845
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905114122
+    source_loop: LOOP-20260905114122
+    observation_id: OBS-EXEC-1788608489-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788608489-H-029-INTERVIEWSERVICE-JAVA-372-REQU
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788608489
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id845
+  loop_id: LOOP-20260905114122
+  countable: false
+- candidate_id: CAND-EXEC-1788608489-HYP-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  source_execution: EXEC-1788608489
+  target_memory: H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905114122
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-030-INTERVIEWSERVICE-JAVA-286-DETA engaged by agent in EXEC-1788608489
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_015b90db3ff6
+    model: ''
+    tokens: *id846
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id845
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905114122
+    source_loop: LOOP-20260905114122
+    observation_id: OBS-EXEC-1788608489-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788608489-H-030-INTERVIEWSERVICE-JAVA-286-DETA
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788608489
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id845
+  loop_id: LOOP-20260905114122
+  countable: false
+- candidate_id: CAND-EXEC-1788608489-HYP-H-047-INTERVIEWSERVICE-JAVA-149-150-
+  source_execution: EXEC-1788608489
+  target_memory: H-047-INTERVIEWSERVICE-JAVA-149-150-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905114122
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-047-INTERVIEWSERVICE-JAVA-149-150- engaged by agent in EXEC-1788608489
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_015b90db3ff6
+    model: ''
+    tokens: *id846
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id845
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905114122
+    source_loop: LOOP-20260905114122
+    observation_id: OBS-EXEC-1788608489-H-047-INTERVIEWSERVICE-JAVA-149-150-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788608489-H-047-INTERVIEWSERVICE-JAVA-149-150-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788608489
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id845
+  loop_id: LOOP-20260905114122
+  countable: false
+- candidate_id: CAND-EXEC-1788608489-HYP-H-055-INTERVIEWSERVICE-JAVA-372-382-
+  source_execution: EXEC-1788608489
+  target_memory: H-055-INTERVIEWSERVICE-JAVA-372-382-
+  candidate_type: reinforce_hypothesis
+  quality_score: 1.65
+  canonical_source: LOOP-20260905114122
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: Hypothesis H-055-INTERVIEWSERVICE-JAVA-372-382- engaged by agent in EXEC-1788608489
+    (level=hypothesis_used, term_matches=2, id_mentioned=False). Evidence from real
+    execution.
+  evidence:
+    session_id: test_ses_015b90db3ff6
+    model: ''
+    tokens: *id846
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+    agent_role: lead
+    env_fingerprint: *id845
+  outcome: inconclusive
+  hypothesis_engagement:
+    referenced: true
+    engagement_level: hypothesis_used
+    term_matches: 2
+    id_mentioned: false
+    changed_decision: false
+    same_loop_as_creation: false
+    created_loop: ''
+    shared_context_with_other_agents: false
+    loop_id: LOOP-20260905114122
+    source_loop: LOOP-20260905114122
+    observation_id: OBS-EXEC-1788608489-H-055-INTERVIEWSERVICE-JAVA-372-382-
+    root_task_id: FULL-A-001
+    model_family: unknown
+    retrieval_context_hash: 74a2f968a3499239
+  observation_id: OBS-EXEC-1788608489-H-055-INTERVIEWSERVICE-JAVA-372-382-
+  root_task_id: FULL-A-001
+  root_execution_id: EXEC-1788608489
+  model_family: unknown
+  retrieval_context_hash: 74a2f968a3499239
+  env_fingerprint: *id845
+  loop_id: LOOP-20260905114122
+  countable: false
+- candidate_id: CAND-EXEC-1788608612-T-009
+  source_execution: EXEC-1788608612
+  target_memory: T-009
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-009 was used in EXEC-1788608612 (INT-7.4-A-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_26b823d6a199
+    model: ''
+    tokens: &id847
+      total: 500
+      input: 100
+      output: 400
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+  root_task_id: INT-7.4-A-001
+  model_family: unknown
+  retrieval_context_hash: ''
+  countable: true
+  root_execution_id: EXEC-1788608612
+  env_fingerprint: &id848
+    python_version: 3.14.4
+    collector_version: '8.7'
+    model_family: unknown
+  observation_id: OBS-EXEC-1788608612-T-009
+  loop_id: LOOP-20260905114325
+- candidate_id: CAND-EXEC-1788608612-T-010
+  source_execution: EXEC-1788608612
+  target_memory: T-010
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-010 was used in EXEC-1788608612 (INT-7.4-A-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_26b823d6a199
+    model: ''
+    tokens: *id847
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+  root_task_id: INT-7.4-A-001
+  model_family: unknown
+  retrieval_context_hash: ''
+  countable: true
+  root_execution_id: EXEC-1788608612
+  env_fingerprint: *id848
+  observation_id: OBS-EXEC-1788608612-T-010
+  loop_id: LOOP-20260905114325
+- candidate_id: CAND-EXEC-1788608612-AP-001
+  source_execution: EXEC-1788608612
+  target_memory: AP-001
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory AP-001 was used in EXEC-1788608612 (INT-7.4-A-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_26b823d6a199
+    model: ''
+    tokens: *id847
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+  root_task_id: INT-7.4-A-001
+  model_family: unknown
+  retrieval_context_hash: ''
+  countable: true
+  root_execution_id: EXEC-1788608612
+  env_fingerprint: *id848
+  observation_id: OBS-EXEC-1788608612-AP-001
+  loop_id: LOOP-20260905114325
+- candidate_id: CAND-EXEC-1788608612-T-002
+  source_execution: EXEC-1788608612
+  target_memory: T-002
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory T-002 was used in EXEC-1788608612 (INT-7.4-A-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_26b823d6a199
+    model: ''
+    tokens: *id847
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+  root_task_id: INT-7.4-A-001
+  model_family: unknown
+  retrieval_context_hash: ''
+  countable: true
+  root_execution_id: EXEC-1788608612
+  env_fingerprint: *id848
+  observation_id: OBS-EXEC-1788608612-T-002
+  loop_id: LOOP-20260905114325
+- candidate_id: CAND-EXEC-1788608612-E-003
+  source_execution: EXEC-1788608612
+  target_memory: E-003
+  candidate_type: reinforce
+  quality_score: 1.65
+  quality_breakdown:
+    completeness: 3
+    accuracy: 0
+    structure: 4
+    actionability: 1
+    novelty: 1
+  reasoning: 'Memory E-003 was used in EXEC-1788608612 (INT-7.4-A-001). Execution
+    succeeded. Memory influence: confirmation. This confirms the memory is valid and
+    useful.'
+  evidence:
+    session_id: test_ses_26b823d6a199
+    model: ''
+    tokens: *id847
+    output_hash: 9d764047da81585c
+    latency_ms: 0
+    is_real_execution: true
+  outcome: promoted
+  root_task_id: INT-7.4-A-001
+  model_family: unknown
+  retrieval_context_hash: ''
+  countable: true
+  root_execution_id: EXEC-1788608612
+  env_fingerprint: *id848
+  observation_id: OBS-EXEC-1788608612-E-003
+  loop_id: LOOP-20260905114325
 cycle_summary:
-  total_candidates: 1606
-  reinforce: 1466
+  total_candidates: 1626
+  reinforce: 1471
   weaken: 0
   create_hypothesis: 90
-  reinforce_hypothesis: 50
+  reinforce_hypothesis: 65
   weaken_hypothesis: 0
   safety_checks:
     no_memory_off_processed: PASS
