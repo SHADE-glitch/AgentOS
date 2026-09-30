@@ -57,22 +57,28 @@ def route_stage(state: LoopState, *, store: Optional[MemoryStore] = None) -> dic
 
 
 def resolve_role_stage(state: LoopState, decision: dict[str, Any]) -> dict[str, Any]:
-    """Record the concrete role the executor should adopt."""
+    """Resolve the concrete role(s) and form a team if the task warrants one."""
     lead_role = decision.get("lead_role")
     support_roles = decision.get("support_roles", [])
     executor = plan_executor(
+        task=state.task_text,
         lead_role=lead_role or "",
         support_roles=support_roles,
         domains=decision.get("domains", []),
-        difficulty=state.stage_data("route").get("artifact", {}).get("difficulty", "medium"),
+        difficulty=decision.get("difficulty", "medium"),
+        intent=decision.get("intent", ""),
     )
     state.complete(
         "resolve_role",
-        lead_role=lead_role,
-        support_roles=support_roles,
+        lead_role=executor.lead_role,
+        support_roles=executor.support_roles,
         executor=executor.to_dict(),
     )
-    return {"lead_role": lead_role, "support_roles": support_roles, "executor": executor.to_dict()}
+    return {
+        "lead_role": executor.lead_role,
+        "support_roles": executor.support_roles,
+        "executor": executor.to_dict(),
+    }
 
 
 # ── recall ─────────────────────────────────────────────────────────────
@@ -136,7 +142,9 @@ def plan_stage(state: LoopState, *, recall: dict[str, Any], executor: dict[str, 
         "support_roles": executor.get("support_roles", []),
         "memory_ids": [m["memory_id"] for m in memories],
         "hypothesis_ids": [h["memory_id"] for h in recall.get("hypotheses", [])],
-        "multi_agent": executor.get("executor", {}).get("is_multi_agent", False),
+        "multi_agent": executor.get("is_multi_agent", False),
+        "team_id": executor.get("team_id", ""),
+        "task_cards": executor.get("task_cards", []),
     }
     state.complete("plan", **plan)
     return plan

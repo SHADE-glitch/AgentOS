@@ -110,6 +110,7 @@ class DecisionContext:
             "intent": self.intent,
             "domains": self.domains,
             "primary_domain": self.primary_domain,
+            "difficulty": self.difficulty,
             "rules_applied": self.rules_applied,
         }
 

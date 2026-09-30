@@ -42,6 +42,32 @@ def _content_map_path() -> Path:
     return get_paths().content_dir / "routing" / "taxonomy-map.json"
 
 
+@lru_cache(maxsize=None)
+def _content_roles_path() -> Path:
+    return get_paths().content_dir / "routing" / "roles.json"
+
+
+def _role_entries(path: Path) -> dict[str, dict]:
+    entries = _read_json(path).get("roles", [])
+    return {
+        entry["id"]: entry
+        for entry in entries
+        if isinstance(entry, dict) and entry.get("id")
+    }
+
+
+def role_catalog() -> dict[str, dict]:
+    """Return the effective role catalog ``{role_id: entry}``.
+
+    Content-layer entries are merged over the built-in catalog, so a project
+    can add roles or refine ``domain``/``dependencies`` without forking the
+    engine.
+    """
+    catalog = _role_entries(_DEFAULT_ROLES_PATH)
+    catalog.update(_role_entries(_content_roles_path()))
+    return catalog
+
+
 def taxonomy_map() -> dict[str, str]:
     """Return the effective abstract-id -> role map (content overrides built-in)."""
     mapping = dict(_read_json(_DEFAULT_MAP_PATH).get("map", {}))
@@ -70,10 +96,10 @@ def resolve_roles(abstract_ids: list[str]) -> list[str]:
 
 def known_roles() -> list[str]:
     """Return the built-in role catalog (ids only)."""
-    roles = _read_json(_DEFAULT_ROLES_PATH).get("roles", [])
-    return [r["id"] for r in roles if isinstance(r, dict) and "id" in r]
+    return list(role_catalog())
 
 
 def reload() -> None:
     """Clear caches so a changed content override is picked up."""
     _content_map_path.cache_clear()
+    _content_roles_path.cache_clear()
