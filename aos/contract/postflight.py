@@ -77,6 +77,14 @@ def _evidence(data: dict[str, Any] | None) -> dict[str, Any]:
         "path": data.get("path", ""),
         "repo_resolved": bool(data.get("repo_resolved", False)),
         "files_changed": list(data.get("files_changed", [])),
+        # Files that were already modified when preflight took its snapshot. A
+        # reviewer comparing `files_changed` against the diff needs to know which
+        # of them this run is actually responsible for.
+        "preexisting_files": list(data.get("preexisting_files", [])),
+        # "preflight" when the baseline is the one taken before the run,
+        # "recaptured at postflight" when there was none — a reviewer needs to
+        # know whether `files_changed` is a real diff or a best effort.
+        "before_source": data.get("before_source", ""),
         "test_passed": data.get("test_passed"),
     }
 

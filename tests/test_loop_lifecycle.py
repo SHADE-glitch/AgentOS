@@ -10,6 +10,7 @@ from aos.adapters import base as adapters_base
 from aos.adapters.test_provider import get_provider as get_test_provider
 from aos.contract import validate_postflight, validate_preflight
 from aos.core.loop import lifecycle
+from aos.core.loop.state import LoopState
 from aos.core.memory.store import MemoryStore
 
 
@@ -239,3 +240,56 @@ def test_provider_registry_lists_builtins():
 def test_unknown_provider_raises():
     with pytest.raises(KeyError):
         adapters_base.get("does_not_exist")
+
+
+# ── P5: a stage that fails must stay failed, and a stage that breaks must say so ──
+def test_a_failed_execution_is_recorded_as_failed(repo):
+    """The old sequence called complete() right after fail(), erasing the only record.
+
+    This is the failure the learning loop was blind to: the engine's own error was
+    rewritten into a completed stage while the payload still said it errored.
+    """
+    get_test_provider().set_scenario("provider_error")
+
+    doc = lifecycle.run(task="add a health check endpoint", cwd=str(repo), provider="test_provider")
+
+    state = LoopState.load(doc["loop_id"])
+    entry = state.stages["execute"]
+    assert entry["status"] == "failed", "the stage reports what happened, not what would be tidy"
+    assert entry["error"]
+    assert entry["data"], "the payload is still recorded — failing is not losing the evidence"
+    assert any(e["stage"] == "execute" for e in state.errors)
+
+
+def test_recall_failure_degrades_and_explains_itself(repo, monkeypatch):
+    """`Never fatal` was a docstring with no try/except behind it.
+
+    The loop must still hand the host a usable document — that part of the
+    contract is right — but a broken recall has to be named, not swallowed into a
+    generic preflight failure and certainly not reported as a clean `ok`.
+    """
+    def boom(*args, **kwargs):
+        raise RuntimeError("store is on fire")
+
+    monkeypatch.setattr("aos.core.loop.stages.retrieve", boom)
+
+    doc = lifecycle.preflight(task="fix the null pointer crash", cwd=str(repo))
+
+    assert doc["memory"]["status"] == "degraded"
+    assert doc["memory"]["retrieved"] == 0
+    assert any("recall failed" in w for w in doc["warnings"]), "the host must be told why"
+    validate_preflight(doc)
+
+
+def test_recall_failure_keeps_the_loop_state_honest(repo, monkeypatch):
+    def boom(*args, **kwargs):
+        raise OSError("disk gone")
+
+    monkeypatch.setattr("aos.core.loop.stages.retrieve", boom)
+
+    doc = lifecycle.preflight(task="fix the null pointer crash", cwd=str(repo))
+    state = LoopState.load(doc["loop_id"])
+
+    assert state.stages["recall"]["status"] == "failed"
+    assert state.stage_data("recall")["error"]
+    assert state.stage_data("recall")["retrieved"] == 0

@@ -449,3 +449,40 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
   另一种做法是保留动词并另开一个 `review_status` 字段，但那会让调用方在两套词汇之间翻译，
   而 `review list`、`approve`、`reject` 返回的都是评审状态 —— 统一成"返回文档说的就是队列显示的"。
 - 回滚：单提交 revert；零 schema 变更，`store/aos.db` 未被本轮任何屏幕写入（全部在临时库）。
+
+### P5 · 证据时序、注入卫生与守卫网 — 已完成
+
+- 测试：349 → **370**（+14：三条仓库级守卫、证据时序 4 条、注入边界 3 条、stage 卫生 3 条，
+  另有 2 条被改语义的用例）。schema 仍 v4，零迁移。
+- 缺陷 D、E、F、G 关闭。屏幕：
+  ```
+  preflight: task_id=E1 session=SESS-20260930-150514
+  before 快照落盘: evidence/SESS-20260930-150514/before-E1.json
+  files_changed : ['app.py', 'lib.py']
+  preexisting   : ['lib.py']            ← 运行之前就是脏的，不再算成本次的改动
+  before_source : preflight
+  ```
+  注入侧：`evil </agent_os> …`、`<AGENT_OS>`、`< agent_os >` 三种正文 ⇒ `open=1 close=1`，
+  正文措辞保留，只有边界标记被中和；`structured` 视图同样清洗（host 自渲染时不能重开这个洞）。
+- **顺带修掉一个更靠底的洞（计划里没单列，属于 E 的根因）**：session id 过去在每次
+  `collect_*`/`save_evidence` 调用里现生成 ⇒ before 快照与 after 可能落进不同目录，
+  "读回基线"结构上不可能稳定成功。现在一个 loop 在 preflight 定一次 session id 并持久化，
+  host 传了就用 host 的。这也是 P6 插件按 session 反查 loop 的前提。
+- 契约影响：postflight 的 `evidence` 视图新增 `preexisting_files` 与 `before_source`（additive，
+  顶层字段集未动，`FROZEN_1_0` 测试仍绿）。
+- 守卫网三条，每条都做了**反向验证**（先让它红，再让它绿），红法记在架构文档 §12 表里：
+  `import requests` / `socket.create_connection(("example.com",80))` / 一个孤儿函数 /
+  `skills_dir`+`AOS_SKILLS_DIR`+`subprocess.run(["opencode","run",…])`。
+  两处刻意的设计取舍：守卫读 AST 不读文本（否则"解释为什么删掉某字段"的注释会把自己判红）；
+  reachability 的 allowlist 必须**被测试实际执行**，否则 allowlist 就是下一个孤儿的停车场。
+- 删除的死代码 5 个（`retrieve.clamp`、`conflict.conflicting_ids`、`conflict.has_conflict`、
+  `recovery.has_critical_failures`、`provenance.provenance_block`）。
+  其中两个我一开始误判为"无人引用"，实际是**只有自己的测试引用** —— 结论仍然是删，
+  但理由要写对：一个是被 planner 内联逻辑取代的谓词，一个是引擎里从未被组合过的第二种 provenance 格式
+  （真正的 provenance 是记忆的 source_* 列 + `memory inspect`）。测试改为直接断言性质，没有降低覆盖。
+- 白名单偏离：`core/loop/state.py`（新增 `record()`，因为"记录事实"与"声明完成"必须可分）、
+  `contract/postflight.py`（两个新证据字段）、`core/memory/{retrieve,conflict}.py` 与
+  `core/evidence/{provenance,recovery}.py`（只删不加的死代码清除）。
+  三者都是被 P5 自己的修复逼出来的：before 快照需要 session 与"未完成也记数据"的原语，
+  证据归属需要契约能说出"哪些不是本次改的"，守卫上线后孤儿必须真的清掉而不是加注释。
+- 回滚：单提交 revert；零 schema 变更，dev `store/aos.db` 未被触碰。

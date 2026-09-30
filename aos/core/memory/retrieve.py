@@ -23,10 +23,6 @@ TOP_K = 5
 MIN_SCORE = 0.15
 
 
-def clamp(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
-    return max(lo, min(hi, value))
-
-
 def query_hash(query: dict[str, Any]) -> str:
     text = str(query.get("task_text", ""))
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]

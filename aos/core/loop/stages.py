@@ -84,7 +84,13 @@ def _keywords(task_text: str, decision: dict[str, Any]) -> list[str]:
 def recall_stage(
     state: LoopState, decision: dict[str, Any], *, store: Optional[MemoryStore] = None
 ) -> dict[str, Any]:
-    """Retrieve relevant memories. Never fatal: on error the loop continues."""
+    """Retrieve relevant memories. Never fatal — but a failure is written down.
+
+    "Never fatal" used to be a docstring with no try/except behind it, so a store
+    that raised took the whole preflight into the fail-open path and the recorded
+    reason was a generic preflight failure rather than "recall broke". The host
+    still gets to proceed; the loop says what actually happened.
+    """
     if state.memory_mode in ("disabled", "off"):
         state.complete("recall", retrieved=0, memory_ids=[], hypotheses=[], skipped=True)
         return {"memories": [], "hypotheses": [], "ranking": [], "retrieved": 0}
@@ -103,7 +109,27 @@ def recall_stage(
         "scope_project": Path(state.cwd).name if state.cwd else "",
         "scope_session": state.session_id or "",
     }
-    result = retrieve(query, store=store, loop_id=state.loop_id)
+    try:
+        result = retrieve(query, store=store, loop_id=state.loop_id)
+    except Exception as exc:
+        state.fail("recall", exc, critical=False)
+        state.record(
+            "recall",
+            retrieved=0,
+            memory_ids=[],
+            hypotheses=[],
+            ranking=[],
+            query=query,
+            error=str(exc),
+        )
+        return {
+            "memories": [],
+            "hypotheses": [],
+            "ranking": [],
+            "retrieved": 0,
+            "query": query,
+            "error": f"recall failed: {exc}",
+        }
     memories, hypotheses = [], []
     for row in result.get("results", []):
         (hypotheses if row.get("is_hypothesis") else memories).append(row)
@@ -173,8 +199,12 @@ def execute_stage(state: LoopState, provider: Any, *, prompt: str, cwd: str = ""
     elif result.delegated:
         state.complete("execute", **payload)
     else:
+        # Fail, and stay failed. The old sequence called complete() on the same
+        # entry immediately after, which rewrote the status back to "completed"
+        # and erased the only record that the run had failed — the loop then
+        # looked healthy while the payload said otherwise.
         state.fail("execute", result.error or result.status, critical=False)
-        state.complete("execute", **payload)
+        state.record("execute", **payload)
     return payload
 
 
@@ -191,9 +221,16 @@ def evidence_stage(
 ) -> dict[str, Any]:
     """Collect and persist git/test evidence for the task."""
     root = project_root or state.cwd
-    before = before or evidence_collector.collect_before(
-        state.task_id, project_root=root, loop_id=state.loop_id, session=state.session_id
-    )
+    source = "caller"
+    if before is None:
+        before = evidence_collector.read_before(state.task_id, session=state.session_id)
+        source = "preflight" if before else "recaptured at postflight"
+    if before is None:
+        before = evidence_collector.collect_before(
+            state.task_id, project_root=root, loop_id=state.loop_id, session=state.session_id
+        )
+        source = "recaptured at postflight"
+    preexisting = (before.get("git_status") or "").strip() if source == "preflight" else ""
     after = evidence_collector.collect_after(
         state.task_id,
         before,
@@ -206,14 +243,55 @@ def evidence_stage(
         session=state.session_id,
     )
     path = evidence_collector.save_evidence(state.task_id, before, after, session=state.session_id)
+    # Files that were already dirty before the run are not this run's work, and a
+    # reviewer comparing `files_changed` against the diff needs to know which is
+    # which rather than discovering it by reading git status themselves.
+    changed = after.get("files_changed", [])
+    # `git status --porcelain` puts the path last (` M src/a.py`, `?? new.py`).
+    already = {line.split()[-1] for line in preexisting.splitlines() if line.strip()}
+    preexisted = [f for f in changed if f in already]
     state.complete(
         "evidence",
         path=str(path),
         repo_resolved=after.get("repo_resolved", False),
-        files_changed=after.get("files_changed", []),
+        files_changed=changed,
+        preexisting_files=preexisted,
         test_passed=after.get("test_passed"),
+        before_source=source,
     )
-    return {"before": before, "after": after, "path": str(path)}
+    return {
+        "before": before,
+        "after": after,
+        "path": str(path),
+        "before_source": source,
+        "preexisting_files": preexisted,
+    }
+
+
+# ── pre-execution evidence ─────────────────────────────────────────────
+def snapshot_before_stage(state: LoopState, *, project_root: str = "") -> dict[str, Any]:
+    """Take the pre-execution snapshot while the tree is still the tree it started with.
+
+    Collecting this in postflight — which is where it used to happen — diffs a
+    dirty working tree against itself, so `files_changed` reported whatever the
+    developer had uncommitted before the task began, not what the task did. The
+    snapshot also has to survive the host dying between the two calls, so it goes
+    to disk immediately.
+    """
+    root = project_root or state.cwd
+    before = evidence_collector.collect_before(
+        state.task_id, project_root=root, loop_id=state.loop_id, session=state.session_id
+    )
+    if root:
+        evidence_collector.write_before(before, session=state.session_id)
+    state.record(
+        "evidence",
+        before=before,
+        before_at=before.get("timestamp", ""),
+        repo_resolved=before.get("repo_resolved", False),
+        working_tree_dirty=before.get("working_tree_dirty", False),
+    )
+    return before
 
 
 # ── project preflight ──────────────────────────────────────────────────

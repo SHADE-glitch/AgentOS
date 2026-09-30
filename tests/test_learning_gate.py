@@ -355,7 +355,7 @@ def test_conflict_detects_opposing_tags():
     a = {"memory_id": "A", "tags": ["centralized"]}
     b = {"memory_id": "B", "tags": ["distributed"]}
     assert conflict_mod.detect_conflicts(a, b)
-    assert conflict_mod.has_conflict("A", [a, b])
+    assert conflict_mod.conflicts_for("A", [a, b]), "the pair must be reported for both sides"
 
 
 def test_no_conflict_for_unrelated_memories():

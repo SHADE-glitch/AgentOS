@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import hashlib
 import re
-from typing import Any
-
 # Punctuation that carries no meaning in a fact sentence. Kept narrow on
 # purpose: `/` and `-` survive inside identifiers like `cache-key` and `a/b`,
 # which are part of what the fact is about.

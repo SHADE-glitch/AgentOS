@@ -27,6 +27,7 @@ from aos.contract import (
     fallback_postflight,
     fallback_preflight,
 )
+from aos.core.evidence import collector as evidence_collector
 from aos.core.loop import stages
 from aos.core.loop.state import LoopState
 from aos.core.memory import inject
@@ -61,6 +62,13 @@ def _run_preflight(
     model: str = "",
 ) -> tuple[LoopState, dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     get_paths().ensure_store()
+    if not session_id:
+        # One session id for the whole loop, decided here and then persisted.
+        # Every evidence path is keyed by it, so a loop whose session was
+        # re-derived per call writes its before-snapshot into one directory and
+        # reads it back from another — which is how a diff silently degrades into
+        # "no baseline found". The host may name the session; then its name wins.
+        session_id = evidence_collector.session_id()
     state = LoopState.new(
         task_text=task,
         cwd=cwd,
@@ -84,9 +92,19 @@ def _run_preflight(
     state.begin("plan")
     plan = stages.plan_stage(state, recall=recall, roles=roles)
     stages.project_preflight_stage(state, project_root=cwd)
+    stages.snapshot_before_stage(state, project_root=cwd)
 
     state.save()
     return state, decision, roles, recall, plan
+
+
+def _memory_status(state: LoopState, recall: dict[str, Any]) -> str:
+    """Recall health, as the host should read it: disabled, degraded, or fine."""
+    if state.memory_mode in ("disabled", "off"):
+        return "skipped"
+    if recall.get("error"):
+        return "degraded"
+    return "ok"
 
 
 def _preflight_doc(
@@ -109,6 +127,8 @@ def _preflight_doc(
             warnings.append("no concrete role resolved; routing degraded")
         if decision.get("fallback_reason"):
             warnings.append(f"routing fell back: {decision['fallback_reason']}")
+    if recall.get("error"):
+        warnings.append(f"recall failed; the host proceeded without memories: {recall['error']}")
     if state.memory_mode in ("disabled", "off"):
         warnings.append("memory disabled by request")
     # Rendered from the raw scored rows, which still carry title/body/tags;
@@ -153,7 +173,7 @@ def _preflight_doc(
             "memories": [_memory_view(m) for m in recall.get("memories", [])],
             "hypotheses": [_memory_view(h) for h in recall.get("hypotheses", [])],
             "ranking": recall.get("ranking", []),
-            "status": "skipped" if state.memory_mode in ("disabled", "off") else "ok",
+            "status": _memory_status(state, recall),
             "injection": injection,
         },
         skill={
@@ -332,7 +352,9 @@ def _run_postflight(
                 "path": evidence["path"],
                 "repo_resolved": evidence["after"].get("repo_resolved", False),
                 "files_changed": evidence["after"].get("files_changed", []),
+                "preexisting_files": evidence.get("preexisting_files", []),
                 "test_passed": evidence["after"].get("test_passed"),
+                "before_source": evidence.get("before_source", ""),
             },
             recovery={
                 "failures_detected": len(final["failures"]),

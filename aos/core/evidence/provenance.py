@@ -99,21 +99,3 @@ def provenance_for(filepath: str, symbol: Optional[str] = None) -> dict[str, Any
 
     result["file_hash"] = hashlib.md5(result["file"].encode("utf-8")).hexdigest()[:8]
     return result
-
-
-def provenance_block(filepath: str, symbol: Optional[str] = None) -> str:
-    """Markdown provenance block for inclusion in agent output."""
-    prov = provenance_for(filepath, symbol)
-    lines = ["```provenance", f"file: {prov['file']}"]
-    if prov["symbol"]:
-        lines.append(f"symbol: {prov['symbol']}")
-    if prov["line_range"]:
-        lines.append(f"range: {prov['line_range']}")
-    if prov["git_commit"]:
-        lines.append(f"commit: {prov['git_commit']}")
-    if prov["git_author"]:
-        lines.append(f"author: {prov['git_author']}")
-    if prov["git_date"]:
-        lines.append(f"date: {prov['git_date']}")
-    lines.append("```")
-    return "\n".join(lines)

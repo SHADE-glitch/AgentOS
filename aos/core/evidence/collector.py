@@ -124,6 +124,36 @@ def collect_before(
     }
 
 
+def before_path(task_id: str, *, session: str = "") -> Path:
+    return session_dir(session) / f"before-{task_id}.json"
+
+
+def write_before(before: dict[str, Any], *, session: str = "") -> Path:
+    """Persist the pre-execution snapshot the moment it is taken.
+
+    Two reasons it lives on disk instead of only in the returned dict. The first
+    is correctness: the diff is only meaningful against the tree *before* the run,
+    so postflight must not re-collect it (that was a dirty tree diffing itself).
+    The second is that a host can die between preflight and postflight — the
+    snapshot has to outlive the call that took it.
+    """
+    path = before_path(before.get("task_id", ""), session=session or before.get("session", ""))
+    path.write_text(json.dumps(before, indent=2, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def read_before(task_id: str, *, session: str = "") -> Optional[dict[str, Any]]:
+    path = before_path(task_id, session=session)
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        # A snapshot we cannot read is worse than none only if we pretend
+        # otherwise; say nothing and let the caller fall back and report it.
+        return None
+
+
 def collect_after(
     task_id: str,
     before: dict[str, Any],

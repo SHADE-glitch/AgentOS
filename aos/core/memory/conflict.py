@@ -105,14 +105,6 @@ def find_conflicts(memories: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return found
 
 
-def conflicting_ids(conflicts: Iterable[dict[str, Any]]) -> set[str]:
-    ids: set[str] = set()
-    for conflict in conflicts:
-        ids.add(conflict["memory_a"])
-        ids.add(conflict["memory_b"])
-    return ids
-
-
 def index_by_id(pairs: Iterable[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """Group conflict pairs by each memory they involve.
 
@@ -132,5 +124,3 @@ def conflicts_for(memory_id: str, memories: Iterable[dict[str, Any]]) -> list[di
     return [c for c in find_conflicts(memories) if memory_id in (c["memory_a"], c["memory_b"])]
 
 
-def has_conflict(memory_id: str, memories: Iterable[dict[str, Any]]) -> bool:
-    return bool(conflicts_for(memory_id, memories))

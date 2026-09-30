@@ -144,10 +144,6 @@ def detect_failures(
     return events
 
 
-def has_critical_failures(events: list[dict[str, Any]]) -> bool:
-    return any(e.get("severity") == "critical" for e in events)
-
-
 def plan_recovery(
     failure_events: list[dict[str, Any]], *, task_id: str = "", loop_id: str = "", retry_count: int = 0
 ) -> dict[str, Any]:

@@ -124,6 +124,19 @@ class LoopState:
             self.final_status = "failed"
         self.updated_at = now_iso()
 
+    def record(self, stage: str, **data: Any) -> None:
+        """Attach data to a stage without declaring it finished.
+
+        `complete()` means "this step ran and succeeded", which is a claim other
+        code reads. Two steps need to write facts while that claim is still false:
+        the preflight evidence snapshot (evidence collection is not over) and a
+        failed execution (the payload is real, the success is not).
+        """
+        entry = self.stages.setdefault(stage, _blank_stage())
+        if data:
+            entry.setdefault("data", {}).update(data)
+        self.updated_at = now_iso()
+
     def stage_data(self, stage: str) -> dict[str, Any]:
         return self.stages.get(stage, {}).get("data", {})
 

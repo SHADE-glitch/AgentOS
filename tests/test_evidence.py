@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
+
+from pathlib import Path
 
 import pytest
 
@@ -94,7 +97,10 @@ def test_detect_failures_reports_failed_tests():
     events = recovery.detect_failures(task_id="T1", evidence=evidence)
 
     assert any(e["type"] == "failed_tests" for e in events)
-    assert recovery.has_critical_failures(events)
+    # Severity asserted directly. There used to be a `has_critical_failures`
+    # helper here that nothing in the engine called — the planner sorts by
+    # severity and never gates on it — so the guarantee stays, the orphan goes.
+    assert any(e["severity"] == "critical" for e in events)
 
 
 def test_detect_failures_reports_runtime_error():
@@ -155,8 +161,71 @@ def test_provenance_for_symbol_has_line_range(tmp_path):
     assert prov["file_hash"]
 
 
-def test_provenance_block_is_markdown(tmp_path):
+# ── P5: the before-snapshot has to be taken before ─────────────────────
+def test_preflight_persists_the_before_snapshot(tmp_path):
     repo = _init_repo(tmp_path / "repo")
-    block = provenance.provenance_block(str(repo / "app.py"), symbol="main")
-    assert block.startswith("```provenance")
-    assert "file:" in block
+    (repo / "dirty.py").write_text("pre-existing\n", encoding="utf-8")
+
+    from aos.core.loop import lifecycle
+
+    doc = lifecycle.preflight(task="改一点东西", cwd=str(repo))
+    written = collector.read_before(doc["task_id"], session=doc.get("session_id", ""))
+
+    assert written is not None, "the snapshot must survive the gap between the two calls"
+    assert "dirty.py" in written["git_status"]
+
+
+def test_files_changed_separates_the_run_from_pre_existing_dirt(tmp_path):
+    """The defect: postflight diffing a dirty tree against itself.
+
+    A file the developer had already modified must not be reported as this run's
+    work. With the snapshot taken at preflight the two sets are distinguishable,
+    and a reviewer can tell what the agent actually touched.
+    """
+    repo = _init_repo(tmp_path / "repo")
+    (repo / "app.py").write_text("def main():\n    return 2\n", encoding="utf-8")  # already dirty
+
+    from aos.core.loop import lifecycle
+
+    pre = lifecycle.preflight(task="改一点东西", cwd=str(repo))
+    (repo / "helper.py").write_text("def h():\n    return 1\n", encoding="utf-8")
+    _git(repo, "add", "helper.py")
+    (repo / "helper.py").write_text("def h():\n    return 3\n", encoding="utf-8")  # the run's change
+
+    doc = lifecycle.postflight(
+        task_id=pre["task_id"], loop_id=pre["loop_id"], session_id=pre.get("session_id", ""), cwd=str(repo)
+    )
+
+    evidence = doc["evidence"]
+    assert "helper.py" in evidence["files_changed"], "the run's own change is attributed to it"
+    assert evidence["preexisting_files"] == ["app.py"], "the dirty file is named, not credited"
+    assert doc["final_status"] in ("completed", "partial")
+
+
+def test_evidence_reports_where_the_before_snapshot_came_from(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+
+    from aos.core.loop import lifecycle
+
+    pre = lifecycle.preflight(task="正常流程", cwd=str(repo))
+    doc = lifecycle.postflight(task_id=pre["task_id"], loop_id=pre["loop_id"], cwd=str(repo))
+
+    # The document names the bundle it wrote; `get_evidence` reads it back.
+    bundle = json.loads(Path(doc["evidence_path"]).read_text(encoding="utf-8"))
+    assert bundle["before"]["phase"] == "before"
+    assert bundle["before"]["repo_resolved"] is True
+    assert doc["evidence"]["before_source"] == "preflight"
+
+
+def test_a_missing_before_is_recaptured_and_said_so(tmp_path):
+    """Fallback must not pretend to be a real baseline."""
+    repo = _init_repo(tmp_path / "repo")
+    from aos.core.loop import lifecycle
+
+    pre = lifecycle.preflight(task="没有快照的情况", cwd=str(repo))
+    collector.before_path(pre["task_id"], session=pre.get("session_id", "")).unlink(missing_ok=True)
+
+    doc = lifecycle.postflight(task_id=pre["task_id"], loop_id=pre["loop_id"], cwd=str(repo))
+
+    state = __import__("aos.core.loop.state", fromlist=["LoopState"]).LoopState.load(pre["loop_id"])
+    assert state.stage_data("evidence")["before_source"] == "recaptured at postflight"

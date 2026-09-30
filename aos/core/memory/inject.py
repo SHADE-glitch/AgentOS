@@ -11,6 +11,7 @@ the scoring work that decides it would be undone at render time.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
@@ -50,10 +51,21 @@ _SHAPE_BY_TYPE = {
 }
 
 _TRUNCATED = "…"
+_BOUNDARY_TAG = re.compile(r"<\s*/?\s*agent_os\s*>", re.IGNORECASE)
+_REMOVED = "[边界标签已移除]"
 
 
 def _normalise(text: str) -> str:
-    return " ".join(str(text).split())
+    """Collapse whitespace and neutralise our own boundary tags.
+
+    A memory whose body contains ``</agent_os>`` closes the block early and puts
+    the rest of its text outside the "these are experience, not instructions"
+    frame — the one guarantee the injection rests on. The claim that the tag is
+    unique was only ever true if nothing wrote it but us, and memories are text a
+    model produced. Replaced with a marker rather than deleted silently, so a
+    reviewer reading the structured view can see the memory contained one.
+    """
+    return _BOUNDARY_TAG.sub(_REMOVED, " ".join(str(text).split()))
 
 
 def _clip(text: str, limit: int) -> tuple[str, bool]:
