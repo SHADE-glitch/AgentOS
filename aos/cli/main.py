@@ -133,6 +133,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         memory_mode="enabled" if args.memory == "on" else "disabled",
         test_command=args.test_command,
         test_exit_code=args.test_exit_code,
+        compile_command=args.compile_command,
+        expected_files=args.expect,
+        validate=not args.no_validate,
     )
     validate_postflight(doc)
     _emit(doc)
@@ -222,6 +225,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--model", default="")
     p_run.add_argument("--test-command", default="", help="test command to record as evidence")
     p_run.add_argument("--test-exit-code", type=int, default=None, help="test exit code (0 = pass)")
+    p_run.add_argument("--compile-command", default="", help="compile/build command for validation")
+    p_run.add_argument("--expect", action="append", default=None, help="expected changed file (repeatable)")
+    p_run.add_argument("--no-validate", action="store_true", help="skip post-execution code validation")
 
     p_memory = sub.add_parser("memory", help="inspect the memory store")
     mem_sub = p_memory.add_subparsers(dest="memory_command")

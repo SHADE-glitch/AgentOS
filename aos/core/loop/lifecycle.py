@@ -70,6 +70,7 @@ def _run_preflight(
 
     state.begin("plan")
     plan = stages.plan_stage(state, recall=recall, executor=executor)
+    stages.project_preflight_stage(state, project_root=cwd)
 
     state.save()
     return state, decision, executor, recall, plan
@@ -162,6 +163,9 @@ def _run_postflight(
     test_stdout: str = "",
     test_stderr: str = "",
     test_exit_code: Optional[int] = None,
+    compile_command: str = "",
+    expected_files: Optional[list[str]] = None,
+    validate: bool = True,
     execution: Optional[dict[str, Any]] = None,
     outcome: str = "",
     quality_score: Optional[float] = None,
@@ -195,6 +199,16 @@ def _run_postflight(
             test_exit_code=test_exit_code,
         )
 
+        state.begin("validate")
+        validation = stages.validate_stage(
+            state,
+            project_root=project_root or state.cwd,
+            compile_command=compile_command,
+            test_command=test_command,
+            expected_files=expected_files,
+            enabled=validate,
+        )
+
         state.begin("record")
         record = stages.record_stage(
             state,
@@ -210,7 +224,9 @@ def _run_postflight(
         learning = stages.evolve_stage(state, store=store)["summary"]
 
         state.begin("finalize")
-        final = stages.finalize_stage(state, execution=execution, evidence=evidence)
+        final = stages.finalize_stage(
+            state, execution=execution, evidence=evidence, validation=validation
+        )
 
         doc = build_postflight(
             task_id=state.task_id,
@@ -257,6 +273,9 @@ def postflight(
     test_stdout: str = "",
     test_stderr: str = "",
     test_exit_code: Optional[int] = None,
+    compile_command: str = "",
+    expected_files: Optional[list[str]] = None,
+    validate: bool = True,
     execution: Optional[dict[str, Any]] = None,
     outcome: str = "",
     quality_score: Optional[float] = None,
@@ -270,6 +289,9 @@ def postflight(
             test_stdout=test_stdout,
             test_stderr=test_stderr,
             test_exit_code=test_exit_code,
+            compile_command=compile_command,
+            expected_files=expected_files,
+            validate=validate,
             execution=execution,
             outcome=outcome,
             quality_score=quality_score,
@@ -294,6 +316,9 @@ def run(
     test_exit_code: Optional[int] = None,
     test_stdout: str = "",
     test_stderr: str = "",
+    compile_command: str = "",
+    expected_files: Optional[list[str]] = None,
+    validate: bool = True,
 ) -> dict[str, Any]:
     """Full loop: preflight, execute through the provider, then postflight."""
     try:
@@ -326,6 +351,9 @@ def run(
         test_stdout=test_stdout,
         test_stderr=test_stderr,
         test_exit_code=test_exit_code,
+        compile_command=compile_command,
+        expected_files=expected_files,
+        validate=validate,
         execution=execution,
     )
     return doc

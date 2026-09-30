@@ -21,6 +21,8 @@ from aos.core.memory import evaluate as evaluate_mod
 from aos.core.memory.record import record_outcome
 from aos.core.memory.retrieve import retrieve
 from aos.core.memory.store import MemoryStore
+from aos.core.validation import project_preflight
+from aos.core.validation.code_validator import validate_code_changes
 
 _STOPWORDS = frozenset(
     {
@@ -230,6 +232,76 @@ def evidence_stage(
     return {"before": before, "after": after, "path": str(path)}
 
 
+# ── project preflight ──────────────────────────────────────────────────
+def project_preflight_stage(state: LoopState, *, project_root: str = "") -> dict[str, Any]:
+    """Detect the project's build system, runtime and validation commands."""
+    root = project_root or state.cwd or "."
+    result = project_preflight.run_preflight(root).to_dict()
+    state.complete(
+        "plan",
+        project_preflight={
+            "project_root": result["project_root"],
+            "status": result["status"],
+            "build_system": result["build_system"],
+            "build_file": result["build_file"],
+            "compile_command": result["compile_command"],
+            "test_command": result["test_command"],
+            "environment_blockers": result["environment_blockers"],
+        },
+    )
+    return result
+
+
+# ── validate ───────────────────────────────────────────────────────────
+def validate_stage(
+    state: LoopState,
+    *,
+    project_root: str = "",
+    compile_command: str = "",
+    test_command: str = "",
+    expected_files: Optional[list[str]] = None,
+    baseline: Optional[dict[str, Any]] = None,
+    enabled: bool = True,
+) -> dict[str, Any]:
+    """Run post-execution code validation, unless there is nothing to run.
+
+    The *compile* command is taken from the caller or, failing that, from the
+    detected build system. A project's test suite is only run when the caller
+    explicitly supplies ``test_command`` — silently executing an unknown
+    project's full test suite is expensive and can have side effects.
+    """
+    root = project_root or state.cwd or "."
+    preflight = state.stage_data("plan").get("project_preflight") or {}
+    compile_command = compile_command or preflight.get("compile_command", "")
+
+    if not enabled:
+        state.complete("validate", validation_status="SKIPPED", reason="disabled by request")
+        return {"validation_status": "SKIPPED", "reason": "disabled by request"}
+
+    if not compile_command and not test_command:
+        reason = "no compile or test command available"
+        state.complete("validate", validation_status="SKIPPED", reason=reason)
+        return {"validation_status": "SKIPPED", "reason": reason}
+
+    result = validate_code_changes(
+        project_root=root,
+        execution_id=state.loop_id,
+        expected_files=expected_files,
+        compile_command=compile_command,
+        test_command=test_command,
+        baseline=baseline,
+    )
+    state.complete(
+        "validate",
+        validation_status=result.validation_status,
+        files_changed=[c.path for c in result.files_changed],
+        unexpected_files=result.unexpected_files_changed,
+        build_status=result.build.status,
+        test_status=result.test.status,
+    )
+    return result.to_dict()
+
+
 # ── record ─────────────────────────────────────────────────────────────
 def _outcome_for(execution: dict[str, Any], test_exit_code: Optional[int]) -> str:
     status = execution.get("status", "")
@@ -313,6 +385,7 @@ def finalize_stage(
     *,
     execution: dict[str, Any],
     evidence: dict[str, Any],
+    validation: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Detect failures, plan recovery (never execute it) and set the status."""
     failures = recovery.detect_failures(
@@ -327,8 +400,11 @@ def finalize_stage(
         status = execution.get("status", "")
         after = evidence.get("after", {}) if evidence else {}
         test_passed = after.get("test_passed")
+        validation_status = (validation or {}).get("validation_status", "SKIPPED")
         if status in ("error", "timeout", "failed"):
             state.final_status = "failed"
+        elif validation_status == "FAIL":
+            state.final_status = "partial"
         elif status == "delegated":
             # The host owns execution; the loop is only half closed.
             state.final_status = "partial"
@@ -342,6 +418,7 @@ def finalize_stage(
         final_status=state.final_status,
         failures_detected=len(failures),
         recovery_needed=plan["recovery_needed"],
+        validation_status=(validation or {}).get("validation_status", "SKIPPED"),
     )
     return {
         "failures": failures,

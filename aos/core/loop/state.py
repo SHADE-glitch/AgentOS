@@ -26,6 +26,7 @@ STAGES = (
     "plan",
     "execute",
     "evidence",
+    "validate",
     "record",
     "evolve",
     "finalize",
