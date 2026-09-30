@@ -54,25 +54,6 @@ store/loops/
 store/evidence/
 store/pending-postflight/
 
-# Agent OS - legacy generated runtime state
-runtime/loop-controller/state/
-runtime/loop-controller/validation/
-runtime/logs/
-runtime/traces/
-runtime/metrics/
-runtime/telemetry/
-runtime/analytics/
-runtime/reports/
-runtime/state/pending-postflight/
-runtime/executor/executions/
-runtime/datasets/generators/out/
-
-# Agent OS - Memory and hypotheses (generated during runtime)
-memory/hypotheses/
-memory/*/state/
-memory/*/retrieval/
-memory/*/feedback/
-
 # Freebuff worktrees
 .freebuff/worktrees/
 

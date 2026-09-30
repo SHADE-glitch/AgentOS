@@ -1,7 +1,0 @@
-task_id: ai-02
-winner: multi
-quality_delta: 1.50
-cost_delta: 1
-decision_reason: >
-  Multi-agent added robust error handling, comprehensive evaluation set, and cost
-  optimization. cost_delta=1 within threshold. Multi win.

@@ -1,7 +1,0 @@
-task_id: opt-01
-winner: multi
-quality_delta: 1.0
-cost_delta: 1
-decision_reason: >
-  Multi-agent added layer-specific optimizations with concrete rollback strategy.
-  cost_delta=1 within threshold. Multi win.
