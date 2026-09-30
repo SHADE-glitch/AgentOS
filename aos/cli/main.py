@@ -132,7 +132,25 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 
 def cmd_memory(args: argparse.Namespace) -> int:
-    return _not_implemented("memory", "phase 3")
+    from aos.core.memory.store import MemoryStore
+
+    command = getattr(args, "memory_command", None)
+    if command != "list":
+        print("usage: aos memory list [--type TYPE]", file=sys.stderr)
+        return 1
+
+    store = MemoryStore()
+    try:
+        memories = store.list_memories(type=getattr(args, "type", None))
+        if not memories:
+            print("(no memories)")
+            return 0
+        for m in memories:
+            print(f"{m['memory_id']:<12} {m['type']:<14} {m['category']:<14} decay={m['decay_factor']:<5} {m['title']}")
+        print(f"\n{len(memories)} memories")
+        return 0
+    finally:
+        store.close()
 
 
 def cmd_review(args: argparse.Namespace) -> int:
@@ -165,7 +183,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--provider", default="opencode")
     p_run.add_argument("--model", default="")
 
-    sub.add_parser("memory", help="inspect the memory store")
+    p_memory = sub.add_parser("memory", help="inspect the memory store")
+    mem_sub = p_memory.add_subparsers(dest="memory_command")
+    p_mem_list = mem_sub.add_parser("list", help="list memories")
+    p_mem_list.add_argument("--type", default=None, help="filter by memory type")
+
     sub.add_parser("review", help="review pending memory promotions")
 
     return parser
