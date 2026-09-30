@@ -153,6 +153,8 @@ def compute_adaptive_score(
         "confidence": memory.get("confidence", "low"),
         "type": memory.get("type", "unknown"),
         "category": memory.get("category", ""),
+        "title": memory.get("title", ""),
+        "body": memory.get("body", ""),
         "tags": memory.get("tags", []),
         "usage_count": uc,
         "is_hypothesis": is_hypothesis,

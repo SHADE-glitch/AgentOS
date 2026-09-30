@@ -56,6 +56,15 @@ DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
         "reject_weaken": True,
         "hypothesis_requires_review": True,
     },
+    "injection": {
+        # The block is one ranked list cut at a whitespace boundary; the
+        # ceiling is a character budget, not a token one, so it stays honest
+        # without a tokenizer.
+        "max_chars": 1400,
+        "max_items": 6,
+        "max_body_chars": 280,
+        "hypothesis_max_items": 1,
+    },
 }
 
 

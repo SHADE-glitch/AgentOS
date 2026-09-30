@@ -18,6 +18,7 @@ from aos.core.loop.state import LoopState
 from aos.core.loop.team import plan_executor
 from aos.core.memory import evolve as evolve_mod
 from aos.core.memory import evaluate as evaluate_mod
+from aos.core.memory import inject
 from aos.core.memory.record import record_outcome
 from aos.core.memory.retrieve import retrieve
 from aos.core.memory.store import MemoryStore
@@ -163,19 +164,17 @@ def build_prompt(state: LoopState, *, decision: dict[str, Any], recall: dict[str
     lines.append("")
     lines.append("Task:")
     lines.append(state.task_text)
-    memories = recall.get("memories", [])
-    if memories:
-        lines.append("")
-        lines.append("Relevant memory (apply where it fits):")
-        for memory in memories:
-            body = (memory.get("content") or memory.get("body") or "").strip()
-            lines.append(f"- [{memory['memory_id']}] {body[:400]}")
-    hypotheses = recall.get("hypotheses", [])
-    if hypotheses:
-        lines.append("")
-        lines.append("Unverified hypotheses (treat as hints, not facts):")
-        for hypothesis in hypotheses:
-            lines.append(f"- [{hypothesis['memory_id']}] {hypothesis.get('content', '')[:300]}")
+    injection = inject.render(
+        recall.get("memories", []),
+        hypotheses=recall.get("hypotheses", []),
+        route={
+            "lead_skill": decision.get("selected", ""),
+            "lead_role": decision.get("lead_role", ""),
+            "confidence": decision.get("confidence", ""),
+        },
+    )
+    if injection["text"]:
+        lines.extend(["", injection["text"]])
     return "\n".join(lines)
 
 
