@@ -1,9 +1,11 @@
 # Agent OS 架构：现状与边界
 
-对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新：**P1（收缩）已落地**，基线由 `b9dd2d6`
-（v4 schema / 339 tests / 11,250 行 Python）变为 313 tests / 10,265 行 Python ——
-编排、`opencode` provider、两个零写入者的 review kind、`skills_dir`/`knowledge_dir`、两个假字段与
-`skill.skills_loaded` 已删除，契约推到 **1.2**。下文描述的是删除后的事实状态。
+对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新，当前反映到 **P3**：
+v4 schema / **338 tests** / **11,073 行 Python**（`aos/`）。
+P1 收缩：编排、`opencode` provider、两个零写入者的 review kind、`skills_dir`/`knowledge_dir`、
+两个假字段与 `skill.skills_loaded` 已删除，契约推到 **1.2**。
+P2 生效化：召回尊重 status/scope，linkage 与 outcome 分表派生。
+P3 判重：提案身份确定、`dedupe_key` 有生成者、灰区走冲突评审。下文是这些之后的事实状态。
 标签：`[Verified]` 带 `path:line` 或可复现命令；`[Inferred]`；`[Judgment]`；`[Unconfirmed]`。
 
 **为什么这份文档不叫"v2 蓝图"**：定位裁决（`docs/decision/positioning.md` §4）选的是候选 D ——
@@ -170,7 +172,24 @@ learning_reviews（pending → approved | rejected | stale）
    └─ 候选无论批准/拒绝都被消费（consumed_at/consumed_by），下一轮不再重算同一件事
 ```
 
-四条安全属性 `[Verified]`（`tests/test_learning_gate.py`、`tests/test_end_to_end_evolution.py` 钉住）：
+**提案身份与判重（P3）** `[Verified]`：`aos/core/learning/identity.py` 让一次运行的 episode 记忆
+拿到**由内容决定的 id**（`sha1(scope|type|category|规范化 token)`），于是 `_create_review` 里本来就在的
+`pending_review_id(memory_id, kind="promotion")` 复用路径真的会命中 —— 同一任务失败三次现在是
+**一条 accumulating 的评审**（屏幕：`#1 pending promotion M-9C4C248E runs=3（提案提出后又收集到 2 次）`），
+而不是三个各持一次证据、各自因 `min_observations=2` 被拒后作废的碎片。
+`aos/core/learning/dedupe.py` 是三层：
+① fact key 由 `store.upsert_memory` 对**每个写入者**生成 ⇒ v2 就建好的 `uq_mem_dedupe(scope, dedupe_key)`
+从此真的会挡（屏幕：`同一事实已存在：M-0AC7CE6C …`，退出码 2，不是 traceback）；
+② 相似面是 **title**（title 才是那条断言；body 对提案而言是模板散文 —— 实测带上 body 时同一事实的
+ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.86` ⇒ 不新建，改为对既有条目累积证据；
+③ `0.60 ≤ ratio < 0.86` 灰区 ⇒ `kind="conflict"` 评审，批准=取代（`supersedes` + 旧条目 `superseded`），
+拒绝=保留旧条目。**tag 重叠只报告不参与判决**：同一个主题下的两条不同主张正是该由人分开的那对。
+`REVIEW_KINDS` 里的 `conflict` 由此有了第一个写入者（P1 保留它的理由兑现）。
+`conflict.find_conflicts` 由每周期扫一次再建索引（`conflict.index_by_id`）取代"每组重扫全表"，
+把 O(组数 × n²) 降到 O(n²)，并用测试证明结果集与逐 id 扫描一致。
+
+四条安全属性 `[Verified]`（`tests/test_learning_gate.py`、`tests/test_end_to_end_evolution.py`、
+`tests/test_dedupe.py` 钉住）：
 1. **create 永不自动**：新记忆只能由人写（`_can_auto_promote` 挡住 `PROPOSAL_TYPES`）；
 2. **weaken 永不自动**：负向证据必须过人门；
 3. **reinforce 与 weaken 同时存在 ⇒ `mixed`**：开 review 且**什么都不写**；
@@ -197,7 +216,9 @@ learning_reviews（pending → approved | rejected | stale）
   `MIGRATIONS` **append-only**（v2 破坏性步骤先 `Connection.backup()`）。现有 v2/v3/v4 三步。
 
 不存在且已裁决**不做**的：`policy_versions`、`skill_versions`、`aos/core/sensing/`、
-`aos/core/evolution/`、`aos/core/learning/`（目录都还没建）。
+`aos/core/evolution/`。
+`aos/core/learning/` **已建且只装新逻辑**（`identity.py` 78 行、`dedupe.py` 164 行）——
+按裁决 `memory/evolve.py` 没有搬家。
 
 **阈值现在有一个可调入口，其余仍内置** `[Verified]`：`policy.py` 有 **54 个叶子策略键**（P2 新增 `retrieval.recall_statuses`；按 `DEFAULT_POLICIES`
 递归数叶子得到，脚本可复现），全部有读者 —— 其中 `success_quality`/`partial_quality`/`failure_quality`
@@ -283,8 +304,8 @@ learning_reviews（pending → approved | rejected | stale）
 | # | 缺陷 | 证据 | 排期 |
 |---|---|---|---|
 | A | 降级在召回侧不生效（无 status/scope 过滤） | 实测 `recalled: ['M-956C3507']`（修复前） | **已修于 P2**（§5 有三段屏幕） |
-| B | 提案身份随机 ⇒ 同任务重复失败堆多条 review | `record.py:86` `_new_id("M")`；实演 3 次同任务失败 ⇒ 16 条 pending | **P3** |
-| C | `dedupe_key` 无生成者 ⇒ `uq_mem_dedupe` 永不生效 | `grep dedupe_key aos/core/memory/{authoring,record,retrieve}.py` 无匹配 | **P3** |
+| B | 提案身份随机 ⇒ 同任务重复失败堆多条 review | 修复前实演 3 次同任务失败 ⇒ 16 条 pending | **已修于 P3**（屏幕见 §6） |
+| C | `dedupe_key` 无生成者 ⇒ `uq_mem_dedupe` 永不生效 | 修复前 grep 无匹配 | **已修于 P3**（`store.upsert_memory` 统一生成） |
 | D | 注入边界标签未清洗 | `inject.py:19-20,149-172`，实测 close 计数 2 | **P5** |
 | E | `collect_before` 在 postflight ⇒ `files_changed` 是脏树自 diff | `stages.py` evidence 段 | **P5** |
 | F | `state.fail("execute")` 后紧接 `complete` 擦除失败 | `stages.py:191-193` | **P5** |

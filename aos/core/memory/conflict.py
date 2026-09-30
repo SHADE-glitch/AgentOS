@@ -113,6 +113,20 @@ def conflicting_ids(conflicts: Iterable[dict[str, Any]]) -> set[str]:
     return ids
 
 
+def index_by_id(pairs: Iterable[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """Group conflict pairs by each memory they involve.
+
+    Exists so one learning cycle can compute the pairwise scan *once*. Calling
+    :func:`conflicts_for` per memory re-scans every pair for every group, which is
+    cubic in the size of the store — the same scan, done n times over.
+    """
+    indexed: dict[str, list[dict[str, Any]]] = {}
+    for pair in pairs:
+        for side in ("memory_a", "memory_b"):
+            indexed.setdefault(pair[side], []).append(pair)
+    return indexed
+
+
 def conflicts_for(memory_id: str, memories: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     """Conflicts that involve *memory_id*."""
     return [c for c in find_conflicts(memories) if memory_id in (c["memory_a"], c["memory_b"])]

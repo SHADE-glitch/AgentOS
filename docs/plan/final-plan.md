@@ -374,3 +374,34 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
   另：`skill_used` 来源的改变使 `observations.skill_used` 列的语义从"路由标签"变为"host 上报"，
   P5 的守卫测试与 P6 的插件必须按新语义对待它。
 - 回滚：单提交 revert；`content/policies/retrieval.json` 与内置默认等值，删除它也不改变行为。
+### P3 · 提案身份与判重 — 已完成
+
+- 测试：323 → **338**（新增 `tests/test_dedupe.py` 15 例）。`doctor` READY。schema：**零迁移**（与预判一致）。
+- 面积：`aos/core/learning/`（`identity.py` 78 + `dedupe.py` 164 + `__init__.py` 6）落地，
+  只装新逻辑，`memory/evolve.py` 未搬家（P1 已裁决）。`aos/` 10,265 → 11,073 行。
+- 三段验收屏幕全部在终端跑出来：
+  ① 同任务失败三次 ⇒ **一条**评审：`#1 pending promotion M-9C4C248E runs=3（提案提出后又收集到 2 次）`；
+  ② 同 scope 同事实第二次 ⇒ `同一事实已存在：M-0AC7CE6C 「Java 17 是本项目运行时」… 退出码 2`（不是 traceback）；
+  ③ 灰区（实测 title ratio=0.604，tag 重叠 0.0）⇒ `pending conflict`，批准后
+     `M-0245234C -> superseded` / `M-CEA71DED 取代它（active，evidence 仍 hypothesis）`。
+- 顺带把 `conflict` 这个 review kind 从"预留枚举"变成**有写入者、有裁决语义**的东西 ——
+  P1 删掉 `policy`/`skill_improvement` 而留下 `conflict` 的理由在这里兑现。
+- 冲突扫描的复杂度：`run_learning` 原来对每个候选组重扫全表（O(组数 × n²)），
+  现在每周期扫一次并用 `conflict.index_by_id` 建索引；`test_conflicts_are_scanned_once_per_cycle_with_the_same_results`
+  钉住"结果集与逐 id 扫描一致"，所以这是性能修复而非语义收窄（分桶收窄只用在 dedupe 的候选集上，那里同 scope 是定义的一部分）。
+- **实施中被测量推翻的两次自我设计（如实记录）**：
+  1. 原打算让 tag 重叠把灰区提升为合并（`lifted`）。这与计划自己的"灰区交人"直接矛盾，
+     且同一个主题下的两条不同主张（"输入要先归一化" vs "加命名空间前缀"，tag 全同）会被静默删掉一条 —— 删掉。
+     tag 重叠改为**只报告不参与判决**。
+  2. 相似面从 `title + body` 改成 `title`：提案 body 是模板句（`任务「…」的结果：failure。`），
+     把同一事实的 ratio 压到最高 0.24，灰区与"新事实"因此不可分；只看 title 实测拉开 0.34 / 0.604 / 1.00。
+     完全重复仍由 fact key 兜住（key 含 body）。
+- **偏离白名单之处（一处）**：`aos/cli/main.py`。原因不是顺手扩展，而是我这个 Phase 自己造出的洞 ——
+  通用评审渲染对 `kind="conflict"` 会打印 `批准后: nothing`，而批准实际会取代一条记忆；
+  这违反本仓库最硬的那条性质（评审展示的与写入的必须是同一件事）。同一提交里还补了
+  `runs_now`：确定 id 让同一提案跨运行复用同一条评审后，`validation_runs` 变成"开评审那次的快照"，
+  人看到的 1 次可能是 3 次证据 —— 新增 `store.evidence_loops_by_review()` 把当前计数显示出来。
+- 屏幕之外的一处诚实边界：`classify()` 的灰区在**自动提案 × 模板散文**的组合下仍可能落到 `new`
+  （title 相似但被模板稀释），此时保护来自第①层 fact key 与人门，而不是相似度 ——
+  所以 §3.4 的"三层"里，第②层是降噪手段而非安全边界，架构文档按这个口径写。
+- 回滚：单提交 revert；零 schema 变更 ⇒ `store/aos.db` 不受影响。

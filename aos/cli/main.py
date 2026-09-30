@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
 from pathlib import Path
 from typing import Any
@@ -325,7 +326,30 @@ def _memory_add(args: argparse.Namespace, store) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    store.upsert_memory(row, tags=row["tags"], roles=row["roles"])
+    from aos.core.learning import dedupe as dedupe_mod
+
+    try:
+        store.upsert_memory(row, tags=row["tags"], roles=row["roles"])
+    except sqlite3.IntegrityError:
+        # The unique (scope, dedupe_key) index caught a restatement of a fact the
+        # store already holds. A traceback tells the author nothing they can act
+        # on; the existing row's id does.
+        existing = store.find_by_dedupe_key(row["scope"], dedupe_mod.key_for(row))
+        if existing:
+            print(
+                f"同一事实已存在：{existing['memory_id']} 「{existing['title']}」"
+                f"（scope={row['scope']}，status={existing['status']}）",
+                file=sys.stderr,
+            )
+            print(
+                "它确实是另一件事 → 改措辞；只是在支持这条既有记忆 → "
+                f"aos memory inspect {existing['memory_id']}，让运行的证据替它说话",
+                file=sys.stderr,
+            )
+        else:
+            print("该 scope 下已有相同事实的记录，未写入。", file=sys.stderr)
+        return 2
+
     _emit(row)
     return 0
 
@@ -485,15 +509,38 @@ def _describe_review(review: dict[str, Any]) -> str:
             f"      -> aos review label {review['review_id']} --outcome success|partial|failure"
         )
 
+    if kind == "conflict":
+        existing = evidence.get("existing") or {}
+        proposed = evidence.get("proposed") or {}
+        new_row = (change.get("new") or {})
+        return "\n".join(
+            [
+                f"#{review['review_id']:<4} {review['status']:<8} conflict {review['memory_id']:<12} "
+                f"相似={evidence.get('ratio')} tag重叠={evidence.get('tag_jaccard')}",
+                f"      已有: {existing.get('title') or '(gone)'}  [{existing.get('status') or '-'}]",
+                f"      提案: {proposed.get('title') or '(none)'}",
+                f"      内容: {(proposed.get('body') or '')[:160]}",
+                f"      批准后: {review['memory_id']} -> superseded，"
+                f"{new_row.get('memory_id') or '(新条目)'} 取代它（active，证据仍为 hypothesis）",
+                f"      拒绝则: 保留 {review['memory_id']}，提案作废",
+                f"      -> aos review approve {review['review_id']} | reject {review['review_id']}",
+            ]
+        )
+
     changes = change.get("changes") or {}
     before = change.get("before") or {}
     moved = ", ".join(
         f"{key}: {before.get(key, '-')!r} -> {value!r}" for key, value in changes.items()
     ) or "nothing"
     proposal = evidence.get("proposal") or {}
+    runs_now = review.get("runs_now")
+    opened_runs = evidence.get("validation_runs", 0)
+    runs_label = f"runs={runs_now}" if runs_now is not None else f"runs={opened_runs}"
+    if runs_now is not None and runs_now > opened_runs:
+        runs_label += f"（提案提出后又收集到 {runs_now - opened_runs} 次）"
     lines = [
         f"#{review['review_id']:<4} {review['status']:<8} {kind} {review['memory_id']:<12} "
-        f"runs={evidence.get('validation_runs', 0)} quality={evidence.get('quality_score', 0)}"
+        f"{runs_label} quality={evidence.get('quality_score', 0)}"
     ]
     if change.get("kind") == "create":
         lines.append(f"      新建: [{proposal.get('type')}] {proposal.get('title', '')}")

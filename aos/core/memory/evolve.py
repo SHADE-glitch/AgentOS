@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from aos.core.learning import dedupe as dedupe_mod
 from aos.core.memory import conflict as conflict_mod
 from aos.core.memory import evaluate as evaluate_mod
 from aos.core.memory.policy import load_policy
@@ -537,6 +538,57 @@ def _proposed_change(result: dict[str, Any], memory: Optional[dict[str, Any]]) -
     }
 
 
+def _open_conflict_review(
+    store: MemoryStore, group: dict[str, Any], verdict: dict[str, Any], proposal: dict[str, Any]
+) -> tuple[Optional[int], bool]:
+    """Ask a person which of two similar statements is the one to keep.
+
+    The grey band is deliberately not resolved by code: merging on a 0.7 ratio
+    would silently delete a fact nobody agreed to lose, and keeping both lets the
+    store fill with near-duplicates. So the pair goes to the queue with its
+    numbers attached, approving means "the new one supersedes the old", and
+    rejecting means the opposite.
+    """
+    existing = verdict["match"]
+    existing_id = str(existing["memory_id"])
+    pending = store.pending_review_id(existing_id, kind="conflict")
+    if pending is not None:
+        return pending, False
+    loops = sorted(group["executions"])
+    review_id = store.add_review(
+        memory_id=existing_id,
+        candidate_id=group["best_candidate_id"],
+        kind="conflict",
+        loop_id=group["candidates"][0].get("loop_id", "") if group.get("candidates") else "",
+        proposed_change={
+            "kind": "conflict",
+            "action": "supersede",
+            "supersedes": existing_id,
+            # Only the words that will actually be written. `status`, `lane`,
+            # `evidence_level` and `confidence` are set by _resolve_conflict itself,
+            # so copying the proposal's claims into the effect would let the review
+            # advertise a standing the write never grants.
+            "new": {
+                key: proposal.get(key)
+                for key in (
+                    "memory_id", "type", "category", "title", "body", "tags", "roles",
+                    "scope", "when_to_apply",
+                )
+            },
+        },
+        evidence={
+            "reason": "possible duplicate, similarity in the grey band",
+            "ratio": existing["ratio"],
+            "tag_jaccard": existing["tag_jaccard"],
+            "existing": {"memory_id": existing_id, "title": existing.get("title", ""),
+                         "status": existing.get("status", "")},
+            "proposed": {"title": proposal.get("title", ""), "body": proposal.get("body", "")},
+            "evidence_sources": loops,
+        },
+    )
+    return review_id, True
+
+
 def _create_review(
     group: dict[str, Any], result: dict[str, Any], memory: Optional[dict[str, Any]], store: MemoryStore
 ) -> tuple[Optional[int], bool]:
@@ -633,7 +685,14 @@ def run_learning(*, store: Optional[MemoryStore] = None, apply: bool = True) -> 
         candidates = store.list_open_candidates()
         memories = {m["memory_id"]: m for m in store.memories_for_scoring()}
 
-        groups = group_candidates(candidates, store.linkage_by_memory())
+        linkage = store.linkage_by_memory()
+        groups = group_candidates(candidates, linkage)
+        # One pairwise scan per cycle, indexed by memory. Asking
+        # ``conflicts_for(memory_id, all_memories)`` inside the loop re-scanned
+        # every pair for every group, which is cubic in the size of the store.
+        conflicts_by_id = conflict_mod.index_by_id(
+            conflict_mod.find_conflicts(list(memories.values()))
+        )
         results: list[dict[str, Any]] = []
         reviews_created = 0
         promoted: list[dict[str, Any]] = []
@@ -643,12 +702,69 @@ def run_learning(*, store: Optional[MemoryStore] = None, apply: bool = True) -> 
             group = groups[memory_id]
             candidate_ids = [c.get("candidate_id") for c in group["candidates"] if c.get("candidate_id")]
             memory = memories.get(memory_id)
+            duplicate = None
+            if memory is None:
+                proposal = _proposal_of(group)
+                if proposal is not None:
+                    verdict = dedupe_mod.classify(store, proposal)
+                    if verdict["action"] == "merge":
+                        target = str(verdict["match"]["memory_id"])
+                        existing = store.get_memory(target)
+                        if existing is not None:
+                            # One fact, one row: the arriving evidence joins the
+                            # memory that already states it. Candidates stay
+                            # `create`-typed, which keeps the human in the loop —
+                            # a duplicate is not self-approving evidence.
+                            memory_id = target
+                            memory = existing
+                            memories.setdefault(target, existing)
+                            group["memory_id"] = target
+                            group["executions"] |= {
+                                run["loop_id"] for run in linkage.get(target, [])
+                            }
+                            group["source_hashes"] |= {
+                                run["source_hash"]
+                                for run in linkage.get(target, [])
+                                if run.get("source_hash")
+                            }
+                            duplicate = verdict["match"]
+                    elif verdict["action"] == "review":
+                        review_id, created = _open_conflict_review(store, group, verdict, proposal)
+                        if created:
+                            reviews_created += 1
+                        store.consume_candidates(candidate_ids, consumed_by=f"conflict:{review_id}")
+                        results.append(
+                            {
+                                "memory_id": verdict["match"]["memory_id"],
+                                "candidate_id": group["best_candidate_id"],
+                                "candidate_types": sorted(
+                                    c.get("candidate_type", "") for c in group["candidates"]
+                                ),
+                                "status": "review",
+                                "validation_runs": len(group["executions"]),
+                                "quality_score": group["best_quality"],
+                                "confidence": 0.0,
+                                "checks": {},
+                                "rejection_reason": (
+                                    f"possible duplicate of {verdict['match']['memory_id']} "
+                                    f"(ratio {verdict['scores']['ratio']})"
+                                ),
+                                "evidence_sources": sorted(group["executions"]),
+                                "memory_exists": True,
+                                "proposal": proposal,
+                                "conflicts": [],
+                                "gate": "conflict",
+                                "review_id": review_id,
+                                "promotion": None,
+                                "duplicate_of": verdict["match"],
+                            }
+                        )
+                        continue
             result = validate_group(
                 group, promotion=promotion, rejection=rejection, memory=memory
             )
-            result["conflicts"] = (
-                conflict_mod.conflicts_for(memory_id, list(memories.values())) if memory else []
-            )
+            result["duplicate_of"] = duplicate
+            result["conflicts"] = conflicts_by_id.get(memory_id, []) if memory else []
             result["gate"] = None
             result["review_id"] = None
             result["promotion"] = None
@@ -717,13 +833,135 @@ def run_learning(*, store: Optional[MemoryStore] = None, apply: bool = True) -> 
 
 # ── review gate ────────────────────────────────────────────────────────
 def list_reviews(*, store: Optional[MemoryStore] = None, status: Optional[str] = None) -> list[dict[str, Any]]:
+    """The queue, with each review's evidence counted as of now.
+
+    The stored snapshot says how many runs supported the decision when it was
+    opened. A reused review (the same proposal arriving from a later run) has more
+    than that, and a reviewer deciding on "one run" who is actually looking at
+    three is deciding on a number nobody wrote down on purpose.
+    """
     owns_store = store is None
     store = store or MemoryStore()
     try:
-        return store.list_reviews(status=status)
+        reviews = store.list_reviews(status=status)
+        loops = store.evidence_loops_by_review()
+        for review in reviews:
+            gathered = loops.get(int(review["review_id"]), [])
+            review["evidence_loops"] = gathered
+            review["runs_now"] = len(gathered)
+        return reviews
     finally:
         if owns_store:
             store.close()
+
+
+def _resolve_conflict(store: MemoryStore, review: dict[str, Any]) -> dict[str, Any]:
+    """Approving a conflict review: the newer statement replaces the one it supersedes.
+
+    Neither side is deleted. The old row keeps its history and turns
+    ``superseded``, which takes it out of recall, and the new row is born exactly
+    where a human-approved proposal is born — ``active`` but with hypothesis-level
+    evidence, because being preferred over a near-duplicate is not the same as
+    being proven. Rejecting the review goes the other way and is handled by
+    :func:`reject_review`, which needs no special case: nothing is written.
+    """
+    review_id = review["review_id"]
+    change = dict(review.get("proposed_change") or {})
+    if change.get("action") != "supersede":
+        return {
+            "review_id": review_id,
+            "status": "malformed",
+            "reason": "a conflict review must carry a supersede instruction",
+        }
+    new = dict(change.get("new") or {})
+    if not new.get("title") or not new.get("body"):
+        return {"review_id": review_id, "status": "rejected", "reason": "the proposed wording is gone"}
+    old_id = str(change.get("supersedes") or review.get("memory_id") or "")
+    old = store.get_memory(old_id)
+    if old is None:
+        return {
+            "review_id": review_id,
+            "status": "stale",
+            "reason": "the memory this proposal would replace no longer exists",
+        }
+
+    scope = new.get("scope") or old.get("scope") or "global"
+    if new.get("scope") not in (None, "", scope) and new.get("scope") != scope:
+        return {
+            "review_id": review_id,
+            "status": "malformed",
+            "reason": "a conflict may only be resolved inside one scope",
+        }
+    if dedupe_mod.key_for({**new, "scope": scope}) == old.get("dedupe_key"):
+        # The same fact in other words is not a replacement; it is the same row.
+        # Creating a second one would violate the very index that caught it.
+        store.set_review_status(review_id, "approved")
+        store.add_event(
+            event_type="learning.conflict_resolved",
+            payload={"review_id": review_id, "memory_id": old_id, "result": "no_new_row"},
+        )
+        return {
+            "review_id": review_id,
+            "status": "approved",
+            "promotion": {
+                "memory_id": old_id,
+                "status": "no_new_row",
+                "kind": "conflict",
+                "reason": "same fact key as the existing memory",
+            },
+        }
+
+    memory_id = str(new.get("memory_id") or "")
+    if not memory_id:
+        # Checked before anything is retired: the proposal reserved its id when it
+        # was drafted, and without one there is nothing to write. Superseding the
+        # old row first would leave the store with two losses instead of one fact.
+        return {
+            "review_id": review_id,
+            "status": "malformed",
+            "reason": "the proposal carries no reserved memory_id",
+        }
+
+    store.update_memory_fields(old_id, status="superseded")
+    store.upsert_memory(
+        {
+            "memory_id": memory_id,
+            "type": new.get("type") or "episodic",
+            "category": new.get("category") or "",
+            "title": new.get("title") or "",
+            "body": new.get("body") or "",
+            "scope": scope,
+            "when_to_apply": new.get("when_to_apply") or "",
+            "status": "active",
+            "lane": "hypothesis",
+            "evidence_level": "hypothesis",
+            "confidence": "low",
+            "supersedes": old_id,
+            "version": int(old.get("version", 1) or 1) + 1,
+            "source_task": new.get("task_id") or "",
+            "source_session": new.get("session_id") or "",
+            "source_project": new.get("cwd") or "",
+            "source_loop_id": new.get("loop_id") or "",
+        },
+        tags=new.get("tags") or [],
+        roles=new.get("roles") or [],
+    )
+    store.set_review_status(review_id, "approved")
+    store.add_event(
+        event_type="learning.conflict_resolved",
+        payload={"review_id": review_id, "new": memory_id, "superseded": old_id},
+    )
+    return {
+        "review_id": review_id,
+        "status": "approved",
+        "promotion": {
+            "memory_id": memory_id,
+            "status": "created",
+            "kind": "conflict",
+            "supersedes": old_id,
+            "title": new.get("title"),
+        },
+    }
 
 
 def approve_review(review_id: int, *, store: Optional[MemoryStore] = None) -> dict[str, Any]:
@@ -737,6 +975,8 @@ def approve_review(review_id: int, *, store: Optional[MemoryStore] = None) -> di
         if review["status"] != "pending":
             return {"review_id": review_id, "status": "already_decided", "review_status": review["status"]}
         kind = review.get("kind", "promotion")
+        if kind == "conflict":
+            return _resolve_conflict(store, review)
         if kind != "promotion":
             # A label request is not answered by "yes": approving it would invent a
             # verdict, which is the thing the gate exists to avoid.

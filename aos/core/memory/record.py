@@ -30,8 +30,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Optional
 
+from aos.core.learning import identity
 from aos.core.memory.policy import load_policy
-from aos.core.memory.store import MemoryStore, _new_id
+from aos.core.memory.store import MemoryStore
 
 # Candidate types that ask for a *new* memory rather than a change to one.
 PROPOSAL_TYPES = frozenset({"create", "new", "create_hypothesis"})
@@ -93,11 +94,20 @@ def proposal_for_loop(
         body_parts.append("改动：" + ", ".join(changed))
     if cwd:
         body_parts.append(f"位置：{cwd}")
+    mtype = "failure" if outcome == "failure" else "episodic"
+    scope = f"project:{Path(cwd).name}" if cwd else "global"
+    body = " ".join(body_parts)[:500]
     return {
-        "memory_id": _new_id("M"),
-        "type": "failure" if outcome == "failure" else "episodic",
+        # Derived from what the episode says, not handed out randomly: the same
+        # task failing three times is one thing worth remembering once, and a
+        # stable id is what lets the review queue recognise the second arrival
+        # instead of opening a third decision for a human to make again.
+        "memory_id": identity.proposal_id(
+            scope=scope, category=category, mtype=mtype, title=task[:110] or loop_id, body=body
+        ),
+        "type": mtype,
         "title": task[:110] or loop_id,
-        "body": " ".join(body_parts)[:500],
+        "body": body,
         "category": category,
         # The route's skills become tags because a tag hit is the largest single
         # term in recall ranking — a proposal tagged "bugfix" can be found again
@@ -107,7 +117,7 @@ def proposal_for_loop(
         # Scoped to the project it happened in: an episode in one repository is
         # not a fact about another, and an unscoped proposal is how Java advice
         # ends up in a JavaScript task.
-        "scope": f"project:{Path(cwd).name}" if cwd else "global",
+        "scope": scope,
         "when_to_apply": f"下次处理「{task[:40]}」这类任务时" if task else "",
         "outcome": outcome,
         "quality_score": float(quality_score),

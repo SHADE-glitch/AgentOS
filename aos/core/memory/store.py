@@ -116,7 +116,13 @@ class MemoryStore:
         weight anywhere else — a memory whose tags silently vanish stops being
         findable by the largest single term in its ranking.
         """
+        from aos.core.learning import dedupe as dedupe_mod
+
+        # Every writer passes through here, so this is where the key gets derived
+        # rather than declared: an author who did not think about deduplication
+        # still cannot store the same fact twice inside one scope.
         memory_id = memory.get("memory_id") or _new_id("M")
+        dedupe_key = str(memory.get("dedupe_key") or "") or dedupe_mod.key_for(memory)
         if tags is None:
             tags = list(memory.get("tags") or [])
         if roles is None:
@@ -146,7 +152,7 @@ class MemoryStore:
             memory.get("lane", "standard"),
             memory.get("scope", "global"),
             memory.get("when_to_apply", ""),
-            memory.get("dedupe_key", ""),
+            dedupe_key,
             int(memory.get("version", 1) or 1),
             memory.get("supersedes", ""),
             memory.get("last_verified_at", ""),
@@ -239,6 +245,17 @@ class MemoryStore:
             f"SELECT * FROM memories {where} ORDER BY created_at, memory_id", params
         ).fetchall()
         return [self._row_to_memory(r) for r in rows]
+
+    def find_by_dedupe_key(self, scope: str, key: str) -> Optional[dict[str, Any]]:
+        """The live row that already states this fact, if there is one."""
+        if not key:
+            return None
+        row = self._conn.execute(
+            "SELECT * FROM memories WHERE scope = ? AND dedupe_key = ? "
+            "ORDER BY CASE status WHEN 'superseded' THEN 1 ELSE 0 END, memory_id LIMIT 1",
+            (scope, key),
+        ).fetchone()
+        return self._row_to_memory(row) if row else None
 
     def delete_memory(self, memory_id: str) -> None:
         self._conn.execute("DELETE FROM memories WHERE memory_id = ?", (memory_id,))
@@ -741,6 +758,27 @@ class MemoryStore:
             "SELECT * FROM learning_reviews WHERE review_id = ?", (int(review_id),)
         ).fetchone()
         return self._row_to_review(row) if row else None
+
+    def evidence_loops_by_review(self) -> dict[int, list[str]]:
+        """Which loops have since been consumed into each open review.
+
+        A review records the evidence that existed when it opened. When the same
+        proposal arrives again from another run the queue reuses that review, so
+        the number a reviewer reads can be two runs older than the decision they
+        are making — and "only one run supports this" is a reason to reject.
+        """
+        rows = self._conn.execute(
+            "SELECT consumed_by, loop_id FROM candidates "
+            "WHERE consumed_by LIKE 'review:%' AND loop_id <> '' ORDER BY candidate_id"
+        ).fetchall()
+        grouped: dict[int, set[str]] = {}
+        for row in rows:
+            try:
+                review_id = int(str(row["consumed_by"]).split(":", 1)[1])
+            except ValueError:
+                continue
+            grouped.setdefault(review_id, set()).add(row["loop_id"])
+        return {review_id: sorted(loops) for review_id, loops in grouped.items()}
 
     def list_reviews(
         self, *, status: Optional[str] = None, kind: Optional[str] = None
