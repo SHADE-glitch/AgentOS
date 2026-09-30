@@ -149,14 +149,18 @@ def test_record_failure_creates_candidate(store):
     _add(store, "M1")
     counts = record_outcome(loop_id="L1", outcome="failure", quality_score=0.0, memories_used=["M1"], store=store)
     assert counts["candidates_created"] == 1
-    assert store.list_candidates()[0]["candidate_type"] == "failure"
+    candidate = store.list_candidates()[0]
+    assert candidate["candidate_type"] == "weaken"
+    assert candidate["target_memory"] == "M1"
 
 
 def test_record_high_quality_success_creates_candidate(store):
     _add(store, "M1")
     counts = record_outcome(loop_id="L1", outcome="success", quality_score=4.0, memories_used=["M1"], store=store)
     assert counts["candidates_created"] == 1
-    assert store.list_candidates()[0]["candidate_type"] == "success"
+    candidate = store.list_candidates()[0]
+    assert candidate["candidate_type"] == "reinforce"
+    assert candidate["target_memory"] == "M1"
 
 
 def test_usage_stats_track_success_rate(store):

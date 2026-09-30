@@ -332,7 +332,71 @@ class MemoryStore:
 
     def list_candidates(self) -> list[dict[str, Any]]:
         rows = self._conn.execute("SELECT * FROM candidates ORDER BY candidate_id").fetchall()
-        return [dict(r) for r in rows]
+        candidates = []
+        for row in rows:
+            candidate = dict(row)
+            candidate["payload"] = json.loads(candidate.get("payload_json") or "{}")
+            candidates.append(candidate)
+        return candidates
+
+    # ── learning reviews (the human gate) ──────────────────────────
+
+    def add_review(
+        self,
+        *,
+        memory_id: str,
+        proposed_change: dict[str, Any],
+        evidence: dict[str, Any],
+        candidate_id: Optional[int] = None,
+    ) -> int:
+        cursor = self._conn.execute(
+            """
+            INSERT INTO learning_reviews
+                (memory_id, candidate_id, proposed_change_json, evidence_json, status, created_at)
+            VALUES (?,?,?,?, 'pending', ?)
+            """,
+            (
+                memory_id,
+                candidate_id,
+                json.dumps(proposed_change, ensure_ascii=False),
+                json.dumps(evidence, ensure_ascii=False),
+                _now(),
+            ),
+        )
+        self._conn.commit()
+        return int(cursor.lastrowid)
+
+    def get_review(self, review_id: int) -> Optional[dict[str, Any]]:
+        row = self._conn.execute(
+            "SELECT * FROM learning_reviews WHERE review_id = ?", (int(review_id),)
+        ).fetchone()
+        return self._row_to_review(row) if row else None
+
+    def list_reviews(self, *, status: Optional[str] = None) -> list[dict[str, Any]]:
+        if status:
+            rows = self._conn.execute(
+                "SELECT * FROM learning_reviews WHERE status = ? ORDER BY review_id", (status,)
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT * FROM learning_reviews ORDER BY review_id"
+            ).fetchall()
+        return [self._row_to_review(r) for r in rows]
+
+    def has_pending_review(self, memory_id: str) -> bool:
+        row = self._conn.execute(
+            "SELECT 1 FROM learning_reviews WHERE memory_id = ? AND status = 'pending' LIMIT 1",
+            (memory_id,),
+        ).fetchone()
+        return row is not None
+
+    def set_review_status(self, review_id: int, status: str) -> bool:
+        cursor = self._conn.execute(
+            "UPDATE learning_reviews SET status = ?, reviewed_at = ? WHERE review_id = ?",
+            (status, _now(), int(review_id)),
+        )
+        self._conn.commit()
+        return cursor.rowcount > 0
 
     # ── telemetry ──────────────────────────────────────────────────
 
@@ -358,7 +422,41 @@ class MemoryStore:
             rows = self._conn.execute("SELECT * FROM telemetry_events ORDER BY id").fetchall()
         return [dict(r) for r in rows]
 
+    # ── promotion writes ───────────────────────────────────────────
+
+    # Fields the learning pipeline is allowed to change. Everything else on a
+    # memory is author-owned content and must not be rewritten by promotion.
+    _PROMOTABLE_FIELDS = frozenset(
+        {
+            "evidence_level",
+            "confidence",
+            "status",
+            "observation_count",
+            "decay_factor",
+            "performance_gain",
+        }
+    )
+
+    def update_memory_fields(self, memory_id: str, **fields: Any) -> bool:
+        """Apply a whitelisted partial update to a memory. Returns True if applied."""
+        updates = {k: v for k, v in fields.items() if k in self._PROMOTABLE_FIELDS}
+        if not updates:
+            return False
+        assignments = ", ".join(f"{k} = ?" for k in updates)
+        cursor = self._conn.execute(
+            f"UPDATE memories SET {assignments}, updated_at = ? WHERE memory_id = ?",
+            (*updates.values(), _now(), memory_id),
+        )
+        self._conn.commit()
+        return cursor.rowcount > 0
+
     # ── internals ──────────────────────────────────────────────────
+
+    def _row_to_review(self, row: sqlite3.Row) -> dict[str, Any]:
+        review = dict(row)
+        review["proposed_change"] = json.loads(review.pop("proposed_change_json") or "{}")
+        review["evidence"] = json.loads(review.pop("evidence_json") or "{}")
+        return review
 
     def _group(self, sql: str, value_key: str) -> dict[str, list[str]]:
         grouped: dict[str, list[str]] = {}

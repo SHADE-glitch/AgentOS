@@ -20,6 +20,7 @@ def record_outcome(
     quality_score: float = 0.0,
     task_id: str = "",
     session_id: str = "",
+    source_hash: str = "",
     memories_used: Optional[list[str]] = None,
     store: Optional[MemoryStore] = None,
 ) -> dict[str, int]:
@@ -41,6 +42,7 @@ def record_outcome(
             task_id=task_id,
             session_id=session_id,
             quality_score=quality_score,
+            source_hash=source_hash,
         )
         observations_recorded = 1
 
@@ -52,27 +54,39 @@ def record_outcome(
                 task_id=task_id,
                 session_id=session_id,
                 quality_score=quality_score,
+                source_hash=source_hash,
             )
             observations_recorded += 1
             # Keep the denormalised count in sync with the observation log.
             store.set_observation_count(memory_id, len(store.list_observations(memory_id=memory_id)))
 
-        candidates_created = 0
+        # Candidates are *proposed changes to a specific memory*, so the
+        # learning pipeline can group and validate them per target. A failure
+        # proposes weakening each memory that was in play; a high-quality
+        # success proposes reinforcing it.
         promotion = load_policy("promotion")
+        candidate_type = None
         if outcome == "failure":
-            store.add_candidate(
-                candidate_type="failure",
-                loop_id=loop_id,
-                payload={"task_id": task_id, "memories_used": memories_used, "quality_score": quality_score},
-            )
-            candidates_created += 1
+            candidate_type = "weaken"
         elif outcome == "success" and quality_score >= float(promotion["quality_threshold"]):
-            store.add_candidate(
-                candidate_type="success",
-                loop_id=loop_id,
-                payload={"task_id": task_id, "memories_used": memories_used, "quality_score": quality_score},
-            )
-            candidates_created += 1
+            candidate_type = "reinforce"
+
+        candidates_created = 0
+        if candidate_type:
+            for memory_id in memories_used:
+                store.add_candidate(
+                    candidate_type=candidate_type,
+                    target_memory=memory_id,
+                    loop_id=loop_id,
+                    payload={
+                        "task_id": task_id,
+                        "outcome": outcome,
+                        "quality_score": quality_score,
+                        "session_id": session_id,
+                        "source_hash": source_hash,
+                    },
+                )
+                candidates_created += 1
 
         return {"observations_recorded": observations_recorded, "candidates_created": candidates_created}
     finally:

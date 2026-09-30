@@ -154,7 +154,37 @@ def cmd_memory(args: argparse.Namespace) -> int:
 
 
 def cmd_review(args: argparse.Namespace) -> int:
-    return _not_implemented("review", "phase 4")
+    from aos.core.memory import evolve
+
+    command = getattr(args, "review_command", None) or "list"
+
+    if command == "list":
+        reviews = evolve.list_reviews(status=getattr(args, "status", None))
+        if not reviews:
+            print("(no reviews)")
+            return 0
+        for review in reviews:
+            evidence = review["evidence"]
+            reason = evidence.get("reason") or ""
+            print(
+                f"#{review['review_id']:<4} {review['status']:<9} {review['memory_id']:<12} "
+                f"runs={evidence.get('validation_runs', 0)} quality={evidence.get('quality_score', 0)} {reason}"
+            )
+        print(f"\n{len(reviews)} reviews")
+        return 0
+
+    if command in ("approve", "reject"):
+        if command == "approve":
+            result = evolve.approve_review(args.review_id)
+            expected = "approved"
+        else:
+            result = evolve.reject_review(args.review_id)
+            expected = "rejected"
+        _emit(result)
+        return 0 if result["status"] == expected else 1
+
+    print("usage: aos review list [--status STATUS] | approve <id> | reject <id>", file=sys.stderr)
+    return 1
 
 
 # ── Parser ─────────────────────────────────────────────────────────────
@@ -188,7 +218,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_mem_list = mem_sub.add_parser("list", help="list memories")
     p_mem_list.add_argument("--type", default=None, help="filter by memory type")
 
-    sub.add_parser("review", help="review pending memory promotions")
+    p_review = sub.add_parser("review", help="review pending memory promotions")
+    review_sub = p_review.add_subparsers(dest="review_command")
+    p_review_list = review_sub.add_parser("list", help="list learning reviews")
+    p_review_list.add_argument(
+        "--status", choices=["pending", "approved", "rejected"], default=None, help="filter by status"
+    )
+    for action in ("approve", "reject"):
+        p_action = review_sub.add_parser(action, help=f"{action} a pending review")
+        p_action.add_argument("review_id", type=int, help="review id")
 
     return parser
 
