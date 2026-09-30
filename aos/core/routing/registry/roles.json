@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "name": "default_role_catalog",
+    "version": "1.0",
+    "note": "Built-in agent role catalog. The content layer may override or extend it under content/skills/."
+  },
+  "roles": [
+    {"id": "code-reviewer", "desc": "reviews and fixes defects, refactors, general code quality"},
+    {"id": "testing-engineer", "desc": "unit/integration tests, assertions, coverage, fixtures"},
+    {"id": "security-engineer", "desc": "auth, authorization, injection, secrets, encryption"},
+    {"id": "database-engineer", "desc": "schema, migrations, indexes, queries, joins"},
+    {"id": "backend-architect", "desc": "APIs, services, backend structure and configuration"},
+    {"id": "frontend-architect", "desc": "UI, components, frontend structure"},
+    {"id": "frontend-performance", "desc": "load time, rendering, bundle size, latency"},
+    {"id": "distributed-system", "desc": "concurrency, messaging, scaling, multi-tenant"},
+    {"id": "system-architect", "desc": "system design, architecture, cross-cutting decisions"},
+    {"id": "technical-reviewer", "desc": "technical review, reports, documentation"},
+    {"id": "devops-engineer", "desc": "deploy, containers, CI/CD, observability, infra"},
+    {"id": "rag-engineer", "desc": "retrieval augmented generation, embeddings, vector search"},
+    {"id": "llm-engineer", "desc": "LLM integration, prompt/agent plumbing"},
+    {"id": "prompt-engineer", "desc": "prompt design, evaluation and refinement"},
+    {"id": "agent-engineer", "desc": "agent workflows, tool calling, MCP"},
+    {"id": "learning-strategist", "desc": "learning plans and study strategy"},
+    {"id": "project-mentor", "desc": "guided practice and explanation"},
+    {"id": "interview-coach", "desc": "interview preparation"}
+  ]
+}

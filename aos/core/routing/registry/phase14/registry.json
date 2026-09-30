@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "name": "phase14_semantic_router_registry_contract",
+    "version": "3.0",
+    "note": "Vocabulary + evidence contract for the Phase14 Hybrid (fast/slow) Semantic Router. Reuses the Phase13 canonical abstract 10-skill registry for routing ground truth, and ADDS the Phase13.5 route_mode / escalation contract.",
+    "vocab_base": "../phase13/registry.json",
+    "route_mode_enum": ["lexical", "semantic", "planner"],
+    "escalation_reason_enum": ["domain_unrecognized", "partial_known", "ambiguous", "low_separation", "low_confidence"],
+    "escalation_contract": {
+      "purpose": "Hybrid router routes high-confidence/clear tasks on the fast path and escalates low-confidence/ambiguous/multi-intent/F3-F5 tasks to a semantic reader or planner. Benchmark measures BOTH semantic correctness AND escalation propriety (the gate must be selective, not a 100%-escalate loophole).",
+      "fast_path_ok_on": ["clear", "e2e-pass"],
+      "escalate_expected_on": ["generic-lure", "volume", "first-match", "shared-term", "rare-word", "description-creep", "ambiguous", "contradictory", "multi-domain", "pollution"],
+      "fallback_on": ["new-domain", "keyword-less"],
+      "either_ok": ["implicit", "near-dup", "low-conf-exec"],
+      "provenance_rule": "If route_mode==planner, the manifest MUST include an escalation_reason whose cited tokens are SUBSTRINGS present in the original task_text. An ungrounded/attractive reason (cited tokens not in the task) is treated as hallucinated evidence; validator must reject or dock evidence.",
+      "efficiency_rule": "Escalating a task labeled fast_path_ok (clear single-intent high-confidence) is WASTE. A router whose total escalation rate exceeds 0.55 across the pool, or that escalates >10% of the clear set, is penalized on the efficiency axis (anti-'escalate everything' guard).",
+      "recovery_rule": "escalation_reason must be compatible with escalation_reason_enum for consumers (loop_controller / evidence / recovery). retry budget = 2 still applies across escalated retries; low-confidence must trigger escalation-or-protection, never a crash."
+    }
+  }
+}

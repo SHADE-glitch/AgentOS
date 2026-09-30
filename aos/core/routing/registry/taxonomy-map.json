@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "name": "default_taxonomy_map",
+    "version": "1.0",
+    "note": "Maps the router's canonical abstract skill ids to concrete agent roles. The content layer may override this at content/routing/taxonomy-map.json."
+  },
+  "map": {
+    "bugfix": "code-reviewer",
+    "refactor": "code-reviewer",
+    "performance": "frontend-performance",
+    "security": "security-engineer",
+    "data_model": "database-engineer",
+    "test": "testing-engineer",
+    "observability": "devops-engineer",
+    "config": "backend-architect",
+    "infra": "devops-engineer",
+    "report": "technical-reviewer"
+  }
+}
