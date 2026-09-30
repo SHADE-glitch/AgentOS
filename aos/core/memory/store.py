@@ -420,6 +420,33 @@ class MemoryStore:
         ).fetchone()
         return int(row["n"] or 0)
 
+    def backfill_dedupe_keys(self) -> list[str]:
+        """Derive the fact key for rows written before the store did it on write.
+
+        `uq_mem_dedupe` can only protect rows that carry a key, so rows written
+        before every writer filled one sit outside the index — and those are the
+        rows a reviewer trusts most, because they were authored by hand.
+        Returns the ids it filled; idempotent, since a filled row is no longer empty.
+        """
+        from aos.core.learning import dedupe as dedupe_mod
+
+        rows = self._conn.execute(
+            "SELECT memory_id, type, category, title, body, scope FROM memories "
+            "WHERE dedupe_key = '' ORDER BY memory_id"
+        ).fetchall()
+        filled: list[str] = []
+        for row in rows:
+            key = dedupe_mod.key_for(dict(row))
+            if not key.strip("|"):
+                continue
+            self._conn.execute(
+                "UPDATE memories SET dedupe_key = ?, updated_at = ? WHERE memory_id = ?",
+                (key, _now(), row["memory_id"]),
+            )
+            filled.append(row["memory_id"])
+        self._conn.commit()
+        return filled
+
     def expire_due(self, *, today: str = "") -> list[dict[str, Any]]:
         """Step overdue memories down one lifecycle level; return what moved.
 
@@ -877,8 +904,20 @@ class MemoryStore:
     )
 
     def update_memory_fields(self, memory_id: str, **fields: Any) -> bool:
-        """Apply a whitelisted partial update to a memory. Returns True if applied."""
-        updates = {k: v for k, v in fields.items() if k in self._PROMOTABLE_FIELDS}
+        """Apply a whitelisted partial update to a memory. Returns True if applied.
+
+        Asking for a field outside the whitelist is an error rather than a quiet
+        no-op. The whitelist is the safety property — learning must never rewrite a
+        title or body it did not write — but filtering silently would let a caller
+        believe it had set `revalidate_after` while the store carried on without it.
+        """
+        refused = [key for key in fields if key not in self._PROMOTABLE_FIELDS]
+        if refused:
+            raise ValueError(
+                f"these columns are not writable here: {sorted(refused)}; "
+                f"allowed: {sorted(self._PROMOTABLE_FIELDS)}"
+            )
+        updates = dict(fields)
         if not updates:
             return False
         assignments = ", ".join(f"{k} = ?" for k in updates)

@@ -1,11 +1,13 @@
 # Agent OS 架构：现状与边界
 
-对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新，当前反映到 **P3**：
-v4 schema / **338 tests** / **11,073 行 Python**（`aos/`）。
+对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新，当前反映到 **P4**：
+v4 schema / **349 tests** / 11,073+ 行 Python（`aos/`，见 §3）。
 P1 收缩：编排、`opencode` provider、两个零写入者的 review kind、`skills_dir`/`knowledge_dir`、
 两个假字段与 `skill.skills_loaded` 已删除，契约推到 **1.2**。
 P2 生效化：召回尊重 status/scope，linkage 与 outcome 分表派生。
-P3 判重：提案身份确定、`dedupe_key` 有生成者、灰区走冲突评审。下文是这些之后的事实状态。
+P3 判重：提案身份确定、`dedupe_key` 有生成者、灰区走冲突评审。
+P4 人门可用：标注即刻结算、`doctor --json`、`memory refresh`、阈值从文件可调。
+下文是这些之后的事实状态。
 标签：`[Verified]` 带 `path:line` 或可复现命令；`[Inferred]`；`[Judgment]`；`[Unconfirmed]`。
 
 **为什么这份文档不叫"v2 蓝图"**：定位裁决（`docs/decision/positioning.md` §4）选的是候选 D ——
@@ -76,26 +78,29 @@ Self-Evolution 的对象只有 memory / policy / routing knowledge / experience 
 ## 3. 组件（真实存在的东西 + 谁调用谁）
 
 ```
-bin/aos ──▶ aos/cli/main.py (715) ── 8 个命令：doctor preflight postflight route run memory review
+bin/aos ──▶ aos/cli/main.py (914) ── 8 个命令组：doctor preflight postflight route run memory review
                                         │
    aos/contract/{schema,preflight,postflight}.py (729)  ◀── stdin/stdout JSON, 1.0/1.1/1.2 版本谈判
                                         │
-                    aos/core/loop/lifecycle.py (457)
+                    aos/core/loop/lifecycle.py (462)
                                         │  10 stages
-                    aos/core/loop/stages.py (481) ──▶ routing/router.py (431)
+                    aos/core/loop/stages.py (500) ──▶ routing/router.py (431)
                                         │                    └─▶ routing/semantic_reader.py (1157)
                                         │                            单一调用点 router.py:324
-                                        ├─▶ memory/retrieve.py (403) ─▶ store.py (734) ─▶ store/aos.db (v4)
+                                        ├─▶ memory/retrieve.py (423) ─▶ store.py (953) ─▶ store/aos.db (v4)
                                         ├─▶ memory/inject.py (233)   ◀── Memory 的唯一出口
                                         ├─▶ core/outcome.py (320)    ◀── 信号→结论的合成，纯函数
-                                        ├─▶ memory/record.py (248) ─▶ candidates
-                                        └─▶ memory/evolve.py (999)  ─▶ learning_reviews（人门）+ 晋升效果
+                                        ├─▶ memory/record.py (283) ─▶ candidates
+                                        ├─▶ memory/evolve.py (1276) ─▶ learning_reviews（人门）+ 晋升效果
+                                        └─▶ learning/{identity,dedupe}.py (242) ◀── 提案身份与三层判重
      aos/core/evidence/{collector,provenance,recovery}.py (568)   aos/core/validation/* (633)
      aos/adapters/{base,host_delegate,test_provider}.py (258)
 ```
 
-维护面积 `[Verified]`：`aos/` 共 **10,265 行** Python（P1 前 11,250）。P1 删掉的正是裁决里成块的那部分 ——
-编排 793 行 + `loop/team.py` 64 行 + `adapters/opencode.py` 90 行 + `tests/test_orchestration.py` 286 行。
+维护面积 `[Verified]`：`aos/` 现 **11,314 行** Python。变化轨迹：P1 收缩到 10,265（删编排 793 + `team.py` 64 +
+`opencode.py` 90 + 其测试 286），P2 起回到 10,265→11,073（新增 `learning/` 242 行），
+P4 的 241 行是命令面（`doctor --json`、`memory refresh`、批量标注、按 status 渲染）——
+它们不新增能力面，是把已有的能力接到人能敲到的地方。
 
 **删除时的连带依赖（已按 P1 计划处理，记在这里是因为它是这种删除的真实成本）**：
 `aos/config.py` 的 `reset_caches()` 原先 import 并 `orchestrator.reload()`；
@@ -220,7 +225,18 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 `aos/core/learning/` **已建且只装新逻辑**（`identity.py` 78 行、`dedupe.py` 164 行）——
 按裁决 `memory/evolve.py` 没有搬家。
 
-**阈值现在有一个可调入口，其余仍内置** `[Verified]`：`policy.py` 有 **54 个叶子策略键**（P2 新增 `retrieval.recall_statuses`；按 `DEFAULT_POLICIES`
+**六个策略文件已落地，阈值可不调代码就改** `[Verified]`：`content/policies/{retrieval,decay,promotion,rejection,injection,outcome}.json`
+逐键等于内置默认（`load_policy` 是**顶层浅合并**：文件里出现的顶层键整体替换默认，
+所以随文件一起发布的是完整拷贝；只写一个嵌套字典会丢掉同级其它键 —— 这是 `R-007` 说的
+"字段层级写错 ⇒ 静默不生效"在本仓库的对应物）。守卫：
+`tests/test_config.py::test_shipped_policy_files_only_name_keys_the_engine_reads`
+把拼错的键当作失败（实测塞进 `min_auto_confidance` 会红）。
+屏幕：把 `outcome.json` 的 `min_auto_confidence` 由 0.6 改 0.0 ⇒ 同一无人判定的运行
+`needs_review` 由 `True` 变 `False`，不改一行代码。
+`aos memory refresh` 负责把派生态重新对齐事实：过期逐级降级、回填 `dedupe_key`（幂等）、
+重算"被判定过的运行数"、重算 decay。`aos doctor --json` 是给 host 的握手文档
+（版本、schema、路径、计数），不含任何记忆正文。
+旧的表述保留在这里以免被读成"一直如此"：`policy.py` 有 **54 个叶子策略键**（P2 新增 `retrieval.recall_statuses`；按 `DEFAULT_POLICIES`
 递归数叶子得到，脚本可复现），全部有读者 —— 其中 `success_quality`/`partial_quality`/`failure_quality`
 是经 `rules[f"{outcome}_quality"]` 动态拼键读的，**纯字面 grep 会把它们误报成无人使用**；`content/policies/retrieval.json` 已落地且与内置默认逐键相等，所以它是**中性的**，
 但它证明了覆盖通路真的通 —— 实测把 `min_score` 改成 `0.99`  ⇒ 召回从 3 条变 0 条，
@@ -312,16 +328,16 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 | G | `recall_stage` docstring 写"Never fatal"但无 try/except | `stages.py` | **P5** |
 | H | `skills_loaded` 恒 `[]` 却被校验 | `lifecycle.py:157` vs `preflight.py:109,230` | **已修于 P1**（契约 1.2 + 具名守卫） |
 | I | `memory_influence="none"` / `memory_retrieved=0` 是假字段 | `router.py:397-398`、`decision.py:49-50` | **已修于 P1** |
-| J | `aos doctor --json` 与 `memory refresh` 退出码 2 | 命令未实现 | **P4** |
-| K | 人标注之后提案评审不会立刻出现，必须等**下一次 postflight** 才被扫进门 | 实测：`review label 1 --outcome failure` 返回 `candidates_created=3, proposal_created=1`，但 `learning_reviews` 仍只有 1 行（那条 label 自己），4 条 candidates 全部 `consumed_at IS NULL`；随后一次无关的 postflight 才让 `#2/#3 promotion` 出现 | **P4** |
+| J | `aos doctor --json` 与 `memory refresh` 退出码 2 | 两个命令现已实现（§7） | **已修于 P4** |
+| K | 人标注之后提案评审不会立刻出现，必须等**下一次 postflight** 才被扫进门（已修，见下行）| 实测：`review label 1 --outcome failure` 返回 `candidates_created=3, proposal_created=1`，但 `learning_reviews` 仍只有 1 行（那条 label 自己），4 条 candidates 全部 `consumed_at IS NULL`；随后一次无关的 postflight 才让 `#2/#3 promotion` 出现 | **已修于 P4**（label 自带结算 + `review sync`）|
 | L | 归因仍按"被召回"发放：一次失败的任务产生 3 条 `weaken` 候选，对象是那 3 条**被召回的记忆**，与它们是否影响结果无关 | 修复前实测 `target_memory=M-SEED-CACHEKEY02/MIGRATE11/DEFAULT5, candidate_type=weaken` | **已修于 P2**（候选需 `skill_used` 归因） |
-| M | 已标注的 review 在 `review list` 里仍打印 `-> aos review label 1 --outcome …`，且 CLI 返回 `"status":"labelled"` 而库里写的是 `approved` | `./bin/aos review list` 实测（status=approved 的行仍给标注提示） | **P4** |
-| N | `preflight` 可以返回 `aos_status=degraded` 而 `warnings` 为空 ⇒ 降级没有解释。`lifecycle.py:104-108` 只在"没解析出角色"时补 warning，但 status 另由 `fallback_reason` 决定 | 实测：空库 preflight ⇒ `status: degraded \| warnings: []`（`retrieved=0`） | **P4** |
+| M | 已标注的 review 在 `review list` 里仍打印 `-> aos review label 1 --outcome …`，且 CLI 返回 `"status":"labelled"` 而库里写的是 `approved` | 实测 | **已修于 P4**（`已标注:` + 返回评审自身状态）|
+| N | `preflight` 可以返回 `aos_status=degraded` 而 `warnings` 为空 ⇒ 降级没有解释 | 实测：`degraded \| warnings: []` | **已修于 P4**：`routing fell back: domain_unrecognized` 等解释随行 |
 
 三条共性 `[Judgment]`：A–M 大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
 所以 final-plan P5 的三个仓库级守卫测试优先级高于新功能 —— 它们是这类失效的自动拦截网。
-排期编号 P1–P7 的定义在 `docs/plan/final-plan.md §4`。
+排期编号 P1–P7 的定义在 `docs/plan/final-plan.md §4`；每个 Phase 的结果与偏离在 §11 的执行日志。
 
 ---
 

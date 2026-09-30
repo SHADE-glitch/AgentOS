@@ -51,13 +51,16 @@ path resolves from `AGENT_OS_ROOT` (defaulting to the repo itself).
 ## Quick start
 
 ```bash
-./bin/aos doctor                       # show resolved paths and health
+./bin/aos doctor                       # resolved paths and health
+./bin/aos doctor --json                # the same facts as a document (a host negotiates on this)
 ./bin/aos memory seed                  # cold start: load content/memory/seed into the store
 ./bin/aos memory list                  # what the engine knows
 ./bin/aos memory inspect <id>          # a memory and why it believes it
+./bin/aos memory refresh               # recompute derived state: expiry, fact keys, counts, decay
 ./bin/aos route "fix the null pointer crash"
 ./bin/aos run "add a /health endpoint" --cwd /path/to/project --provider test_provider
-./bin/aos review list                  # pending memory promotions
+./bin/aos review list                  # what the gate is asking a person about
+./bin/aos review sync                  # settle written candidates into the queue without another run
 ```
 
 A fresh store holds nothing, and with nothing stored recall is empty, so no
@@ -194,10 +197,17 @@ held as a `learning_reviews(status='pending')` row and is never auto-promoted.**
 A human resolves it:
 
 ```bash
-./bin/aos review list
-./bin/aos review approve <review-id>
-./bin/aos review reject  <review-id>
+./bin/aos review list                        # each row says what approving would do
+./bin/aos review label <id...> --outcome X    # answer the queue; the consequence prints back
+./bin/aos review approve <review-id>         # promotion, or a conflict's supersede
+./bin/aos review reject  <review-id> [--as X] # --as turns a rejection into a weakening signal
+./bin/aos review sync                         # settle candidates from any other writer
 ```
+
+Thresholds live in `content/policies/*.json` and are read per resolved path, so
+retuning one is an edit, not a code change: `min_auto_confidence` decides when a
+run must be handed to a person, `recall_statuses` decides which memories a host may
+be shown, `revalidate_after` expiry is stepped by `aos memory refresh`.
 
 ## Loop lifecycle
 
@@ -269,7 +279,7 @@ it, and reading it was worse than useless.
 | Path | Status |
 |---|---|
 | `content/memory/seed/` | **live** — loaded by `aos memory seed`; the cold start |
-| `content/policies/` | empty; `policy.load_policy` falls back to built-in defaults |
+| `content/policies/` | **shipped** — six files, each key-for-key equal to the built-in defaults; edit any value to retune without touching code |
 
 `content/policies/*.json` overrides `aos/core/memory/policy.py`'s defaults, so
 thresholds can be retuned per deployment without a code change. Routing rules,

@@ -100,12 +100,17 @@ def _preflight_doc(
     lead_role = route.get("lead_role")
     support_roles = route.get("support_roles", [])
     warnings: list[str] = []
-    if not lead_role:
-        warnings.append("no concrete role resolved; routing degraded")
+    status = "degraded" if (decision.get("fallback_reason") or not lead_role) else "ok"
+    # A document that degrades must say why, in the field a host already reads.
+    # `degraded` with an empty `warnings` is the shape that makes a human open the
+    # database, which is the failure mode this loop was built to remove.
+    if status == "degraded":
+        if not lead_role:
+            warnings.append("no concrete role resolved; routing degraded")
+        if decision.get("fallback_reason"):
+            warnings.append(f"routing fell back: {decision['fallback_reason']}")
     if state.memory_mode in ("disabled", "off"):
         warnings.append("memory disabled by request")
-
-    status = "degraded" if (decision.get("fallback_reason") or not lead_role) else "ok"
     # Rendered from the raw scored rows, which still carry title/body/tags;
     # _memory_view below is the trimmed contract view of the same recall.
     injection = inject.render(

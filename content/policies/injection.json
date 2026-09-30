@@ -1,0 +1,6 @@
+{
+  "max_chars": 1400,
+  "max_items": 6,
+  "max_body_chars": 280,
+  "hypothesis_max_items": 1
+}

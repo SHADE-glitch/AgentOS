@@ -22,6 +22,7 @@ from aos import __version__
 from aos.config import ConfigError, get_paths
 from aos.contract import (
     CONTRACT_VERSION,
+    SUPPORTED_VERSIONS,
     collect_signals,
     fallback_postflight,
     fallback_preflight,
@@ -83,8 +84,8 @@ def _emit(doc: dict[str, Any]) -> None:
 
 
 # ── Commands ───────────────────────────────────────────────────────────
-def _schema_line(db_path) -> str:
-    """Report the database's schema version without opening it for business.
+def _schema_state(db_path) -> dict:
+    """The store's schema facts as data, for both the human line and `--json`.
 
     Diagnosis must not migrate, create, or repair anything: `doctor` is the
     command run when something looks wrong, and a diagnostic that rewrites the
@@ -94,38 +95,137 @@ def _schema_line(db_path) -> str:
 
     from aos.core.memory import migrations
 
-    if not Path(db_path).is_file():
-        return f"no database yet — will be built at v{migrations.LATEST_VERSION}"
+    state = {
+        "expected": migrations.LATEST_VERSION,
+        "installed": None,
+        "readable": False,
+        "present": Path(db_path).is_file(),
+        "pending": [],
+        "note": "",
+    }
+    if not state["present"]:
+        state["note"] = f"no database yet — will be built at v{migrations.LATEST_VERSION}"
+        return state
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     except sqlite3.Error as exc:
-        return f"unreadable ({exc})"
+        state["note"] = f"unreadable ({exc})"
+        return state
     try:
         version = migrations.current_version(conn)
     except sqlite3.Error:
-        return "unreadable schema version"
-    finally:
         conn.close()
+        state["note"] = "unreadable schema version"
+        return state
+    conn.close()
 
+    state["installed"] = version
+    state["readable"] = True
     if version == 0:
-        return "unversioned file (pre-migration)"
-    if version < migrations.LATEST_VERSION:
-        pending = ", ".join(m.describe() for m in migrations.pending_migrations(version))
-        return (
-            f"v{version} [BEHIND] — the next write runs {pending}; "
+        state["note"] = "unversioned file (pre-migration)"
+    elif version < migrations.LATEST_VERSION:
+        state["pending"] = [m.describe() for m in migrations.pending_migrations(version)]
+        state["note"] = (
+            f"v{version} [BEHIND] — the next write runs {', '.join(state['pending'])}; "
             "run `aos memory migrate` to do it now, with a backup"
         )
-    if version > migrations.LATEST_VERSION:
-        return f"v{version} [NEWER THAN ENGINE v{migrations.LATEST_VERSION}]"
-    return f"v{version} [OK]"
+    elif version > migrations.LATEST_VERSION:
+        state["note"] = f"v{version} [NEWER THAN ENGINE v{migrations.LATEST_VERSION}]"
+    else:
+        state["note"] = f"v{version} ok"
+    return state
+
+
+def _schema_line(db_path) -> str:
+    """One line for a human, from the same facts `--json` reports."""
+    state = _schema_state(db_path)
+    if state["installed"] == state["expected"] and state["readable"]:
+        return f"v{state['installed']} [OK]"
+    return state["note"]
+
+
+def _doctor_document(paths) -> dict:
+    """The machine-readable form of `doctor` — the plugin's probe before it speaks.
+
+    Kept to facts a host can act on: versions (so a plugin can negotiate before
+    it sends anything it might get a version error for), paths, whether the store
+    is readable and at which schema, and the queue's shape. No secrets, no memory
+    bodies.
+    """
+    from aos.core.memory import migrations
+    from aos.core.memory.store import MemoryStore
+
+    schema = _schema_state(paths.db_path)
+    document = {
+        "ok": schema["readable"] or not schema["present"],
+        "status": "READY",
+        "aos_version": __version__,
+        "contract_version": CONTRACT_VERSION,
+        "supported_versions": list(SUPPORTED_VERSIONS),
+        "schema": {
+            "expected": migrations.LATEST_VERSION,
+            "installed": schema["installed"],
+            "readable": schema["readable"],
+            "present": schema["present"],
+            "pending": schema["pending"],
+        },
+        "paths": {
+            "root": str(paths.root),
+            "store": str(paths.store_dir),
+            "database": str(paths.db_path),
+            "content": str(paths.content_dir),
+            "policies": str(paths.policies_dir),
+            "pending_dir": str(paths.pending_dir),
+        },
+        "features": {"preflight": True, "postflight": True, "memory": True, "learning_gate": True},
+    }
+    try:
+        store = MemoryStore()
+    except Exception as exc:  # a store that will not open is a diagnosis, not a crash
+        store = None
+        document["ok"] = False
+        document["status"] = "FAIL"
+        document["error"] = f"store unreadable: {exc}"
+    if store is not None:
+        try:
+            rows = store.list_memories()
+            by_status: dict = {}
+            for row in rows:
+                by_status[row["status"]] = by_status.get(row["status"], 0) + 1
+            document["memories"] = {
+                "total": len(rows),
+                "by_status": by_status,
+                "recallable": sum(
+                    1 for r in rows if r["status"] in ("active", "verified")
+                ),
+                "without_dedupe_key": sum(1 for r in rows if not r["dedupe_key"]),
+            }
+            reviews = store.list_reviews(status="pending")
+            by_kind: dict = {}
+            for review in reviews:
+                by_kind[review["kind"]] = by_kind.get(review["kind"], 0) + 1
+            document["reviews"] = {"pending": len(reviews), "by_kind": by_kind}
+            document["candidates"] = {"open": len(store.list_open_candidates())}
+        finally:
+            store.close()
+    return document
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
+    as_json = bool(getattr(args, "json", False))
     try:
         paths = get_paths()
     except ConfigError as exc:
+        if as_json:
+            _emit({"ok": False, "error": str(exc), "status": "FAIL"})
+            return 1
         print(f"Agent OS Doctor\n  [FAIL] {exc}")
         return 1
+
+    if as_json:
+        document = _doctor_document(paths)
+        _emit(document)
+        return 0 if document["ok"] else 1
 
     print("Agent OS Doctor")
     print(f"  version:         {__version__}")
@@ -354,6 +454,23 @@ def _memory_add(args: argparse.Namespace, store) -> int:
     return 0
 
 
+def _memory_refresh(args: argparse.Namespace, store) -> int:
+    from aos.core.memory import evolve
+
+    report = evolve.refresh_store(store=store, today=getattr(args, "today", "") or "")
+    if getattr(args, "json", False):
+        _emit(report)
+        return 0
+    print(f"过期降级: {len(report['expired'])} 条")
+    for move in report["expired"]:
+        print(f"  {move['memory_id']}: {move['from']} -> {move['to']}（到期 {move['revalidate_after']}）")
+    print(f"补齐 dedupe_key: {len(report['dedupe_keys_filled'])} 条")
+    print(f"重算判定计数: {report['observation_counts_refreshed']} 条")
+    summary = report["decay"]
+    print(f"衰减: active {summary['active']} / degraded {summary['degraded']} / archived_candidate {summary['archived_candidate']}")
+    return 0
+
+
 def _memory_seed(args: argparse.Namespace, store) -> int:
     from aos.config import get_paths
     from aos.core.memory import authoring
@@ -459,6 +576,7 @@ def _memory_inspect(args: argparse.Namespace, store) -> int:
 _MEMORY_COMMANDS = {
     "list": _memory_list,
     "add": _memory_add,
+    "refresh": _memory_refresh,
     "seed": _memory_seed,
     "show": _memory_show,
     "inspect": _memory_inspect,
@@ -471,7 +589,7 @@ def cmd_memory(args: argparse.Namespace) -> int:
 
     handler = _MEMORY_COMMANDS.get(getattr(args, "memory_command", None) or "list")
     if handler is None:
-        print("usage: aos memory list|add|seed|show|inspect", file=sys.stderr)
+        print("usage: aos memory list|add|seed|refresh|migrate|show|inspect", file=sys.stderr)
         return 1
 
     store = MemoryStore()
@@ -498,6 +616,12 @@ def _describe_review(review: dict[str, Any]) -> str:
             f"{key}={signals[key]}" for key in sorted(signals) if signals[key] not in (None, "", [], {})
         ) or "nothing"
         memories = evidence.get("memories_used") or []
+        decided = review.get("status") != "pending"
+        action = (
+            f"      已标注: {review.get('outcome') or '-'}（{review['status']}）"
+            if decided
+            else f"      -> aos review label {review['review_id']} --outcome success|partial|failure"
+        )
         return (
             f"#{review['review_id']:<4} label    loop={review.get('loop_id') or '-':<14} "
             f"engine said={evidence.get('outcome')} confidence={evidence.get('confidence')} "
@@ -505,8 +629,7 @@ def _describe_review(review: dict[str, Any]) -> str:
             f"      任务: {evidence.get('task') or '(unknown)'}\n"
             f"      信号: {shown}\n"
             f"      缺席: {', '.join(evidence.get('absent') or []) or '-'}\n"
-            f"      涉及记忆: {', '.join(memories) or '(none recalled)'}\n"
-            f"      -> aos review label {review['review_id']} --outcome success|partial|failure"
+            f"      涉及记忆: {', '.join(memories) or '(none recalled)'}\n" + action
         )
 
     if kind == "conflict":
@@ -539,7 +662,7 @@ def _describe_review(review: dict[str, Any]) -> str:
     if runs_now is not None and runs_now > opened_runs:
         runs_label += f"（提案提出后又收集到 {runs_now - opened_runs} 次）"
     lines = [
-        f"#{review['review_id']:<4} {review['status']:<8} {kind} {review['memory_id']:<12} "
+        f"#{review['review_id']:<4} {review['status']:<8} {kind} {review['memory_id']:<16} "
         f"{runs_label} quality={evidence.get('quality_score', 0)}"
     ]
     if change.get("kind") == "create":
@@ -571,10 +694,22 @@ def cmd_review(args: argparse.Namespace) -> int:
         print(f"{len(reviews)} reviews ({len(pending)} pending, {len(labels)} waiting for a label)")
         return 0
 
+    if command == "sync":
+        _emit(evolve.run_learning())
+        return 0
+
     if command == "label":
-        result = evolve.label_review(args.review_id, args.outcome, quality_score=args.quality)
-        _emit(result)
-        return 0 if result["status"] == "labelled" else 1
+        results = [
+            evolve.label_review(review_id, args.outcome, quality_score=args.quality)
+            for review_id in args.review_ids
+        ]
+        if len(results) == 1:
+            _emit(results[0])
+        else:
+            _emit({"labelled": [r["review_id"] for r in results if r["status"] == "approved"],
+                   "skipped": [{"review_id": r["review_id"], "status": r["status"]}
+                               for r in results if r["status"] != "approved"]})
+        return 0 if all(r["status"] == "approved" for r in results) else 1
 
     if command in ("approve", "reject"):
         if command == "approve":
@@ -589,7 +724,8 @@ def cmd_review(args: argparse.Namespace) -> int:
         return 0 if result["status"] == expected else 1
 
     print(
-        "usage: aos review list [--status STATUS] [--json] | label <id> --outcome X | approve <id> | reject <id> [--as X]",
+        "usage: aos review list [--status STATUS] [--json] | sync"
+        " | label <id...> --outcome X | approve <id> | reject <id> [--as X]",
         file=sys.stderr,
     )
     return 1
@@ -611,7 +747,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="store_true", help="show version and exit")
     sub = parser.add_subparsers(dest="command")
 
-    sub.add_parser("doctor", help="diagnose the Agent OS environment")
+    p_doctor = sub.add_parser("doctor", help="diagnose the Agent OS environment")
+    p_doctor.add_argument("--json", action="store_true", help="emit the machine-readable report")
 
     for phase in ("preflight", "postflight"):
         p = sub.add_parser(phase, help=f"run the {phase} contract for a host")
@@ -680,6 +817,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="keep the claimed evidence_level; without it a memory is demoted to hypothesis",
     )
 
+    p_mem_refresh = mem_sub.add_parser(
+        "refresh",
+        help="recompute derived state: expiry, fact keys, judged-run counts, decay",
+    )
+    p_mem_refresh.add_argument("--today", default="", help="override the date used for expiry (YYYY-MM-DD)")
+    p_mem_refresh.add_argument("--json", action="store_true", help="emit the report as JSON")
     p_mem_seed = mem_sub.add_parser("seed", help="load content/memory/**/*.json into the store")
     p_mem_seed.add_argument("--dir", default=None, help="seed directory (default: the content memory dir)")
     p_mem_seed.add_argument("--force", action="store_true", help="rewrite entries that already exist")
@@ -701,6 +844,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_review = sub.add_parser("review", help="the human gate: label runs, decide reviews")
     review_sub = p_review.add_subparsers(dest="review_command")
+    review_sub.add_parser(
+        "sync",
+        help="run one learning cycle now (settle unconsumed candidates into the queue)",
+    )
     p_review_list = review_sub.add_parser("list", help="list learning reviews")
     p_review_list.add_argument(
         "--status",
@@ -722,7 +869,12 @@ def build_parser() -> argparse.ArgumentParser:
                      "becomes a weakening signal instead of a shrug",
             )
     p_label = review_sub.add_parser("label", help="answer an outcome-label review")
-    p_label.add_argument("review_id", type=int, help="review id")
+    p_label.add_argument(
+        "review_ids",
+        type=int,
+        nargs="+",
+        help="one or more label reviews — a queue of the same verdict is answered in one go",
+    )
     p_label.add_argument("--outcome", required=True, choices=list(OUTCOMES), help="what the run achieved")
     p_label.add_argument(
         "--quality",

@@ -1,0 +1,6 @@
+{
+  "quality_threshold": 3.0,
+  "min_observations": 2,
+  "hypothesis_min_observations": 1,
+  "max_promotions": 5
+}

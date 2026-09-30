@@ -56,13 +56,16 @@ def test_a_failure_becomes_a_warning_the_next_run_hears(store):
     assert labels[0]["evidence"]["task"].startswith("修复 Redis Lua")
 
     labelled = evolve.label_review(labels[0]["review_id"], "failure", store=store)
-    assert labelled["status"] == "labelled"
+    # The review's own state, not a verb for this call: `review list` shows the
+    # same word, so a caller comparing the two is not translating.
+    assert labelled["status"] == "approved"
+    assert labelled["outcome"] == "failure"
     assert labelled["proposal_created"] == 1, "a failed task with no memory recalled must be remembered"
 
-    # Labelling wrote a candidate; the next cycle turns it into a review, and the
-    # review is what a human approves — no step writes a memory by itself.
-    cycle = evolve.run_learning(store=store)
-    assert cycle["summary"]["reviews_created"] == 1
+    # Labelling settles the cycle it just fed: the person who answered the queue
+    # sees the consequence in the same command, instead of waiting for some later
+    # run to sweep the candidate up.
+    assert labelled["learning"]["reviews_created"] == 1
     review = evolve.list_reviews(store=store, status="pending")[0]
     assert review["kind"] == "promotion"
     assert review["proposed_change"]["kind"] == "create"

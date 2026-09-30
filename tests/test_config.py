@@ -120,3 +120,37 @@ def test_engine_has_no_hardcoded_install_root():
         if "/home/shade/.agents" in text or "~/.agents" in text:
             offenders.append(str(path.relative_to(REPO_ROOT)))
     assert offenders == [], f"hardcoded install root in: {offenders}"
+
+
+def test_shipped_policy_files_only_name_keys_the_engine_reads(tmp_path, monkeypatch):
+    """A misspelled threshold in a policy file is accepted and then ignored.
+
+    That is the exact failure the research records call a silent no-op — a probe
+    reading the wrong field level never fires and never complains. The files under
+    ``content/policies/`` are the human-facing knobs, so their key names are checked
+    against the defaults the code actually reads, one level deep.
+    """
+    import json
+
+    from aos.core.memory.policy import DEFAULT_POLICIES
+
+    policies = REPO_ROOT / "content" / "policies"
+    offenders = []
+    for path in sorted(policies.glob("*.json")):
+        name = path.stem
+        if name not in DEFAULT_POLICIES:
+            offenders.append(f"{path.name}: no such policy section")
+            continue
+        shipped = json.loads(path.read_text(encoding="utf-8"))
+        defaults = DEFAULT_POLICIES[name]
+        for key, value in shipped.items():
+            if key not in defaults:
+                offenders.append(f"{name}.json: {key} is not a key the engine reads")
+            elif isinstance(value, dict) and isinstance(defaults[key], dict):
+                for sub in value:
+                    if sub not in defaults[key]:
+                        offenders.append(f"{name}.json: {key}.{sub} is not a key the engine reads")
+            elif isinstance(value, dict) != isinstance(defaults[key], dict):
+                offenders.append(f"{name}.json: {key} changed shape")
+
+    assert offenders == [], offenders

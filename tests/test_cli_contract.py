@@ -338,3 +338,186 @@ def _v1_downgrade(db):
                  (str(migrations.BASELINE_VERSION),))
     conn.commit()
     return conn
+
+
+# ── P4: the gate has to be usable by a person at a terminal ────────────
+def _settle_payload(capsys, task="fix the null pointer crash in the parser", **extra):
+    pre = _preflight(capsys, task=task, **extra)
+    return _postflight(capsys, pre, cwd=extra.get("cwd", ""))
+
+
+def test_doctor_json_is_machine_readable_and_names_the_versions(capsys, store):
+    """The plugin probes this before it speaks; a paragraph is not a handshake."""
+    store.upsert_memory({"memory_id": "M1", "type": "semantic", "title": "a", "body": "b"})
+
+    code = main(["doctor", "--json"])
+    document = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert document["ok"] is True
+    assert document["contract_version"]
+    assert set(document["supported_versions"]) >= {"1.1", "1.2"}
+    assert document["schema"]["installed"] == document["schema"]["expected"]
+    assert document["paths"]["database"].endswith("aos.db")
+    assert document["features"]["learning_gate"] is True
+    # A handshake document carries versions and counts, never the store's contents.
+    assert "memory bodies" not in json.dumps(document, ensure_ascii=False)
+
+
+def test_doctor_json_reports_the_store_as_it_really_is(capsys, store):
+    from aos.core.memory.authoring import new_memory
+
+    store.upsert_memory(new_memory(title="a", body="b", verified=True, status="active"))
+    store.upsert_memory(new_memory(title="c", body="d"))
+
+    main(["doctor", "--json"])
+    document = json.loads(capsys.readouterr().out)
+
+    assert document["memories"]["total"] == 2
+    assert document["memories"]["recallable"] == 1, "only the approved row may be recalled"
+    assert document["memories"]["without_dedupe_key"] == 0, "every writer fills the key now"
+
+
+def test_memory_refresh_backfills_keys_and_is_idempotent(capsys, store):
+    from aos.core.memory.authoring import new_memory
+
+    store.upsert_memory(new_memory(title="a", body="b", verified=True, status="active"))
+    store._conn.execute("UPDATE memories SET dedupe_key = ''")
+    store._conn.commit()
+
+    code = main(["memory", "refresh", "--json"])
+    report = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert len(report["dedupe_keys_filled"]) == 1
+
+    main(["memory", "refresh", "--json"])
+    again = json.loads(capsys.readouterr().out)
+
+    assert again["dedupe_keys_filled"] == [], "a second pass changes nothing"
+    assert again["expired"] == []
+
+
+def test_memory_refresh_expires_by_ladder_not_by_deletion(capsys, store):
+    from aos.core.memory.authoring import new_memory
+
+    store.upsert_memory(
+        new_memory(title="JDK 17 is the runtime", body="build with LTS", verified=True, status="verified")
+    )
+    memory_id = store.list_memories()[0]["memory_id"]
+    store._conn.execute(
+        "UPDATE memories SET revalidate_after = '2026-01-01' WHERE memory_id = ?", (memory_id,)
+    )
+    store._conn.commit()
+
+    main(["memory", "refresh", "--json", "--today", "2026-09-30"])
+    first = json.loads(capsys.readouterr().out)
+    assert first["expired"] == [
+        {"memory_id": memory_id, "from": "verified", "to": "active", "revalidate_after": "2026-01-01"}
+    ]
+    assert store.get_memory(memory_id)["status"] == "active"
+
+    main(["memory", "refresh", "--json", "--today", "2026-09-30"])
+    second = json.loads(capsys.readouterr().out)
+    assert second["expired"][0]["to"] == "deprecated"
+    assert store.get_memory(memory_id) is not None, "expiry retires, it does not delete"
+
+
+def test_labelling_a_run_shows_its_consequence_in_the_same_command(capsys, store):
+    """The defect this closed: a label wrote candidates the queue could not see."""
+    pre = _preflight(capsys, task="修复 cache key 碰撞导致命中率下降的 bug", cwd="/home/dev/repos/warehouse")
+    _postflight(capsys, pre, cwd="/home/dev/repos/warehouse")
+
+    _, listed = _call(capsys, ["review", "list", "--json"], {})
+    label_id = [r for r in listed if r["kind"] == "outcome_label"][0]["review_id"]
+
+    code, result = _call(capsys, ["review", "label", str(label_id), "--outcome", "failure"], {})
+
+    assert code == 0
+    assert result["status"] == "approved", "the review's own state, not a verb for the call"
+    assert result["learning"]["reviews_created"] == 1
+    _, after = _call(capsys, ["review", "list", "--json"], {})
+    assert any(r["kind"] == "promotion" and r["status"] == "pending" for r in after)
+
+
+def test_review_list_does_not_offer_an_answered_question(capsys, store):
+    pre = _preflight(capsys, task="修复 cache key 碰撞导致命中率下降的 bug", cwd="/home/dev/repos/warehouse")
+    _postflight(capsys, pre, cwd="/home/dev/repos/warehouse")
+    _, listed = _call(capsys, ["review", "list", "--json"], {})
+    label_id = [r for r in listed if r["kind"] == "outcome_label"][0]["review_id"]
+    capsys.readouterr()
+
+    main(["review", "label", str(label_id), "--outcome", "failure"])
+    capsys.readouterr()
+    main(["review", "list"])
+    shown = capsys.readouterr().out
+
+    assert f"-> aos review label {label_id}" not in shown
+    assert "已标注: failure" in shown
+
+
+def test_batch_labelling_answers_the_queue_in_one_line(capsys, store):
+    ids = []
+    for index in range(3):
+        pre = _preflight(capsys, task=f"任务 {index} 失败了", cwd="/home/dev/repos/warehouse", task_id=f"B{index}")
+        _postflight(capsys, pre, cwd="/home/dev/repos/warehouse")
+    _, listed = _call(capsys, ["review", "list", "--json"], {})
+    ids = [r["review_id"] for r in listed if r["kind"] == "outcome_label"]
+    assert len(ids) == 3
+
+    code, result = _call(capsys, ["review", "label", *[str(i) for i in ids], "--outcome", "failure"], {})
+
+    assert code == 0
+    assert sorted(result["labelled"]) == sorted(ids)
+    assert result["skipped"] == []
+
+
+def test_batch_labelling_reports_what_it_refused(capsys, store):
+    pre = _preflight(capsys, task="只有一个待标注", cwd="/home/dev/repos/warehouse")
+    _postflight(capsys, pre, cwd="/home/dev/repos/warehouse")
+    _, listed = _call(capsys, ["review", "list", "--json"], {})
+    only = [r for r in listed if r["kind"] == "outcome_label"][0]["review_id"]
+    capsys.readouterr()
+    main(["review", "label", str(only), "--outcome", "failure"])
+    capsys.readouterr()  # drain the first answer before reading the second call
+
+    code, result = _call(capsys, ["review", "label", str(only), "9999", "--outcome", "failure"], {})
+
+    assert code == 1
+    assert result["labelled"] == []
+    assert {s["status"] for s in result["skipped"]} == {"already_decided", "not_found"}
+
+
+def test_review_sync_settles_candidates_without_another_run(capsys, store):
+    from aos.core.memory import evolve
+    from aos.core.memory.record import proposal_for_loop, record_outcome
+
+    record_outcome(
+        loop_id="L9",
+        outcome="failure",
+        quality_score=0.0,
+        memories_used=[],
+        needs_review=False,
+        source_hash="h9",
+        proposal=proposal_for_loop(
+            loop_id="L9", task_text="一个值得记住的失败", outcome="failure", cwd="/home/dev/repos/warehouse"
+        ),
+        store=store,
+    )
+
+    code, summary = _call(capsys, ["review", "sync"], {})
+
+    assert code == 0
+    assert summary["summary"]["reviews_created"] == 1
+
+
+def test_degraded_preflight_says_why(capsys):
+    """A document that degrades in silence sends the human to the database."""
+    code, doc = _call(
+        capsys,
+        ["preflight", "--payload-stdin"],
+        {"schema_version": "1.2", "task": "随便一件完全没有线索的事", "cwd": "/tmp/nowhere"},
+    )
+
+    assert code == 0
+    if doc["aos_status"] == "degraded":
+        assert doc["warnings"], "degraded without an explanation is not a diagnosis"

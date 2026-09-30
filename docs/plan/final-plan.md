@@ -405,3 +405,47 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
   （title 相似但被模板稀释），此时保护来自第①层 fact key 与人门，而不是相似度 ——
   所以 §3.4 的"三层"里，第②层是降噪手段而非安全边界，架构文档按这个口径写。
 - 回滚：单提交 revert；零 schema 变更 ⇒ `store/aos.db` 不受影响。
+
+### P4 · 人门可用 — 已完成
+
+- 测试：338 → **349**（`tests/test_cli_contract.py` +9 条命令面用例、`tests/test_config.py` +1 条策略键守卫）。
+  schema 仍 **v4**，零迁移。
+- 缺陷 J、K、M、N 一次关闭。
+- 验收屏幕：
+  ```
+  # 标完就看到下一步（K）
+  $ ./bin/aos review label 1 --outcome failure
+    {"status":"approved","learning":{"candidates":1,"reviews_created":1,...}}
+  # 队列不再问已经答过的问题（M）
+  $ ./bin/aos review list | grep 已标注
+      已标注: failure（approved）
+  # 一次答完整排（批量 + 拒绝说明）
+  $ ./bin/aos review label 1 2 3 --outcome failure
+    {"labelled":[1,2,3],"skipped":[]}
+  # 握手文档（J，插件用）
+  $ ./bin/aos doctor --json | python3 -m json.tool   → contract_version / supported_versions /
+    schema.{expected,installed,pending} / paths / memories{total,recallable,without_dedupe_key} / reviews / candidates
+  # 派生态对齐（J 的另一半 + P3 遗留的回填）
+  $ ./bin/aos memory refresh
+    补齐 dedupe_key: 13 条 ／ 重算判定计数: 5 条 ／ 衰减: degraded 13
+  $ ./bin/aos doctor --json → without_dedupe_key: 0      （幂等：第二次全 0）
+  # 过期逐级降级，不删（verified→active→deprecated，两次跑到位）
+  # 阈值不调代码（P4 的存在理由）
+  outcome.json 的 min_auto_confidence 0.6 → 0.0 ⇒ 同一无人判定的运行 needs_review True → False
+  ```
+- 反向验证做了一次：往 `content/policies/outcome.json` 塞拼错的 `min_auto_confidance` ⇒
+  守卫测试转红；还原 ⇒ 绿。所以那条守卫不是装饰。
+- **偏离与超出计划之处（四条，如实）**：
+  1. `store.update_memory_fields` 原本**静默丢弃**白名单外的字段，现改为抛 `ValueError`。
+     起因是我自己踩到：给某条记忆设 `revalidate_after` 时"成功"返回、字段却没写进去，
+     于是过期阶梯整段不触发 —— 白名单是安全属性（学习不得改写 title/body），静默吞掉不是。
+  2. 加了计划没点名的 `aos review sync`：`label` 已自带结算，但任何**其它**写入候选的路径
+     （直接 `record_outcome`、导入历史、未来回读）仍需要一个手动结算口，否则缺陷 K 只是换了个入口。
+  3. `doctor --json` 顺手把 `_schema_line` 重构为共用 `_schema_state()`：人类那行与 JSON 必须来自
+     同一份事实，否则两个视图会各自漂移（这也是本仓库反复犯的"两处表达同一件事"）。
+  4. 策略文件随发布的是**完整拷贝**而非增量：`load_policy` 只做顶层浅合并，
+     文件里写一个嵌套字典会整体替换掉同级默认 —— 记进架构文档 §7，并把键名校验做成测试。
+- 一处设计选择说明：`label` 的返回值从 `"labelled"` 改成评审自身的 `"approved"`。
+  另一种做法是保留动词并另开一个 `review_status` 字段，但那会让调用方在两套词汇之间翻译，
+  而 `review list`、`approve`、`reject` 返回的都是评审状态 —— 统一成"返回文档说的就是队列显示的"。
+- 回滚：单提交 revert；零 schema 变更，`store/aos.db` 未被本轮任何屏幕写入（全部在临时库）。

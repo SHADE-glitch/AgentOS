@@ -1,0 +1,26 @@
+{
+  "weights": {
+    "test_exit_code": 0.45,
+    "build_exit_code": 0.2,
+    "validation_status": 0.2,
+    "user_interrupted": 0.2,
+    "session_error": 0.2,
+    "tool_errors": 0.1,
+    "todos_unfinished": 0.1,
+    "expected_files": 0.1,
+    "diff": 0.05,
+    "response_summary": 0.0
+  },
+  "weight_overrides": {},
+  "thresholds": {
+    "success": 0.75,
+    "partial": 0.4
+  },
+  "error_cap": 5,
+  "min_auto_confidence": 0.6,
+  "min_verdict_mass": 0.45,
+  "no_signal_outcome": "partial",
+  "success_quality": 3.5,
+  "partial_quality": 0.0,
+  "failure_quality": 0.0
+}

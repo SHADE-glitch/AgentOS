@@ -832,6 +832,40 @@ def run_learning(*, store: Optional[MemoryStore] = None, apply: bool = True) -> 
 
 
 # ── review gate ────────────────────────────────────────────────────────
+def refresh_store(*, store: Optional[MemoryStore] = None, today: str = "") -> dict[str, Any]:
+    """Bring every derived column back in line with the facts on record.
+
+    Three things are derived, not stored truth, and all three drift when nobody
+    recomputes them: lifecycle status past its revalidation date, the per-memory
+    count of judged runs, and the dedupe key that makes the unique index bite.
+    Exposed as ``aos memory refresh`` so a human can settle the store without
+    waiting for a run to trigger each path by accident.
+    """
+    from aos.core.memory.retrieve import compute_all_decay
+
+    owns_store = store is None
+    store = store or MemoryStore()
+    try:
+        expired = store.expire_due(today=today)
+        keys_filled = store.backfill_dedupe_keys()
+        counts_refreshed = 0
+        for row in store.memories_for_scoring():
+            derived = store.linked_outcome_count(row["memory_id"])
+            if int(row.get("observation_count", 0)) != derived:
+                store.set_observation_count(row["memory_id"], derived)
+                counts_refreshed += 1
+        decay = compute_all_decay(store)
+        return {
+            "expired": expired,
+            "dedupe_keys_filled": keys_filled,
+            "observation_counts_refreshed": counts_refreshed,
+            "decay": decay["summary"],
+        }
+    finally:
+        if owns_store:
+            store.close()
+
+
 def list_reviews(*, store: Optional[MemoryStore] = None, status: Optional[str] = None) -> list[dict[str, Any]]:
     """The queue, with each review's evidence counted as of now.
 
@@ -1089,6 +1123,7 @@ def label_review(
     *,
     quality_score: Optional[float] = None,
     store: Optional[MemoryStore] = None,
+    settle: bool = True,
 ) -> dict[str, Any]:
     """Answer an outcome-label review: the human verdict becomes the run's record.
 
@@ -1130,9 +1165,15 @@ def label_review(
             event_type="learning.run_labelled",
             payload={"review_id": review_id, "loop_id": review.get("loop_id"), "outcome": outcome},
         )
+        settled = run_learning(store=store) if settle else None
         return {
             "review_id": review_id,
-            "status": "labelled",
+            # The review's own status, not a verb describing this call. The queue
+            # row is `approved` with an outcome attached, and a caller reading
+            # `status` must be able to compare it against what `review list`
+            # shows without translating between two vocabularies.
+            "status": "approved",
+            "learning": settled["summary"] if settled else None,
             "outcome": outcome,
             "quality_score": applied["quality_score"],
             "candidates_created": applied["candidates_created"],
