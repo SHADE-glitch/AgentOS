@@ -14,6 +14,7 @@ from aos.contract.schema import (
     CONTRACT_VERSION,
     FINAL_STATUS,
     ValidationError,
+    declared_version,
     is_enum,
     require,
     validate_phase,
@@ -33,6 +34,7 @@ _TOP_LEVEL = (
     "recovery",
     "learning",
     "replayed",
+    "aos_error",
 )
 
 
@@ -52,7 +54,10 @@ def _recovery(data: dict[str, Any] | None) -> dict[str, Any]:
         "failures_detected": int(data.get("failures_detected", 0)),
         "recovery_attempted": bool(data.get("recovery_attempted", False)),
         "recovery_success": bool(data.get("recovery_success", False)),
-        "final_status": data.get("final_status", "completed"),
+        # No verdict, rather than an invented "completed": a fail-open document
+        # whose recovery block contradicts the top-level failure is the same
+        # class of lie as reporting an unlabeled run as a success.
+        "final_status": data.get("final_status"),
         "plan": data.get("plan"),
     }
 
@@ -78,10 +83,12 @@ def build_postflight(
     recovery: dict[str, Any] | None = None,
     learning: dict[str, Any] | None = None,
     replayed: bool = False,
+    aos_error: str = "",
+    schema_version: str = CONTRACT_VERSION,
 ) -> dict[str, Any]:
     """Assemble a normalised postflight response document."""
     return {
-        "schema_version": CONTRACT_VERSION,
+        "schema_version": declared_version(schema_version),
         "phase": "postflight",
         "aos_status": aos_status,
         "task_id": task_id,
@@ -93,18 +100,35 @@ def build_postflight(
         "recovery": _recovery(recovery),
         "learning": _learning(learning),
         "replayed": bool(replayed),
+        "aos_error": aos_error,
     }
 
 
-def fallback_postflight(reason: str, *, task_id: str = "", loop_id: str = "", session_id: str = "") -> dict[str, Any]:
-    """Fail-open response: the host should proceed without AOS finalisation."""
+def fallback_postflight(
+    reason: str,
+    *,
+    task_id: str = "",
+    loop_id: str = "",
+    session_id: str = "",
+    schema_version: str = CONTRACT_VERSION,
+) -> dict[str, Any]:
+    """Fail-open response: the host should proceed without AOS finalisation.
+
+    ``final_status`` is ``failed``, not ``completed``: a loop the engine could
+    not finish did not complete, and reporting otherwise is what let an
+    unlabeled run look like a successful one. The reason travels in
+    ``aos_error`` instead of being dropped.
+    """
     return build_postflight(
         task_id=task_id,
         loop_id=loop_id,
         session_id=session_id,
         aos_status="fallback",
-        final_status="completed",
+        final_status="failed",
+        evidence_path="",
         learning={"candidates_recorded": 0, "hypotheses_pending_review": 0, "promoted": 0},
+        aos_error=reason,
+        schema_version=schema_version,
     )
 
 
@@ -143,6 +167,7 @@ def validate_postflight(doc: dict[str, Any]) -> None:
             require(isinstance(learning.get(key), int), f"learning.{key} must be an int", errors)
 
     require(isinstance(doc.get("replayed"), bool), "replayed must be a bool", errors)
+    require(isinstance(doc.get("aos_error"), str), "aos_error must be a string", errors)
 
     if errors:
         raise ValidationError(errors)

@@ -77,9 +77,10 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def cmd_preflight(args: argparse.Namespace) -> int:
     payload = _read_payload(args)
+    declared = payload.get("schema_version", "")
     lifecycle = _load_lifecycle()
     if lifecycle is None:
-        doc = fallback_preflight("core lifecycle not yet ported", task_id=payload.get("task_id", ""), session_id=payload.get("session_id", ""))
+        doc = fallback_preflight("core lifecycle not yet ported", task_id=payload.get("task_id", ""), session_id=payload.get("session_id", ""), schema_version=declared)
     else:
         doc = lifecycle.preflight(
             task=payload.get("task", ""),
@@ -88,6 +89,7 @@ def cmd_preflight(args: argparse.Namespace) -> int:
             memory_mode=payload.get("memory_mode", "enabled"),
             provider=payload.get("provider", "opencode"),
             model=payload.get("model", ""),
+            schema_version=declared,
         )
     validate_preflight(doc)
     _emit(doc)
@@ -96,15 +98,17 @@ def cmd_preflight(args: argparse.Namespace) -> int:
 
 def cmd_postflight(args: argparse.Namespace) -> int:
     payload = _read_payload(args)
+    declared = payload.get("schema_version", "")
     lifecycle = _load_lifecycle()
     if lifecycle is None:
-        doc = fallback_postflight("core lifecycle not yet ported", task_id=payload.get("task_id", ""), loop_id=payload.get("loop_id", ""), session_id=payload.get("session_id", ""))
+        doc = fallback_postflight("core lifecycle not yet ported", task_id=payload.get("task_id", ""), loop_id=payload.get("loop_id", ""), session_id=payload.get("session_id", ""), schema_version=declared)
     else:
         doc = lifecycle.postflight(
             task_id=payload.get("task_id", ""),
             loop_id=payload.get("loop_id", ""),
             session_id=payload.get("session_id", ""),
             cwd=payload.get("cwd", ""),
+            schema_version=declared,
         )
     validate_postflight(doc)
     _emit(doc)

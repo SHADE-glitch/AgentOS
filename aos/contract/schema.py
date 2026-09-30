@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-CONTRACT_VERSION = "1.0"
+CONTRACT_VERSION = "1.1"
+
+# A request may declare any supported version and the document it gets back is
+# written in that same version. 1.1 only adds fields, so a host that still pins
+# "1.0" keeps passing its own version check instead of failing at the exact
+# moment the engine degraded and it needed to carry on.
+SUPPORTED_VERSIONS = ("1.0", "1.1")
 
 # ── Enums ──────────────────────────────────────────────────────────────
 AOS_STATUS = frozenset({"ok", "degraded", "fallback"})
@@ -34,6 +40,9 @@ MEMORY_TYPE = frozenset(
     }
 )
 MEMORY_MODE = frozenset({"enabled", "disabled", "fallback"})
+# Health of the recall step itself, reported next to whatever it returned, so a
+# host can tell "nothing was relevant" from "retrieval did not run".
+MEMORY_STATUS = frozenset({"ok", "degraded", "skipped", "fallback"})
 PROVIDER = frozenset({"opencode", "host_delegate", "test_provider"})
 
 # Required request keys per phase. A request may always carry more.
@@ -62,10 +71,15 @@ def is_enum(value: Any, allowed: frozenset[str]) -> bool:
     return value is None or value in allowed
 
 
+def declared_version(value: Any) -> str:
+    """The version to write a document in: the caller's, when we support it."""
+    return value if value in SUPPORTED_VERSIONS else CONTRACT_VERSION
+
+
 def validate_schema_version(doc: dict[str, Any], errors: list[str]) -> None:
     require(
-        doc.get("schema_version") == CONTRACT_VERSION,
-        f"schema_version must be {CONTRACT_VERSION!r}",
+        doc.get("schema_version") in SUPPORTED_VERSIONS,
+        f"schema_version must be one of {', '.join(repr(v) for v in SUPPORTED_VERSIONS)}",
         errors,
     )
 

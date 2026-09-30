@@ -20,9 +20,16 @@ from typing import Any, Optional
 
 from aos.adapters import base as adapters_base
 from aos.config import get_paths
-from aos.contract import build_postflight, build_preflight, fallback_postflight, fallback_preflight
+from aos.contract import (
+    CONTRACT_VERSION,
+    build_postflight,
+    build_preflight,
+    fallback_postflight,
+    fallback_preflight,
+)
 from aos.core.loop import stages
 from aos.core.loop.state import LoopState
+from aos.core.memory import inject
 from aos.core.memory.store import MemoryStore
 
 
@@ -76,7 +83,13 @@ def _run_preflight(
     return state, decision, executor, recall, plan
 
 
-def _preflight_doc(state: LoopState, decision: dict[str, Any], recall: dict[str, Any]) -> dict[str, Any]:
+def _preflight_doc(
+    state: LoopState,
+    decision: dict[str, Any],
+    recall: dict[str, Any],
+    *,
+    schema_version: str = CONTRACT_VERSION,
+) -> dict[str, Any]:
     route = state.stage_data("route")
     lead_role = route.get("lead_role")
     support_roles = route.get("support_roles", [])
@@ -87,6 +100,17 @@ def _preflight_doc(state: LoopState, decision: dict[str, Any], recall: dict[str,
         warnings.append("memory disabled by request")
 
     status = "degraded" if (decision.get("fallback_reason") or not lead_role) else "ok"
+    # Rendered from the raw scored rows, which still carry title/body/tags;
+    # _memory_view below is the trimmed contract view of the same recall.
+    injection = inject.render(
+        recall.get("memories", []),
+        hypotheses=recall.get("hypotheses", []),
+        route={
+            "lead_skill": decision.get("selected", ""),
+            "lead_role": lead_role,
+            "confidence": decision.get("confidence", ""),
+        },
+    )
     return build_preflight(
         task_id=state.task_id,
         loop_id=state.loop_id,
@@ -118,6 +142,8 @@ def _preflight_doc(state: LoopState, decision: dict[str, Any], recall: dict[str,
             "memories": [_memory_view(m) for m in recall.get("memories", [])],
             "hypotheses": [_memory_view(h) for h in recall.get("hypotheses", [])],
             "ranking": recall.get("ranking", []),
+            "status": "skipped" if state.memory_mode in ("disabled", "off") else "ok",
+            "injection": injection,
         },
         skill={
             "lead_skill": decision.get("selected", ""),
@@ -126,6 +152,7 @@ def _preflight_doc(state: LoopState, decision: dict[str, Any], recall: dict[str,
         },
         warnings=warnings,
         artifacts={"loop_state": str(state.state_path())},
+        schema_version=schema_version,
     )
 
 
@@ -138,6 +165,7 @@ def preflight(
     memory_mode: str = "enabled",
     provider: str = "opencode",
     model: str = "",
+    schema_version: str = CONTRACT_VERSION,
 ) -> dict[str, Any]:
     """Run the pre-execution stages and return the preflight contract."""
     try:
@@ -151,8 +179,13 @@ def preflight(
             model=model,
         )
     except Exception as exc:  # fail-open: the host must still be able to proceed
-        return fallback_preflight(f"preflight failed: {exc}", task_id=task_id, session_id=session_id)
-    return _preflight_doc(state, decision, recall)
+        return fallback_preflight(
+            f"preflight failed: {exc}",
+            task_id=task_id,
+            session_id=session_id,
+            schema_version=schema_version,
+        )
+    return _preflight_doc(state, decision, recall, schema_version=schema_version)
 
 
 def _run_postflight(
@@ -170,10 +203,13 @@ def _run_postflight(
     outcome: str = "",
     quality_score: Optional[float] = None,
     store: Optional[MemoryStore] = None,
+    schema_version: str = CONTRACT_VERSION,
 ) -> tuple[Optional[LoopState], dict[str, Any]]:
     state = LoopState.load(loop_id)
     if state is None:
-        return None, fallback_postflight("unknown loop_id", loop_id=loop_id)
+        return None, fallback_postflight(
+            "unknown loop_id", loop_id=loop_id, schema_version=schema_version
+        )
 
     # Idempotency: a finished loop returns its stored document, flagged.
     if state.postflight is not None and state.final_status != "pending":
@@ -254,6 +290,7 @@ def _run_postflight(
                 "promoted": learning.get("promoted", 0),
             },
             replayed=False,
+            schema_version=schema_version,
         )
         state.postflight = doc
         state.save()
@@ -279,6 +316,7 @@ def postflight(
     execution: Optional[dict[str, Any]] = None,
     outcome: str = "",
     quality_score: Optional[float] = None,
+    schema_version: str = CONTRACT_VERSION,
 ) -> dict[str, Any]:
     """Run the post-execution stages and return the postflight contract."""
     try:
@@ -295,10 +333,15 @@ def postflight(
             execution=execution,
             outcome=outcome,
             quality_score=quality_score,
+            schema_version=schema_version,
         )
     except Exception as exc:  # fail-open: never break the host on finalisation
         return fallback_postflight(
-            f"postflight failed: {exc}", task_id=task_id, loop_id=loop_id, session_id=session_id
+            f"postflight failed: {exc}",
+            task_id=task_id,
+            loop_id=loop_id,
+            session_id=session_id,
+            schema_version=schema_version,
         )
     return doc
 

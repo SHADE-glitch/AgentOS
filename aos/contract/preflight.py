@@ -15,8 +15,10 @@ from aos.contract.schema import (
     CONFIDENCE,
     DIFFICULTY,
     ESCALATION,
+    MEMORY_STATUS,
     ROUTE_MODE,
     ValidationError,
+    declared_version,
     is_enum,
     require,
     validate_phase,
@@ -68,6 +70,23 @@ def _router(data: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def _injection(data: dict[str, Any] | None) -> dict[str, Any]:
+    """The block a host puts in front of the model, plus its provenance.
+
+    ``structured`` is the same content before it was flattened, so a host
+    consumes fields rather than parsing the text back apart.
+    """
+    data = data or {}
+    return {
+        "text": str(data.get("text", "")),
+        "structured": list(data.get("structured", [])),
+        "char_count": int(data.get("char_count", 0)),
+        "truncated": bool(data.get("truncated", False)),
+        "memory_ids": [str(mid) for mid in data.get("memory_ids", [])],
+        "dropped": [str(mid) for mid in data.get("dropped", [])],
+    }
+
+
 def _memory(data: dict[str, Any] | None) -> dict[str, Any]:
     data = data or {}
     memories = list(data.get("memories", []))
@@ -77,6 +96,8 @@ def _memory(data: dict[str, Any] | None) -> dict[str, Any]:
         "memories": memories,
         "hypotheses": hypotheses,
         "ranking": list(data.get("ranking", [])),
+        "status": data.get("status", "ok"),
+        "injection": _injection(data.get("injection")),
     }
 
 
@@ -101,10 +122,11 @@ def build_preflight(
     skill: dict[str, Any] | None = None,
     warnings: list[str] | None = None,
     artifacts: dict[str, Any] | None = None,
+    schema_version: str = CONTRACT_VERSION,
 ) -> dict[str, Any]:
     """Assemble a normalised preflight response document."""
     return {
-        "schema_version": CONTRACT_VERSION,
+        "schema_version": declared_version(schema_version),
         "phase": "preflight",
         "aos_status": aos_status,
         "task_id": task_id,
@@ -119,14 +141,23 @@ def build_preflight(
     }
 
 
-def fallback_preflight(reason: str, *, task_id: str = "", loop_id: str = "", session_id: str = "") -> dict[str, Any]:
+def fallback_preflight(
+    reason: str,
+    *,
+    task_id: str = "",
+    loop_id: str = "",
+    session_id: str = "",
+    schema_version: str = CONTRACT_VERSION,
+) -> dict[str, Any]:
     """Fail-open response: the host should proceed without AOS context."""
     return build_preflight(
         task_id=task_id,
         loop_id=loop_id,
         session_id=session_id,
         aos_status="fallback",
+        memory={"status": "fallback"},
         warnings=[reason],
+        schema_version=schema_version,
     )
 
 
@@ -170,6 +201,28 @@ def validate_preflight(doc: dict[str, Any]) -> None:
         require(isinstance(memory.get("retrieved"), int), "memory.retrieved must be an int", errors)
         for key in ("memories", "hypotheses", "ranking"):
             require(isinstance(memory.get(key), list), f"memory.{key} must be a list", errors)
+        require(is_enum(memory.get("status"), MEMORY_STATUS), "memory.status is not a known status", errors)
+        injection = memory.get("injection")
+        require(isinstance(injection, dict), "memory.injection must be an object", errors)
+        if isinstance(injection, dict):
+            require(isinstance(injection.get("text"), str), "memory.injection.text must be a string", errors)
+            require(
+                isinstance(injection.get("structured"), list),
+                "memory.injection.structured must be a list",
+                errors,
+            )
+            require(
+                isinstance(injection.get("char_count"), int),
+                "memory.injection.char_count must be an int",
+                errors,
+            )
+            require(
+                isinstance(injection.get("truncated"), bool),
+                "memory.injection.truncated must be a bool",
+                errors,
+            )
+            for key in ("memory_ids", "dropped"):
+                require(isinstance(injection.get(key), list), f"memory.injection.{key} must be a list", errors)
 
     skill = doc.get("skill")
     require(isinstance(skill, dict), "skill must be an object", errors)

@@ -21,7 +21,7 @@ AgentOS/
 ├── pyproject.toml              # package metadata + pytest config (no runtime deps)
 ├── aos/                        # the engine (stdlib only)
 │   ├── config.py               # resolve_root() + Paths (every path injectable)
-│   ├── contract/               # frozen preflight/postflight contract (schema 1.0)
+│   ├── contract/               # frozen preflight/postflight contract (schema 1.1)
 │   ├── core/
 │   │   ├── routing/            # hybrid router + taxonomy resolution
 │   │   │   └── registry/       # engine vocab, role catalog, taxonomy map
@@ -65,21 +65,30 @@ Hosts do not call the Python API directly — they speak the JSON contract over
 stdin/stdout:
 
 ```bash
-echo '{"schema_version":"1.0","phase":"preflight","task":"...","session_id":"...","cwd":"..."}' \
+echo '{"schema_version":"1.1","phase":"preflight","task":"...","session_id":"...","cwd":"..."}' \
   | ./bin/aos preflight --payload-stdin
 ```
 
-## The frozen contract (`schema_version = "1.0"`)
+The response's `memory.injection.text` is the block to append to the host's
+system prompt; an empty string means push nothing.
+
+## The frozen contract (`schema_version = "1.1"`, serves `1.0`)
 
 The preflight/postflight JSON shapes are the public interface. They live in
-`aos/contract/` and are locked by `tests/test_contract.py`, which asserts the
-exact field set the host plugins read — so the contract cannot silently break a
-host.
+`aos/contract/` and are locked by `tests/test_contract.py`, which holds the 1.0
+field set as a literal and asserts the emitted document equals that set plus
+only the declared additions — so a key cannot be dropped, and one cannot be
+added quietly either.
+
+A request may declare `1.0` or `1.1` and the response is echoed in the version
+it declared; anything else is answered in the engine's own. 1.1 is additions
+only, which is what lets a host still pinned to 1.0 keep passing its own check
+while reading nothing new.
 
 **Request payload** (both phases share it; fields optional unless noted):
 
 ```json
-{ "schema_version": "1.0", "phase": "preflight|postflight",
+{ "schema_version": "1.0|1.1", "phase": "preflight|postflight",
   "task": "(preflight, required)", "task_id": "(postflight, required)",
   "loop_id": "(postflight, required)", "session_id": "", "cwd": "",
   "memory_mode": "enabled|disabled|fallback",
@@ -89,13 +98,18 @@ host.
 **preflight response** carries `aos_status`, the generated `task_id` / `loop_id`
 / `session_id`, `classification`, `router` (`lead_skill` abstract,
 `lead_role` concrete, confidence, escalation reason, artifact), `memory`
-(retrieved memories + hypotheses), `skill`, `warnings` and `artifacts`.
+(retrieved memories + hypotheses, `status` = recall health
+`ok|degraded|skipped|fallback`, and 1.1's `injection` — the ready-to-append
+`<agent_os>` block with its `structured` fields, `char_count`, `truncated`,
+`memory_ids` and `dropped`), `skill`, `warnings` and `artifacts`.
 
 **postflight response** carries `final_status`, `evidence_path` + `evidence`,
-`recovery`, `learning` (candidates / pending reviews / promoted) and `replayed`.
+`recovery`, `learning` (candidates / pending reviews / promoted), `replayed`
+and 1.1's `aos_error` (why a fail-open document was returned).
 
 `aos_status` is one of `ok | degraded | fallback`; `final_status` one of
-`completed | partial | failed`. Validation lives in
+`completed | partial | failed`. A document the engine could not produce reports
+`failed`, never `completed`. Validation lives in
 `aos/contract/{preflight,postflight}.py`; the legacy nested shape is rendered on
 demand by `aos/contract/legacy.py`.
 

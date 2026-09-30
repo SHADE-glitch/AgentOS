@@ -84,6 +84,58 @@ def test_preflight_recalls_seeded_memory(repo, store):
     assert "M1" in ids
 
 
+def test_preflight_ships_the_rendered_injection_block(repo, store):
+    """The block a host pushes must be produced by preflight, not just declared.
+
+    A contract key that no producer fills is how ``skills_loaded`` ended up a
+    validated field that is always empty, so this pins the seam itself.
+    """
+    store.upsert_memory(
+        {
+            "memory_id": "M1",
+            "type": "pattern",
+            "category": "backend",
+            "title": "null pointer guard",
+            "body": "check for null before dereferencing",
+            "evidence_level": "runtime_validated",
+        },
+        tags=["null", "crash", "parser"],
+    )
+    doc = lifecycle.preflight(task="fix the null pointer crash in the parser", cwd=str(repo))
+
+    injection = doc["memory"]["injection"]
+    assert doc["memory"]["status"] == "ok"
+    assert "<agent_os>" in injection["text"]
+    assert "check for null before dereferencing" in injection["text"]
+    assert injection["memory_ids"] == ["M1"]
+    assert injection["char_count"] == len(injection["text"])
+    assert [item["memory_id"] for item in injection["structured"]] == ["M1"]
+    # The trimmed contract view and the block agree about what was recalled.
+    assert injection["structured"][0]["body"] == doc["memory"]["memories"][0]["content"]
+
+
+def test_preflight_reports_recall_as_skipped_when_memory_is_off(repo, store):
+    store.upsert_memory(
+        {"memory_id": "M1", "type": "pattern", "title": "t", "body": "b",
+         "evidence_level": "runtime_validated", "tags": []},
+        tags=["crash"],
+    )
+    doc = lifecycle.preflight(
+        task="fix the null pointer crash", cwd=str(repo), memory_mode="disabled"
+    )
+
+    assert doc["memory"]["status"] == "skipped"
+    # Skipped means nothing pushed, not an empty section for the host to inject.
+    assert doc["memory"]["injection"]["text"] == ""
+    assert "memory disabled by request" in doc["warnings"]
+
+
+def test_preflight_echoes_a_declared_1_0_version(repo):
+    doc = lifecycle.preflight(task="fix the crash", cwd=str(repo), schema_version="1.0")
+    assert doc["schema_version"] == "1.0"
+    validate_preflight(doc)
+
+
 # ── run ────────────────────────────────────────────────────────────────
 def test_run_with_test_provider_completes(repo):
     doc = lifecycle.run(task="add a health check endpoint", cwd=str(repo), provider="test_provider")

@@ -20,6 +20,7 @@ from aos.contract import (
 )
 from aos.contract.postflight import fallback_postflight
 from aos.contract.preflight import fallback_preflight
+from aos.contract.schema import SUPPORTED_VERSIONS
 
 # Fields the OpenCode plugin reads from a preflight response, as dotted paths.
 PLUGIN_PREFLIGHT_FIELDS = (
@@ -36,6 +37,7 @@ PLUGIN_PREFLIGHT_FIELDS = (
     "router.confidence",
     "memory.retrieved",
     "memory.memories",
+    "memory.injection.text",
     "skill.skills_loaded",
     "warnings",
 )
@@ -49,6 +51,46 @@ PLUGIN_POSTFLIGHT_FIELDS = (
     "evidence_path",
     "recovery.failures_detected",
 )
+
+# The 1.0 top-level field set, restated here as a literal rather than imported,
+# so deleting or retyping one of these keys fails this test instead of silently
+# breaking a host that pins the contract version.
+FROZEN_1_0_PREFLIGHT = frozenset(
+    {
+        "schema_version",
+        "phase",
+        "aos_status",
+        "task_id",
+        "loop_id",
+        "session_id",
+        "classification",
+        "router",
+        "memory",
+        "skill",
+        "warnings",
+        "artifacts",
+    }
+)
+FROZEN_1_0_POSTFLIGHT = frozenset(
+    {
+        "schema_version",
+        "phase",
+        "aos_status",
+        "task_id",
+        "loop_id",
+        "session_id",
+        "final_status",
+        "evidence_path",
+        "evidence",
+        "recovery",
+        "learning",
+        "replayed",
+    }
+)
+
+# What 1.1 adds on top. Nothing may be removed, so this is a growth list only.
+EXTRA_1_1_PREFLIGHT: frozenset[str] = frozenset()
+EXTRA_1_1_POSTFLIGHT = frozenset({"aos_error"})
 
 
 def _has_path(doc: dict, dotted: str) -> bool:
@@ -86,7 +128,125 @@ def _sample_postflight() -> dict:
 
 
 def test_contract_version():
-    assert CONTRACT_VERSION == "1.0"
+    assert CONTRACT_VERSION == "1.1"
+    # A host pinned to the previous version must still be served.
+    assert SUPPORTED_VERSIONS == ("1.0", "1.1")
+
+
+def test_preflight_field_set_is_frozen_plus_declared_additions():
+    doc = _sample_preflight()
+    assert FROZEN_1_0_PREFLIGHT <= set(doc)
+    assert set(doc) == FROZEN_1_0_PREFLIGHT | EXTRA_1_1_PREFLIGHT
+
+
+def test_postflight_field_set_is_frozen_plus_declared_additions():
+    doc = _sample_postflight()
+    assert FROZEN_1_0_POSTFLIGHT <= set(doc)
+    assert set(doc) == FROZEN_1_0_POSTFLIGHT | EXTRA_1_1_POSTFLIGHT
+
+
+# ── version negotiation ────────────────────────────────────────────────
+def test_1_0_request_is_served_1_0():
+    doc = build_preflight(task_id="T", loop_id="L", schema_version="1.0")
+    assert doc["schema_version"] == "1.0"
+    validate_preflight(doc)
+    assert "injection" in doc["memory"]  # additive keys arrive regardless
+
+
+def test_1_1_request_gets_injection():
+    doc = build_preflight(task_id="T", loop_id="L", schema_version="1.1")
+    assert doc["schema_version"] == "1.1"
+    assert set(doc["memory"]["injection"]) == {
+        "text",
+        "structured",
+        "char_count",
+        "truncated",
+        "memory_ids",
+        "dropped",
+    }
+
+
+def test_unsupported_version_is_answered_in_the_engines_own():
+    """An unknown declaration is answered in a version we do support.
+
+    Answering "0.9" would hand back a document no validator accepts, so the
+    caller's own check fails at the moment it is trying to degrade.
+    """
+    assert build_preflight(task_id="T", loop_id="L", schema_version="0.9")["schema_version"] == "1.1"
+    assert build_postflight(task_id="T", loop_id="L", schema_version="")["schema_version"] == "1.1"
+    assert fallback_preflight("boom", schema_version="1.0")["schema_version"] == "1.0"
+
+
+def test_validate_still_rejects_a_version_we_do_not_support():
+    doc = _sample_preflight()
+    doc["schema_version"] = "2.0"
+    with pytest.raises(ValidationError):
+        validate_preflight(doc)
+
+
+# ── honesty of the fail-open documents ─────────────────────────────────
+def test_fallback_postflight_reports_failure_not_completion():
+    doc = fallback_postflight("core lifecycle not yet ported", loop_id="L")
+    assert doc["final_status"] == "failed"
+    assert doc["aos_status"] == "fallback"
+    # The reason must travel, not be discarded on the way out.
+    assert doc["aos_error"] == "core lifecycle not yet ported"
+    validate_postflight(doc)
+
+
+def test_fallback_postflight_does_not_claim_a_recovery_verdict():
+    doc = fallback_postflight("boom", loop_id="L")
+    # The recovery planner never ran, so it must not assert a completion verdict
+    # that contradicts the top-level failure.
+    assert doc["recovery"]["final_status"] is None
+    assert doc["final_status"] == "failed"
+    validate_postflight(doc)
+
+
+def test_recovery_verdict_is_kept_when_the_loop_ran():
+    doc = build_postflight(
+        task_id="T",
+        loop_id="L",
+        final_status="partial",
+        recovery={"failures_detected": 2, "final_status": "partial", "plan": {"steps": []}},
+    )
+    assert doc["recovery"]["final_status"] == "partial"
+    validate_postflight(doc)
+
+
+def test_fallback_preflight_marks_recall_as_not_run():
+    doc = fallback_preflight("boom")
+    assert doc["memory"]["status"] == "fallback"
+    assert doc["memory"]["injection"]["text"] == ""
+    validate_preflight(doc)
+
+
+# ── injection and recall health are validated, not just present ────────
+def test_validate_preflight_rejects_bad_memory_status():
+    doc = _sample_preflight()
+    doc["memory"]["status"] = "vibing"
+    with pytest.raises(ValidationError):
+        validate_preflight(doc)
+
+
+def test_validate_preflight_rejects_a_non_string_injection_text():
+    doc = _sample_preflight()
+    doc["memory"]["injection"]["text"] = ["<agent_os>"]
+    with pytest.raises(ValidationError):
+        validate_preflight(doc)
+
+
+def test_memory_defaults_are_valid():
+    doc = build_preflight(task_id="T", loop_id="L")
+    assert doc["memory"]["status"] == "ok"
+    assert doc["memory"]["injection"] == {
+        "text": "",
+        "structured": [],
+        "char_count": 0,
+        "truncated": False,
+        "memory_ids": [],
+        "dropped": [],
+    }
 
 
 def test_preflight_carries_every_field_the_plugin_reads():
