@@ -26,9 +26,6 @@ ENV_MEMORY_DIR = "AOS_MEMORY_DIR"
 ENV_KNOWLEDGE_DIR = "AOS_KNOWLEDGE_DIR"
 ENV_POLICIES_DIR = "AOS_POLICIES_DIR"
 
-# Legacy variable accepted for one release with a warning.
-ENV_LEGACY_HOME = "AGENT_OS_HOME"
-
 
 def resolve_root() -> Path:
     """Resolve the Agent OS root.

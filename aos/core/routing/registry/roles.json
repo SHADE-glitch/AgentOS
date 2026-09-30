@@ -2,7 +2,7 @@
   "meta": {
     "name": "default_role_catalog",
     "version": "1.1",
-    "note": "Built-in agent role catalog. The content layer may override or extend it under content/skills/. 'domain' groups roles for orchestration; 'dependencies' is advisory ordering metadata."
+    "note": "Built-in agent role catalog. A deployment may override or extend it by placing content/routing/roles.json (merged over these entries), or replace the whole registry via AOS_REGISTRY_PATH. 'domain' groups roles for orchestration; 'dependencies' is advisory ordering metadata."
   },
   "roles": [
     {"id": "code-reviewer", "domain": "backend", "desc": "reviews and fixes defects, refactors, general code quality", "dependencies": []},

@@ -4,11 +4,15 @@ Agent OS is an external "brain" for coding agents (OpenCode, and later other
 hosts). It wraps a host agent and adds four capabilities:
 
 ```text
-Route    pick the right role for the task
+Route    pick the right skill and role for the task
 Recall   retrieve the memories that apply to it
-Inject   hand the routed prompt to the host to execute
+Inject   render them into one block the host puts in front of the model
 Learn    record the outcome and promote repeated lessons into memory
 ```
+
+The host executes; the engine decides what it should know first and what the
+episode taught afterwards. Actual code changes are never made here —
+`auto_modify_code` is `False` everywhere.
 
 The engine is pure Python standard library — **zero third-party dependencies**.
 All configuration, rules, roles and policies are JSON.
@@ -26,18 +30,19 @@ AgentOS/
 │   │   ├── routing/            # hybrid router + taxonomy resolution
 │   │   │   └── registry/       # engine vocab, role catalog, taxonomy map
 │   │   ├── memory/             # SQLite store, retrieve, record, evolve, policy,
-│   │   │                       #   conflict, evaluate
+│   │   │                       #   conflict, evaluate, inject (the block renderer),
+│   │   │                       #   authoring (add/seed)
 │   │   ├── loop/               # state machine + lifecycle + stages + team
 │   │   ├── orchestration/      # multi-agent team formation + collaboration
 │   │   ├── validation/         # project build detection + code validation
 │   │   └── evidence/           # collection, recovery planning, provenance
 │   ├── adapters/               # Provider protocol: opencode / host_delegate / test_provider
 │   └── cli/main.py             # run | doctor | preflight | postflight | review | route | memory
-├── content/                    # deferred content layer (README + overridable JSON)
+├── content/                    # overridable JSON layer (see content/README.md)
+│   └── memory/seed/            # cold-start memories (loaded by `aos memory seed`)
 ├── store/                      # runtime state (gitignored; see store/.gitignore)
 │   ├── aos.db                  # SQLite memory store
 │   └── loops/  evidence/  pending-postflight/
-├── hosts/                      # host integrations (frozen this round — see below)
 └── tests/                      # conftest + per-module tests
 ```
 
@@ -48,11 +53,17 @@ path resolves from `AGENT_OS_ROOT` (defaulting to the repo itself).
 
 ```bash
 ./bin/aos doctor                       # show resolved paths and health
+./bin/aos memory seed                  # cold start: load content/memory/seed into the store
+./bin/aos memory list                  # what the engine knows
+./bin/aos memory inspect <id>          # a memory and why it believes it
 ./bin/aos route "fix the null pointer crash"
 ./bin/aos run "add a /health endpoint" --cwd /path/to/project --provider test_provider
-./bin/aos memory list
 ./bin/aos review list                  # pending memory promotions
 ```
+
+A fresh store holds nothing, and with nothing stored recall is empty, so no
+candidate is ever proposed and no learning is observable at all. `memory seed`
+is therefore step one, not a nicety.
 
 `run` executes the full lifecycle (preflight → execute → postflight) against a
 real provider and prints the postflight contract. Use `--provider test_provider`
@@ -127,8 +138,7 @@ back named in `warnings` instead of being ignored in silence.
 `aos_status` is one of `ok | degraded | fallback`; `final_status` one of
 `completed | partial | failed`. A document the engine could not produce reports
 `failed`, never `completed`. Validation lives in
-`aos/contract/{preflight,postflight}.py`; the legacy nested shape is rendered on
-demand by `aos/contract/legacy.py`.
+`aos/contract/{preflight,postflight}.py`.
 
 ## Configuration
 
@@ -138,12 +148,14 @@ demand by `aos/contract/legacy.py`.
 | store dir | `AOS_STORE_DIR` | `<root>/store` |
 | database | `AOS_DB_PATH` | `<store>/aos.db` |
 | content dir | `AOS_CONTENT_DIR` | `<root>/content` |
-| skills dir | `AOS_SKILLS_DIR` | `<content>/skills` |
+| memory dir | `AOS_MEMORY_DIR` | `<content>/memory` |
 | policies dir | `AOS_POLICIES_DIR` | `<content>/policies` |
+| skills dir | `AOS_SKILLS_DIR` | `<content>/skills` |
+| knowledge dir | `AOS_KNOWLEDGE_DIR` | `<content>/knowledge` |
 
-Other recognised variables: `AOS_RUNTIME_PROVIDER`, `AOS_RUNTIME_MODEL`,
-`AOS_SESSION_ID`, `AOS_HOST_PLUGIN_ACTIVE`, `AOS_MIN_MEMORY_SCORE`. The legacy
-`AGENT_OS_HOME` is accepted with a one-time warning. `tests/test_config.py`
+Two more the engine reads directly: `AOS_SESSION_ID` (names the evidence
+directory; generated when unset) and `AOS_REGISTRY_PATH` (override the routing
+registry). `tests/test_config.py`
 guards against any hardcoded absolute path creeping back into `aos/`.
 
 ## Memory and the learning gate
@@ -207,26 +219,43 @@ provenance.
 ## Tests
 
 ```bash
-python -m pytest tests/ -q                    # dev dependency: pytest
-python -m unittest discover -s tests          # stdlib fallback
+python -m pytest tests/ -q
 ```
 
+pytest is the only runner: the suite is built on pytest fixtures, so
+`python -m unittest discover -s tests` collects **zero** tests and exits `0` —
+a green that means nothing. Do not wire it into anything as a check.
+
 Each test runs against a hermetic `tmp_path` store (autouse `hermetic_env`
-fixture), so tests are side-effect free and parallel-safe.
+fixture), so tests are side-effect free and parallel-safe. The repository's own
+`store/aos.db` is never touched by a test.
 
-## Hosts (frozen this round)
+## Host integration
 
-`hosts/opencode/` and `hosts/freebuff/` are **intentionally disconnected** in
-this round. Their plugin entry points still reference the retired
-`runtime/hosts/...` paths and `~/.agents`, which no longer exist. Host
-integration is the next round's work: point the plugins at `bin/aos` (the JSON
-contract above) and at the new `store/` paths. Until then, `./bin/aos` is the
-supported entry point.
+A host reaches the engine only through `./bin/aos` and the JSON contract above —
+there is no second host protocol and no Python API for hosts to import. The
+OpenCode plugin is the adapter that speaks it; it is designed but not yet
+written, and nothing here installs into `~/.config/opencode/`. Until the plugin
+lands, `./bin/aos` is the entry point.
 
-## Deferred: the content layer
+The previous `hosts/opencode/` tree is deleted. It pointed at a retired
+`~/.agents` layout that no longer exists, neither `aos/` nor `tests/` imported
+it, and the engine never read a byte of it — so a fresh clone could not start
+it, and reading it was worse than useless.
 
-`content/` (skills, knowledge, policies) is deferred. The engine ships built-in
-defaults — role catalog, taxonomy map, orchestration rules — so routing,
-orchestration and the loop work with an empty content layer. The content layer
-is meant to be rebuilt on top of the interfaces defined here, overriding the
-engine defaults via the `AOS_*_DIR` variables.
+## The content layer
+
+`content/` holds what a host may edit without touching the engine:
+
+| Path | Status |
+|---|---|
+| `content/memory/seed/` | **live** — loaded by `aos memory seed`; the cold start |
+| `content/policies/` | empty; `policy.load_policy` falls back to built-in defaults |
+| `content/skills/`, `content/knowledge/` | not created — declared paths only |
+
+`content/policies/*.json` overrides `aos/core/memory/policy.py`'s defaults, so
+thresholds can be retuned per deployment without a code change. Routing rules,
+the role catalog and the taxonomy map are resolved from
+`aos/core/routing/registry/` first, and `AOS_REGISTRY_PATH` overrides that — the
+engine works with an entirely empty `content/`, which is why every path here is
+optional and none is validated.

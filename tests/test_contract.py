@@ -1,8 +1,8 @@
 """Contract tests.
 
 The most important assertion here is that the frozen contract still carries
-every field the host plugin actually reads (``hosts/opencode/plugin/index.js``).
-If a field is dropped, this test fails before a host can break.
+every field a host reads from a response. If a field is dropped, this test
+fails before a host can break.
 """
 
 from __future__ import annotations
@@ -14,7 +14,6 @@ from aos.contract import (
     ValidationError,
     build_postflight,
     build_preflight,
-    to_adapter_context,
     validate_postflight,
     validate_preflight,
 )
@@ -313,12 +312,3 @@ def test_fallback_documents_validate():
 def test_fallback_marks_status():
     assert fallback_preflight("boom")["aos_status"] == "fallback"
     assert fallback_postflight("boom")["aos_status"] == "fallback"
-
-
-def test_legacy_adapter_context_shape():
-    doc = _sample_preflight()
-    legacy = to_adapter_context(doc)
-    assert legacy["aos_status"] == "completed"
-    assert legacy["decision"]["classification"]["category"] == "backend"
-    assert legacy["orchestration"]["lead_agent"] == "code-reviewer"
-    assert legacy["orchestration"]["support_agents"] == []

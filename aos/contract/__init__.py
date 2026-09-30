@@ -15,7 +15,6 @@ from aos.contract.schema import (
 )
 from aos.contract.preflight import build_preflight, fallback_preflight, validate_preflight
 from aos.contract.postflight import build_postflight, fallback_postflight, validate_postflight
-from aos.contract.legacy import to_adapter_context
 
 __all__ = [
     "CONTRACT_VERSION",
@@ -29,5 +28,4 @@ __all__ = [
     "validate_postflight",
     "validate_request",
     "unread_request_fields",
-    "to_adapter_context",
 ]

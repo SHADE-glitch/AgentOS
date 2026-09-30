@@ -54,9 +54,6 @@ store/loops/
 store/evidence/
 store/pending-postflight/
 
-# Freebuff worktrees
-.freebuff/worktrees/
-
 # Reports and audit files (if generated dynamically)
 reports/
 *Audit-Report.md
