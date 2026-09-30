@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
 from aos import __version__
@@ -226,24 +227,113 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _split_list(value: str) -> list[str]:
+    return [part.strip() for part in str(value or "").split(",") if part.strip()]
+
+
+def _memory_list(args: argparse.Namespace, store) -> int:
+    memories = store.list_memories(
+        type=getattr(args, "type", None), status=getattr(args, "status", None)
+    )
+    limit = getattr(args, "limit", 0) or 0
+    if limit:
+        memories = memories[:limit]
+    if not memories:
+        print("(no memories)")
+        return 0
+    for m in memories:
+        print(
+            f"{m['memory_id']:<14} {m['type']:<14} {m['category']:<14} "
+            f"{m['status']:<9} {m['evidence_level']:<24} decay={m['decay_factor']:<5} {m['title']}"
+        )
+    print(f"\n{len(memories)} memories")
+    return 0
+
+
+def _memory_add(args: argparse.Namespace, store) -> int:
+    from aos.core.memory import authoring
+
+    try:
+        row = authoring.new_memory(
+            title=args.title,
+            body=args.body,
+            type=args.type,
+            category=args.category,
+            tags=_split_list(args.tags),
+            roles=_split_list(args.roles),
+            evidence_level=args.evidence_level,
+            confidence=args.confidence,
+            status=args.status,
+            verified=args.verified,
+        )
+    except authoring.AuthoringError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    store.upsert_memory(row, tags=row["tags"], roles=row["roles"])
+    _emit(row)
+    return 0
+
+
+def _memory_seed(args: argparse.Namespace, store) -> int:
+    from aos.config import get_paths
+    from aos.core.memory import authoring
+
+    directory = Path(args.dir) if args.dir else get_paths().memory_dir
+    report = authoring.seed_from_dir(directory, store=store, force=args.force)
+    _emit(report)
+    return 1 if report["errors"] and not report["seeded"] else 0
+
+
+def _memory_show(args: argparse.Namespace, store) -> int:
+    for row in store.memories_for_scoring():
+        if row["memory_id"] == args.memory_id:
+            _emit(row)
+            return 0
+    print(f"error: no memory {args.memory_id}", file=sys.stderr)
+    return 1
+
+
+def _memory_inspect(args: argparse.Namespace, store) -> int:
+    """Everything the store can say about one memory, and why it believes it."""
+    memory = next((row for row in store.memories_for_scoring() if row["memory_id"] == args.memory_id), None)
+    if memory is None:
+        print(f"error: no memory {args.memory_id}", file=sys.stderr)
+        return 1
+
+    candidates = [c for c in store.list_candidates() if c.get("target_memory") == args.memory_id]
+    reviews = [r for r in store.list_reviews() if r.get("memory_id") == args.memory_id]
+    _emit(
+        {
+            "memory": memory,
+            "observations": store.list_observations(memory_id=args.memory_id),
+            "candidates": candidates,
+            "reviews": reviews,
+        }
+    )
+    return 0
+
+
+_MEMORY_COMMANDS = {
+    "list": _memory_list,
+    "add": _memory_add,
+    "seed": _memory_seed,
+    "show": _memory_show,
+    "inspect": _memory_inspect,
+}
+
+
 def cmd_memory(args: argparse.Namespace) -> int:
     from aos.core.memory.store import MemoryStore
 
-    command = getattr(args, "memory_command", None)
-    if command != "list":
-        print("usage: aos memory list [--type TYPE]", file=sys.stderr)
+    handler = _MEMORY_COMMANDS.get(getattr(args, "memory_command", None) or "list")
+    if handler is None:
+        print("usage: aos memory list|add|seed|show|inspect", file=sys.stderr)
         return 1
 
     store = MemoryStore()
     try:
-        memories = store.list_memories(type=getattr(args, "type", None))
-        if not memories:
-            print("(no memories)")
-            return 0
-        for m in memories:
-            print(f"{m['memory_id']:<12} {m['type']:<14} {m['category']:<14} decay={m['decay_factor']:<5} {m['title']}")
-        print(f"\n{len(memories)} memories")
-        return 0
+        return handler(args, store)
     finally:
         store.close()
 
@@ -284,6 +374,12 @@ def cmd_review(args: argparse.Namespace) -> int:
 
 # ── Parser ─────────────────────────────────────────────────────────────
 def build_parser() -> argparse.ArgumentParser:
+    # Imported here rather than at module scope so the contract-only commands
+    # stay free of the storage layer, as they were before.
+    from aos.contract.schema import MEMORY_TYPE
+    from aos.core.memory.authoring import CONFIDENCE_LEVELS, STATUSES
+    from aos.core.memory.evolve import EVIDENCE_LEVELS
+
     parser = argparse.ArgumentParser(
         prog="aos",
         description="Agent OS — routing, memory and evolution for coding agents",
@@ -313,10 +409,44 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--expect", action="append", default=None, help="expected changed file (repeatable)")
     p_run.add_argument("--no-validate", action="store_true", help="skip post-execution code validation")
 
-    p_memory = sub.add_parser("memory", help="inspect the memory store")
+    p_memory = sub.add_parser("memory", help="author and inspect the memory store")
     mem_sub = p_memory.add_subparsers(dest="memory_command")
+
     p_mem_list = mem_sub.add_parser("list", help="list memories")
     p_mem_list.add_argument("--type", default=None, help="filter by memory type")
+    p_mem_list.add_argument("--status", default=None, help="filter by lifecycle status")
+    p_mem_list.add_argument("--limit", type=int, default=0, help="show at most N rows")
+
+    p_mem_add = mem_sub.add_parser("add", help="author one memory by hand")
+    p_mem_add.add_argument("--title", required=True, help="one line, shown when the budget is tight")
+    p_mem_add.add_argument("--body", required=True, help="the lesson itself")
+    p_mem_add.add_argument("--type", default="pattern", choices=sorted(MEMORY_TYPE))
+    p_mem_add.add_argument(
+        "--category",
+        default="",
+        help="a router skill id (bugfix, security, test, ...) — other values never match",
+    )
+    p_mem_add.add_argument("--tags", default="", help="comma separated; the strongest scoring term")
+    p_mem_add.add_argument("--roles", default="", help="comma separated role ids")
+    p_mem_add.add_argument("--evidence-level", default="hypothesis", choices=list(EVIDENCE_LEVELS))
+    p_mem_add.add_argument("--confidence", default="low", choices=list(CONFIDENCE_LEVELS))
+    p_mem_add.add_argument("--status", default="active", choices=list(STATUSES))
+    p_mem_add.add_argument(
+        "--verified",
+        action="store_true",
+        help="keep the claimed evidence_level; without it a memory is demoted to hypothesis",
+    )
+
+    p_mem_seed = mem_sub.add_parser("seed", help="load content/memory/**/*.json into the store")
+    p_mem_seed.add_argument("--dir", default=None, help="seed directory (default: the content memory dir)")
+    p_mem_seed.add_argument("--force", action="store_true", help="rewrite entries that already exist")
+
+    for name, help_text in (
+        ("show", "print one memory as JSON"),
+        ("inspect", "one memory plus its observations, candidates and reviews"),
+    ):
+        p_mem_detail = mem_sub.add_parser(name, help=help_text)
+        p_mem_detail.add_argument("memory_id", help="memory id")
 
     p_review = sub.add_parser("review", help="review pending memory promotions")
     review_sub = p_review.add_subparsers(dest="review_command")
