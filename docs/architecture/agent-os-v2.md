@@ -286,7 +286,25 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 
 ---
 
-## 9. Plugin 生命周期（尚不存在，此处只记权威事实）
+## 9. Plugin 生命周期（代码在仓库里，**未安装**）
+
+`integrations/opencode/plugin/agent-os.js` 与 `integrations/opencode/README.md` 已落地并通过
+fixture 证明（`tests/js/plugin.test.mjs` 13 例，由 `tests/test_cli_contract.py` 调 `node --test` 一起跑，
+node 不在场即失败而非跳过）。**它没有被链接进 `~/.config/opencode/plugin/`** —— 真实装载需要单独批准，
+因为钩子执行顺序与 `tool.execute.after` 的真实形状只能靠装载确认（`[Unconfirmed]`）。
+
+通电的另一半在引擎侧 `[Verified]`：`aos/core/loop/pending.py` 让
+`store/pending-postflight/` 第一次有了写入者与读取者 —— preflight 落一条
+`pending-<session>.json`（loop_id / task_id / cwd / 注入规模），postflight 成功即删除，
+`aos pending --session <id> --json` 是**唯一**的 session→loop 反查接口，
+`aos doctor --json` 报 `pending_postflight{outstanding,unreadable,oldest_hours}`。
+插件因此不需要猜引擎的文件格式（okdk 猜错字段层级导致探针静默失效是现成的反面教材）。
+
+实施中被测出来的一个真实缺陷：`execFile` 的 `input` 选项在本机环境下**不会把 EOF 送到子进程**，
+调用只能等到超时 ⇒ 若照它写，插件的行为是"永远安静地什么都不注入"。
+JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.end()` + 自己 kill 超时。
+
+以下是仍然有效的权威事实清单：
 
 本机 `@opencode-ai/plugin@1.18.4` 的 d.ts 是权威清单：**20 个钩子键**
 `[Verified]` `~/.config/opencode/node_modules/@opencode-ai/plugin/dist/index.d.ts`。
@@ -347,6 +365,7 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 | L | 归因仍按"被召回"发放：一次失败的任务产生 3 条 `weaken` 候选，对象是那 3 条**被召回的记忆**，与它们是否影响结果无关 | 修复前实测 `target_memory=M-SEED-CACHEKEY02/MIGRATE11/DEFAULT5, candidate_type=weaken` | **已修于 P2**（候选需 `skill_used` 归因） |
 | M | 已标注的 review 在 `review list` 里仍打印 `-> aos review label 1 --outcome …`，且 CLI 返回 `"status":"labelled"` 而库里写的是 `approved` | 实测 | **已修于 P4**（`已标注:` + 返回评审自身状态）|
 | N | `preflight` 可以返回 `aos_status=degraded` 而 `warnings` 为空 ⇒ 降级没有解释 | 实测：`degraded \| warnings: []` | **已修于 P4**：`routing fell back: domain_unrecognized` 等解释随行 |
+| O | `store/pending-postflight/` 由 `config.py` 声明、`ensure_store` 创建，但全仓零写入零读取 | 审计登记；P6 之后有写有读 | **已闭于 P6** |
 
 三条共性 `[Judgment]`：A–M 大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。

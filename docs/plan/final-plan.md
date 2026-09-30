@@ -486,3 +486,34 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
   三者都是被 P5 自己的修复逼出来的：before 快照需要 session 与"未完成也记数据"的原语，
   证据归属需要契约能说出"哪些不是本次改的"，守卫上线后孤儿必须真的清掉而不是加注释。
 - 回滚：单提交 revert；零 schema 变更，dev `store/aos.db` 未被触碰。
+
+### P6 · 通电：pending + 最小插件 — 已完成（**未安装**）
+
+- 测试：Python 349 → **382**（+9 pending 语义、+3 插件接缝/契约漂移、+1 跑 node 的守卫），
+  另有 JS **13** 例（`node --test tests/js/plugin.test.mjs`）。schema 仍 v4。
+- `store/pending-postflight/` 第一次有了写入者与读取者（审计里那条"声明了但零读写"就此关闭）：
+  preflight 落 `pending-<session>.json`、postflight 删除、`aos pending --session … --json` 是唯一的
+  session→loop 反查接口、`doctor --json` 报 outstanding/unreadable/oldest_hours。
+- 插件只有三个钩子 + `dispose`，`export default { id, server }`，每钩子 `safe()`，
+  超时默认 1200ms，任何失败都"这一轮不注入"而不是拖住 prompt；
+  没看到的信号保持**缺席**（不写 `tool_errors: 0` 这种假装干净的数字），缺席在 P2 的 mass 记账里
+  就是覆盖率下降 ⇒ 交给人，这是两半设计对上的地方。
+- 三性的证明形式（都是断言，不是宣言）：未配置 root 时 `output.system` 与基线**逐字节相等**且
+  假引擎记录**零次调用**；启用时数组长度 +1、原元素原样、不占 `[0]`、同一段文本重复 transform 不叠加；
+  重启后不猜文件格式而是 `aos pending`；测试夹具里插件自己不创建任何文件。
+- 实施中被测出来的真实缺陷（值得记，因为它决定插件上线后是否会静默失效）：
+  `execFile` 的 `input` 选项在本机不会把 EOF 送进子进程 ⇒ 每次调用都等到超时 ⇒ 表现是
+  "插件在、什么都不注入、也不报错"。JS 测试先红在此，传输层改为显式 `spawn` + `stdin.end()` + 自管 kill。
+- 契约漂移现在有守卫：`test_every_field_the_plugin_sends_is_one_the_engine_reads` 断言
+  `warnings == []`（引擎不读的关键会点名返回），未知键那条用例断言它**被点名**。
+  JS 与 Python 两半因此不能各自漂走。
+- **偏离与诚实边界**：
+  1. 白名单里原本只有插件与 `pending.py`，实际还改了 `cli/main.py`（`aos pending` 命令）与
+     `contract/postflight` 无关；新增 `tests/js/`（13 例 + 一个假 `aos`）。
+  2. 没有安装、没有链接、没写 `~/.config/opencode/**`、没有启动 opencode ⇒
+     钩子执行顺序与 `tool.execute.after` 的真实 payload 形状仍是 `[Unconfirmed]`，
+     这两项必须在真实装载时确认，装载需要单独批准（判据 3 优先于功能）。
+  3. 插件**不**读 skill-tracker 的 db、不注册工具、不碰权限钩子、不使用
+     `experimental.chat.messages.transform` —— P7 的"遥测→证据"若要做，也在引擎侧只读文件/命令，
+     不给插件加第二块地盘。
+- 回滚：单提交 revert；插件留在仓库里不构成"已启用"，删除它也不需要 host 侧任何动作。

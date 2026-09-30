@@ -37,12 +37,13 @@ AgentOS/
 │   │   └── evidence/           # collection, recovery planning, provenance
 │   ├── adapters/               # Provider protocol: host_delegate / test_provider
 │   └── cli/main.py             # run | doctor | preflight | postflight | review | route | memory
+├── integrations/opencode/      # the plugin (written, not installed) + its fixture tests
 ├── content/                    # overridable JSON layer (see content/README.md)
 │   └── memory/seed/            # cold-start memories (loaded by `aos memory seed`)
 ├── store/                      # runtime state (gitignored; see store/.gitignore)
 │   ├── aos.db                  # SQLite memory store
 │   └── loops/  evidence/  pending-postflight/
-└── tests/                      # conftest + per-module tests
+└── tests/                      # conftest + per-module tests, plus tests/js/ (node --test)
 ```
 
 The **repository is the runtime root**. Nothing points at `~/.agents`; every
@@ -263,9 +264,15 @@ fixture), so tests are side-effect free and parallel-safe. The repository's own
 
 A host reaches the engine only through `./bin/aos` and the JSON contract above —
 there is no second host protocol and no Python API for hosts to import. The
-OpenCode plugin is the adapter that speaks it; it is designed but not yet
-written, and nothing here installs into `~/.config/opencode/`. Until the plugin
-lands, `./bin/aos` is the entry point.
+OpenCode plugin that speaks it exists at
+`integrations/opencode/plugin/agent-os.js` (three hooks: `chat.message` →
+preflight, `experimental.chat.system.transform` → append one element,
+`event`/`session.idle` → postflight, resolving a session back to a loop through
+`aos pending` rather than by reading the store's files). **It is not installed:**
+nothing in this repository writes to `~/.config/opencode/`, and loading it is a
+separate decision — see `integrations/opencode/README.md` for the fixture proof of
+disable-clean / additive-only / reuse-not-rebuild and for what remains
+`[Unconfirmed]` until a real load.
 
 The previous `hosts/opencode/` tree is deleted. It pointed at a retired
 `~/.agents` layout that no longer exists, neither `aos/` nor `tests/` imported

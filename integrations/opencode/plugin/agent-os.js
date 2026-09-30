@@ -1,0 +1,290 @@
+// Agent OS plugin for OpenCode — the advisory seam, nothing more.
+//
+// Three hooks, and each one has exactly one job:
+//   chat.message                          ask the engine for context (preflight)
+//   experimental.chat.system.transform    append our own system element
+//   event (session.idle / session.error) report the run back (postflight)
+//
+// What it deliberately never does: it does not edit another plugin's system
+// element, never writes to index 0 (DCP reads that slot to decide whether a call
+// is internal and skips its whole pruning pass if it is), does not touch
+// ~/.config/opencode/**, does not read the skill tracker's database, and does not
+// block the prompt. Anything it cannot answer in time says nothing instead.
+//
+// Non-interference here is a property of the code, not of the install: with
+// AGENT_OS_ROOT unset the plugin loads, does nothing, and the system array is
+// byte-for-byte what it would be without it. That is the case tests/js/plugin.test.mjs pins.
+
+import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+// One transport for every engine call. `execFile`'s `input` option is *not* used:
+// it was measured hanging in this environment — the child never saw EOF and the
+// call only ended at the timeout, which for an advisor means "say nothing,
+// forever, silently". spawn + explicit write/end is unambiguous about who closes
+// the pipe, and the kill on timeout is ours rather than implicit.
+function run(bin, args, input, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, args, { stdio: ["pipe", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      child.kill("SIGKILL");
+      const error = new Error("timeout");
+      error.code = "ETIMEDOUT";
+      reject(error);
+    }, timeoutMs);
+
+    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.stderr.on("data", (chunk) => (stderr += chunk));
+    child.on("error", (error) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on("close", (code) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      // The engine answers exit code 3 for a request it refuses, and still
+      // prints a document it expects the host to read. So a non-zero code is not
+      // a reason to throw away the answer.
+      resolve({ stdout, stderr, code });
+    });
+    child.stdin.write(input ?? "");
+    child.stdin.end();
+  });
+}
+
+const ID = "agent-os";
+const OPEN = "<agent_os>";
+const CLOSE = "</agent_os>";
+
+function settings() {
+  const root = (process.env.AGENT_OS_ROOT || "").trim();
+  return {
+    root,
+    bin: (process.env.AOS_BIN || path.join(root, "bin", "aos")).trim(),
+    timeoutMs: Number(process.env.AOS_TIMEOUT_MS || 1200) || 1200,
+    enabled: root !== "" && existsSync(path.join(root, "bin", "aos")),
+  };
+}
+
+// The engine is the only thing this plugin talks to, and only through the same
+// stdin/stdout contract a human uses. No file formats are guessed at: the session
+// to loop lookup goes through `aos pending`, not through the store's internals.
+async function ask(cfg, phase, payload) {
+  const child = await run(cfg.bin, [phase, "--payload-stdin"], JSON.stringify(payload), cfg.timeoutMs);
+  const text = (child.stdout || "").trim();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    // A document we cannot parse is a reason to say nothing, never a crash: the
+    // host still has to finish the turn.
+    return null;
+  }
+}
+
+function userText(output) {
+  const parts = (output && output.parts) || [];
+  return parts
+    .filter((part) => part && part.type === "text" && typeof part.text === "string")
+    .map((part) => part.text)
+    .join("\n")
+    .trim();
+}
+
+// One hook that throws takes the turn down with it. Fail-open is the whole point
+// of an advisor: the host's own work must never depend on us agreeing.
+function safe(name, cfg, state, fn) {
+  return async function guarded(...args) {
+    try {
+      await fn(...args);
+    } catch (err) {
+      const why = err && err.code === "ETIMEDOUT" ? "timeout" : "error";
+      state.failures = (state.failures || 0) + 1;
+      if (process.env.AOS_PLUGIN_DEBUG) {
+        process.stderr.write(`${ID}: ${name} ${why}: ${err && err.message}\n`);
+      }
+    }
+  };
+}
+
+export default {
+  id: ID,
+  server: async (input) => {
+    const cfg = settings();
+    const state = { sessions: new Map(), failures: 0 };
+    const directory =
+      (input && (input.directory || (input.project && input.project.directory))) || "";
+
+    const remember = (sessionID, patch) => {
+      const current = state.sessions.get(sessionID) || {};
+      state.sessions.set(sessionID, { ...current, ...patch });
+      return state.sessions.get(sessionID);
+    };
+
+    return {
+      "chat.message": safe("chat.message", cfg, state, async (hookInput, output) => {
+        if (!cfg.enabled) return;
+        const sessionID = hookInput && hookInput.sessionID;
+        if (!sessionID) return;
+        const task = userText(output);
+        if (!task) return;
+
+        const doc = await ask(cfg, "preflight", {
+          schema_version: "1.2",
+          phase: "preflight",
+          task,
+          session_id: sessionID,
+          cwd: directory,
+          provider: "host_delegate",
+        });
+        if (!doc || !doc.loop_id) return;
+
+        remember(sessionID, {
+          loopId: doc.loop_id,
+          taskId: doc.task_id,
+          sessionKey: doc.session_id || sessionID,
+          task,
+          cwd: directory,
+          text: (doc.memory && doc.memory.injection && doc.memory.injection.text) || "",
+          // Counts stay unknown until something actually reports them. A zero
+          // here would be a claim that nothing went wrong, and the engine would
+          // read that as evidence.
+          toolErrors: null,
+          sessionError: null,
+          interrupted: null,
+          reported: false,
+        });
+      }),
+
+      "experimental.chat.system.transform": safe("system.transform", cfg, state, async (hookInput, output) => {
+        if (!cfg.enabled) return;
+        const sessionID = hookInput && hookInput.sessionID;
+        const entry = sessionID ? state.sessions.get(sessionID) : null;
+        if (!entry || !entry.text) return;
+
+        // Additive only: our element goes on the end, and no existing element is
+        // read, reordered, joined or removed. If a block is already in place
+        // (retry, or a re-run of the same turn) it is replaced in place rather
+        // than duplicated.
+        const ours = output.system.findIndex(
+          (block) => typeof block === "string" && block.includes(OPEN) && block.includes(CLOSE),
+        );
+        if (ours >= 0) {
+          if (output.system[ours] === entry.text) return;
+          output.system[ours] = entry.text;
+          return;
+        }
+        output.system.push(entry.text);
+      }),
+
+      "tool.execute.after": safe("tool.execute.after", cfg, state, async (hookInput, output) => {
+        if (!cfg.enabled) return;
+        const sessionID = hookInput && hookInput.sessionID;
+        const entry = sessionID ? state.sessions.get(sessionID) : null;
+        if (!entry) return;
+        // Only a stated error counts. The shape of a tool result is opencode's
+        // business, and guessing at it is how a probe ends up firing forever on
+        // nothing — so an unrecognised shape leaves the count unknown instead of
+        // reporting a clean run.
+        const failed = Boolean(
+          (output && (output.error || (output.metadata && output.metadata.error))) ||
+            (hookInput && hookInput.error),
+        );
+        if (failed) entry.toolErrors = (entry.toolErrors || 0) + 1;
+      }),
+
+      event: safe("event", cfg, state, async (hookInput) => {
+        if (!cfg.enabled) return;
+        const event = (hookInput && hookInput.event) || {};
+        const sessionID = event.properties && event.properties.sessionID;
+        if (!sessionID) return;
+
+        if (event.type === "session.error") {
+          const message = (event.properties && event.properties.error) || "session error";
+          remember(sessionID, { sessionError: String(message).slice(0, 500) });
+          return;
+        }
+        if (event.type === "session.idle") await report(sessionID);
+      }),
+
+      dispose: async () => {
+        state.sessions.clear();
+      },
+    };
+
+    // The run ended. Everything known about it goes back through the same
+    // contract; the engine decides what the outcome was, and a run nobody
+    // described lands in the human queue instead of being called a success.
+    async function report(sessionID) {
+      let entry = state.sessions.get(sessionID);
+
+      if (!entry || !entry.loopId) {
+        // The plugin restarted, or the session opened while it was down. The
+        // engine can still name the loop for that session — and it is asked
+        // through its own command line rather than by reading the store's files,
+        // because guessing another component's format is how a probe ends up
+        // firing on nothing forever.
+        const found = await lookup(cfg, sessionID);
+        if (!found || !found.loop) return;
+        entry = remember(sessionID, {
+          loopId: found.loop.loop_id,
+          taskId: found.loop.task_id,
+          sessionKey: found.loop.session_id || sessionID,
+          cwd: found.loop.cwd || directory,
+          toolErrors: null,
+          sessionError: null,
+          interrupted: null,
+          reported: false,
+        });
+      }
+      if (!entry || entry.reported) return;
+      entry.reported = true;
+
+      const signals = {};
+      if (entry.toolErrors !== null && entry.toolErrors !== undefined) signals.tool_errors = entry.toolErrors;
+      if (entry.sessionError) signals.session_error = entry.sessionError;
+      if (entry.interrupted !== null && entry.interrupted !== undefined) signals.user_interrupted = entry.interrupted;
+
+      await ask(cfg, "postflight", {
+        schema_version: "1.2",
+        phase: "postflight",
+        task_id: entry.taskId,
+        loop_id: entry.loopId,
+        session_id: entry.sessionKey || sessionID,
+        cwd: entry.cwd || directory,
+        provider: "host_delegate",
+        signals,
+      });
+      state.sessions.delete(sessionID);
+    }
+  },
+};
+
+// `aos pending --session <id> --json` is the only way this plugin resolves a
+// session back to a loop after a restart. Flags rather than a payload on purpose:
+// the shape of that answer is asserted by the Python suite, so it cannot drift
+// out from under this call without a test failing.
+async function lookup(cfg, sessionID) {
+  const child = await run(
+    cfg.bin,
+    ["pending", "--session", String(sessionID), "--json"],
+    "",
+    cfg.timeoutMs,
+  ).catch(() => null);
+  if (!child || !child.stdout) return null;
+  try {
+    const doc = JSON.parse(child.stdout);
+    return doc && doc.found ? doc : null;
+  } catch {
+    return null;
+  }
+}

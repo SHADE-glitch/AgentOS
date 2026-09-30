@@ -28,7 +28,7 @@ from aos.contract import (
     fallback_preflight,
 )
 from aos.core.evidence import collector as evidence_collector
-from aos.core.loop import stages
+from aos.core.loop import pending, stages
 from aos.core.loop.state import LoopState
 from aos.core.memory import inject
 from aos.core.memory.store import MemoryStore
@@ -215,7 +215,23 @@ def preflight(
             session_id=session_id,
             schema_version=schema_version,
         )
-    return _preflight_doc(state, decision, recall, schema_version=schema_version)
+    doc = _preflight_doc(state, decision, recall, schema_version=schema_version)
+    if doc["aos_status"] != "fallback" and doc["loop_id"]:
+        # Written before the host starts working: if it never comes back, this file
+        # is the only sign the run existed. A fail-open document records nothing —
+        # there is no loop to close.
+        pending.record(
+            session_id=doc["session_id"],
+            loop_id=doc["loop_id"],
+            task_id=doc["task_id"],
+            cwd=cwd,
+            task=task,
+            injected_memories=[m["memory_id"] for m in doc["memory"]["injection"]["structured"]]
+            if doc["memory"]["injection"]["structured"]
+            else doc["memory"]["injection"]["memory_ids"],
+            injection_chars=doc["memory"]["injection"]["char_count"],
+        )
+    return doc
 
 
 def _validator_exit_codes(validation: dict[str, Any]) -> dict[str, Any]:
@@ -374,6 +390,9 @@ def _run_postflight(
         )
         state.postflight = doc
         state.save()
+        # The loop has reported back, so it no longer owes anything. Deleting the
+        # record is what makes a *remaining* one meaningful.
+        pending.clear(state.session_id)
         return state, doc
     finally:
         if owns_store:

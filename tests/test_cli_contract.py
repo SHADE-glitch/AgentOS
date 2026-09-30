@@ -10,12 +10,17 @@ from __future__ import annotations
 
 import io
 import json
+import shutil
+import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 from aos.cli.main import BAD_REQUEST, main
 from aos.core.memory.store import MemoryStore
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # ── helpers ────────────────────────────────────────────────────────────
 def _call(capsys, argv, payload):
@@ -521,3 +526,75 @@ def test_degraded_preflight_says_why(capsys):
     assert code == 0
     if doc["aos_status"] == "degraded":
         assert doc["warnings"], "degraded without an explanation is not a diagnosis"
+
+
+# ── P6: the plugin's half of the seam ──────────────────────────────────
+def test_the_plugin_test_suite_runs_and_passes():
+    """`node --test` over tests/js is part of the suite, not an optional extra.
+
+    Deliberately not skipped when node is missing: the non-interference properties
+    it checks are the condition the plugin is allowed to exist under, and a guard
+    that skips is a guard that passed.
+    """
+    node = shutil.which("node")
+    assert node, "node is required to run the plugin's tests (see integrations/opencode/README.md)"
+
+    finished = subprocess.run(
+        [node, "--test", "tests/js/plugin.test.mjs"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+
+    assert finished.returncode == 0, finished.stdout[-4000:] + finished.stderr[-2000:]
+    assert "# fail 0" in finished.stdout
+
+
+def test_every_field_the_plugin_sends_is_one_the_engine_reads(capsys):
+    """The two halves of the seam are written in different languages; this is the shared check.
+
+    A key the engine does not read comes back named in `warnings` rather than
+    being dropped in silence, so this fails the moment the plugin starts sending
+    something the contract never agreed to read — the drift that left the outcome
+    channel missing in the first place.
+    """
+    pre = _preflight(capsys, task="修复 cache key 碰撞", cwd="/fixture/project", session_id="ses-1")
+    capsys.readouterr()
+
+    code, doc = _postflight(
+        capsys,
+        pre,
+        cwd="/fixture/project",
+        provider="host_delegate",
+        signals={"tool_errors": 1, "session_error": "模型超时"},
+    )
+
+    assert code == 0
+    assert doc["warnings"] == [], doc["warnings"]
+    # The session error is decisive for the *status*…
+    assert doc["final_status"] == "failed"
+    # …while two signals out of the contract's set is not enough coverage to name
+    # an outcome for learning. Low mass still asks a person: that is the designed
+    # main path, not a loss of the signal.
+    assert doc["learning"]["needs_review"] is True
+
+
+def test_plugin_payload_with_an_unknown_key_is_named_not_swallowed(capsys):
+    pre = _preflight(capsys, task="修复 cache key 碰撞", cwd="/fixture/project", session_id="ses-2")
+    capsys.readouterr()
+
+    code, doc = _call(
+        capsys,
+        ["postflight", "--payload-stdin"],
+        {
+            "schema_version": "1.2",
+            "phase": "postflight",
+            "task_id": pre["task_id"],
+            "loop_id": pre["loop_id"],
+            "session_id": pre["session_id"],
+            "totally_new_field": True,
+        },
+    )
+
+    assert code == 0
+    assert any("totally_new_field" in warning for warning in doc["warnings"])

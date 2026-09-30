@@ -152,6 +152,7 @@ def _doctor_document(paths) -> dict:
     is readable and at which schema, and the queue's shape. No secrets, no memory
     bodies.
     """
+    from aos.core.loop import pending as loop_pending
     from aos.core.memory import migrations
     from aos.core.memory.store import MemoryStore
 
@@ -179,6 +180,9 @@ def _doctor_document(paths) -> dict:
         },
         "features": {"preflight": True, "postflight": True, "memory": True, "learning_gate": True},
     }
+    # Loops that opened and never reported back. The directory used to exist with
+    # no writer and no reader; now the first is the loop and this is the second.
+    document["pending_postflight"] = loop_pending.summary()
     try:
         store = MemoryStore()
     except Exception as exc:  # a store that will not open is a diagnosis, not a crash
@@ -584,6 +588,22 @@ _MEMORY_COMMANDS = {
 }
 
 
+def cmd_pending(args: argparse.Namespace) -> int:
+    """Read-only view of the open loops. A host gets here with a sessionID alone,
+    which is all opencode's idle event carries.
+    """
+    from aos.core.loop import pending
+
+    if args.session:
+        entry = pending.find(args.session)
+        payload = {"session_id": args.session, "found": entry is not None, "loop": entry}
+    else:
+        payload = pending.summary() | {"loops": pending.list_pending()}
+
+    _emit(payload)
+    return 0 if (args.session == "" or payload["found"]) else 1
+
+
 def cmd_memory(args: argparse.Namespace) -> int:
     from aos.core.memory.store import MemoryStore
 
@@ -770,6 +790,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--expect", action="append", default=None, help="expected changed file (repeatable)")
     p_run.add_argument("--no-validate", action="store_true", help="skip post-execution code validation")
 
+    p_pending = sub.add_parser(
+        "pending",
+        help="loops that opened and have not reported back (the plugin's lookup surface)",
+    )
+    p_pending.add_argument("--session", default="", help="look up one session instead of the summary")
+    p_pending.add_argument("--json", action="store_true", help="emit JSON")
+
     p_memory = sub.add_parser("memory", help="author and inspect the memory store")
     mem_sub = p_memory.add_subparsers(dest="memory_command")
 
@@ -901,6 +928,7 @@ def main(argv: list[str] | None = None) -> int:
         "route": cmd_route,
         "run": cmd_run,
         "memory": cmd_memory,
+        "pending": cmd_pending,
         "review": cmd_review,
     }
     handler = handlers.get(args.command)
