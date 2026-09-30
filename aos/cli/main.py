@@ -122,13 +122,21 @@ def cmd_route(args: argparse.Namespace) -> int:
     return 0
 
 
-def _not_implemented(name: str, phase: str) -> int:
-    print(f"error: `aos {name}` is not implemented yet ({phase})", file=sys.stderr)
-    return NOT_IMPLEMENTED
-
-
 def cmd_run(args: argparse.Namespace) -> int:
-    return _not_implemented("run", "phase 5")
+    from aos.core.loop import lifecycle
+
+    doc = lifecycle.run(
+        task=args.task,
+        cwd=args.cwd,
+        provider=args.provider,
+        model=args.model,
+        memory_mode="enabled" if args.memory == "on" else "disabled",
+        test_command=args.test_command,
+        test_exit_code=args.test_exit_code,
+    )
+    validate_postflight(doc)
+    _emit(doc)
+    return 0
 
 
 def cmd_memory(args: argparse.Namespace) -> int:
@@ -212,6 +220,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--memory", choices=["on", "off"], default="on")
     p_run.add_argument("--provider", default="opencode")
     p_run.add_argument("--model", default="")
+    p_run.add_argument("--test-command", default="", help="test command to record as evidence")
+    p_run.add_argument("--test-exit-code", type=int, default=None, help="test exit code (0 = pass)")
 
     p_memory = sub.add_parser("memory", help="inspect the memory store")
     mem_sub = p_memory.add_subparsers(dest="memory_command")
