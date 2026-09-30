@@ -18,6 +18,11 @@ DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
     "retrieval": {
         "top_k": 5,
         "min_score": 0.15,
+        # Only these lifecycle states may reach a host. `candidate` waits for the
+        # gate, `deprecated`/`superseded`/`invalidated`/`archived` have been
+        # retired by it — and a demotion that still gets injected is not a
+        # demotion, which is exactly how negative learning used to be a no-op.
+        "recall_statuses": ["active", "verified"],
         "quality_bonus_weights": {
             "success_rate": 0.15,
             "confidence": 0.10,

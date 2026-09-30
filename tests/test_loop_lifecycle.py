@@ -75,6 +75,7 @@ def test_preflight_recalls_seeded_memory(repo, store):
             "title": "null pointer guard",
             "body": "check for null before dereferencing",
             "evidence_level": "runtime_validated",
+            "status": "active",
         },
         tags=["null", "crash", "parser"],
     )
@@ -98,6 +99,7 @@ def test_preflight_ships_the_rendered_injection_block(repo, store):
             "title": "null pointer guard",
             "body": "check for null before dereferencing",
             "evidence_level": "runtime_validated",
+            "status": "active",
         },
         tags=["null", "crash", "parser"],
     )

@@ -56,19 +56,18 @@ STRONG_EVIDENCE = frozenset(
 
 # ── grouping ───────────────────────────────────────────────────────────
 def group_candidates(
-    candidates: list[dict[str, Any]], observations: list[dict[str, Any]]
+    candidates: list[dict[str, Any]], linkage: dict[str, list[dict[str, Any]]]
 ) -> dict[str, dict[str, Any]]:
     """Group candidates by the memory they target, gathering their evidence.
 
-    Independent executions are counted as distinct loops that produced an
-    observation for the target memory — the store-native equivalent of the
-    old ``source_execution`` / observation-log counting.
-    """
-    obs_by_memory: dict[str, list[dict[str, Any]]] = {}
-    for obs in observations:
-        if obs.get("memory_id"):
-            obs_by_memory.setdefault(obs["memory_id"], []).append(obs)
+    ``linkage`` maps a memory to the runs it was recalled into **whose verdict was
+    earned** (``store.linkage_by_memory``). Independent executions are counted from
+    those distinct loops.
 
+    This used to be counted from per-memory observation rows, which were written
+    for every recalled memory whether or not anybody judged the run — so the gate
+    was measuring how often a memory showed up, and calling that evidence.
+    """
     groups: dict[str, dict[str, Any]] = {}
 
     def _group(memory_id: str) -> dict[str, Any]:
@@ -91,12 +90,10 @@ def group_candidates(
             group = _group(target)
             group["candidates"].append(candidate)
 
-            # Every observation of the target memory is an independent
-            # execution, regardless of which loop produced the candidate.
-            for obs in obs_by_memory.get(target, []):
-                group["executions"].add(obs["loop_id"])
-                if obs.get("source_hash"):
-                    group["source_hashes"].add(obs["source_hash"])
+            for run in linkage.get(target, []):
+                group["executions"].add(run["loop_id"])
+                if run.get("source_hash"):
+                    group["source_hashes"].add(run["source_hash"])
 
             # A proposal has no memory to have been observed against, so the run
             # that drafted it is its only execution. Counting it for a memory that
@@ -634,10 +631,9 @@ def run_learning(*, store: Optional[MemoryStore] = None, apply: bool = True) -> 
         # Only unconsumed candidates. Re-reading the whole history each cycle is
         # what made an already-approved promotion open a fresh review forever.
         candidates = store.list_open_candidates()
-        observations = store.list_observations()
         memories = {m["memory_id"]: m for m in store.memories_for_scoring()}
 
-        groups = group_candidates(candidates, observations)
+        groups = group_candidates(candidates, store.linkage_by_memory())
         results: list[dict[str, Any]] = []
         reviews_created = 0
         promoted: list[dict[str, Any]] = []

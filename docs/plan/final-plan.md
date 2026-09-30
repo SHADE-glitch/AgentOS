@@ -166,7 +166,7 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
 `aos memory refresh`（派生计数与 decay 的手动重算入口）；`content/policies/` 落 6 个 JSON
 （retrieval / decay / promotion / rejection / injection / outcome，键名与 `policy.py` 内置默认逐一对齐）。
 - 验收屏幕：§3 的第 5 步不再需要"再跑一次 postflight"；`./bin/aos doctor --json | python3 -m json.tool` 通过；
-  改一个 `content/policies/outcome.json` 里的阈值 ⇒ 不碰代码就改变 `needs_review`（这是 42 个键第一次真的可调）。
+  改一个 `content/policies/outcome.json` 里的阈值 ⇒ 不碰代码就改变 `needs_review`（这是 54 个叶子键第一次真的可调）。
 - 白名单：`cli/main.py`、`memory/{evolve,policy}.py`、`content/policies/*.json`、`tests/test_cli_contract.py`。
 
 ### P5 · 证据时序、注入卫生与守卫网（缺陷 D/E/F/G）
@@ -337,3 +337,40 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
      「What the engine deliberately does not do」，把四条边界（不编排、不驱动 host、不做第二套 skill、不写遥测）
      写成一处可指的文本，而不是只存在于没有文件的空白里。
 - 回滚：单提交 revert 即可；无 schema 变更 ⇒ `store/aos.db` 不受影响。
+
+### P2 · 让学习作用到召回 — 已完成
+
+- 测试：313 → **323**（+6 个过滤/过期用例、+1 个"被召回不加分"用例、+1 条负向学习端到端；
+  其余是既有用例改语义而非删除）。`./bin/aos doctor` READY。
+- schema：**零迁移**，与计划预判一致 —— `status`/`scope`/`revalidate_after` 列与 `retrieval_log`
+  在 v2/v4 就已建好，缺的一直是"没人过滤、没人生成"。
+- 验收屏幕（临时库，同一 task 文本只换 cwd 与 status）：
+  `[1] 同项目 warehouse -> retrieved 1 | chars 253` ／ `[2] 另一个项目 billing -> retrieved 0` ／
+  `[3] 降级之后再问一次 -> retrieved 0`。第一段在 P2 之前是 `retrieved 1`，第三段之前**也是 1**（缺陷 A）。
+- 策略地基提前：`content/policies/retrieval.json` 落地，与内置默认逐键相等 ⇒ 中性的；
+  但把 `min_score` 改 0.99 ⇒ 召回 3→0，`top_k` 改 1 ⇒ 恰好 1，全程不改代码。
+  42→**54**：审计与定位文档里的"42 个键"是错的，已按 `DEFAULT_POLICIES` 递归叶子计数更正（四处）。
+- 行为变化的完整清单（不止屏幕上那三段）：
+  ① `retrieve()` 只放行 `policy.recall_statuses`（默认 `active|verified`）；
+  ② scope 过滤生效 ⇒ **`project:AgentOS` 的 8 条种子不再漏进别的项目**，host 实际看到的内容变少；
+  ③ per-memory observation 停写 ⇒ 一次运行一条 loop 级观测；
+  ④ `usage_stats` 拆成 linkage（`usage_count`）与 earned verdict（`success_rate`，只算 `needs_review=0`）；
+  ⑤ 自动路径的候选要求归因（host 上报的 `skill_used` 对上记忆的 category/tags）；
+  ⑥ `memories_used` 现在包含 hypothesis lane —— 提示行也是注入进 prompt 的内容，
+     失败时同样可以被归因，否则负向学习对人能看到的 hint 永远无牙。
+- 计划本身需要修正的一处：§3 的 MVP 屏幕写"批准 weaken ⇒ 下次不再出现"。实情更窄 ——
+  `decide_promotion` 只在**已在证据阶梯底部或已 deprecated**时才写 `status='deprecated'`，
+  所以对强证据记忆，weaken 的效果是"降一档证据 + decay"，不是消失。端到端用例因此用
+  hypothesis-lane 记忆来证明"退役即不再出现"，并把强证据记忆的那一半留在 §4 的 decay 语义里。
+- **偏离白名单之处（三处，都是被自己的改动逼出来的，不是顺手扩展）**：
+  1. `aos/core/loop/stages.py`：把 `scope_project`/`scope_session` 放进 recall query、
+     把 `skill_used` 的来源从"引擎自己的路由标签"改成"host 上报"、`memories_used` 并入 hypothesis ids。
+     不放进去，scope 过滤就成了没人喂参数的死参数 —— 正是本 Phase 要消灭的形状。
+  2. `aos/core/memory/evolve.py`：`group_candidates` 的"独立运行数"原来数的是 per-memory observation，
+     停写之后它恒为 0 ⇒ 晋升路径会静默停止工作。改为数 `store.linkage_by_memory()`。
+  3. `aos/core/memory/evaluate.py`：A/B 对比的 used_loops 同上改读 linkage；
+     `evaluate_all` 的候选集也从"有 per-memory 观测的记忆"改成"有判定 linkage 的记忆"，
+     否则它会返回空列表而不报错 —— 一个永远为空的报告比错误的报告更难发现。
+  另：`skill_used` 来源的改变使 `observations.skill_used` 列的语义从"路由标签"变为"host 上报"，
+  P5 的守卫测试与 P6 的插件必须按新语义对待它。
+- 回滚：单提交 revert；`content/policies/retrieval.json` 与内置默认等值，删除它也不改变行为。

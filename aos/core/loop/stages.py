@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from pathlib import Path
 from typing import Any, Optional
 
 from aos.core import outcome as outcome_mod
@@ -96,6 +97,11 @@ def recall_stage(
         "keywords": _keywords(state.task_text, decision),
         "difficulty": "medium",
         "exclude_hypothesis": False,
+        # Scope travels with the query. Without it a memory learned in one
+        # repository is offered as fact in another, and the `scope` column —
+        # which the gate already writes — stays a label nobody filters on.
+        "scope_project": Path(state.cwd).name if state.cwd else "",
+        "scope_session": state.session_id or "",
     }
     result = retrieve(query, store=store, loop_id=state.loop_id)
     memories, hypotheses = [], []
@@ -336,7 +342,16 @@ def record_stage(
         received["response_summary"] = response_text
 
     evidence = engine_evidence or {}
-    memories_used = [m for m in (plan.get("memory_ids") or []) if m]
+    # Everything that reached the prompt is in play — the ranked memories *and*
+    # the hypothesis-lane hints. A hint was in front of the model too, so a run
+    # that failed while following it is evidence against it, and excluding hints
+    # here would leave the only evidence a gate can act on unreachable.
+    memories_used = list(
+        dict.fromkeys(
+            [m for m in (plan.get("memory_ids") or []) if m]
+            + [h for h in (plan.get("hypothesis_ids") or []) if h]
+        )
+    )
     route = state.stage_data("route") or {}
     artifact = route.get("artifact") or {}
     category = str(artifact.get("primary_domain") or route.get("lead_skill") or "")
@@ -398,7 +413,11 @@ def record_stage(
         signals=snapshot,
         needs_review=synthesis["needs_review"],
         synthesised=synthesis["synthesised"],
-        skill_used=str(route.get("lead_skill") or ""),
+        # The host's report, not the engine's own routing label. Attribution has
+        # to come from outside the loop that chose the memory, or "it was routed
+        # to this skill" becomes "this memory earned its keep" — the same
+        # circular credit the recall counters used to hand out.
+        skill_used=str((signals or {}).get("skill_used") or ""),
         proposal=proposal,
     )
     state.complete(

@@ -120,6 +120,7 @@ def test_postflight_forwards_quality_score_and_yields_a_reinforce_candidate(stor
             "title": "null guard",
             "body": "check for null before dereferencing",
             "evidence_level": "runtime_validated",
+            "status": "active",
         },
         tags=["null", "crash", "parser"],
     )
@@ -128,8 +129,15 @@ def test_postflight_forwards_quality_score_and_yields_a_reinforce_candidate(stor
     )
     assert "M1" in pre["memory"]["injection"]["memory_ids"], "recall must feed the loop"
 
+    # `skill_used` is the host's own statement of what it applied. Without it a
+    # successful run credits nothing — recall alone is not evidence (R-006).
     code, doc = _postflight(
-        capsys, pre, cwd=str(repo_dir), outcome="success", quality_score=4.5
+        capsys,
+        pre,
+        cwd=str(repo_dir),
+        outcome="success",
+        quality_score=4.5,
+        skill_used="parser",
     )
 
     assert code == 0

@@ -111,9 +111,11 @@ def compute_adaptive_score(
 ) -> dict[str, Any]:
     """Multiplicative score: static relevance dominates, quality only modifies."""
     memory_id = memory["memory_id"]
-    uc = int(usage.get("usage_count", 0))
-    su = int(usage.get("successful_uses", 0))
-    success_rate = (su / uc) if uc > 0 else 0.5
+    # Read the rate the store derived, rather than recomputing it from
+    # usage_count here: usage_count counts runs the memory was *in*, and most of
+    # them may never have been judged. Dividing by it made an absent verdict look
+    # like a failure.
+    success_rate = float(usage.get("success_rate", 0.5))
     confidence_score = min(int(memory.get("observation_count", 0)) / 5.0, 1.0)
 
     quality_bonus = (
@@ -162,7 +164,11 @@ def compute_adaptive_score(
         "observation_count": int(memory.get("observation_count", 0)),
         "use_count": int(memory.get("use_count", 0)),
         "success_count": int(memory.get("success_count", 0)),
-        "usage_count": uc,
+        "usage_count": int(usage.get("usage_count", 0)),
+        # Runs this memory appeared in whose verdict was actually earned; the
+        # denominator behind success_rate, and the number a reviewer should see
+        # before trusting a success rate built on a single observation.
+        "outcome_count": int(usage.get("outcome_count", 0)),
         "is_hypothesis": is_hypothesis,
         "warning": "Unvalidated hypothesis — not an established engineering rule" if is_hypothesis else None,
     }
@@ -330,7 +336,21 @@ def retrieve(
         weights = policy["quality_bonus_weights"]
         cap = float(policy["quality_bonus_cap"])
 
-        memories = store.memories_for_scoring()
+        # Lifecycle and scope are filters at read time, not decorations on the
+        # row. A memory the gate retired must not reach a prompt, and a fact
+        # learned in another repository must not be offered as if it were local.
+        # An unknown project gets *global* memories only — "we don't know where
+        # we are" is not a licence to borrow another repository's facts.
+        recall_statuses = [str(s) for s in policy.get("recall_statuses", ["active", "verified"])]
+        scopes = ["global"]
+        project = str(query.get("scope_project") or "").strip()
+        if project:
+            scopes.append(f"project:{project}")
+        session = str(query.get("scope_session") or "").strip()
+        if session:
+            scopes.append(f"session:{session}")
+
+        memories = store.memories_for_scoring(statuses=recall_statuses, scopes=scopes)
         if not memories:
             return {
                 "query": query,

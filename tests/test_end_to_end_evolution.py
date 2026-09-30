@@ -117,9 +117,21 @@ def test_a_labelled_success_recalls_and_reinforces_the_memory_it_used(store):
     memory_id = store.list_memories()[0]["memory_id"]
 
     for index in range(2):
-        doc = lifecycle.preflight(task="调整 Redis Lua 脚本的过期逻辑", task_id=f"T{index}")
+        # cwd travels with the request, because the memory this run should hear
+        # is scoped to that repository — an unscoped recall would silently drop it.
+        doc = lifecycle.preflight(
+            task="调整 Redis Lua 脚本的过期逻辑", task_id=f"T{index}", cwd="/home/dev/repos/tracker"
+        )
         assert memory_id in [m["memory_id"] for m in doc["memory"]["memories"]], "recalled"
-        result = _post(doc, cwd="/home/dev/repos/tracker", outcome="success", quality_score=4.5)
+        # The host says which skill it actually used. Without that report a
+        # success credits nothing: the memory was merely in the room (R-006).
+        result = _post(
+            doc,
+            cwd="/home/dev/repos/tracker",
+            outcome="success",
+            quality_score=4.5,
+            signals={"skill_used": "lua"},
+        )
         assert result["final_status"] == "completed"
         assert result["learning"]["needs_review"] is False
         assert result["learning"]["candidates_recorded"] == 1
@@ -129,3 +141,70 @@ def test_a_labelled_success_recalls_and_reinforces_the_memory_it_used(store):
     memory = store.get_memory(memory_id)
     assert memory["evidence_level"] == "independent_validated", "two clean runs lifted it one rung"
     assert memory["observation_count"] == 2
+
+
+def test_an_approved_weakening_takes_the_memory_out_of_the_next_prompt(store):
+    """Negative learning, end to end: a failure the human agreed with must sting.
+
+    This is the loop's other half, and the one the store used to fake. A
+    hypothesis-lane memory is recalled, a run it was part of fails with the host
+    reporting that skill, the gate refuses to act on weakening evidence without a
+    person, the person approves — and only then does the next task stop hearing
+    it. Nothing here deletes the memory: its provenance is history, its status is
+    retired, and recall is what honours that.
+    """
+    from aos.core.memory.authoring import new_memory
+
+    store.upsert_memory(
+        new_memory(
+            title="未归一化的输入不要直接拼进 cache key",
+            body="同项目里引发过键碰撞，回滚耗时两天。",
+            type="failure",
+            category="bugfix",
+            tags=["cache", "key"],
+            scope="project:warehouse",
+            when_to_apply="改动缓存 key 的拼接逻辑之前",
+        )
+    )
+    row = store.list_memories()[0]
+    memory_id = row["memory_id"]
+    store.update_memory_fields(memory_id, status="active")
+
+    def recalled(doc):
+        block = doc["memory"]["injection"]
+        return memory_id in block["memory_ids"] or memory_id in [
+            m["memory_id"] for m in block["structured"]
+        ]
+
+    first = lifecycle.preflight(
+        task="修复 cache key 碰撞导致的命中率下降", task_id="N1", cwd="/home/dev/repos/warehouse"
+    )
+    assert recalled(first), "the memory is offered before anyone disagrees with it"
+
+    result = _post(
+        first,
+        cwd="/home/dev/repos/warehouse",
+        outcome="failure",
+        quality_score=0.0,
+        signals={"skill_used": "cache"},
+    )
+    assert result["learning"]["needs_review"] is False
+    assert result["learning"]["candidates_recorded"] == 1
+
+    run = evolve.run_learning(store=store)
+    assert run["summary"]["promoted"] == 0, "weakening evidence never applies itself"
+    pending = evolve.list_reviews(store=store, status="pending")
+    weakening = [r for r in pending if r["memory_id"] == memory_id]
+    assert len(weakening) == 1
+    # A failed run also proposes a memory of its own, so the queue holds two
+    # rows here. That pile-up on repeat failures is what P3's stable proposal
+    # identity is for; it is not this test's subject.
+    assert len(pending) == 2
+
+    evolve.approve_review(weakening[0]["review_id"], store=store)
+
+    assert store.get_memory(memory_id)["status"] == "deprecated"
+    second = lifecycle.preflight(
+        task="修复 cache key 碰撞导致的命中率下降", task_id="N2", cwd="/home/dev/repos/warehouse"
+    )
+    assert not recalled(second), "a retired memory must not come back into the prompt"

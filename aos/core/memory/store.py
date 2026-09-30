@@ -209,7 +209,16 @@ class MemoryStore:
         status: Optional[str] = None,
         scope: Optional[str] = None,
         lane: Optional[str] = None,
+        statuses: Optional[list[str]] = None,
+        scopes: Optional[list[str]] = None,
     ) -> list[dict[str, Any]]:
+        """Read memories. ``statuses``/``scopes`` are set filters (IN, not =).
+
+        Both single-value and set forms exist on purpose: the authoring surface
+        asks for one status at a time, recall asks "everything a host may be
+        shown", and a recall view that had to loop over the table would be the
+        same read-twice-write-once defect this repository keeps cataloguing.
+        """
         clauses, params = [], []
         for column, value in (
             ("type", type),
@@ -220,6 +229,11 @@ class MemoryStore:
             if value:
                 clauses.append(f"{column} = ?")
                 params.append(value)
+        for column, values in (("status", statuses), ("scope", scopes)):
+            if values:
+                placeholders = ", ".join("?" for _ in values)
+                clauses.append(f"{column} IN ({placeholders})")
+                params.extend(values)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         rows = self._conn.execute(
             f"SELECT * FROM memories {where} ORDER BY created_at, memory_id", params
@@ -253,9 +267,16 @@ class MemoryStore:
 
     # ── scoring views ──────────────────────────────────────────────
 
-    def memories_for_scoring(self) -> list[dict[str, Any]]:
-        """Memories enriched with tags and roles, ready for scoring."""
-        memories = self.list_memories()
+    def memories_for_scoring(
+        self, *, statuses: Optional[list[str]] = None, scopes: Optional[list[str]] = None
+    ) -> list[dict[str, Any]]:
+        """Memories enriched with tags and roles, ready for scoring.
+
+        The filters are optional so the decay sweep still sees every row: a
+        deprecated memory must keep its provenance and be recomputable, it just
+        must never reach a host.
+        """
+        memories = self.list_memories(statuses=statuses, scopes=scopes)
         tags = self._group("SELECT memory_id, tag FROM memory_tags", "tag")
         roles = self._group("SELECT memory_id, role FROM memory_roles", "role")
         for mem in memories:
@@ -264,39 +285,160 @@ class MemoryStore:
         return memories
 
     def usage_stats(self) -> dict[str, dict[str, Any]]:
-        """Per-memory usage derived from observations and retrieval history."""
+        """Per-memory usage, with linkage and outcome kept apart.
+
+        Two different facts used to arrive through one door. Being *retrieved*
+        into a run says only that a memory was in the room, and it used to be
+        written as a per-memory observation whose outcome was then averaged into
+        that memory's own ranking — so a memory got better-placed the more it was
+        recalled, which is the loop this repository caught in four other
+        projects (R-006: linkage is not outcome).
+
+        Now: ``usage_count``/``last_retrieved`` come from ``retrieval_log``
+        (linkage, and nothing else), and ``successful_uses``/``quality_scores``
+        come from the run-level verdicts of the runs that memory appeared in —
+        counted only when the verdict was earned (``needs_review = 0``). An
+        unlabelled guess by the engine moves nothing.
+        """
         stats: dict[str, dict[str, Any]] = {}
-        rows = self._conn.execute(
-            """
-            SELECT memory_id, outcome, quality_score, created_at
-            FROM observations
-            WHERE memory_id IS NOT NULL
-            """
-        ).fetchall()
-        for row in rows:
-            entry = stats.setdefault(
-                row["memory_id"],
-                {"usage_count": 0, "successful_uses": 0, "last_used": None, "quality_scores": []},
+
+        def entry(memory_id: str) -> dict[str, Any]:
+            return stats.setdefault(
+                memory_id,
+                {
+                    "usage_count": 0,
+                    "successful_uses": 0,
+                    "last_used": None,
+                    "last_retrieved": None,
+                    "last_outcome_at": "",
+                    "quality_scores": [],
+                },
             )
-            entry["usage_count"] += 1
-            if row["outcome"] == "success":
-                entry["successful_uses"] += 1
-            entry["quality_scores"].append(float(row["quality_score"]))
-            entry["last_used"] = max(entry["last_used"] or "", row["created_at"])
 
         for row in self._conn.execute(
-            "SELECT memory_id, MAX(created_at) AS last_retrieved FROM retrieval_log GROUP BY memory_id"
+            """
+            SELECT memory_id,
+                   COUNT(DISTINCT loop_id) AS loops,
+                   MAX(created_at) AS last_retrieved
+            FROM retrieval_log
+            GROUP BY memory_id
+            """
         ).fetchall():
-            entry = stats.setdefault(
-                row["memory_id"],
-                {"usage_count": 0, "successful_uses": 0, "last_used": None, "quality_scores": []},
-            )
-            entry["last_retrieved"] = row["last_retrieved"]
+            seen = entry(row["memory_id"])
+            seen["usage_count"] = int(row["loops"] or 0)
+            seen["last_retrieved"] = row["last_retrieved"]
+            seen["last_used"] = row["last_retrieved"]
 
-        for entry in stats.values():
-            uc = entry["usage_count"]
-            entry["success_rate"] = (entry["successful_uses"] / uc) if uc else 0.5
+        for row in self.earned_linkage():
+            seen = entry(row["memory_id"])
+            if row["outcome"] == "success":
+                seen["successful_uses"] += 1
+            seen["quality_scores"].append(float(row["quality_score"] or 0.0))
+            if str(row["created_at"] or "") > str(seen["last_outcome_at"] or ""):
+                seen["last_outcome_at"] = row["created_at"]
+
+        for seen in stats.values():
+            # Rate over the runs that were actually judged. An unjudged run is
+            # neither credit nor blame — dividing by every run the memory sat in
+            # would punish it for the engine's missing verdict, not its own.
+            earned = len(seen["quality_scores"])
+            seen["outcome_count"] = earned
+            seen["success_rate"] = (seen["successful_uses"] / earned) if earned else 0.5
         return stats
+
+    def earned_linkage(self) -> list[dict[str, Any]]:
+        """Every (memory, run) pair whose verdict was actually earned.
+
+        One credit per pair no matter how many times the memory was logged inside
+        that run. This single join is what both the ranking stats and the
+        learning gate read, so "how many independent runs backed this" cannot be
+        two numbers that disagree.
+        """
+        rows = self._conn.execute(
+            """
+            SELECT DISTINCT rl.memory_id AS memory_id,
+                            o.observation_id AS observation_id,
+                            rl.loop_id AS loop_id,
+                            o.outcome AS outcome,
+                            o.quality_score AS quality_score,
+                            o.source_hash AS source_hash,
+                            o.created_at AS created_at
+            FROM retrieval_log rl
+            JOIN observations o ON o.loop_id = rl.loop_id
+            WHERE o.memory_id IS NULL AND o.needs_review = 0
+            ORDER BY rl.memory_id, o.created_at, o.observation_id
+            """
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def linkage_by_memory(self) -> dict[str, list[dict[str, Any]]]:
+        """``earned_linkage`` grouped by memory, for the learning gate."""
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for row in self.earned_linkage():
+            grouped.setdefault(row["memory_id"], []).append(row)
+        return grouped
+
+    def memories_retrieved_in_loop(self, loop_id: str) -> list[str]:
+        """Which memories a run had in the room, from the retrieval log.
+
+        This used to be answered by scanning that run's per-memory observations;
+        linkage lives in one table now, so there is exactly one place to look.
+        """
+        rows = self._conn.execute(
+            "SELECT DISTINCT memory_id FROM retrieval_log WHERE loop_id = ? ORDER BY rank",
+            (loop_id,),
+        ).fetchall()
+        return [r["memory_id"] for r in rows]
+
+    def linked_outcome_count(self, memory_id: str) -> int:
+        """How many earned verdicts this memory appeared in."""
+        row = self._conn.execute(
+            """
+            SELECT COUNT(DISTINCT o.observation_id) AS n
+            FROM retrieval_log rl
+            JOIN observations o ON o.loop_id = rl.loop_id
+            WHERE rl.memory_id = ? AND o.memory_id IS NULL AND o.needs_review = 0
+            """,
+            (memory_id,),
+        ).fetchone()
+        return int(row["n"] or 0)
+
+    def expire_due(self, *, today: str = "") -> list[dict[str, Any]]:
+        """Step overdue memories down one lifecycle level; return what moved.
+
+        Retirement by degrees, not deletion: ``verified`` that nobody has
+        re-checked becomes ``active`` (still recalled, but labelled stale by the
+        injector), and ``active`` past its date becomes ``deprecated`` and stops
+        being recalled. ``candidate`` is left alone — it was never trusted, so an
+        expiry date has nothing to demote it from.
+        """
+        day = (today or _now())[:10]
+        down = {"verified": "active", "active": "deprecated"}
+        rows = self._conn.execute(
+            "SELECT memory_id, status, revalidate_after FROM memories "
+            "WHERE revalidate_after <> '' AND substr(revalidate_after, 1, 10) < ? "
+            "ORDER BY memory_id",
+            (day,),
+        ).fetchall()
+        moved: list[dict[str, Any]] = []
+        for row in rows:
+            nxt = down.get(row["status"])
+            if not nxt:
+                continue
+            self._conn.execute(
+                "UPDATE memories SET status = ?, updated_at = ? WHERE memory_id = ?",
+                (nxt, _now(), row["memory_id"]),
+            )
+            self._conn.commit()
+            moved.append(
+                {
+                    "memory_id": row["memory_id"],
+                    "from": row["status"],
+                    "to": nxt,
+                    "revalidate_after": row["revalidate_after"],
+                }
+            )
+        return moved
 
     def quality_stats(self) -> dict[str, float]:
         """Average quality score per memory (from observations)."""

@@ -60,7 +60,9 @@
 ## 4. 两处"付了成本、拿不到东西"的契约事实
 
 ### 4.1 `content/policies/` 为空 ⇒ 阈值 tuning 是纸面能力
-`policy.py` 的默认段包含 42 个键（`retrieval/decay/promotion/rejection/injection/outcome`），
+`policy.py` 的默认段包含 **54 个叶子键**（`retrieval/decay/promotion/rejection/injection/outcome`）。
+**更正**：本文初稿写 42，是错的 —— 复现口径见 `docs/architecture/agent-os-v2.md §7`；另外三个 `*_quality`
+键由 `f"{outcome}_quality"` 动态拼接读取，纯字面 grep 会把它们误判成无读者。
 逐个 grep 在 `aos/` 内都有读者 —— 也就是说**接线做完了，接口没打开**：
 不改代码就调任何一个阈值都做不到，而 `load_policy` 已支持从 `content/policies/<name>.json` 覆盖
 （`policy.py:66-73` 的按解析路径缓存正是为此修的）。

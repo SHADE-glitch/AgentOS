@@ -129,10 +129,17 @@ def evaluate_memory(memory_id: str, store: Any) -> Optional[dict[str, Any]]:
     used the memory), so callers never read a meaningless delta.
     """
     observations = store.list_observations()
+    # "Used" is linkage, read from where linkage is recorded. The per-memory
+    # observation rows this used to scan are gone: they wrote a run's verdict
+    # against every recalled memory, which is the inference this module is meant
+    # to *test*, not assume.
     used_loops = {
-        o["loop_id"] for o in observations if o.get("memory_id") == memory_id and o.get("loop_id")
+        r["loop_id"] for r in store.list_retrievals(memory_id=memory_id) if r.get("loop_id")
     }
-    loop_level = [o for o in observations if not o.get("memory_id")]
+    # Only runs whose verdict was earned belong in either group. An unlabelled
+    # run says nothing, and counting it as "the runs without this memory went
+    # worse" would be inventing the very comparison this report exists to make.
+    loop_level = [o for o in observations if not o.get("memory_id") and not o.get("needs_review")]
     group_a = [o for o in loop_level if o.get("loop_id") in used_loops]
     group_b = [o for o in loop_level if o.get("loop_id") not in used_loops]
     if not group_a or not group_b:
@@ -168,10 +175,11 @@ def evaluate_memory(memory_id: str, store: Any) -> Optional[dict[str, Any]]:
 
 
 def evaluate_all(store: Any) -> list[dict[str, Any]]:
-    """Evaluate every memory that has at least one observation."""
-    memory_ids = sorted(
-        {o["memory_id"] for o in store.list_observations() if o.get("memory_id")}
-    )
+    """Evaluate every memory that has appeared in at least one judged run."""
+    # The candidate set comes from judged linkage, not from per-memory
+    # observation rows — those no longer exist, and a reader that still looked
+    # for them would report "0 evaluated" forever without failing.
+    memory_ids = sorted(store.linkage_by_memory())
     evaluations = []
     for memory_id in memory_ids:
         result = evaluate_memory(memory_id, store)

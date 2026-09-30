@@ -142,13 +142,16 @@ observations=candidates=learning_reviews=retrieval_log=telemetry_events=**0** �
   降为 `hypothesis/low` 且 `status='candidate'`（实测：`--evidence-level production_validated --confidence high
   --status active` 落库后是 `hypothesis / low / candidate`）。只有门能往上抬。
 
-**已知失效（本文只登记，修期见 final-plan P2）** `[Verified]`：
-`retrieve()` 的候选来自 `store.memories_for_scoring()` ⇒ `list_memories()` 无参数
-（`store.py:256-264`），排序循环里只过滤 `exclude_hypothesis` / `exclude_memories`（`retrieve.py:351-355`），
-**没有 status 过滤、没有 scope 过滤**。复现：
-临时库里写一条 `failure` 记忆 → 把 status 改成 `deprecated` → `retrieve()` 仍返回它
-（`recalled: ['M-956C3507']`）。
-⇒ 后果是整条负向学习在召回侧不生效：门把记忆降级了，注入照旧。这是本架构当前最大的名实不符。
+**召回尊重生命周期与 scope（P2 之后）** `[Verified]`：`retrieve()` 的候选集合由
+`store.memories_for_scoring(statuses=policy["recall_statuses"], scopes=...)` 决定 ——
+默认只有 `active|verified` 可被召回，`candidate` 等门确认、`deprecated|superseded|invalidated|archived` 已被门退役；
+scope 一侧只放行 `global` + 当前 `project:<cwd 目录名>`（+ 同 `session:`），
+**cwd 未知时只给 global** —— "不知道自己在哪"不等于可以借用别的项目的事实。
+屏幕（临时库，同一 task 文本，只换 cwd 与 status）：
+`[1] 同项目 warehouse -> retrieved 1 | chars 253` ／ `[2] 另一个项目 billing -> retrieved 0`／
+`[3] 把该条降成 deprecated 之后再问 -> retrieved 0`。
+副作用要如实写出：P2 之前 `content/memory/seed` 里 8 条 `project:AgentOS` 种子会被注入到任何项目，
+现在不会了 —— 这是修复而非回归，但它改变了 host 实际看到的内容。
 
 `memories.difficulty` 按裁决保留列但退出打分（`retrieve.py:320` 的 docstring 明说此事），只作 review 元数据。
 
@@ -173,12 +176,15 @@ learning_reviews（pending → approved | rejected | stale）
 3. **reinforce 与 weaken 同时存在 ⇒ `mixed`**：开 review 且**什么都不写**；
 4. **晋升效果的展示与执行同源**：`decide_promotion` 是唯一真相，`apply_effect` 只执行。
 
-`R-006` 的教训已在代码里但性质未改 `[Verified]`：一次运行的成败仍被写给**每条被召回的记忆**
-（`record.py:186`），再经 `store.usage_stats`（`:266-298`）→ `quality_bonus`（`retrieve.py:287,345`）
-反馈进该记忆自己的排序 ⇒ **召回越多 ⇒ 排名越高的正反馈**。
-"被召回"是 linkage，不是 outcome。
-实测形状 `[Verified]`：一个失败任务留下了 3 条 `weaken` 候选，`target_memory` 恰好是那次召回的
-3 条种子记忆 —— 归因单位是"在场"，不是"起作用"（缺陷登记 L）。这是 final-plan P2 的第二个问题。
+**linkage 与 outcome 已分层（P2）** `[Verified]`：per-memory observation 不再写入。
+一次运行只有**一条 loop 级观测**；"这条记忆曾在哪次运行里在场"记在 `retrieval_log`（linkage），
+"那次运行结果如何"记在 loop 级观测，两者只在 `store.earned_linkage()` 这一个 join 里汇合，
+且**只统计 `needs_review = 0` 的判定** —— 引擎猜出来的结论既不加分也不减分。
+由此 `usage_stats` 的 `usage_count`（在场次数）与 `success_rate`（在**被判定过**的运行里的成功率）
+不再是同一个数字的两种用法；`evaluate.py` 的 A/B 对比也改读 linkage。
+自动路径的候选现在还要求归因：host 上报的 `skill_used` 必须与该记忆的 `category`/tags 对上
+（`record.is_attributable`），对不上就不产生候选 —— 由人标注的路径不受此限制，因为标注本身就是归因。
+反面形状已被测试钉住：`tests/test_memory.py::test_being_recalled_alone_credits_nothing`。
 
 ---
 
@@ -193,10 +199,12 @@ learning_reviews（pending → approved | rejected | stale）
 不存在且已裁决**不做**的：`policy_versions`、`skill_versions`、`aos/core/sensing/`、
 `aos/core/evolution/`、`aos/core/learning/`（目录都还没建）。
 
-**Policy Evolution 目前没有地基** `[Verified]`：`policy.py` 的 42 个策略键**全部有文本读者**，
-但 `content/policies/` 只有 `.gitkeep` ⇒ 不改代码就调不动任何阈值。
-`load_policy` 已支持从 `content/policies/<name>.json` 覆盖，缓存键也已在 `ce02163` 修好，
-所以缺的只是那 6 个 JSON（final-plan P4）。
+**阈值现在有一个可调入口，其余仍内置** `[Verified]`：`policy.py` 有 **54 个叶子策略键**（P2 新增 `retrieval.recall_statuses`；按 `DEFAULT_POLICIES`
+递归数叶子得到，脚本可复现），全部有读者 —— 其中 `success_quality`/`partial_quality`/`failure_quality`
+是经 `rules[f"{outcome}_quality"]` 动态拼键读的，**纯字面 grep 会把它们误报成无人使用**；`content/policies/retrieval.json` 已落地且与内置默认逐键相等，所以它是**中性的**，
+但它证明了覆盖通路真的通 —— 实测把 `min_score` 改成 `0.99`  ⇒ 召回从 3 条变 0 条，
+把 `top_k` 改成 `1` ⇒ 恰好 1 条，全程不改代码。
+剩下 5 个文件（`decay/promotion/rejection/injection/outcome`）仍在 P4：不是难度，是没人写。
 
 `decay_factor` 的读路径 `[Verified]`：写于 `apply_effect`，读于 `retrieve.py` 的
 `store.decay_factors()`；但**检索日志的读路径**（`usage_stats` ← `retrieval_log`）在 Phase 3.4 之前
@@ -274,7 +282,7 @@ learning_reviews（pending → approved | rejected | stale）
 
 | # | 缺陷 | 证据 | 排期 |
 |---|---|---|---|
-| A | 降级在召回侧不生效（无 status/scope 过滤） | `store.py:256-264` + `retrieve.py:351-355` + 本次实测 | **P2** |
+| A | 降级在召回侧不生效（无 status/scope 过滤） | 实测 `recalled: ['M-956C3507']`（修复前） | **已修于 P2**（§5 有三段屏幕） |
 | B | 提案身份随机 ⇒ 同任务重复失败堆多条 review | `record.py:86` `_new_id("M")`；实演 3 次同任务失败 ⇒ 16 条 pending | **P3** |
 | C | `dedupe_key` 无生成者 ⇒ `uq_mem_dedupe` 永不生效 | `grep dedupe_key aos/core/memory/{authoring,record,retrieve}.py` 无匹配 | **P3** |
 | D | 注入边界标签未清洗 | `inject.py:19-20,149-172`，实测 close 计数 2 | **P5** |
@@ -285,7 +293,7 @@ learning_reviews（pending → approved | rejected | stale）
 | I | `memory_influence="none"` / `memory_retrieved=0` 是假字段 | `router.py:397-398`、`decision.py:49-50` | **已修于 P1** |
 | J | `aos doctor --json` 与 `memory refresh` 退出码 2 | 命令未实现 | **P4** |
 | K | 人标注之后提案评审不会立刻出现，必须等**下一次 postflight** 才被扫进门 | 实测：`review label 1 --outcome failure` 返回 `candidates_created=3, proposal_created=1`，但 `learning_reviews` 仍只有 1 行（那条 label 自己），4 条 candidates 全部 `consumed_at IS NULL`；随后一次无关的 postflight 才让 `#2/#3 promotion` 出现 | **P4** |
-| L | 归因仍按"被召回"发放：一次失败的任务产生 3 条 `weaken` 候选，对象是那 3 条**被召回的记忆**，与它们是否影响结果无关 | 同上，candidates 表 `target_memory=M-SEED-CACHEKEY02/MIGRATE11/DEFAULT5, candidate_type=weaken` | **P2** |
+| L | 归因仍按"被召回"发放：一次失败的任务产生 3 条 `weaken` 候选，对象是那 3 条**被召回的记忆**，与它们是否影响结果无关 | 修复前实测 `target_memory=M-SEED-CACHEKEY02/MIGRATE11/DEFAULT5, candidate_type=weaken` | **已修于 P2**（候选需 `skill_used` 归因） |
 | M | 已标注的 review 在 `review list` 里仍打印 `-> aos review label 1 --outcome …`，且 CLI 返回 `"status":"labelled"` 而库里写的是 `approved` | `./bin/aos review list` 实测（status=approved 的行仍给标注提示） | **P4** |
 | N | `preflight` 可以返回 `aos_status=degraded` 而 `warnings` 为空 ⇒ 降级没有解释。`lifecycle.py:104-108` 只在"没解析出角色"时补 warning，但 status 另由 `fallback_reason` 决定 | 实测：空库 preflight ⇒ `status: degraded \| warnings: []`（`retrieved=0`） | **P4** |
 

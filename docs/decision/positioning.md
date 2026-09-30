@@ -171,7 +171,7 @@ Agent OS 若要在 skill 侧做，正确动作是**移植/复用这些纪律**�
 | §4.7 证据时序 + pending + stage 卫生 | **KEEP 的三件** | `collect_before` 上移（Evidence 定义的一部分）、`pending.py`（**插件硬前置**）、`execute` 的 fail→complete 擦除与 `recall_stage` 无 try/except（静默吞失败类）|
 | §4.8 三个守卫测试 | **优先级升高** | `audit §5` 的三个现存缺陷恰好全在它们的射程内；`test_no_third_party_imports` 是"零依赖"唯一可维持的执行方式 |
 | `doctor --json` | **KEEP** | 版本谈判 + 让闭环不查 SQL 就可见 |
-| `content/policies/*.json` | **KEEP，成本极低** | 42 个键全部有读者但无一可调 ⇒ Policy Evolution 目前没有地基（`audit §4.1`）|
+| `content/policies/*.json` | **KEEP，成本极低** | 54 个叶子键全部有读者但无一可调 ⇒ Policy Evolution 目前没有地基（`audit §4.1`，该处数字已更正）|
 | Phase 4 插件 | **KEEP，但先做 20 行** | 只为通电：`chat.message`→preflight、`system.transform`→push、`session.idle`+`pending`→postflight。其余信号一律后置 |
 
 ---

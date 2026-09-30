@@ -50,9 +50,19 @@ def _add(store, memory_id, *, evidence_level="benchmark_evaluated", mtype="proce
 
 
 def _observe(store, memory_id, loop_id, *, quality=4.0, source_hash=None, outcome="success"):
+    """One earned verdict for a run this memory was recalled into.
+
+    Two facts, written where each belongs: the memory was in the run
+    (``retrieval_log``), and the run ended this way (a loop-level observation).
+    This used to be one per-memory row, which let the gate read "it was there"
+    as "it helped".
+    """
+    store.log_retrieval(
+        memory_id=memory_id, score=0.5, rank=1, loop_id=loop_id, query_hash=f"Q-{loop_id}"
+    )
     return store.add_observation(
         loop_id=loop_id,
-        memory_id=memory_id,
+        memory_id=None,
         outcome=outcome,
         quality_score=quality,
         source_hash=source_hash or f"hash-{loop_id}",
@@ -216,7 +226,10 @@ def test_insufficient_observations_is_rejected(store):
 
 def test_missing_evidence_hash_is_rejected(store):
     _add(store, "M1", evidence_level="runtime_validated")
-    store.add_observation(loop_id="L1", memory_id="M1", outcome="success", quality_score=4.0)
+    # The run is on record and the memory was in it, but the run carries no
+    # evidence hash — so there is nothing a reviewer could go back and check.
+    store.log_retrieval(memory_id="M1", score=0.5, rank=1, loop_id="L1", query_hash="Q-L1")
+    store.add_observation(loop_id="L1", memory_id=None, outcome="success", quality_score=4.0)
     _candidate(store, "M1", "L1")
 
     result = run_learning(store=store)["results"][0]
@@ -316,7 +329,7 @@ def test_group_candidates_counts_independent_loops(store):
     _observe(store, "M1", "L2")
     _candidate(store, "M1", "L1")
 
-    groups = group_candidates(store.list_candidates(), store.list_observations())
+    groups = group_candidates(store.list_candidates(), store.linkage_by_memory())
 
     assert set(groups["M1"]["executions"]) == {"L1", "L2"}
 
@@ -325,7 +338,7 @@ def test_validate_group_hypothesis_first_observation(store):
     _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce_hypothesis")
-    group = group_candidates(store.list_candidates(), store.list_observations())["H-1"]
+    group = group_candidates(store.list_candidates(), store.linkage_by_memory())["H-1"]
 
     result = validate_group(
         group,

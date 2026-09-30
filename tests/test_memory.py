@@ -30,6 +30,10 @@ def _add(store, memory_id, *, tags=None, roles=None, **overrides):
         "evidence_level": overrides.pop("evidence_level", "benchmark_evaluated"),
         "confidence": overrides.pop("confidence", "high"),
         "observation_count": overrides.pop("observation_count", 5),
+        # Recall only shows the gate its trustworthiest rows, and these fixtures
+        # predate the status axis: they are about ranking, not about whether a
+        # memory has been approved. A test that wants the filter itself says so.
+        "status": overrides.pop("status", "active"),
         **overrides,
     }
     return store.upsert_memory(memory, tags=tags or [], roles=roles or [])
@@ -127,6 +131,106 @@ def test_retrieval_policy_override(store):
         (policies / "retrieval.json").unlink()
 
 
+# ── recall respects the lifecycle and the scope ────────────────────────
+def test_recall_offers_only_statuses_the_gate_trusts(store):
+    for status in ("candidate", "deprecated", "superseded", "invalidated", "archived"):
+        _add(store, f"M-{status}", tags=["mysql", "slow-query"], status=status)
+    _add(store, "M-active", tags=["mysql", "slow-query"], status="active")
+    _add(store, "M-verified", tags=["mysql", "slow-query"], status="verified")
+
+    ids = {r["memory_id"] for r in retrieve(QUERY, store=store, log=False)["results"]}
+
+    assert ids == {"M-active", "M-verified"}
+
+
+def test_a_demotion_changes_what_the_next_run_hears(store):
+    """The screen this phase exists for: demoted means gone from the injection.
+
+    Approving a weakening used to lower the evidence level and leave the memory
+    recallable, so the negative half of learning was written down and never
+    applied.
+    """
+    _add(store, "M1", tags=["mysql", "slow-query"], status="active")
+    assert "M1" in {r["memory_id"] for r in retrieve(QUERY, store=store, log=False)["results"]}
+
+    store.update_memory_fields("M1", status="deprecated")
+
+    assert retrieve(QUERY, store=store, log=False)["results"] == []
+
+
+def test_recall_does_not_borrow_another_projects_memory(store):
+    _add(store, "M-ours", tags=["mysql", "slow-query"], scope="project:warehouse")
+    _add(store, "M-theirs", tags=["mysql", "slow-query"], scope="project:billing")
+    _add(store, "M-global", tags=["mysql", "slow-query"], scope="global")
+
+    ids = {
+        r["memory_id"]
+        for r in retrieve(dict(QUERY, scope_project="warehouse"), store=store, log=False)["results"]
+    }
+
+    assert ids == {"M-ours", "M-global"}
+
+
+def test_an_unknown_project_gets_global_memories_only(store):
+    """Not knowing where we are is not a licence to use somebody else's facts."""
+    _add(store, "M-scoped", tags=["mysql", "slow-query"], scope="project:warehouse")
+    _add(store, "M-global", tags=["mysql", "slow-query"], scope="global")
+
+    ids = {r["memory_id"] for r in retrieve(QUERY, store=store, log=False)["results"]}
+
+    assert ids == {"M-global"}
+
+
+def test_session_memory_is_only_offered_to_its_own_session(store):
+    _add(store, "M-session", tags=["mysql", "slow-query"], scope="session:S1")
+
+    assert retrieve(dict(QUERY, scope_session="S2"), store=store, log=False)["results"] == []
+    ids = {r["memory_id"] for r in retrieve(dict(QUERY, scope_session="S1"), store=store, log=False)["results"]}
+    assert ids == {"M-session"}
+
+
+# ── expiry ─────────────────────────────────────────────────────────────
+def test_expire_due_steps_one_level_per_pass(store):
+    """Overdue retires by degrees: verified becomes active, active becomes deprecated.
+
+    Nothing is deleted — the provenance stays history — but a fact about a version
+    nobody re-checked stops being served as if it were current.
+    """
+    _add(store, "M-verified", tags=["mysql"], status="verified", revalidate_after="2026-01-01")
+    _add(store, "M-active", tags=["mysql"], status="active", revalidate_after="2026-01-01")
+    _add(store, "M-fresh", tags=["mysql"], status="active", revalidate_after="2099-01-01")
+
+    moved = {m["memory_id"]: (m["from"], m["to"]) for m in store.expire_due(today="2026-09-30")}
+
+    assert moved == {"M-verified": ("verified", "active"), "M-active": ("active", "deprecated")}
+    assert store.get_memory("M-fresh")["status"] == "active"
+    # Two passes take the ex-verified one all the way out of recall.
+    store.expire_due(today="2026-09-30")
+    assert store.get_memory("M-verified")["status"] == "deprecated"
+
+
+def test_overdue_memory_is_labelled_when_it_is_still_recallable(store):
+    from aos.core.memory import inject
+
+    _add(
+        store,
+        "M1",
+        tags=["mysql"],
+        status="verified",
+        revalidate_after="2026-01-01",
+        body="use the pooled connection",
+    )
+    row = retrieve(dict(QUERY, scope_project=""), store=store, log=False)["results"][0]
+    assert row["revalidate_after"] == "2026-01-01"
+
+    rendered = inject.render([row], hypotheses=[], route=None, today="2026-09-30")
+
+    line = next(line for line in rendered["text"].splitlines() if "可能已过期" in line)
+    # The date a human must re-check is named, so "stale" is actionable rather
+    # than a vibe.
+    assert "2026-01-01" in line
+
+
 # ── decay ──────────────────────────────────────────────────────────────
 def test_compute_all_decay_penalises_unobserved_memory(store):
     _add(store, "M1", tags=["mysql"], observation_count=0)
@@ -136,40 +240,92 @@ def test_compute_all_decay_penalises_unobserved_memory(store):
 
 
 # ── recording ──────────────────────────────────────────────────────────
-def test_record_outcome_writes_observations(store):
+def _link(store, loop_id, memory_id, rank=1):
+    """Record that a memory was in a run's context (linkage, nothing more)."""
+    store.log_retrieval(memory_id=memory_id, score=0.5, rank=rank, loop_id=loop_id, query_hash="Q")
+
+
+def test_record_outcome_writes_one_observation_per_run(store):
+    """The run is the unit of evidence; the memories in it are not separate runs.
+
+    Per-memory rows used to be written for everything recalled, then averaged
+    back into each memory's own success rate — so being recalled raised a
+    memory's rank, which raised how often it was recalled (R-006).
+    """
     _add(store, "M1", tags=["mysql"])
+    _link(store, "L1", "M1")
     counts = record_outcome(loop_id="L1", outcome="success", quality_score=1.0, memories_used=["M1"], store=store)
-    assert counts["observations_recorded"] == 2  # loop-level + M1
+    assert counts["observations_recorded"] == 1
+    rows = store.list_observations()
+    assert [r["memory_id"] for r in rows] == [None]
     assert store.get_memory("M1")["observation_count"] == 1
-    assert counts["candidates_created"] == 0
 
 
-def test_record_failure_creates_candidate(store):
-    _add(store, "M1")
-    counts = record_outcome(loop_id="L1", outcome="failure", quality_score=0.0, memories_used=["M1"], store=store)
+def test_record_failure_creates_candidate_only_for_the_skill_that_was_used(store):
+    _add(store, "M1", tags=["mysql"])
+    _link(store, "L1", "M1")
+    counts = record_outcome(
+        loop_id="L1", outcome="failure", quality_score=0.0,
+        memories_used=["M1"], skill_used="mysql", store=store,
+    )
     assert counts["candidates_created"] == 1
     candidate = store.list_candidates()[0]
     assert candidate["candidate_type"] == "weaken"
     assert candidate["target_memory"] == "M1"
+    assert "mysql" in candidate["payload_json"]
 
 
 def test_record_high_quality_success_creates_candidate(store):
-    _add(store, "M1")
-    counts = record_outcome(loop_id="L1", outcome="success", quality_score=4.0, memories_used=["M1"], store=store)
+    _add(store, "M1", tags=["mysql"])
+    _link(store, "L1", "M1")
+    counts = record_outcome(
+        loop_id="L1", outcome="success", quality_score=4.0,
+        memories_used=["M1"], skill_used="mysql", store=store,
+    )
     assert counts["candidates_created"] == 1
-    candidate = store.list_candidates()[0]
-    assert candidate["candidate_type"] == "reinforce"
-    assert candidate["target_memory"] == "M1"
+    assert store.list_candidates()[0]["candidate_type"] == "reinforce"
 
 
-def test_usage_stats_track_success_rate(store):
-    _add(store, "M1")
+def test_being_recalled_alone_credits_nothing(store):
+    """No host-reported skill ⇒ no attribution ⇒ no candidate, in either direction.
+
+    A failure does not blame a memory that merely shared the prompt with it, and
+    a success does not promote one. The human label path is what names memories.
+    """
+    _add(store, "M1", tags=["mysql"])
+    _link(store, "L1", "M1")
+    counts = record_outcome(
+        loop_id="L1", outcome="failure", quality_score=0.0, memories_used=["M1"], store=store
+    )
+    assert counts["candidates_created"] == 0
+    assert store.list_candidates() == []
+
+
+def test_usage_stats_separates_linkage_from_verdicts(store):
+    """``usage_count`` is where a memory has been; ``success_rate`` is what happened."""
+    _add(store, "M1", tags=["mysql"])
+    _link(store, "L1", "M1")
+    _link(store, "L2", "M1")
     record_outcome(loop_id="L1", outcome="success", memories_used=["M1"], store=store)
     record_outcome(loop_id="L2", outcome="failure", memories_used=["M1"], store=store)
+
     stats = store.usage_stats()["M1"]
-    assert stats["usage_count"] == 2
+    assert stats["usage_count"] == 2          # linkage: two runs held it
+    assert stats["outcome_count"] == 2        # verdicts: both were earned
     assert stats["successful_uses"] == 1
     assert stats["success_rate"] == 0.5
+
+
+def test_unlabelled_run_is_neither_credit_nor_blame(store):
+    """needs_review runs are excluded from the rate, so a guess cannot rank memories."""
+    _add(store, "M1", tags=["mysql"])
+    _link(store, "L1", "M1")
+    record_outcome(loop_id="L1", outcome="success", memories_used=["M1"], needs_review=True, store=store)
+
+    stats = store.usage_stats()["M1"]
+    assert stats["usage_count"] == 1
+    assert stats["outcome_count"] == 0
+    assert stats["success_rate"] == 0.5       # no evidence, so no penalty either
 
 
 def test_upsert_keeps_the_tags_that_came_inside_the_row(store):

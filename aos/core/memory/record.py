@@ -1,17 +1,28 @@
 """Record loop outcomes into the memory store.
 
-This is the "observe" and "learn" half of one step: a finished loop writes an
-observation for the run and for every memory it used, and that evidence becomes
-either a *candidate change* to an existing memory or — when nothing was recalled
-at all — a proposal for a new one.
+This is the "observe" step: a finished run writes **one** loop-level
+observation, and that verdict is what later becomes a candidate change to an
+existing memory or — when nothing was recalled — a proposal for a new one.
 
-Two rules give this module its shape. The first is that **an unlabelled run
-proposes nothing**: a verdict the engine guessed at is not evidence for or against
-a memory, so a run below the confidence floor writes its observation, asks for a
-human label, and generates no candidates until that label arrives. The second is
-that a proposal carries its content in the candidate payload and an id reserved
-at proposal time, so the learning pipeline can group and review it exactly like a
-change to an existing memory, and a human approval is what makes the row real.
+Three rules give this module its shape.
+
+**Linkage is not outcome.** Being retrieved into a run says only that a memory
+was in the room. The per-memory observation rows this module used to write for
+every recalled memory were read back as that memory's success rate, so a memory
+rose in the ranking the more often it was recalled (R-006). Recall is now logged
+once, in ``retrieval_log``, and the only thing that may credit or blame a memory
+is an *attributed* verdict: the host reported having used the very subject the
+memory is about. No attribution, no candidate.
+
+**An unlabelled run proposes nothing**: a verdict the engine guessed at is not
+evidence for or against a memory, so a run below the confidence floor writes its
+observation, asks for a human label, and generates no candidates until that
+label arrives. A human label is attribution by definition, which is why the
+label path (``evolve``) keeps naming the memories involved.
+
+**A proposal carries its content in the candidate payload** and an id reserved
+at proposal time, so the learning pipeline can group and review it exactly like
+a change to an existing memory, and a human approval is what makes the row real.
 """
 
 from __future__ import annotations
@@ -128,13 +139,30 @@ def add_candidates_for_memories(
 
 
 def memories_of_loop(store: MemoryStore, loop_id: str) -> list[str]:
-    """The memories a finished run had in play, from its observations."""
-    seen: list[str] = []
-    for row in store.list_observations(loop_id=loop_id):
-        memory_id = row.get("memory_id")
-        if memory_id and memory_id not in seen:
-            seen.append(memory_id)
-    return seen
+    """The memories a finished run had in play, from the retrieval log."""
+    return store.memories_retrieved_in_loop(loop_id)
+
+
+def is_attributable(memory: dict[str, Any], skill_used: str) -> bool:
+    """Whether a run's verdict may be credited or blamed to this memory.
+
+    The host's reported skill is the only causal signal the contract carries, so
+    it has to line up with what the memory is about — its category or one of its
+    tags. A memory that merely shared context with a failure is not implicated by
+    it; that inference used to be made automatically, and it is the exact shape
+    of the positive feedback the research records call linkage-not-outcome.
+    """
+    skill = " ".join((skill_used or "").lower().replace("/", " ").replace("-", " ").split())
+    if not skill:
+        return False
+    subjects = {str(memory.get("category") or "").lower()}
+    subjects |= {str(tag).lower() for tag in (memory.get("tags") or [])}
+    subjects.discard("")
+    for subject in subjects:
+        needle = " ".join(subject.replace("/", " ").replace("-", " ").split())
+        if needle and (needle in skill or skill in needle):
+            return True
+    return False
 
 
 def record_outcome(
@@ -181,36 +209,28 @@ def record_outcome(
             synthesised=synthesised,
             skill_used=skill_used,
         )
+        # Linkage is already on record in retrieval_log (written by recall);
+        # per-memory observation rows are gone, so nothing here re-writes the
+        # same run once per memory and then averages it back as their merit.
         observations_recorded = 1
-
         for memory_id in memories_used:
-            store.add_observation(
-                loop_id=loop_id,
-                outcome=outcome,
-                memory_id=memory_id,
-                task_id=task_id,
-                session_id=session_id,
-                quality_score=quality_score,
-                source_hash=source_hash,
-                confidence=confidence,
-                synthesised=synthesised,
-                skill_used=skill_used,
-            )
-            observations_recorded += 1
-            # Keep the denormalised count in sync with the observation log.
-            store.set_observation_count(
-                memory_id, len(store.list_observations(memory_id=memory_id))
-            )
+            store.set_observation_count(memory_id, store.linked_outcome_count(memory_id))
 
         candidates_created = 0
         if not needs_review:
             promotion = load_policy("promotion")
             candidate_type = candidate_type_for(outcome, quality_score, promotion=promotion)
-            if candidate_type:
+            rows = {m["memory_id"]: m for m in store.memories_for_scoring()}
+            attributed = [
+                memory_id
+                for memory_id in memories_used
+                if is_attributable(rows.get(memory_id) or {}, skill_used)
+            ] if candidate_type else []
+            if attributed:
                 candidates_created += add_candidates_for_memories(
                     store,
                     candidate_type=candidate_type,
-                    memories=memories_used,
+                    memories=attributed,
                     loop_id=loop_id,
                     payload={
                         "task_id": task_id,
@@ -219,6 +239,11 @@ def record_outcome(
                         "session_id": session_id,
                         "source_hash": source_hash,
                         "confidence": confidence,
+                        "skill_used": skill_used,
+                        # Recorded so a reviewer can see why this memory is being
+                        # credited or blamed, rather than having to guess that it
+                        # was merely in context.
+                        "attributed_by": f"skill_used={skill_used}",
                     },
                 )
 
