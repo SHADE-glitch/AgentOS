@@ -35,6 +35,7 @@ _TOP_LEVEL = (
     "learning",
     "replayed",
     "aos_error",
+    "warnings",
 )
 
 
@@ -84,6 +85,7 @@ def build_postflight(
     learning: dict[str, Any] | None = None,
     replayed: bool = False,
     aos_error: str = "",
+    warnings: list[str] | None = None,
     schema_version: str = CONTRACT_VERSION,
 ) -> dict[str, Any]:
     """Assemble a normalised postflight response document."""
@@ -101,6 +103,7 @@ def build_postflight(
         "learning": _learning(learning),
         "replayed": bool(replayed),
         "aos_error": aos_error,
+        "warnings": list(warnings or []),
     }
 
 
@@ -168,6 +171,7 @@ def validate_postflight(doc: dict[str, Any]) -> None:
 
     require(isinstance(doc.get("replayed"), bool), "replayed must be a bool", errors)
     require(isinstance(doc.get("aos_error"), str), "aos_error must be a string", errors)
+    require(isinstance(doc.get("warnings"), list), "warnings must be a list", errors)
 
     if errors:
         raise ValidationError(errors)

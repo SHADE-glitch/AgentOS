@@ -44,11 +44,64 @@ MEMORY_MODE = frozenset({"enabled", "disabled", "fallback"})
 # host can tell "nothing was relevant" from "retrieval did not run".
 MEMORY_STATUS = frozenset({"ok", "degraded", "skipped", "fallback"})
 PROVIDER = frozenset({"opencode", "host_delegate", "test_provider"})
+# What the host says happened. Distinct from FINAL_STATUS, which is what the
+# engine concluded after checking it — the two may differ.
+OUTCOME = frozenset({"success", "failure", "partial"})
 
 # Required request keys per phase. A request may always carry more.
 REQUEST_REQUIRED: dict[str, tuple[str, ...]] = {
     "preflight": ("task",),
     "postflight": ("task_id", "loop_id"),
+}
+
+# Every inbound field the engine reads, per phase. Anything outside this set is
+# reported as ignored instead of being dropped in silence — silently discarded
+# keys are exactly how the outcome channel went missing in the first place.
+REQUEST_FIELDS: dict[str, frozenset[str]] = {
+    "preflight": frozenset(
+        {
+            "schema_version",
+            "phase",
+            "task",
+            "task_id",
+            "session_id",
+            "cwd",
+            "memory_mode",
+            "provider",
+            "model",
+        }
+    ),
+    "postflight": frozenset(
+        {
+            "schema_version",
+            "phase",
+            "task_id",
+            "loop_id",
+            "session_id",
+            "cwd",
+            "memory_mode",
+            "provider",
+            "model",
+            "outcome",
+            "quality_score",
+            "test_command",
+            "test_stdout",
+            "test_stderr",
+            "test_exit_code",
+            "compile_command",
+            "expected_files",
+            "validate",
+        }
+    ),
+}
+
+_STR_FIELDS = ("task", "task_id", "loop_id", "session_id", "cwd", "model",
+               "test_command", "test_stdout", "test_stderr", "compile_command")
+_NUM_FIELDS = ("quality_score", "test_exit_code")
+_ENUM_FIELDS: dict[str, frozenset[str]] = {
+    "memory_mode": MEMORY_MODE,
+    "provider": PROVIDER,
+    "outcome": OUTCOME,
 }
 
 
@@ -86,3 +139,74 @@ def validate_schema_version(doc: dict[str, Any], errors: list[str]) -> None:
 
 def validate_phase(doc: dict[str, Any], phase: str, errors: list[str]) -> None:
     require(doc.get("phase") == phase, f"phase must be {phase!r}", errors)
+
+
+def _type_name(expected: tuple[type, ...]) -> str:
+    return " or ".join(t.__name__ for t in expected)
+
+
+def validate_request(payload: dict[str, Any], *, phase: str) -> list[str]:
+    """Check an inbound host payload and return the problems, never raising.
+
+    A malformed request is answered with a fallback document rather than an
+    exception, because the host must always receive something it can parse.
+    Absent fields are the caller's default, not an error — except the required
+    ones named in :data:`REQUEST_REQUIRED`.
+    """
+    errors: list[str] = []
+    allowed = REQUEST_FIELDS.get(phase)
+    if allowed is None:
+        return [f"unknown phase: {phase!r}"]
+
+    declared = payload.get("schema_version")
+    require(
+        declared is None or declared in SUPPORTED_VERSIONS,
+        f"schema_version must be one of {', '.join(repr(v) for v in SUPPORTED_VERSIONS)}",
+        errors,
+    )
+    require(payload.get("phase", phase) == phase, f"phase must be {phase!r}", errors)
+
+    for key in REQUEST_REQUIRED[phase]:
+        value = payload.get(key)
+        require(
+            isinstance(value, str) and bool(value.strip()),
+            f"{key} is required and must be a non-empty string",
+            errors,
+        )
+
+    for key, members in _ENUM_FIELDS.items():
+        if payload.get(key) is not None:
+            require(payload[key] in members, f"{key} is not a known value", errors)
+
+    for key in _STR_FIELDS:
+        if key in payload and key not in REQUEST_REQUIRED[phase]:
+            require(isinstance(payload[key], str), f"{key} must be a string", errors)
+
+    for key in _NUM_FIELDS:
+        value = payload.get(key)
+        if value is None:
+            continue
+        # bool is a subclass of int; a "true" quality score is a caller bug.
+        require(
+            isinstance(value, (int, float)) and not isinstance(value, bool),
+            f"{key} must be a number",
+            errors,
+        )
+
+    files = payload.get("expected_files")
+    if files is not None:
+        require(
+            isinstance(files, list) and all(isinstance(entry, str) for entry in files),
+            "expected_files must be a list of strings",
+            errors,
+        )
+    if "validate" in payload:
+        require(isinstance(payload["validate"], bool), "validate must be a boolean", errors)
+
+    return errors
+
+
+def unread_request_fields(payload: dict[str, Any], *, phase: str) -> list[str]:
+    """Request keys the engine does not read, so the caller can be told."""
+    allowed = REQUEST_FIELDS.get(phase, frozenset())
+    return sorted(str(key) for key in payload if key not in allowed)

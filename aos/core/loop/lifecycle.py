@@ -44,6 +44,12 @@ def _memory_view(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# A host-reported outcome maps onto the execution status the stages already
+# understand. Anything unmapped stays "delegated", which finalize_stage treats
+# as a half-closed loop rather than a completed one.
+_DELEGATED_STATUS = {"success": "success", "failure": "failed", "partial": "partial"}
+
+
 def _run_preflight(
     *,
     task: str,
@@ -222,7 +228,14 @@ def _run_postflight(
     try:
         execution = execution if execution is not None else dict(state.stage_data("execute"))
         if not execution:
-            execution = {"status": "success", "response_text": "", "delegated": False}
+            # The host ran the task, so its reported outcome is the only
+            # verdict that exists. Reporting none must not read as a success —
+            # that default is what made every delegated loop look like a win.
+            execution = {
+                "status": _DELEGATED_STATUS.get(outcome, "delegated"),
+                "response_text": "",
+                "delegated": True,
+            }
         plan = state.stage_data("plan")
 
         state.begin("evidence")

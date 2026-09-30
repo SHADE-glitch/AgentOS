@@ -81,19 +81,36 @@ only the declared additions — so a key cannot be dropped, and one cannot be
 added quietly either.
 
 A request may declare `1.0` or `1.1` and the response is echoed in the version
-it declared; anything else is answered in the engine's own. 1.1 is additions
-only, which is what lets a host still pinned to 1.0 keep passing its own check
-while reading nothing new.
+it declared. A declaration the engine does not speak is **rejected** at the CLI
+(exit `3`, a fallback document) rather than quietly answered in the engine's own
+version — replying 1.1 to a host that believes it negotiated 1.2 is a worse trap
+than saying no. 1.1 is additions only, which is what lets a host still pinned to
+1.0 keep passing its own check while reading nothing new.
 
-**Request payload** (both phases share it; fields optional unless noted):
+**Request payload** — `preflight` requires `task`:
 
 ```json
-{ "schema_version": "1.0|1.1", "phase": "preflight|postflight",
-  "task": "(preflight, required)", "task_id": "(postflight, required)",
-  "loop_id": "(postflight, required)", "session_id": "", "cwd": "",
+{ "schema_version": "1.0|1.1", "phase": "preflight",
+  "task": "(required)", "task_id": "", "session_id": "", "cwd": "",
   "memory_mode": "enabled|disabled|fallback",
   "provider": "opencode|host_delegate|test_provider", "model": "" }
 ```
+
+**`postflight` request** requires `task_id` and `loop_id`, and is where the host
+reports what actually happened — this is the learning signal, and it is dropped
+at the CLI boundary at the engine's peril:
+
+```json
+{ "schema_version": "1.1", "phase": "postflight",
+  "task_id": "(required)", "loop_id": "(required)", "session_id": "", "cwd": "",
+  "outcome": "success|failure|partial", "quality_score": 4.5,
+  "test_command": "", "test_stdout": "", "test_stderr": "", "test_exit_code": 0,
+  "compile_command": "", "expected_files": ["src/app.py"], "validate": true }
+```
+
+`outcome` is optional but consequential: with no outcome reported the loop is
+recorded `partial`, never `success`. Any field the engine does not read comes
+back named in `warnings` instead of being ignored in silence.
 
 **preflight response** carries `aos_status`, the generated `task_id` / `loop_id`
 / `session_id`, `classification`, `router` (`lead_skill` abstract,
@@ -104,8 +121,8 @@ while reading nothing new.
 `memory_ids` and `dropped`), `skill`, `warnings` and `artifacts`.
 
 **postflight response** carries `final_status`, `evidence_path` + `evidence`,
-`recovery`, `learning` (candidates / pending reviews / promoted), `replayed`
-and 1.1's `aos_error` (why a fail-open document was returned).
+`recovery`, `learning` (candidates / pending reviews / promoted), `replayed` and
+1.1's `aos_error` (why a fail-open document was returned) + `warnings`.
 
 `aos_status` is one of `ok | degraded | fallback`; `final_status` one of
 `completed | partial | failed`. A document the engine could not produce reports

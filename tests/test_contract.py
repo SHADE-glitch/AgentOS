@@ -90,7 +90,7 @@ FROZEN_1_0_POSTFLIGHT = frozenset(
 
 # What 1.1 adds on top. Nothing may be removed, so this is a growth list only.
 EXTRA_1_1_PREFLIGHT: frozenset[str] = frozenset()
-EXTRA_1_1_POSTFLIGHT = frozenset({"aos_error"})
+EXTRA_1_1_POSTFLIGHT = frozenset({"aos_error", "warnings"})
 
 
 def _has_path(doc: dict, dotted: str) -> bool:

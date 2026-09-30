@@ -15,9 +15,18 @@ from typing import Any
 
 from aos import __version__
 from aos.config import ConfigError, get_paths
-from aos.contract import CONTRACT_VERSION, ValidationError, fallback_postflight, fallback_preflight, validate_postflight, validate_preflight
+from aos.contract import (
+    CONTRACT_VERSION,
+    fallback_postflight,
+    fallback_preflight,
+    unread_request_fields,
+    validate_postflight,
+    validate_preflight,
+    validate_request,
+)
 
 NOT_IMPLEMENTED = 2
+BAD_REQUEST = 3
 
 
 # ── Helpers ────────────────────────────────────────────────────────────
@@ -36,6 +45,22 @@ def _read_payload(args: argparse.Namespace) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise SystemExit("error: payload must be a JSON object")
     return data
+
+
+def _rejected(doc: dict[str, Any], errors: list[str]) -> dict[str, Any]:
+    """Attach request errors to a fallback document before it goes out."""
+    doc["warnings"] = list(doc.get("warnings", [])) + errors
+    return doc
+
+
+def _note_unread(doc: dict[str, Any], payload: dict[str, Any], *, phase: str) -> dict[str, Any]:
+    """Tell the caller which fields were ignored instead of dropping them."""
+    unread = unread_request_fields(payload, phase=phase)
+    if unread:
+        doc["warnings"] = list(doc.get("warnings", [])) + [
+            f"ignored unknown request field: {key}" for key in unread
+        ]
+    return doc
 
 
 def _load_lifecycle():
@@ -78,12 +103,33 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 def cmd_preflight(args: argparse.Namespace) -> int:
     payload = _read_payload(args)
     declared = payload.get("schema_version", "")
+    errors = validate_request(payload, phase="preflight")
+    if errors:
+        doc = _rejected(
+            fallback_preflight(
+                "invalid preflight request",
+                task_id=str(payload.get("task_id") or ""),
+                session_id=str(payload.get("session_id") or ""),
+                schema_version=declared,
+            ),
+            errors,
+        )
+        validate_preflight(doc)
+        _emit(doc)
+        return BAD_REQUEST
+
     lifecycle = _load_lifecycle()
     if lifecycle is None:
-        doc = fallback_preflight("core lifecycle not yet ported", task_id=payload.get("task_id", ""), session_id=payload.get("session_id", ""), schema_version=declared)
+        doc = fallback_preflight(
+            "core lifecycle not yet ported",
+            task_id=payload.get("task_id", ""),
+            session_id=payload.get("session_id", ""),
+            schema_version=declared,
+        )
     else:
         doc = lifecycle.preflight(
             task=payload.get("task", ""),
+            task_id=payload.get("task_id", ""),
             session_id=payload.get("session_id", ""),
             cwd=payload.get("cwd", ""),
             memory_mode=payload.get("memory_mode", "enabled"),
@@ -91,7 +137,7 @@ def cmd_preflight(args: argparse.Namespace) -> int:
             model=payload.get("model", ""),
             schema_version=declared,
         )
-    validate_preflight(doc)
+    validate_preflight(_note_unread(doc, payload, phase="preflight"))
     _emit(doc)
     return 0
 
@@ -99,18 +145,52 @@ def cmd_preflight(args: argparse.Namespace) -> int:
 def cmd_postflight(args: argparse.Namespace) -> int:
     payload = _read_payload(args)
     declared = payload.get("schema_version", "")
+    errors = validate_request(payload, phase="postflight")
+    if errors:
+        doc = _rejected(
+            fallback_postflight(
+                "invalid postflight request",
+                task_id=str(payload.get("task_id") or ""),
+                loop_id=str(payload.get("loop_id") or ""),
+                session_id=str(payload.get("session_id") or ""),
+                schema_version=declared,
+            ),
+            errors,
+        )
+        validate_postflight(doc)
+        _emit(doc)
+        return BAD_REQUEST
+
     lifecycle = _load_lifecycle()
     if lifecycle is None:
-        doc = fallback_postflight("core lifecycle not yet ported", task_id=payload.get("task_id", ""), loop_id=payload.get("loop_id", ""), session_id=payload.get("session_id", ""), schema_version=declared)
+        doc = fallback_postflight(
+            "core lifecycle not yet ported",
+            task_id=payload.get("task_id", ""),
+            loop_id=payload.get("loop_id", ""),
+            session_id=payload.get("session_id", ""),
+            schema_version=declared,
+        )
     else:
+        # Every field the lifecycle can act on is forwarded. This list is the
+        # learning signal's only path into the engine; dropping from it is what
+        # made every host-delegated run record itself as a success.
         doc = lifecycle.postflight(
             task_id=payload.get("task_id", ""),
             loop_id=payload.get("loop_id", ""),
             session_id=payload.get("session_id", ""),
             cwd=payload.get("cwd", ""),
+            outcome=payload.get("outcome", ""),
+            quality_score=payload.get("quality_score"),
+            test_command=payload.get("test_command", ""),
+            test_stdout=payload.get("test_stdout", ""),
+            test_stderr=payload.get("test_stderr", ""),
+            test_exit_code=payload.get("test_exit_code"),
+            compile_command=payload.get("compile_command", ""),
+            expected_files=payload.get("expected_files"),
+            validate=bool(payload.get("validate", True)),
             schema_version=declared,
         )
-    validate_postflight(doc)
+    validate_postflight(_note_unread(doc, payload, phase="postflight"))
     _emit(doc)
     return 0
 
