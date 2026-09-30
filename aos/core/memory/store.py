@@ -395,6 +395,36 @@ class MemoryStore:
             grouped.setdefault(row["memory_id"], []).append(row)
         return grouped
 
+    def backfill_watermark(self, key: str) -> dict[str, Any]:
+        """The read watermark for one source (see ``aos.backfill``)."""
+        row = self._conn.execute(
+            "SELECT watermark_time, watermark_id, sessions_seen FROM backfill_state WHERE key = ?",
+            (key,),
+        ).fetchone()
+        if row is None:
+            return {"watermark_time": 0, "watermark_id": "", "sessions_seen": 0}
+        return {
+            "watermark_time": int(row["watermark_time"]),
+            "watermark_id": row["watermark_id"],
+            "sessions_seen": int(row["sessions_seen"]),
+        }
+
+    def set_backfill_watermark(self, key: str, *, watermark_time: int, watermark_id: str, sessions_seen: int) -> None:
+        """Advance the watermark. Idempotent, so a crashed run cannot lose ground."""
+        self._conn.execute(
+            """
+            INSERT INTO backfill_state (key, watermark_time, watermark_id, sessions_seen, updated_at)
+            VALUES (?,?,?,?,?)
+            ON CONFLICT(key) DO UPDATE SET
+                watermark_time = excluded.watermark_time,
+                watermark_id = excluded.watermark_id,
+                sessions_seen = excluded.sessions_seen,
+                updated_at = excluded.updated_at
+            """,
+            (key, int(watermark_time), watermark_id, int(sessions_seen), _now()),
+        )
+        self._conn.commit()
+
     def memories_retrieved_in_loop(self, loop_id: str) -> list[str]:
         """Which memories a run had in the room, from the retrieval log.
 
@@ -517,6 +547,7 @@ class MemoryStore:
         needs_review: bool = False,
         synthesised: bool = False,
         skill_used: str = "",
+        source: str = "hot",
     ) -> int:
         """Record what happened on one loop.
 
@@ -528,8 +559,8 @@ class MemoryStore:
             """
             INSERT INTO observations
                 (memory_id, loop_id, task_id, session_id, outcome, quality_score, source_hash,
-                 confidence, signals_json, needs_review, synthesised, skill_used, created_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 confidence, signals_json, needs_review, synthesised, skill_used, source, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 memory_id,
@@ -544,6 +575,7 @@ class MemoryStore:
                 1 if needs_review else 0,
                 1 if synthesised else 0,
                 skill_used,
+                source,
                 _now(),
             ),
         )
@@ -576,16 +608,57 @@ class MemoryStore:
 
         Only the loop-level row (``memory_id IS NULL``) counts: that is the one
         written once per run, while per-memory rows inherit its verdict and would
-        otherwise multiply the queue.
+        otherwise multiply the queue. ``source='backfill'`` rows are excluded
+        outright — history read out of someone else's database is not a run a
+        human can be asked to judge, and admitting it would flood the queue with
+        sessions nobody was present for.
         """
         rows = self._conn.execute(
             """
             SELECT * FROM observations
-            WHERE needs_review = 1 AND memory_id IS NULL
+            WHERE needs_review = 1 AND memory_id IS NULL AND source <> 'backfill'
             ORDER BY observation_id
             """
         ).fetchall()
         return [self._row_to_observation(r) for r in rows]
+
+    def observation_counts_by_source(self) -> dict[str, int]:
+        """How many observations each kind of run wrote.
+
+        ``hot`` rows are runs the loop itself was present for; ``backfill`` rows
+        are history read out of another tool's database. The two look identical
+        in a total count and mean opposite things, so any figure that decides
+        whether the loop is working has to be split by source.
+        """
+        rows = self._conn.execute(
+            "SELECT source, COUNT(*) AS n FROM observations GROUP BY source"
+        ).fetchall()
+        return {str(row["source"]): int(row["n"]) for row in rows}
+
+    def find_observation_by_loop(self, loop_id: str) -> Optional[dict[str, Any]]:
+        """The loop-level row for one loop, if a backfill already wrote one."""
+        row = self._conn.execute(
+            "SELECT * FROM observations WHERE loop_id = ? AND memory_id IS NULL "
+            "ORDER BY observation_id LIMIT 1",
+            (loop_id,),
+        ).fetchone()
+        return self._row_to_observation(row) if row else None
+
+    def update_observation_fingerprint(
+        self, observation_id: int, *, signals: dict[str, Any], source_hash: str
+    ) -> None:
+        """Refresh the counts behind an observation without touching its verdict.
+
+        A historical session keeps growing after we have read it, so its evidence
+        changes while nobody observed the change. Updating the snapshot rather than
+        appending a row keeps "one run, one observation" true — otherwise the table
+        grows with each pass and looks like activity.
+        """
+        self._conn.execute(
+            "UPDATE observations SET signals_json = ?, source_hash = ? WHERE observation_id = ?",
+            (json.dumps(signals or {}, ensure_ascii=False), source_hash, int(observation_id)),
+        )
+        self._conn.commit()
 
     def set_observation_outcome(self, observation_id: int, *, outcome: str,
                                 quality_score: float, confidence: float = 1.0,

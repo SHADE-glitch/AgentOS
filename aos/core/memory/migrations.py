@@ -501,10 +501,37 @@ def _rebuild_table(
         )
 
 
+def _v5_backfill_source(conn: sqlite3.Connection) -> None:
+    """Where an observation came from, and how far the read-only backfill has read.
+
+    Purely additive, so no rebuild and no backup: a new column on an empty table
+    and a new table. The column exists because the two kinds of run must never be
+    confused for each other — a backfilled opencode session is history we read,
+    not a run the loop observed and could attribute, and anything that counts
+    "real runs" (the stop criterion in docs/decision/positioning.md §6) has to be
+    able to tell them apart without parsing a loop id.
+    """
+    conn.executescript(
+        """
+        ALTER TABLE observations ADD COLUMN source TEXT NOT NULL DEFAULT 'hot';
+        CREATE INDEX IF NOT EXISTS idx_obs_source ON observations(source);
+
+        CREATE TABLE IF NOT EXISTS backfill_state (
+            key             TEXT PRIMARY KEY,
+            watermark_time  INTEGER NOT NULL DEFAULT 0,
+            watermark_id    TEXT NOT NULL DEFAULT '',
+            sessions_seen   INTEGER NOT NULL DEFAULT 0,
+            updated_at      TEXT NOT NULL DEFAULT ''
+        );
+        """
+    )
+
+
 MIGRATIONS: tuple[Migration, ...] = (
     Migration(2, "memory_lifecycle", _v2_memory_lifecycle, destructive=True),
     Migration(3, "learning_signals", _v3_learning_signals),
     Migration(4, "review_loop_link", _v4_review_loop),
+    Migration(5, "backfill_source", _v5_backfill_source),
 )
 
 # Kept for display and for callers that want the ceiling without a call;

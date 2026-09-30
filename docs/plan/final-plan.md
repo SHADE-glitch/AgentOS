@@ -13,8 +13,10 @@
 `真实运行 → 合成结论 → 人门 → 晋升/降级 → 下次召回改变行为`；其余全部复用。 `[Judgment]`
 
 **四条停止/降级判据**（原文 `positioning.md §6`，此处只重列编号，执行时每 Phase 末检查一次）：
-1. 通电后 4 周内真实 observations（`source∈{hot,backfill}`）**< 30 条** ⇒ 停止新功能，仓库降级为
+1. 通电后 4 周内真实 observations（**只数 `source='hot'`**）< 30 条 ⇒ 停止新功能，仓库降级为
    `outcome.py` + 契约层 + `migrations.py` 三个可独立存活件 + 文档。
+   （P7 修正：原文写 `source∈{hot,backfill}`，但一次回读就产出 174 条 `[Verified]`，按字面已被伪满足 ——
+   回读是"读来的历史"，不是"这套层通电后收到过运行"的证据。`doctor --json` 按来源分项计数正是为了让人数得对。）
 2. `review` 队列周均待标注 > 50，或连续两周标注数 = 0 ⇒ 主路径改成"回读 + 退出码"，人门只处理 `conflict/create`。
 3. 任何能力若必须写 `~/.config/opencode/**`、或必须编辑他人写入的 `output.system` 元素才生效 ⇒ **直接放弃**，
    优先级高于 1 与 2。
@@ -197,6 +199,17 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
 —— 摘要类信号在本机大面积缺失（`summary_files>0` 仅 1/199）`[Verified]`，所以**回读不产出 verdict**，
 只产出 linkage 与工具错误，仍需人标注或退出码来定结论。
 - 验收：`observations` 出现 `source='backfill'` ≥30 条 ⇒ 此时才允许评估判据 1。
+  **P7 执行时的纠正**：这条写反了 —— 回读条数达标并不"允许评估判据 1"，它使判据 1 **失去意义**，
+  因为 174 条读来的历史会把它 trivially 满足。验收改成看两条屏幕：回读落库但不进人门、不改召回；
+  判据 1 只数 `source='hot'`（见 §1 同一处修正）。
+- 白名单（P7 开工时本节未列，补在这里以说明改动面）：`aos/backfill.py`（新）、
+  `aos/core/memory/migrations.py`（v5，纯追加）、`aos/core/memory/store.py`（水位读写 + 按来源过滤/计数）、
+  `aos/cli/main.py`（`backfill plan|run` + `doctor --json` 的 observations 分项）、
+  `tests/test_backfill.py`（新）、`tests/test_migrations.py`。
+- 回滚点：单 commit revert。v5 是追加式 ⇒ 旧代码在同一库上仍可读写（`source` 有默认值 `hot`）。
+  **但**回滚后库里已有的 `source='backfill'` 行会被旧版当成待标注运行灌进人门，
+  所以回滚的正确顺序是先 `DELETE FROM observations WHERE source='backfill'`（或保持 `AOS_BACKFILL_DB` 不设，
+  它本来就是默认）。
 
 **顺序论证**：P1 必须第一（只减不加，把后面每一步的改动面缩小）；P2/P3 是"让已写的生命周期真的生效"，
 先于任何新功能，否则新增的采集面接上的是一个不生效的下游；P4 让人门可被人类日常使用，先于 P6 通电
@@ -263,10 +276,13 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
   `schema_meta` 镜像交叉校验；破坏性步骤前 `Connection.backup()` 出 `.pre-v<k>.bak`。
 - **本计划 P1–P5 预判不需要任何迁移**（缺陷 A/B/C/L 都能在既有列上解决：`dedupe_key`/`scope`/`status`/
   `supersedes`/`revalidate_after` 已在 v2 建好，`retrieval_log` 列已齐）。若实施中需要，走 v5 且单独提交。
+  **实际**：P7 需要 v5（`observations.source` 列 + `backfill_state` 表，纯追加），它**没有单独成 commit**，
+  与 P7 其余改动同批 —— 记在这里作为偏离；分开提交会造出一个"schema 有、代码没有"的中间态。
+  开发库 `store/aos.db` 至今仍是 **v4**：P7 的屏幕全部写在临时库里，它会在第一次真实运行时自己升到 v5。
 - `R-002`（派生计数）的迁移前置：**先去重，才能建唯一索引**。P3 的 `uq_mem_dedupe` 生效前，
   库里若已有同事实不同 id 的条目必须先合并或让人裁决 —— 现在只有 13 条种子，人工核一遍即可，这是顺序上把 P3 放在通电之前的又一个理由。
 - 已知不可逆：v2 的 `memory_lifecycle` 是破坏性重建。**退回代码不等于退回数据库**；对外文档必须写明
-  （已写进 `agent-os-v2.md §12`）。
+  （已写进 `agent-os-v2.md §14`）。
 - 契约风险：P1 删 `skill.skills_loaded` 是破坏性变更。今日零已部署消费者 ⇒ 现在做；P6 之后不可做。
   其余 Phase 全 additive，`_TOP_LEVEL` 不动。
 - 隐私：P7 只读 `~/.local/share/opencode/opencode.db`（1.7GB，含私人对话）。规则：列白名单、
@@ -290,7 +306,8 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
 ## 10. 完成定义
 
 做到 P1–P5 后，"Agent OS 是什么"有了可演示的答案；做到 P6 后，它第一次接到真实运行；
-做到 P7 后，判据 1 才有资格被检验。**任何 Phase 结束时如果 §6 的三性 fixture 或 §1 的四条判据不通过，
+P7 只给它读到**历史**，判据 1 仍然要等 `source='hot'` 的运行长出来才有资格被检验
+（见 §1 的 P7 修正）。**任何 Phase 结束时如果 §6 的三性 fixture 或 §1 的四条判据不通过，
 该 Phase 不算完成**，即使测试全绿 —— 测试数不是成功标准，屏幕上那条链才是。
 
 ```bash
@@ -470,7 +487,7 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
   host 传了就用 host 的。这也是 P6 插件按 session 反查 loop 的前提。
 - 契约影响：postflight 的 `evidence` 视图新增 `preexisting_files` 与 `before_source`（additive，
   顶层字段集未动，`FROZEN_1_0` 测试仍绿）。
-- 守卫网三条，每条都做了**反向验证**（先让它红，再让它绿），红法记在架构文档 §12 表里：
+- 守卫网三条，每条都做了**反向验证**（先让它红，再让它绿），红法记在架构文档 §13 表里：
   `import requests` / `socket.create_connection(("example.com",80))` / 一个孤儿函数 /
   `skills_dir`+`AOS_SKILLS_DIR`+`subprocess.run(["opencode","run",…])`。
   两处刻意的设计取舍：守卫读 AST 不读文本（否则"解释为什么删掉某字段"的注释会把自己判红）；
@@ -517,3 +534,49 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
      `experimental.chat.messages.transform` —— P7 的"遥测→证据"若要做，也在引擎侧只读文件/命令，
      不给插件加第二块地盘。
 - 回滚：单提交 revert；插件留在仓库里不构成"已启用"，删除它也不需要 host 侧任何动作。
+
+### P7 · 真实数据：只读历史回读 — 已完成（**默认关**，本机未启用）
+
+- 测试：Python 382 → **396**（+14：`tests/test_backfill.py` 13 例 + `doctor` 的按来源分项 1 例），
+  JS 仍 13 例。schema v4 → **v5**（追加式：`observations.source` 列 + `backfill_state` 表 + 索引）。
+  迁移用例进 `tests/test_migrations.py`：断言 v5 纯追加、不改动既有行。
+- 屏幕（源库 = 真实 `~/.local/share/opencode/opencode.db` 1.7GB / 199 会话 / 61,790 part，
+  写入的是 `/tmp` 临时库；跑完源库与开发库 md5 逐字节相等 `[Verified]`）：
+  1. `aos backfill plan` ⇒ `sessions_total: 199, with_evidence: 174`，且**临时库里连 db 文件都没被创建**
+     （plan 零写入是屏幕证明的，不是断言声明的）。
+  2. `backfill run --apply` ⇒ `written: 174, skipped_without_evidence: 25`，
+     水位 `(1790762360092, ses_f0e43306dffehgI0IQwfd3K6Q2)`。
+  3. 紧接着第二次同一命令 ⇒ `sessions_seen: 0, written: 0` —— 增量走水位，不重读。
+  4. `doctor --json` ⇒ `observations: {"backfill": 174}`（**没有 total**）、`reviews.pending: 0`、
+     `candidates.open: 0`、`retrieval_log`/`memories` 均 0 —— 174 条历史没有灌满人门，也没有假装成记忆。
+  5. `AOS_BACKFILL_DB` 指向一个不存在的库 + `run --apply --reset` ⇒ `ok:false` 且**174 行仍在**：
+     "先开源、后清空"这条顺序是屏幕可见的，它才是 `--reset` 的唯一保护。
+  6. `AOS_BACKFILL_DB` 不设 ⇒ `{"enabled": false}` + exit 0 —— 默认关不是注释里的承诺。
+- 落库内容的形状（隐私边的可核对形式）：信号只有 8 个键
+  `agent, diff, files_changed, model, origin, project, todos_unfinished, tool_errors`；
+  174 行共 1,392 个值，**最长 41 字符**（一个项目名 `AI-Interview-Practice-and-Feedback-System`），
+  >60 字符者 0 个、含 `/` 者 0 个、含中文正文标记者 0 个。每行 `outcome='partial'`、`needs_review=1`、
+  `memory_id IS NULL`、`source='backfill'`。其中 56 个会话带工具错误、27 个有 patch 证据 —— 这就是
+  计划里预判的"可反推证据只有 error/patch/todo 状态"，实测吻合 `[Verified]`。
+- 实施中被测出来（且都进了测试）的真实缺陷：
+  1. **`session.model` 是 JSON 对象**（`{id, providerID, variant}`），原样搬运等于把别人的完整模型配置
+     抄进我们的库。改成 `COALESCE(json_extract(model,'$.id'), model)`，并在 `plan` 的 probe 里报告该
+     表达式是否可用（json1 缺席时降解而不是失败）。
+  2. **同一毫秒内的兄弟行会被单时间戳游标静默跳过** ⇒ 水位改成 `(time_updated, id)` 复合比较；
+     `test_sessions_sharing_a_timestamp_are_not_skipped` 钉住它。
+  3. **一个畸形 part JSON 会让整条 SELECT 崩掉**（解析发生在 Python 侧）⇒ 按会话隔离解析并计
+     `parts_unreadable`，坏数据降解为"未知"，不降解为"干净"。
+  4. **`Path("")` 等于 `PosixPath(".")`** ⇒ "没配置源"看起来像"源文件不存在"，报错文案因此是假的。
+     改成 `Optional[Path]`，未设置为 `None`。
+  5. **回读一次就伪满足判据 1**（174 ≥ 30）。这是判据的缺陷不是代码的缺陷，登记为架构文档缺陷 P，
+     修法是计数按来源分开 + 判据只数 `source='hot'`（§1 与 §4 已就地改正并注明）。
+- **偏离与诚实边界**：
+  1. 白名单本节原本没写，实际改动面见上（`backfill.py`/`migrations.py`/`store.py`/`cli/main.py`/两个测试文件）；
+     其中 `store.py` 与 `cli/main.py` 是为水位与计数通电的最小改动面，没有新能力。
+  2. v5 没有按计划"单独提交"，随本 Phase 同批提交（理由记在 §8）。
+  3. **开发库没有被回读**：`store/aos.db` 仍是 v4 / 13 条种子 / 其余表全空。回读是**可选**的入口，
+     要不要开、开在哪个库上是用户的决定，不是本仓库的默认状态。`AOS_BACKFILL_DB` 未设 ⇒ 这条通路完全不存在。
+  4. 源库结构仍是 `[Unconfirmed]` 意义上的"外部契约"：它没有版本号，opencode 一次升级就可能让
+     `part.state.status` 换层级（okdk 犯过的错）。这里的对策是 probe + 降解，**不是**跟进适配。
+- 回滚：单提交 revert。v5 纯追加 ⇒ 旧代码在同库上照跑；唯一残留是 `source='backfill'` 的行会被旧版当成
+  待标注运行灌进人门，所以回滚顺序是先删这些行（或保持默认：不设 `AOS_BACKFILL_DB`）。

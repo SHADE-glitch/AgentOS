@@ -1,7 +1,7 @@
 # Agent OS 架构：现状与边界
 
-对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新，当前反映到 **P5**：
-v4 schema / **370 tests**（其中 14 条是仓库级守卫）/ `aos/` 约 11,400 行 Python（§3）。
+对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新，当前反映到 **P7**：
+v5 schema / **396 tests**（另有 13 例 JS；其中 12 条是仓库级守卫）/ `aos/` 12,232 行 Python（§3）。
 P1 收缩：编排、`opencode` provider、两个零写入者的 review kind、`skills_dir`/`knowledge_dir`、
 两个假字段与 `skill.skills_loaded` 已删除，契约推到 **1.2**。
 P2 生效化：召回尊重 status/scope，linkage 与 outcome 分表派生。
@@ -9,6 +9,8 @@ P3 判重：提案身份确定、`dedupe_key` 有生成者、灰区走冲突评�
 P4 人门可用：标注即刻结算、`doctor --json`、`memory refresh`、阈值从文件可调。
 P5 时序与守卫：before 快照上移到 preflight、失败的 stage 保持失败、注入边界被清洗、
 三个仓库级守卫测试上线（零依赖、可达性、Skill 边界）。
+P6 通电：`pending` 反查有了写入者与读取者，插件骨架在仓库里（**未安装**）。
+P7 只读回读：`aos/backfill.py` + v5 水位，默认关，源库只读且永不落正文（§10）。
 下文是这些之后的事实状态。
 标签：`[Verified]` 带 `path:line` 或可复现命令；`[Inferred]`；`[Judgment]`；`[Unconfirmed]`。
 
@@ -34,7 +36,7 @@ P5 时序与守卫：before 快照上移到 preflight、失败的 stage 保持�
 |---|---|---|
 | **disable-clean** | 拔掉 Agent OS 插件后，其他插件的 `output.system` 元素、MCP 调用、skill 加载逐字节不变；Agent OS 不产生任何别人依赖的共享状态 | `[Verified]` 当前零写入 `~/.config/opencode/**`，插件尚不存在 ⇒ 性质自动成立；插件落地后必须由 fixture 证明 |
 | **additive-only** | 启用时只**新增**一个自标识元素，永不编辑/删除他人元素，永不占 `output.system[0]` | `[Verified]` DCP 用 `systemPrompts[0]` 判内部调用而整轮跳过裁剪：`~/.cache/opencode/packages/@tarquinen/opencode-dcp@3.2.0/node_modules/@tarquinen/opencode-dcp/lib/hooks.ts:49-56,101-105`，且它 `append` 到 `[-1]` |
-| **reuse-not-rebuild** | 已有能力一律复用：会话检索交 opencode、skill 遥测交 skill-tracker、通用知识交 basic-memory、skill 生命周期交 UniM0cha/Hermes 家族 | `[Judgment]` 本文 §10 的"刻意不存在清单"就是这条的账目 |
+| **reuse-not-rebuild** | 已有能力一律复用：会话检索交 opencode、skill 遥测交 skill-tracker、通用知识交 basic-memory、skill 生命周期交 UniM0cha/Hermes 家族 | `[Judgment]` 本文 §11 的"刻意不存在清单"就是这条的账目 |
 
 用户定位句保留在项目记忆里，但架构上生效的是上面三行 —— 定位句是方向，三性是门槛。
 
@@ -80,29 +82,31 @@ Self-Evolution 的对象只有 memory / policy / routing knowledge / experience 
 ## 3. 组件（真实存在的东西 + 谁调用谁）
 
 ```
-bin/aos ──▶ aos/cli/main.py (914) ── 8 个命令组：doctor preflight postflight route run memory review
+bin/aos ──▶ aos/cli/main.py (995) ── 9 个命令组：doctor preflight postflight route run pending backfill memory review
                                         │
    aos/contract/{schema,preflight,postflight}.py (729)  ◀── stdin/stdout JSON, 1.0/1.1/1.2 版本谈判
                                         │
-                    aos/core/loop/lifecycle.py (462)
+                    aos/core/loop/lifecycle.py (503)
                                         │  10 stages
-                    aos/core/loop/stages.py (500) ──▶ routing/router.py (431)
+                    aos/core/loop/stages.py (578) ──▶ routing/router.py (431)
                                         │                    └─▶ routing/semantic_reader.py (1157)
                                         │                            单一调用点 router.py:324
-                                        ├─▶ memory/retrieve.py (423) ─▶ store.py (953) ─▶ store/aos.db (v4)
+                                        ├─▶ memory/retrieve.py (423) ─▶ store.py (1026) ─▶ store/aos.db (v5)
                                         ├─▶ memory/inject.py (233)   ◀── Memory 的唯一出口
                                         ├─▶ core/outcome.py (320)    ◀── 信号→结论的合成，纯函数
                                         ├─▶ memory/record.py (283) ─▶ candidates
                                         ├─▶ memory/evolve.py (1276) ─▶ learning_reviews（人门）+ 晋升效果
-                                        └─▶ learning/{identity,dedupe}.py (242) ◀── 提案身份与三层判重
+                                        ├─▶ learning/{identity,dedupe}.py (240) ◀── 提案身份与三层判重
+                                        └─▶ backfill.py (458)        ◀── 唯一读别人数据库的入口（默认关）
      aos/core/evidence/{collector,provenance,recovery}.py (568)   aos/core/validation/* (633)
      aos/adapters/{base,host_delegate,test_provider}.py (258)
 ```
 
-维护面积 `[Verified]`：`aos/` 现 **11,314 行** Python。变化轨迹：P1 收缩到 10,265（删编排 793 + `team.py` 64 +
+维护面积 `[Verified]`：`aos/` 现 **12,232 行** Python。变化轨迹：P1 收缩到 10,265（删编排 793 + `team.py` 64 +
 `opencode.py` 90 + 其测试 286），P2 起回到 10,265→11,073（新增 `learning/` 242 行），
 P4 的 241 行是命令面（`doctor --json`、`memory refresh`、批量标注、按 status 渲染）——
-它们不新增能力面，是把已有的能力接到人能敲到的地方。
+它们不新增能力面，是把已有的能力接到人能敲到的地方。P7 的 458 行**是**新能力面，
+但它新增的只有"读"，且默认关闭。
 
 **删除时的连带依赖（已按 P1 计划处理，记在这里是因为它是这种删除的真实成本）**：
 `aos/config.py` 的 `reset_caches()` 原先 import 并 `orchestrator.reload()`；
@@ -123,14 +127,19 @@ CLI/host 输入
         → 低置信/负向/create ⇒ learning_reviews(kind=promotion|outcome_label) pending
   └─ aos review list / label --outcome / approve|reject --as <who>
         └─ decide_promotion(效果作为数据) → apply_effect(CAS；基线漂移⇒stale)
+  └─ aos backfill run --apply（需 AOS_BACKFILL_DB；§10）
+        └─ 只读源库 → observations(source='backfill', outcome='partial', needs_review=1)
+           ⇒ 既不进人门也不改召回，它只让"这个项目以前跑过什么"变成可查询的事实
   └─ 下次 preflight 的召回因此改变           ◀── 环在代码里闭合，有测试与实演屏幕
 ```
 
-**断点在入口，不在中段** `[Verified]`：`store/aos.db` 实测 memories=13、
-observations=candidates=learning_reviews=retrieval_log=telemetry_events=**0** ——
+**断点在入口，不在中段** `[Verified]`：`store/aos.db`（本机开发库，schema 仍 v4，等一次真实运行才迁移）实测
+memories=13、observations=candidates=learning_reviews=retrieval_log=telemetry_events=**0** ——
 13 条是我手写的种子，也就是说这条链从未吃过一次真实运行。
 本机 opencode 侧则有 199 个会话、61,790 个 part、16,374 次工具调用（其中 `state.status='error'` 235 条）。
-⇒ 通电是 final-plan 的第一优先（P5 插件最小骨架 / P6 只读历史回读，二选一即可）。
+⇒ 通电的两个入口都已落地：P6 插件（在仓库里、**未安装**）与 P7 只读回读（默认关）。
+两者都需要一次人的一侧动作才生效 —— 装载需要单独批准，回读需要有人设置 `AOS_BACKFILL_DB`。
+**所以"断点在入口"这一条今天仍然成立**，只是它现在是一个决定而不是一个缺陷。
 
 ---
 
@@ -227,11 +236,12 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 - **记忆侧**：weaken 降一档证据 + 降置信 + `decay_factor *= 0.8`（下限 0.5），到底或已 deprecated ⇒ `status` 改 `deprecated`；
   reinforce 升档受 `STRONG_EVIDENCE` 阈与人门约束。
 - **可解释迁移**：`migrations.py` 的 `PRAGMA user_version` 为权威、`schema_meta` 镜像交叉校验、
-  `MIGRATIONS` **append-only**（v2 破坏性步骤先 `Connection.backup()`）。现有 v2/v3/v4 三步。
+  `MIGRATIONS` **append-only**（v2 破坏性步骤先 `Connection.backup()`）。现有 v2/v3/v4/v5 四步，v5 是纯追加
+  （`observations.source` 列 + `backfill_state` 表），不碰任何既有行。
 
 不存在且已裁决**不做**的：`policy_versions`、`skill_versions`、`aos/core/sensing/`、
 `aos/core/evolution/`。
-`aos/core/learning/` **已建且只装新逻辑**（`identity.py` 78 行、`dedupe.py` 164 行）——
+`aos/core/learning/` **已建且只装新逻辑**（`identity.py` 76 行、`dedupe.py` 164 行）——
 按裁决 `memory/evolve.py` 没有搬家。
 
 **六个策略文件已落地，阈值可不调代码就改** `[Verified]`：`content/policies/{retrieval,decay,promotion,rejection,injection,outcome}.json`
@@ -326,7 +336,38 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 
 ---
 
-## 10. 刻意不存在的东西（含理由与删除时点）
+## 10. 只读历史回读（默认关，P7）
+
+`aos/backfill.py` + `aos backfill plan|run` 是全仓唯一会去看**别人写的数据库**的代码，
+所以它的形状全部由"不能伤人"决定 `[Verified]`（真实源库 = 199 会话 / 61,790 parts，全程只读）：
+
+| 约束 | 实现 | 屏幕（真实数据） |
+|---|---|---|
+| 默认不跑 | 只有 `AOS_BACKFILL_DB` 指向一个存在的库才动；不猜路径 | 未设置 ⇒ `{"enabled": false, "reason": "AOS_BACKFILL_DB is not set; nothing is read"}`，exit 0 |
+| 只读 | `file:<db>?mode=ro` + `uri=True`；**不用 `immutable=1`**，源库有活跃 WAL | 跑完后源库 md5 与跑前逐字节相等 |
+| 先看源，后清空 | `--reset` 在源库打开失败时必须什么都不删 | `AOS_BACKFILL_DB=…/moved-away.db … run --apply --reset` ⇒ `ok:false` + 174 行仍在 |
+| 列白名单 | session 的 `id/project_id/directory/time_updated/agent/model`、part 的 `$.type` 与 `$.state.status`、todo 的 `status` | 落库信号只有 8 个键：`agent, diff, files_changed, model, origin, project, todos_unfinished, tool_errors` |
+| 不落正文 | 标题、slug、part 文本、tool 的 input/output/error、todo 内容**不在白名单**，不是"暂时跳过" | 1,392 个信号值里最长 41 字符（项目名），>60 字符者 0 个，含 `/` 者 0 个 |
+| 不下结论 | 每条回读都是 `outcome='partial'`、`needs_review=1`、`memory_id=NULL`、`source='backfill'` | `learning_reviews: 0 / candidates: 0` —— 队列没有被 174 条历史灌满 |
+
+三个被数据本身教出来的细节（都进了测试）：
+
+1. **`session.model` 是 JSON 对象**，不是字符串。直接搬运等于把别人的完整模型配置抄进我们的库，
+   而且抄进来的是 `{id, providerID, variant}`。现在只取 `COALESCE(json_extract(model,'$.id'), model)`，
+   并在 `plan` 的 probe 里报告该表达式是否可用。
+2. **复合水位 `(time_updated, id)`**。同一毫秒内有多个会话与多个 part，单时间戳游标会静默跳过兄弟行；
+   `backfill_state` 表存 `(watermark_time, watermark_id, sessions_seen)`（v5，追加式迁移）。
+   全量后第二次 pass 实测 `sessions_seen: 0, written: 0`。
+3. **形状变化降解为"未知"，不降解为"干净"**。part 的 JSON 解析失败按会话隔离并计入
+   `parts_unreadable`；源库没有 `todo` 表时 probe 报缺失而命令继续。缺席在这里仍然意味着缺席 ——
+   与 P6 插件"没看到的信号不写 0"是同一条规则的两半。
+
+**判据 1 的读法必须改**：回读一次就产出 174 条 `observations`，而它们不是"Agent OS 通电后收到的运行"。
+原文写作 `source∈{hot,backfill}`，按字面已被 trivially 满足 `[Verified]`。正确读法是**只数 `source='hot'`**；
+`doctor --json` 因此按来源分开计数（`{"observations": {"backfill": 174}}`，不含 total），
+`list_loops_needing_review()` 也排除 `source='backfill'`。回读给的是**上下文**，不是这套层存在与否的证据。
+
+## 11. 刻意不存在的东西（含理由与删除时点）
 
 | 不存在 | 为什么 | 何时开始不存在 |
 |---|---|---|
@@ -340,10 +381,9 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | 自建遥测采集（旧计划的 `aos skill report`） | 本机 skill-tracker 五表 + 单调状态修正更强，AOS 只读（张力 4） | 从未存在（计划取消） |
 | `MemoryProvider` 抽象 / 与 basic-memory 的同步 | 张力 1；预留空壳仍属装饰物 | 从未存在 |
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
-| `content/policies/*.json` | 阈值调不动的唯一原因，排在 P4 | 尚未存在 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 11. 缺陷登记（A–N 已全部关闭；此节留作形状记录）
+## 12. 缺陷登记（A–P 已全部关闭；此节留作形状记录）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -366,15 +406,16 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | M | 已标注的 review 在 `review list` 里仍打印 `-> aos review label 1 --outcome …`，且 CLI 返回 `"status":"labelled"` 而库里写的是 `approved` | 实测 | **已修于 P4**（`已标注:` + 返回评审自身状态）|
 | N | `preflight` 可以返回 `aos_status=degraded` 而 `warnings` 为空 ⇒ 降级没有解释 | 实测：`degraded \| warnings: []` | **已修于 P4**：`routing fell back: domain_unrecognized` 等解释随行 |
 | O | `store/pending-postflight/` 由 `config.py` 声明、`ensure_store` 创建，但全仓零写入零读取 | 审计登记；P6 之后有写有读 | **已闭于 P6** |
+| P | `doctor` 与判据 1 的 observations 计数不区分来源 ⇒ 一次回读（174 条）就会把"通电后收到 ≥30 条真实运行"这条判据伪满足 | 屏幕：回读后 `{"backfill": 174}`，其中 `hot` 为 0；按 total 读就是 174 | **已闭于 P7**（`observation_counts_by_source()` + `doctor --json` 只给分项不给 total + 判据改数 `source='hot'`）|
 
-三条共性 `[Judgment]`：A–M 大部分属于"声明了但没人写"或"读了但不生效"，
+三条共性 `[Judgment]`：A–P 大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
 所以 final-plan P5 的三个仓库级守卫测试优先级高于新功能 —— 它们是这类失效的自动拦截网。
 排期编号 P1–P7 的定义在 `docs/plan/final-plan.md §4`；每个 Phase 的结果与偏离在 §11 的执行日志。
 
 ---
 
-## 12. 仓库级守卫（P5 上线的自动拦截网）
+## 13. 仓库级守卫（P5 上线的自动拦截网）
 
 三条，全部是"结构检查"而非"review 习惯"，因为它们拦的是本仓库与四个外部项目反复犯过的同一类病：
 
@@ -390,7 +431,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 
 ---
 
-## 13. 撤回契约
+## 14. 撤回契约
 
 任何时刻拔掉 Agent OS 的插件与 `bin/aos` 调用，opencode 必须回到"从未装过它"的状态：
 

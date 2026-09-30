@@ -62,6 +62,8 @@ path resolves from `AGENT_OS_ROOT` (defaulting to the repo itself).
 ./bin/aos run "add a /health endpoint" --cwd /path/to/project --provider test_provider
 ./bin/aos review list                  # what the gate is asking a person about
 ./bin/aos review sync                  # settle written candidates into the queue without another run
+./bin/aos backfill plan                # what a read-only source db would yield, writing nothing
+AOS_BACKFILL_DB=... ./bin/aos backfill run --apply   # off unless you name the source
 ```
 
 A fresh store holds nothing, and with nothing stored recall is empty, so no
@@ -72,6 +74,17 @@ is therefore step one, not a nicety.
 real provider and prints the postflight contract. Use `--provider test_provider`
 for a deterministic dry run, `--expect <substr>` to assert on output, and
 `--no-validate` to skip the post-execution build/test validation.
+
+`backfill` is the only code in the repository that looks at another tool's
+database, and it does nothing at all unless `AOS_BACKFILL_DB` names one. The
+source is opened `mode=ro` (never `immutable=1` — a live WAL exists), only
+structural columns and JSON paths are whitelisted, and nothing a person typed
+is ever copied: session titles, part text, tool input/output/error bodies and
+todo contents are outside the whitelist, not "skipped for now". What lands is
+counts and enums, tagged `source='backfill'` with `outcome='partial'` — read
+history, not a verdict. It does not enter the human review queue and it does not
+change recall; `doctor --json` counts `hot` and `backfill` separately so a
+backfill can never be mistaken for evidence that the loop is live.
 
 ### Host integration entry points
 
@@ -165,9 +178,10 @@ guards against any hardcoded absolute path creeping back into `aos/`.
 
 SQLite is the single source of truth. Tables: `memories`, `memory_tags`,
 `memory_roles`, `observations`, `candidates`, `learning_reviews`,
-`retrieval_log`, `telemetry_events`. The schema is versioned by
-`PRAGMA user_version`; `aos/core/memory/schema.sql` is the frozen v1 baseline and
-every change after it is a named migration (`aos memory migrate [--dry-run]`).
+`retrieval_log`, `telemetry_events`, `backfill_state`. The schema is versioned by
+`PRAGMA user_version` (currently v5); `aos/core/memory/schema.sql` is the frozen
+v1 baseline and every change after it is a named, append-only migration
+(`aos memory migrate [--dry-run]`).
 
 A memory has four separate axes, and collapsing any two of them is how a store
 becomes noise:
@@ -230,7 +244,7 @@ No multi-agent orchestration (removed: the routed decision never carried more
 than one domain, so the team path was structurally unreachable and its output
 had no consumer), no provider that drives opencode (`opencode run` is the host's
 job, not the brain's), no second skill system, no telemetry writer.
-See `docs/decision/positioning.md` and `docs/architecture/agent-os-v2.md` §10.
+See `docs/decision/positioning.md` and `docs/architecture/agent-os-v2.md` §11.
 
 ## Validation and evidence
 

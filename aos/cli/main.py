@@ -210,6 +210,11 @@ def _doctor_document(paths) -> dict:
                 by_kind[review["kind"]] = by_kind.get(review["kind"], 0) + 1
             document["reviews"] = {"pending": len(reviews), "by_kind": by_kind}
             document["candidates"] = {"open": len(store.list_open_candidates())}
+            # Split by source: a backfilled row is read history, not a run the
+            # loop observed, and a single total would let one masquerade as the
+            # other in the criterion that decides whether this layer earns its
+            # keep.
+            document["observations"] = store.observation_counts_by_source()
         finally:
             store.close()
     return document
@@ -588,6 +593,38 @@ _MEMORY_COMMANDS = {
 }
 
 
+def cmd_backfill(args: argparse.Namespace) -> int:
+    """The only way history enters the store, and it is closed by default.
+
+    Nothing is read unless `AOS_BACKFILL_DB` names a database. That is not
+    shyness: the source holds other people's conversations, so the whitelist in
+    `aos/backfill.py` decides what may be looked at, and this command refuses to
+    guess where the file is.
+    """
+    from aos import backfill
+
+    command = getattr(args, "backfill_command", None) or "plan"
+    try:
+        if command == "plan":
+            document = backfill.plan()
+        else:
+            document = backfill.run(
+                apply=bool(getattr(args, "apply", False)),
+                limit=int(getattr(args, "limit", 0) or 0),
+                reset=bool(getattr(args, "reset", False)),
+            )
+    except backfill.BackfillError as exc:
+        _emit({"ok": False, "reason": str(exc)})
+        return 1
+
+    _emit(document)
+    if not document.get("ok", True):
+        return 1
+    if command == "run" and document.get("applied") is False:
+        print("(dry run: pass --apply to write)", file=sys.stderr)
+    return 0
+
+
 def cmd_pending(args: argparse.Namespace) -> int:
     """Read-only view of the open loops. A host gets here with a sessionID alone,
     which is all opencode's idle event carries.
@@ -797,6 +834,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_pending.add_argument("--session", default="", help="look up one session instead of the summary")
     p_pending.add_argument("--json", action="store_true", help="emit JSON")
 
+    p_backfill = sub.add_parser(
+        "backfill",
+        help="read past runs out of another tool's database — off unless AOS_BACKFILL_DB is set",
+    )
+    backfill_sub = p_backfill.add_subparsers(dest="backfill_command")
+    backfill_sub.add_parser("plan", help="what would be read, writing nothing")
+    p_bf_run = backfill_sub.add_parser("run", help="read it, once, from the watermark")
+    p_bf_run.add_argument("--apply", action="store_true", help="write observations (default is a dry run)")
+    p_bf_run.add_argument("--limit", type=int, default=0, help="at most N sessions this pass")
+    p_bf_run.add_argument(
+        "--reset",
+        action="store_true",
+        help="drop our own backfill rows first — only ever after the source opened successfully",
+    )
+
     p_memory = sub.add_parser("memory", help="author and inspect the memory store")
     mem_sub = p_memory.add_subparsers(dest="memory_command")
 
@@ -927,6 +979,7 @@ def main(argv: list[str] | None = None) -> int:
         "postflight": cmd_postflight,
         "route": cmd_route,
         "run": cmd_run,
+        "backfill": cmd_backfill,
         "memory": cmd_memory,
         "pending": cmd_pending,
         "review": cmd_review,

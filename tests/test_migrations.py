@@ -513,9 +513,19 @@ def test_v3_is_additive_and_needs_no_backup(tmp_path):
     Path(destructive["backup"]).unlink()
 
     additive = migrate(conn, db_path=db)
-    assert additive["applied"] == ["v3 learning_signals", "v4 review_loop_link"]
+    assert additive["applied"] == [
+        "v3 learning_signals",
+        "v4 review_loop_link",
+        "v5 backfill_source",
+    ]
     assert additive["backup"] is None
     assert list(tmp_path.glob("*.bak")) == []
+    # v5 is the read-only backfill's own bookkeeping: a source marker on
+    # observations, and a watermark so a re-run reads only what it has not seen.
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(observations)")}
+    assert "source" in columns
+    tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert "backfill_state" in tables
 
 
 def test_v4_lets_a_review_belong_to_a_loop(tmp_path):
