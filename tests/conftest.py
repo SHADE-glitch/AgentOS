@@ -17,6 +17,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from aos.config import reset_caches  # noqa: E402  (needs the path hook above)
+
 
 @pytest.fixture(autouse=True)
 def hermetic_env(tmp_path, monkeypatch):
@@ -27,4 +29,6 @@ def hermetic_env(tmp_path, monkeypatch):
     monkeypatch.setenv("AOS_STORE_DIR", str(store))
     monkeypatch.setenv("AOS_DB_PATH", str(store / "aos.db"))
     monkeypatch.setenv("AOS_CONTENT_DIR", str(content))
+    reset_caches()
     yield
+    reset_caches()

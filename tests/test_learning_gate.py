@@ -168,7 +168,6 @@ def test_policy_threshold_is_read_from_file(store):
         report = run_learning(store=store)
     finally:
         (policies / "promotion.json").unlink()
-        policy_mod.reload()
 
     m2 = [r for r in report["results"] if r["memory_id"] == "M2"][0]
     assert m2["status"] == "rejected"

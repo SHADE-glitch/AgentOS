@@ -82,12 +82,9 @@ def test_content_layer_overrides_taxonomy():
         json.dumps({"map": {"bugfix": "my-fixer"}}), encoding="utf-8"
     )
     taxonomy.reload()
-    try:
-        assert taxonomy.resolve_role("bugfix") == "my-fixer"
-        # Unlisted ids still fall back to the built-in map.
-        assert taxonomy.resolve_role("security") == "security-engineer"
-    finally:
-        taxonomy.reload()
+    assert taxonomy.resolve_role("bugfix") == "my-fixer"
+    # Unlisted ids still fall back to the built-in map.
+    assert taxonomy.resolve_role("security") == "security-engineer"
 
 
 def test_router_reset_reloads_registry():

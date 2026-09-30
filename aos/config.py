@@ -110,6 +110,26 @@ def get_paths() -> Paths:
     )
 
 
+def reset_caches() -> None:
+    """Drop every content-layer cache.
+
+    Those modules resolve their paths through this file, so they are imported
+    here rather than at module scope. Called around every test, and available
+    to a long-lived host that swaps ``AOS_CONTENT_DIR`` mid-process.
+
+    ``routing.router`` and ``adapters.base`` are deliberately not reset: that
+    singleton loads package data, and the adapter registry holds built-in
+    providers — neither depends on the content directory.
+    """
+    from aos.core.memory import policy
+    from aos.core.orchestration import orchestrator
+    from aos.core.routing import taxonomy
+
+    policy.reload()
+    taxonomy.reload()
+    orchestrator.reload()
+
+
 def __getattr__(name: str) -> Paths:
     """Lazily expose ``aos.config.paths`` resolved from the current env."""
     if name == "paths":

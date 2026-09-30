@@ -28,7 +28,13 @@ _DEFAULT_MAP_PATH = _REGISTRY_DIR / "taxonomy-map.json"
 _DEFAULT_ROLES_PATH = _REGISTRY_DIR / "roles.json"
 
 
+@lru_cache(maxsize=64)
 def _read_json(path: Path) -> dict:
+    """Read a registry or content JSON file, memoised by its resolved path.
+
+    Every caller treats the result as read-only, so sharing one parsed object
+    per path is safe; a file rewritten in place needs :func:`reload`.
+    """
     try:
         with path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
@@ -37,12 +43,10 @@ def _read_json(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-@lru_cache(maxsize=None)
 def _content_map_path() -> Path:
     return get_paths().content_dir / "routing" / "taxonomy-map.json"
 
 
-@lru_cache(maxsize=None)
 def _content_roles_path() -> Path:
     return get_paths().content_dir / "routing" / "roles.json"
 
@@ -100,6 +104,5 @@ def known_roles() -> list[str]:
 
 
 def reload() -> None:
-    """Clear caches so a changed content override is picked up."""
-    _content_map_path.cache_clear()
-    _content_roles_path.cache_clear()
+    """Clear the parsed-JSON caches (needed when a file is rewritten in place)."""
+    _read_json.cache_clear()

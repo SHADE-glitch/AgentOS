@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from aos.config import get_paths
 from aos.core.loop import stages
 from aos.core.loop.state import LoopState
@@ -19,15 +17,6 @@ from aos.core.orchestration.collaboration import (
     stub_agent_executor,
 )
 from aos.core.routing import taxonomy
-
-
-@pytest.fixture(autouse=True)
-def _reload_rules():
-    orch.reload()
-    taxonomy.reload()
-    yield
-    orch.reload()
-    taxonomy.reload()
 
 
 def _team(**kwargs):
@@ -154,7 +143,6 @@ def test_rules_can_be_overridden_by_the_content_layer():
         assert orch.should_form_team(domains=["a", "b", "c"], difficulty="hard", intent="architecture") is False
     finally:
         (policies / "orchestration.json").unlink()
-        orch.reload()
 
 
 # ── collaboration ──────────────────────────────────────────────────────

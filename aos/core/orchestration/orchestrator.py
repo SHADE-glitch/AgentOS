@@ -59,9 +59,15 @@ def _content_rules_path() -> Path:
     return get_paths().policies_dir / "orchestration.json"
 
 
-@lru_cache(maxsize=None)
-def _cached_rules() -> dict[str, Any]:
-    return _merge(_read_rules_file(_RULES_PATH), _read_rules_file(_content_rules_path()))
+@lru_cache(maxsize=64)
+def _cached_rules(content_path: Path) -> dict[str, Any]:
+    """Merged rules, memoised by the content override path.
+
+    ``_RULES_PATH`` is package data and never moves, so the content path
+    alone identifies the effective rules. A file rewritten in place at the
+    same path still needs :func:`reload`.
+    """
+    return _merge(_read_rules_file(_RULES_PATH), _read_rules_file(content_path))
 
 
 def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -77,11 +83,11 @@ def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
 
 def load_rules() -> dict[str, Any]:
     """Return the effective orchestration rules (content overrides built-in)."""
-    return _cached_rules()
+    return _cached_rules(_content_rules_path())
 
 
 def reload() -> None:
-    """Clear the rule cache (used by tests)."""
+    """Clear the rule cache (needed when a rules file is rewritten in place)."""
     _cached_rules.cache_clear()
 
 

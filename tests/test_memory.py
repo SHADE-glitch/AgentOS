@@ -125,7 +125,6 @@ def test_retrieval_policy_override(store):
         assert retrieve(QUERY, store=store, log=False)["results"] == []
     finally:
         (policies / "retrieval.json").unlink()
-        policy_mod.reload()
 
 
 # ── decay ──────────────────────────────────────────────────────────────

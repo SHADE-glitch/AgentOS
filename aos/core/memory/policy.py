@@ -63,10 +63,16 @@ def _policy_path(name: str) -> Path:
     return get_paths().policies_dir / f"{name}.json"
 
 
-@lru_cache(maxsize=None)
-def _read_policy_file(name: str) -> dict[str, Any]:
+@lru_cache(maxsize=64)
+def _read_policy_file(path: Path) -> dict[str, Any]:
+    """Read one policy file, memoised by its resolved path.
+
+    Keying on the path rather than the policy name is what stops a changed
+    ``AOS_CONTENT_DIR`` from inheriting another root's thresholds. A file
+    rewritten in place at the same path still needs :func:`reload`.
+    """
     try:
-        with _policy_path(name).open("r", encoding="utf-8") as handle:
+        with path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, json.JSONDecodeError):
         return {}
@@ -76,7 +82,7 @@ def _read_policy_file(name: str) -> dict[str, Any]:
 def load_policy(name: str) -> dict[str, Any]:
     """Return the merged policy: built-in defaults overridden by the file."""
     merged = dict(DEFAULT_POLICIES.get(name, {}))
-    merged.update(_read_policy_file(name))
+    merged.update(_read_policy_file(_policy_path(name)))
     return merged
 
 
@@ -85,5 +91,5 @@ def policy_value(name: str, key: str, default: Any = None) -> Any:
 
 
 def reload() -> None:
-    """Clear cached policy files (used by tests)."""
+    """Clear cached policy files (needed when one is rewritten in place)."""
     _read_policy_file.cache_clear()
