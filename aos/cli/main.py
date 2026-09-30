@@ -176,7 +176,7 @@ def cmd_preflight(args: argparse.Namespace) -> int:
             session_id=payload.get("session_id", ""),
             cwd=payload.get("cwd", ""),
             memory_mode=payload.get("memory_mode", "enabled"),
-            provider=payload.get("provider", "opencode"),
+            provider=payload.get("provider", "host_delegate"),
             model=payload.get("model", ""),
             schema_version=declared,
         )
@@ -578,7 +578,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("task", help="task text")
     p_run.add_argument("--cwd", default="", help="working directory (default: current directory)")
     p_run.add_argument("--memory", choices=["on", "off"], default="on")
-    p_run.add_argument("--provider", default="opencode")
+    p_run.add_argument("--provider", default="host_delegate")
     p_run.add_argument("--model", default="")
     p_run.add_argument("--test-command", default="", help="test command to record as evidence")
     p_run.add_argument("--test-exit-code", type=int, default=None, help="test exit code (0 = pass)")

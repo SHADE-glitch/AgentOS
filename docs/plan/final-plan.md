@@ -304,3 +304,36 @@ README §Multi-agent orchestration 与目录树同步删（删完 grep 名字，
 ./bin/aos review approve K --as shade                # 批准 weaken
 ./bin/aos preflight  --payload '{"task":"…"}'        # 该条**不再出现** ← 今天的仓库做不到这一步
 ```
+
+---
+
+## 11. Phase 执行日志
+
+每 Phase 完成后在此追加：结果计数、验收屏幕是否达成、**偏离白名单/计划之处**。
+这份日志是计划的一部分，不是额外文档 —— 它存在的理由是本仓库已经有过
+"提交信息与实现不符"和"计划预测没兑现但没人记账"的前科（`docs/audit/current-state.md §6`）。
+
+### P1 · 收缩 — 已完成
+
+- 测试：339 → **313**（删 `tests/test_orchestration.py` 的 27 个用例，加 1 个守卫测试；
+  逐项可解释，且逐文件计数之和与全量运行相等）。
+- 面积：`aos/` 11,250 → **10,265** 行 Python。
+- 契约：`CONTRACT_VERSION` **1.1 → 1.2**，`SUPPORTED_VERSIONS` = `("1.0","1.1","1.2")`。
+  兼容性论证（写进 `schema.py:13-19` 的注释）：被删的 `skill.skills_loaded` 唯一取值一直是 `[]`，
+  所以没有任何 host 能观察到行为差异；版本仍然要动，因为文档形状动了，
+  而且这样"想把键要回来"的 host 有一个版本号可指。
+- 行为对拍：同一 payload 在 P1 前后跑 `preflight`，`aos_status / lead_skill / lead_role / warnings / retrieved`
+  逐项相同 ⇒ 删除没有改变外部行为（这是"只减不加"的验收形式）。
+- 验收屏幕：`grep -rn "orchestration|plan_executor|team_id|task_cards|OpenCodeProvider|skills_loaded|skills_dir|knowledge_dir" aos tests`
+  ⇒ 只剩三处**刻意保留的说明性文字**（`schema.py` 的版本注释、两个具名守卫的 docstring）。
+- 缺陷 H、I 关闭；新登记缺陷 **N**（`degraded` 可以不带任何 warning），排期 P4。
+- **偏离之处（三条，如实记录）**：
+  1. 白名单只写了 `skills_dir`，实际同时删了 `knowledge_dir` + `ENV_KNOWLEDGE_DIR`。
+     理由是同一类缺陷（只有声明、零读者），留着就是刚删完一个又留一个。
+  2. P1 声称"只减不加"，实际加了 1 个测试：
+     `tests/test_contract.py::test_1_2_drops_the_field_no_producer_ever_filled`。
+     它钉住的是**删除本身**（防止恒空字段作为装饰品回来），属于删除的收尾而非新功能。
+  3. README 的「Multi-agent orchestration」章节没有直接删空，替换成一小节
+     「What the engine deliberately does not do」，把四条边界（不编排、不驱动 host、不做第二套 skill、不写遥测）
+     写成一处可指的文本，而不是只存在于没有文件的空白里。
+- 回滚：单提交 revert 即可；无 schema 变更 ⇒ `store/aos.db` 不受影响。

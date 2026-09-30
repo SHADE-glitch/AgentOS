@@ -25,18 +25,17 @@ AgentOS/
 ├── pyproject.toml              # package metadata + pytest config (no runtime deps)
 ├── aos/                        # the engine (stdlib only)
 │   ├── config.py               # resolve_root() + Paths (every path injectable)
-│   ├── contract/               # frozen preflight/postflight contract (schema 1.1)
+│   ├── contract/               # frozen preflight/postflight contract (schema 1.2)
 │   ├── core/
 │   │   ├── routing/            # hybrid router + taxonomy resolution
 │   │   │   └── registry/       # engine vocab, role catalog, taxonomy map
 │   │   ├── memory/             # SQLite store, retrieve, record, evolve, policy,
 │   │   │                       #   conflict, evaluate, inject (the block renderer),
 │   │   │                       #   authoring (add/seed)
-│   │   ├── loop/               # state machine + lifecycle + stages + team
-│   │   ├── orchestration/      # multi-agent team formation + collaboration
+│   │   ├── loop/               # state machine + lifecycle + stages
 │   │   ├── validation/         # project build detection + code validation
 │   │   └── evidence/           # collection, recovery planning, provenance
-│   ├── adapters/               # Provider protocol: opencode / host_delegate / test_provider
+│   ├── adapters/               # Provider protocol: host_delegate / test_provider
 │   └── cli/main.py             # run | doctor | preflight | postflight | review | route | memory
 ├── content/                    # overridable JSON layer (see content/README.md)
 │   └── memory/seed/            # cold-start memories (loaded by `aos memory seed`)
@@ -76,14 +75,14 @@ Hosts do not call the Python API directly — they speak the JSON contract over
 stdin/stdout:
 
 ```bash
-echo '{"schema_version":"1.1","phase":"preflight","task":"...","session_id":"...","cwd":"..."}' \
+echo '{"schema_version":"1.2","phase":"preflight","task":"...","session_id":"...","cwd":"..."}' \
   | ./bin/aos preflight --payload-stdin
 ```
 
 The response's `memory.injection.text` is the block to append to the host's
 system prompt; an empty string means push nothing.
 
-## The frozen contract (`schema_version = "1.1"`, serves `1.0`)
+## The frozen contract (`schema_version = "1.2"`, serves `1.0` and `1.1`)
 
 The preflight/postflight JSON shapes are the public interface. They live in
 `aos/contract/` and are locked by `tests/test_contract.py`, which holds the 1.0
@@ -91,20 +90,22 @@ field set as a literal and asserts the emitted document equals that set plus
 only the declared additions — so a key cannot be dropped, and one cannot be
 added quietly either.
 
-A request may declare `1.0` or `1.1` and the response is echoed in the version
-it declared. A declaration the engine does not speak is **rejected** at the CLI
-(exit `3`, a fallback document) rather than quietly answered in the engine's own
-version — replying 1.1 to a host that believes it negotiated 1.2 is a worse trap
-than saying no. 1.1 is additions only, which is what lets a host still pinned to
-1.0 keep passing its own check while reading nothing new.
+A request may declare `1.0`, `1.1` or `1.2` and the response is echoed in the
+version it declared. A declaration the engine does not speak is **rejected** at
+the CLI (exit `3`, a fallback document) rather than quietly answered in the
+engine's own version — replying 1.2 to a host that believes it negotiated 1.1 is
+a worse trap than saying no. 1.1 was additions only. **1.2 removes one nested
+key, `skill.skills_loaded`, which no producer ever filled** (the only value a
+host could read was `[]`), so behaviour is unchanged while the shape is not; the
+removal is pinned by a test so it cannot come back as decoration.
 
 **Request payload** — `preflight` requires `task`:
 
 ```json
-{ "schema_version": "1.0|1.1", "phase": "preflight",
+{ "schema_version": "1.0|1.1|1.2", "phase": "preflight",
   "task": "(required)", "task_id": "", "session_id": "", "cwd": "",
   "memory_mode": "enabled|disabled|fallback",
-  "provider": "opencode|host_delegate|test_provider", "model": "" }
+  "provider": "host_delegate|test_provider", "model": "" }
 ```
 
 **`postflight` request** requires `task_id` and `loop_id`, and is where the host
@@ -112,7 +113,7 @@ reports what actually happened — this is the learning signal, and it is droppe
 at the CLI boundary at the engine's peril:
 
 ```json
-{ "schema_version": "1.1", "phase": "postflight",
+{ "schema_version": "1.2", "phase": "postflight",
   "task_id": "(required)", "loop_id": "(required)", "session_id": "", "cwd": "",
   "outcome": "success|failure|partial", "quality_score": 4.5,
   "test_command": "", "test_stdout": "", "test_stderr": "", "test_exit_code": 0,
@@ -150,8 +151,6 @@ back named in `warnings` instead of being ignored in silence.
 | content dir | `AOS_CONTENT_DIR` | `<root>/content` |
 | memory dir | `AOS_MEMORY_DIR` | `<content>/memory` |
 | policies dir | `AOS_POLICIES_DIR` | `<content>/policies` |
-| skills dir | `AOS_SKILLS_DIR` | `<content>/skills` |
-| knowledge dir | `AOS_KNOWLEDGE_DIR` | `<content>/knowledge` |
 
 Two more the engine reads directly: `AOS_SESSION_ID` (names the evidence
 directory; generated when unset) and `AOS_REGISTRY_PATH` (override the routing
@@ -214,13 +213,13 @@ route -> resolve_role -> recall -> plan -> execute
 `store/loops/`; `postflight()` runs the back half with an idempotency guard
 (replayed runs are flagged). `run()` is both halves plus execution.
 
-## Multi-agent orchestration
+## What the engine deliberately does not do
 
-`aos/core/orchestration/` decides whether a task needs a team (≥2 domains, or
-`hard` difficulty) and, if so, forms one from the engine role catalog using
-data-driven rules in `rules.json`. Collaboration is split into
-`task_decomposer` / `scheduler` / `aggregator` / `trace`. Roles carry `domain`
-and `dependencies`, so the team plan resolves execution order.
+No multi-agent orchestration (removed: the routed decision never carried more
+than one domain, so the team path was structurally unreachable and its output
+had no consumer), no provider that drives opencode (`opencode run` is the host's
+job, not the brain's), no second skill system, no telemetry writer.
+See `docs/decision/positioning.md` and `docs/architecture/agent-os-v2.md` §10.
 
 ## Validation and evidence
 
@@ -271,7 +270,6 @@ it, and reading it was worse than useless.
 |---|---|
 | `content/memory/seed/` | **live** — loaded by `aos memory seed`; the cold start |
 | `content/policies/` | empty; `policy.load_policy` falls back to built-in defaults |
-| `content/skills/`, `content/knowledge/` | not created — declared paths only |
 
 `content/policies/*.json` overrides `aos/core/memory/policy.py`'s defaults, so
 thresholds can be retuned per deployment without a code change. Routing rules,

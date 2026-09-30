@@ -16,7 +16,6 @@ from aos.core import outcome as outcome_mod
 from aos.core.evidence import collector as evidence_collector
 from aos.core.evidence import recovery
 from aos.core.loop.state import LoopState
-from aos.core.loop.team import plan_executor
 from aos.core.memory import evolve as evolve_mod
 from aos.core.memory import inject
 from aos.core.memory import record as record_mod
@@ -60,28 +59,11 @@ def route_stage(state: LoopState, *, store: Optional[MemoryStore] = None) -> dic
 
 
 def resolve_role_stage(state: LoopState, decision: dict[str, Any]) -> dict[str, Any]:
-    """Resolve the concrete role(s) and form a team if the task warrants one."""
-    lead_role = decision.get("lead_role")
-    support_roles = decision.get("support_roles", [])
-    executor = plan_executor(
-        task=state.task_text,
-        lead_role=lead_role or "",
-        support_roles=support_roles,
-        domains=decision.get("domains", []),
-        difficulty=decision.get("difficulty", "medium"),
-        intent=decision.get("intent", ""),
-    )
-    state.complete(
-        "resolve_role",
-        lead_role=executor.lead_role,
-        support_roles=executor.support_roles,
-        executor=executor.to_dict(),
-    )
-    return {
-        "lead_role": executor.lead_role,
-        "support_roles": executor.support_roles,
-        "executor": executor.to_dict(),
-    }
+    """Resolve the concrete role(s) the routed skills map to."""
+    lead_role = decision.get("lead_role") or ""
+    support_roles = [r for r in (decision.get("support_roles") or []) if r]
+    state.complete("resolve_role", lead_role=lead_role, support_roles=support_roles)
+    return {"lead_role": lead_role, "support_roles": support_roles}
 
 
 # ── recall ─────────────────────────────────────────────────────────────
@@ -137,17 +119,14 @@ def recall_stage(
 
 
 # ── plan ───────────────────────────────────────────────────────────────
-def plan_stage(state: LoopState, *, recall: dict[str, Any], executor: dict[str, Any]) -> dict[str, Any]:
+def plan_stage(state: LoopState, *, recall: dict[str, Any], roles: dict[str, Any]) -> dict[str, Any]:
     """Assemble the context to inject into execution."""
     memories = recall.get("memories", [])
     plan = {
-        "lead_role": executor.get("lead_role"),
-        "support_roles": executor.get("support_roles", []),
+        "lead_role": roles.get("lead_role"),
+        "support_roles": roles.get("support_roles", []),
         "memory_ids": [m["memory_id"] for m in memories],
         "hypothesis_ids": [h["memory_id"] for h in recall.get("hypotheses", [])],
-        "multi_agent": executor.get("is_multi_agent", False),
-        "team_id": executor.get("team_id", ""),
-        "task_cards": executor.get("task_cards", []),
     }
     state.complete("plan", **plan)
     return plan

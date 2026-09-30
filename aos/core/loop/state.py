@@ -60,7 +60,7 @@ class LoopState:
     cwd: str = ""
     session_id: str = ""
     memory_mode: str = "enabled"
-    provider: str = "opencode"
+    provider: str = "host_delegate"
     model: str = ""
     created_at: str = field(default_factory=now_iso)
     updated_at: str = field(default_factory=now_iso)
@@ -82,7 +82,7 @@ class LoopState:
         cwd: str = "",
         session_id: str = "",
         memory_mode: str = "enabled",
-        provider: str = "opencode",
+        provider: str = "host_delegate",
         model: str = "",
         task_id: str = "",
         loop_id: str = "",
@@ -157,7 +157,7 @@ class LoopState:
             cwd=data.get("cwd", ""),
             session_id=data.get("session_id", ""),
             memory_mode=data.get("memory_mode", "enabled"),
-            provider=data.get("provider", "opencode"),
+            provider=data.get("provider", "host_delegate"),
             model=data.get("model", ""),
             created_at=data.get("created_at", now_iso()),
             updated_at=data.get("updated_at", now_iso()),

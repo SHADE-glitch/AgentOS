@@ -45,10 +45,6 @@ class DecisionContext:
     escalation_reason: str = None  # domain_unrecognized | partial_known | ambiguous | low_separation | low_confidence | None
     semantic_features: dict = field(default_factory=dict)  # intent_core, entities, action, domain_signal, lure_terms, contradiction
 
-    # Memory influence
-    memory_influence: str = "none"  # "none" | "weak" | "confirmation" | "conflict"
-    memory_retrieved: int = 0
-
     # Provenance
     rules_applied: list = field(default_factory=list)
     router_version: str = "2.0"
@@ -78,8 +74,6 @@ class DecisionContext:
             "escalation_reason": self.escalation_reason,
             "semantic_features": self.semantic_features,
             "difficulty": self.difficulty,
-            "memory_influence": self.memory_influence,
-            "memory_retrieved": self.memory_retrieved,
             "rules_applied": self.rules_applied,
             "router_version": self.router_version,
             "started_at": self.started_at,

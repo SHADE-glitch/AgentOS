@@ -228,7 +228,9 @@ def test_postflight_unknown_loop_falls_back():
 
 # ── provider registry ──────────────────────────────────────────────────
 def test_provider_registry_lists_builtins():
-    assert set(adapters_base.available()) >= {"opencode", "host_delegate", "test_provider"}
+    # Exact equality, not a superset: a provider that *drives* the host would
+    # satisfy `>=` and quietly re-open the direction the boundary closed.
+    assert set(adapters_base.available()) == {"host_delegate", "test_provider"}
     assert adapters_base.get("test_provider").name == "test_provider"
 
 

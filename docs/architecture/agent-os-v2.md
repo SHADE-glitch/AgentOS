@@ -1,6 +1,9 @@
 # Agent OS 架构：现状与边界
 
-对象 `/home/shade/Public/AgentOS`，基线 `b9dd2d6`（v4 schema / 339 tests / 11,250 行 Python）。
+对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新：**P1（收缩）已落地**，基线由 `b9dd2d6`
+（v4 schema / 339 tests / 11,250 行 Python）变为 313 tests / 10,265 行 Python ——
+编排、`opencode` provider、两个零写入者的 review kind、`skills_dir`/`knowledge_dir`、两个假字段与
+`skill.skills_loaded` 已删除，契约推到 **1.2**。下文描述的是删除后的事实状态。
 标签：`[Verified]` 带 `path:line` 或可复现命令；`[Inferred]`；`[Judgment]`；`[Unconfirmed]`。
 
 **为什么这份文档不叫"v2 蓝图"**：定位裁决（`docs/decision/positioning.md` §4）选的是候选 D ——
@@ -36,10 +39,11 @@
 **墙 1 · Skill 属于 host。**
 Agent OS 不设计第二个 skill 来源，不写 skill 文件，不做 skill 生命周期自动化
 （裁决依据：`positioning.md` 张力 2 —— 该能力只有 1 条血统，且其 opencode 端口丢掉了上游六个强制机制）。
-现状 `[Verified]`：`content/` 下没有 `skills/` 目录（`find content -type f` 只有 `memory/seed/agentos.json`、
-`policies/.gitkeep`、`README.md`），但 `config.py:100` 仍声明 `skills_dir = content/skills`；
-`lifecycle.py:157` 的 `skills_loaded` 恒为 `[]`，而 `contract/preflight.py:109` 归一化它、`:230` 校验它是 list
-⇒ **契约付了字段成本，host 拿到恒空**。处置见 final-plan P1。
+现状 `[Verified]`（P1 之后）：`content/` 下没有 `skills/` 目录，`config.py` 里也没有 `skills_dir` / `knowledge_dir`
+这两个**只有声明、没有读者**的路径字段了；契约不再携带恒空的 `skill.skills_loaded`（`schema.py:13-19` 记录了
+为什么删除它不改变任何 host 能观察到的行为：它唯一的取值一直是 `[]`）。`preflight` 的 `skill` 块只剩
+`lead_skill` 与 `support_skills`，并由 `tests/test_contract.py::test_1_2_drops_the_field_no_producer_ever_filled`
+钉住 —— 防止它作为装饰品回来。
 
 **墙 2 · 不改业务代码。**
 `auto_modify_code=False` 全表保持；`evidence/recovery.py` 是 plan-only。
@@ -49,11 +53,12 @@ Self-Evolution 的对象只有 memory / policy / routing knowledge / experience 
 **墙 3 · Plugin 是唯一正式入口。**
 复用 `aos/contract/` + `bin/aos` + stdin/stdout JSON。
 `aos/contract/legacy.py` 与 `hosts/` 已删除（`ffb2880`）。
-残留矛盾 `[Verified]`：`aos/adapters/opencode.py` 会 `subprocess` 跑 `opencode run <prompt>`（`:1-90`），
-且 `lifecycle.py:60,172,409` 与 `state.py:63,85,160` 把默认 provider 写成 `"opencode"` ——
-这是"Agent OS 驱动 opencode"的反方向通路，与墙 3 冲突，且没有任何测试执行过它
-（`grep -rn "OpenCodeProvider" tests` 无匹配；仅 `test_loop_lifecycle.py:231` 断言它在册）。
-处置：REMOVE，见 final-plan §2 归类表与 P1。
+已闭合 `[Verified]`（P1）：`aos/adapters/opencode.py`（会 `subprocess` 跑 `opencode run`）已删除，
+`adapters/base.py` 的内置注册只剩 `host_delegate` 与 `test_provider`，
+`lifecycle.py`/`state.py`/`cli/main.py` 共 9 处默认 provider 从 `"opencode"` 翻成 `"host_delegate"`，
+契约取值域 `PROVIDER` 同步收紧。守卫从 `>=` 改成 `==`：
+`tests/test_loop_lifecycle.py::test_provider_registry_lists_builtins` 现在断言注册表**恰好**是那两个 provider，
+所以"再塞一个驱动 host 的 provider"会直接失败而不是悄悄通过。
 
 **墙 4 · Basic Memory 是只读邻居。**
 现实比旧计划宽：`mcp.basic-memory.enabled=true`，后端是
@@ -71,11 +76,11 @@ Self-Evolution 的对象只有 memory / policy / routing knowledge / experience 
 ```
 bin/aos ──▶ aos/cli/main.py (715) ── 8 个命令：doctor preflight postflight route run memory review
                                         │
-   aos/contract/{schema,preflight,postflight}.py (728)  ◀── stdin/stdout JSON, 1.0/1.1 版本谈判
+   aos/contract/{schema,preflight,postflight}.py (729)  ◀── stdin/stdout JSON, 1.0/1.1/1.2 版本谈判
                                         │
-                    aos/core/loop/lifecycle.py (458)
+                    aos/core/loop/lifecycle.py (457)
                                         │  10 stages
-                    aos/core/loop/stages.py (502) ──▶ routing/router.py (433)
+                    aos/core/loop/stages.py (481) ──▶ routing/router.py (431)
                                         │                    └─▶ routing/semantic_reader.py (1157)
                                         │                            单一调用点 router.py:324
                                         ├─▶ memory/retrieve.py (403) ─▶ store.py (734) ─▶ store/aos.db (v4)
@@ -84,18 +89,17 @@ bin/aos ──▶ aos/cli/main.py (715) ── 8 个命令：doctor preflight po
                                         ├─▶ memory/record.py (248) ─▶ candidates
                                         └─▶ memory/evolve.py (999)  ─▶ learning_reviews（人门）+ 晋升效果
      aos/core/evidence/{collector,provenance,recovery}.py (568)   aos/core/validation/* (633)
-     aos/core/orchestration/* + loop/team.py (857)  ◀── 已裁决 REMOVE（用户 2026-09-30 同意移除编排）
-     aos/adapters/{base,host_delegate,test_provider,opencode}.py (349)
+     aos/adapters/{base,host_delegate,test_provider}.py (258)
 ```
 
-维护面积 `[Verified]`：`aos/` + `tests/` 共 11,250 行 Python；其中编排与 team 适配 857 行 +
-`tests/test_orchestration.py` 286 行，是裁决后唯一成块的待删代码。
+维护面积 `[Verified]`：`aos/` 共 **10,265 行** Python（P1 前 11,250）。P1 删掉的正是裁决里成块的那部分 ——
+编排 793 行 + `loop/team.py` 64 行 + `adapters/opencode.py` 90 行 + `tests/test_orchestration.py` 286 行。
 
-**待删代码的连带依赖（删除时必须一起处理，否则 `test_config.py` 会失去它的载体）**：
-`aos/config.py:122,127` 在 `reload_caches()` 里 import 并 `orchestrator.reload()`；
-`tests/test_config.py:11,78-121` 用 `orchestrator.load_rules()` 来证明 Phase 3.0 的缓存键修复；
-`tests/test_orchestration.py:10` 与 `aos/core/loop/stages.py:19,71,149` 经 `loop/team.py` 相连。
-⇒ 缓存回归测试必须改挂到 `policy.py` 或 `taxonomy.py` 上，不能随编排一起消失。
+**删除时的连带依赖（已按 P1 计划处理，记在这里是因为它是这种删除的真实成本）**：
+`aos/config.py` 的 `reset_caches()` 原先 import 并 `orchestrator.reload()`；
+`tests/test_config.py` 原先用 `orchestrator.load_rules()` 作 Phase 3.0 缓存键修复的三个载体之一。
+⇒ 该回归测试现在只剩 `policy.load_policy` 与 `taxonomy.resolve_role` 两条腿 —— **它是被改挂而非被删除**，
+这正是当初把"改挂载体"写进白名单的原因：删一个模块时，寄生在它上面的守卫必须活着找别宿主。
 
 ---
 
@@ -249,20 +253,22 @@ learning_reviews（pending → approved | rejected | stale）
 
 ---
 
-## 10. 刻意不存在的东西（含理由）
+## 10. 刻意不存在的东西（含理由与删除时点）
 
-| 不存在 | 为什么 |
-|---|---|
-| `aos/core/orchestration/` + `loop/team.py`（857 行）+ `tests/test_orchestration.py`（286 行） | 用户 2026-09-30 同意移除编排。多智能体路径结构性不可达（`router.py:384` 恒 ≤1 domain、`:396` 写死 medium），且编排产出无人消费是原审计自己的结论；`difficulty` 的唯一读者就是它 |
-| 第二个 Skill 系统 / `skill_versions` / `sensing/skills.py` | 墙 1 + `positioning.md` 张力 2 |
-| 自建遥测采集（旧计划的 `aos skill report`） | 本机 skill-tracker 五表 + 单调状态修正更强，AOS 只读（张力 4） |
-| `MemoryProvider` 抽象 / 与 basic-memory 的同步 | 张力 1；预留空壳仍属装饰物 |
-| `aos/adapters/opencode.py`（驱动 `opencode run`） | 墙 3 的反方向通路，无测试执行；真实数据由 P6 插件或 P7 只读回供 |
-| `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 已在 `ffb2880`/Phase 0 删除，且指向它们的记录一并清了 |
-| `content/policies/*.json` | 尚未创建（不是不做，是排在 P4；当前 42 键全内置） |
-| trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` |
-
----
+| 不存在 | 为什么 | 何时开始不存在 |
+|---|---|---|
+| `aos/core/orchestration/` + `loop/team.py`（857 行）+ `tests/test_orchestration.py`（27 个用例） | 用户 2026-09-30 同意移除编排。多智能体路径结构性不可达（`router.py` 的 `domains` 恒 ≤1 元素、`difficulty` 写死 medium），且编排产出无人消费是原审计自己的结论；`difficulty` 的唯一读者就是它 | **P1 删除** |
+| `aos/adapters/opencode.py`（驱动 `opencode run`） | 墙 3 的反方向通路，且无测试执行过它；真实数据改由 P6 插件或 P7 只读回读提供 | **P1 删除**（默认 provider 同时翻成 `host_delegate`，注册表断言改为恰好相等） |
+| `content/skills/`、`content/knowledge/` 的声明路径（`skills_dir` / `knowledge_dir`） | 只有声明、零读者；墙 1 与 reuse-not-rebuild 都不需要它们 | **P1 删除** |
+| `REVIEW_KINDS` 里的 `policy` / `skill_improvement` | 两个零写入者的预留值。`conflict` **保留**，因为 P3 就是它的写入者 | **P1 删除** |
+| `DecisionContext.memory_influence` / `memory_retrieved` | 恒为 `"none"` / `0` —— "曾设计两趟召回、从未实现"的确证，会误导每个读代码的人 | **P1 删除** |
+| 契约里的 `skill.skills_loaded` | 无生产者的字段，host 能读到的唯一值是 `[]` | **P1 删除**（契约 1.1 → 1.2，由具名测试钉住不得回来） |
+| 第二个 Skill 系统 / `skill_versions` / `sensing/skills.py` | 墙 1 + `positioning.md` 张力 2 | 从未存在 |
+| 自建遥测采集（旧计划的 `aos skill report`） | 本机 skill-tracker 五表 + 单调状态修正更强，AOS 只读（张力 4） | 从未存在（计划取消） |
+| `MemoryProvider` 抽象 / 与 basic-memory 的同步 | 张力 1；预留空壳仍属装饰物 | 从未存在 |
+| `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
+| `content/policies/*.json` | 阈值调不动的唯一原因，排在 P4 | 尚未存在 |
+| trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
 ## 11. 缺陷登记（本文不修，排期在 final-plan）
 
@@ -275,12 +281,13 @@ learning_reviews（pending → approved | rejected | stale）
 | E | `collect_before` 在 postflight ⇒ `files_changed` 是脏树自 diff | `stages.py` evidence 段 | **P5** |
 | F | `state.fail("execute")` 后紧接 `complete` 擦除失败 | `stages.py:191-193` | **P5** |
 | G | `recall_stage` docstring 写"Never fatal"但无 try/except | `stages.py` | **P5** |
-| H | `skills_loaded` 恒 `[]` 却被校验 | `lifecycle.py:157` vs `preflight.py:109,230` | **P1** |
-| I | `memory_influence="none"` / `memory_retrieved=0` 是假字段 | `router.py:397-398`、`decision.py:49-50` | **P1** |
+| H | `skills_loaded` 恒 `[]` 却被校验 | `lifecycle.py:157` vs `preflight.py:109,230` | **已修于 P1**（契约 1.2 + 具名守卫） |
+| I | `memory_influence="none"` / `memory_retrieved=0` 是假字段 | `router.py:397-398`、`decision.py:49-50` | **已修于 P1** |
 | J | `aos doctor --json` 与 `memory refresh` 退出码 2 | 命令未实现 | **P4** |
 | K | 人标注之后提案评审不会立刻出现，必须等**下一次 postflight** 才被扫进门 | 实测：`review label 1 --outcome failure` 返回 `candidates_created=3, proposal_created=1`，但 `learning_reviews` 仍只有 1 行（那条 label 自己），4 条 candidates 全部 `consumed_at IS NULL`；随后一次无关的 postflight 才让 `#2/#3 promotion` 出现 | **P4** |
 | L | 归因仍按"被召回"发放：一次失败的任务产生 3 条 `weaken` 候选，对象是那 3 条**被召回的记忆**，与它们是否影响结果无关 | 同上，candidates 表 `target_memory=M-SEED-CACHEKEY02/MIGRATE11/DEFAULT5, candidate_type=weaken` | **P2** |
 | M | 已标注的 review 在 `review list` 里仍打印 `-> aos review label 1 --outcome …`，且 CLI 返回 `"status":"labelled"` 而库里写的是 `approved` | `./bin/aos review list` 实测（status=approved 的行仍给标注提示） | **P4** |
+| N | `preflight` 可以返回 `aos_status=degraded` 而 `warnings` 为空 ⇒ 降级没有解释。`lifecycle.py:104-108` 只在"没解析出角色"时补 warning，但 status 另由 `fallback_reason` 决定 | 实测：空库 preflight ⇒ `status: degraded \| warnings: []`（`retrieved=0`） | **P4** |
 
 三条共性 `[Judgment]`：A–M 大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。

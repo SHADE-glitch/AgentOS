@@ -8,7 +8,6 @@ import pytest
 
 from aos import config
 from aos.core.memory import policy
-from aos.core.orchestration import orchestrator
 from aos.core.routing import taxonomy
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -75,16 +74,12 @@ def test_content_root_change_is_picked_up_without_reload(monkeypatch, tmp_path):
     (root_a / "policies" / "promotion.json").write_text(
         '{"min_observations": 42}', encoding="utf-8"
     )
-    (root_a / "policies" / "orchestration.json").write_text(
-        '{"activation_rules": {"domain_threshold": 7}}', encoding="utf-8"
-    )
     (root_a / "routing" / "taxonomy-map.json").write_text(
         '{"map": {"bugfix": "root-a-fixer"}}', encoding="utf-8"
     )
 
     monkeypatch.setenv("AOS_CONTENT_DIR", str(root_a))
     assert policy.load_policy("promotion")["min_observations"] == 42
-    assert orchestrator.load_rules()["activation_rules"]["domain_threshold"] == 7
     assert taxonomy.resolve_role("bugfix") == "root-a-fixer"
 
     # A second root that ships no override files at all, still with no reload().
@@ -92,33 +87,27 @@ def test_content_root_change_is_picked_up_without_reload(monkeypatch, tmp_path):
     (root_b / "policies").mkdir(parents=True)
     monkeypatch.setenv("AOS_CONTENT_DIR", str(root_b))
     assert policy.load_policy("promotion")["min_observations"] == 2
-    assert orchestrator.load_rules()["activation_rules"]["domain_threshold"] == 2
     assert taxonomy.resolve_role("bugfix") == "code-reviewer"
 
 
 def test_reset_caches_clears_every_content_cache(monkeypatch, tmp_path):
-    """``reset_caches`` must cover all three content-cached loaders."""
+    """``reset_caches`` must cover every content-cached loader."""
     policies = tmp_path / "policies"
     routing = tmp_path / "routing"
     policies.mkdir(parents=True)
     routing.mkdir(parents=True)
     (policies / "promotion.json").write_text('{"min_observations": 99}', encoding="utf-8")
-    (policies / "orchestration.json").write_text(
-        '{"activation_rules": {"domain_threshold": 9}}', encoding="utf-8"
-    )
     (routing / "taxonomy-map.json").write_text('{"map": {"bugfix": "cached"}}', encoding="utf-8")
     monkeypatch.setenv("AOS_CONTENT_DIR", str(tmp_path))
 
-    # Populate all three caches, then empty the directory they read from.
+    # Populate both caches, then empty the directory they read from.
     assert policy.load_policy("promotion")["min_observations"] == 99
-    assert orchestrator.load_rules()["activation_rules"]["domain_threshold"] == 9
     assert taxonomy.resolve_role("bugfix") == "cached"
     for path in list(policies.glob("*.json")) + list(routing.glob("*.json")):
         path.unlink()
 
     config.reset_caches()
     assert policy.load_policy("promotion")["min_observations"] == 2
-    assert orchestrator.load_rules()["activation_rules"]["domain_threshold"] == 2
     assert taxonomy.resolve_role("bugfix") == "code-reviewer"
 
 

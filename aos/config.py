@@ -21,9 +21,7 @@ ENV_ROOT = "AGENT_OS_ROOT"
 ENV_STORE_DIR = "AOS_STORE_DIR"
 ENV_DB_PATH = "AOS_DB_PATH"
 ENV_CONTENT_DIR = "AOS_CONTENT_DIR"
-ENV_SKILLS_DIR = "AOS_SKILLS_DIR"
 ENV_MEMORY_DIR = "AOS_MEMORY_DIR"
-ENV_KNOWLEDGE_DIR = "AOS_KNOWLEDGE_DIR"
 ENV_POLICIES_DIR = "AOS_POLICIES_DIR"
 
 
@@ -63,9 +61,7 @@ class Paths:
     store_dir: Path
     db_path: Path
     content_dir: Path
-    skills_dir: Path
     memory_dir: Path
-    knowledge_dir: Path
     policies_dir: Path
     loops_dir: Path
     evidence_dir: Path
@@ -97,9 +93,7 @@ def get_paths() -> Paths:
         store_dir=store_dir,
         db_path=_env_path(ENV_DB_PATH, store_dir / "aos.db"),
         content_dir=content_dir,
-        skills_dir=_env_path(ENV_SKILLS_DIR, content_dir / "skills"),
         memory_dir=_env_path(ENV_MEMORY_DIR, content_dir / "memory"),
-        knowledge_dir=_env_path(ENV_KNOWLEDGE_DIR, content_dir / "knowledge"),
         policies_dir=_env_path(ENV_POLICIES_DIR, content_dir / "policies"),
         loops_dir=store_dir / "loops",
         evidence_dir=store_dir / "evidence",
@@ -119,12 +113,10 @@ def reset_caches() -> None:
     providers — neither depends on the content directory.
     """
     from aos.core.memory import policy
-    from aos.core.orchestration import orchestrator
     from aos.core.routing import taxonomy
 
     policy.reload()
     taxonomy.reload()
-    orchestrator.reload()
 
 
 def __getattr__(name: str) -> Paths:

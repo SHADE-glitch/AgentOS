@@ -4,13 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
-CONTRACT_VERSION = "1.1"
+CONTRACT_VERSION = "1.2"
 
 # A request may declare any supported version and the document it gets back is
 # written in that same version. 1.1 only adds fields, so a host that still pins
 # "1.0" keeps passing its own version check instead of failing at the exact
 # moment the engine degraded and it needed to carry on.
-SUPPORTED_VERSIONS = ("1.0", "1.1")
+#
+# 1.2 removes ``skill.skills_loaded``, which no producer ever filled: the only
+# value any host could ever read from it was ``[]``, so dropping it changes no
+# behaviour. The version still moves because the document shape did, and a host
+# that wants the key back now has a version number to ask for.
+SUPPORTED_VERSIONS = ("1.0", "1.1", "1.2")
 
 # ── Enums ──────────────────────────────────────────────────────────────
 AOS_STATUS = frozenset({"ok", "degraded", "fallback"})
@@ -73,7 +78,7 @@ MEMORY_MODE = frozenset({"enabled", "disabled", "fallback"})
 # Health of the recall step itself, reported next to whatever it returned, so a
 # host can tell "nothing was relevant" from "retrieval did not run".
 MEMORY_STATUS = frozenset({"ok", "degraded", "skipped", "fallback"})
-PROVIDER = frozenset({"opencode", "host_delegate", "test_provider"})
+PROVIDER = frozenset({"host_delegate", "test_provider"})
 # What the host says happened. Distinct from FINAL_STATUS, which is what the
 # engine concluded after checking it — the two may differ.
 OUTCOME = frozenset({"success", "failure", "partial"})

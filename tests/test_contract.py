@@ -37,7 +37,7 @@ PLUGIN_PREFLIGHT_FIELDS = (
     "memory.retrieved",
     "memory.memories",
     "memory.injection.text",
-    "skill.skills_loaded",
+    "skill.lead_skill",
     "warnings",
 )
 
@@ -109,7 +109,7 @@ def _sample_preflight() -> dict:
         classification={"category": "backend", "domains": ["backend"], "roles": ["backend-architect"], "difficulty": "hard"},
         router={"intent": "bugfix", "lead_skill": "bugfix", "lead_role": "code-reviewer", "support_skills": ["test"], "confidence": "high", "confidence_numeric": 0.82},
         memory={"retrieved": 1, "memories": [{"memory_id": "E-002", "content": "x"}]},
-        skill={"lead_skill": "code-reviewer", "skills_loaded": ["code-reviewer"]},
+        skill={"lead_skill": "code-reviewer", "support_skills": ["test"]},
         warnings=["low evidence"],
     )
 
@@ -127,9 +127,24 @@ def _sample_postflight() -> dict:
 
 
 def test_contract_version():
-    assert CONTRACT_VERSION == "1.1"
-    # A host pinned to the previous version must still be served.
-    assert SUPPORTED_VERSIONS == ("1.0", "1.1")
+    assert CONTRACT_VERSION == "1.2"
+    # A host pinned to an older version must still be served.
+    assert SUPPORTED_VERSIONS == ("1.0", "1.1", "1.2")
+
+
+def test_1_2_drops_the_field_no_producer_ever_filled():
+    """A key that costs a validation and always reads ``[]`` is worse than no key.
+
+    ``skill.skills_loaded`` was the one contract field with no producer, so 1.2
+    removes it. This pins the removal: re-adding it without a producer fails here
+    rather than quietly re-opening the seam that ``R-006`` documents.
+    """
+    doc = _sample_preflight()
+    assert "skills_loaded" not in doc["skill"]
+    assert set(doc["skill"]) == {"lead_skill", "support_skills"}
+    validate_preflight(doc)
+
+
 
 
 def test_preflight_field_set_is_frozen_plus_declared_additions():
@@ -171,8 +186,8 @@ def test_unsupported_version_is_answered_in_the_engines_own():
     Answering "0.9" would hand back a document no validator accepts, so the
     caller's own check fails at the moment it is trying to degrade.
     """
-    assert build_preflight(task_id="T", loop_id="L", schema_version="0.9")["schema_version"] == "1.1"
-    assert build_postflight(task_id="T", loop_id="L", schema_version="")["schema_version"] == "1.1"
+    assert build_preflight(task_id="T", loop_id="L", schema_version="0.9")["schema_version"] == "1.2"
+    assert build_postflight(task_id="T", loop_id="L", schema_version="")["schema_version"] == "1.2"
     assert fallback_preflight("boom", schema_version="1.0")["schema_version"] == "1.0"
 
 

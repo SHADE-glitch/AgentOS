@@ -1,7 +1,7 @@
 """Taxonomy resolution: abstract router skill id -> concrete agent role.
 
 The router emits canonical *abstract* skill ids (``bugfix``, ``performance``,
-...). Downstream consumers (role/skill loading, orchestration) need a
+...). Downstream consumers (role resolution, recall filtering) need a
 concrete *role* (``code-reviewer``, ``frontend-performance``, ...). This module
 is the single place that maps between the two, fixing the vocabulary mismatch
 that previously broke the runtime chain.

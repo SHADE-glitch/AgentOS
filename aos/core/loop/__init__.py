@@ -1,4 +1,4 @@
-"""The Agent OS loop: state, stages, lifecycle and team metadata."""
+"""The Agent OS loop: state, stages and lifecycle."""
 
 from __future__ import annotations
 

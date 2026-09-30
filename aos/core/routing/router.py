@@ -394,8 +394,6 @@ class HybridRouter:
             escalation_reason=escalation_reason,
             semantic_features=features,
             difficulty="medium",
-            memory_influence="none",
-            memory_retrieved=0,
             rules_applied=rules_applied,
             router_version="3.0",
             started_at=started_at,

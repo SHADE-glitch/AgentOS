@@ -106,7 +106,6 @@ def _skill(data: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "lead_skill": data.get("lead_skill", ""),
         "support_skills": list(data.get("support_skills", [])),
-        "skills_loaded": list(data.get("skills_loaded", [])),
     }
 
 
@@ -224,10 +223,7 @@ def validate_preflight(doc: dict[str, Any]) -> None:
             for key in ("memory_ids", "dropped"):
                 require(isinstance(injection.get(key), list), f"memory.injection.{key} must be a list", errors)
 
-    skill = doc.get("skill")
-    require(isinstance(skill, dict), "skill must be an object", errors)
-    if isinstance(skill, dict):
-        require(isinstance(skill.get("skills_loaded"), list), "skill.skills_loaded must be a list", errors)
+    require(isinstance(doc.get("skill"), dict), "skill must be an object", errors)
 
     require(isinstance(doc.get("warnings"), list), "warnings must be a list", errors)
     require(isinstance(doc.get("artifacts"), dict), "artifacts must be an object", errors)

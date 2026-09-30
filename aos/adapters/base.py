@@ -82,10 +82,9 @@ def register(provider: Provider) -> None:
 def _ensure_builtins() -> None:
     if _REGISTRY:
         return
-    from aos.adapters import host_delegate, opencode, test_provider
+    from aos.adapters import host_delegate, test_provider
 
     register(test_provider.get_provider())
-    register(opencode.OpenCodeProvider())
     register(host_delegate.HostDelegateProvider())
 
 

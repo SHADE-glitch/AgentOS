@@ -57,7 +57,7 @@ def _run_preflight(
     session_id: str = "",
     cwd: str = "",
     memory_mode: str = "enabled",
-    provider: str = "opencode",
+    provider: str = "host_delegate",
     model: str = "",
 ) -> tuple[LoopState, dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     get_paths().ensure_store()
@@ -76,17 +76,17 @@ def _run_preflight(
     decision = stages.route_stage(state)
 
     state.begin("resolve_role")
-    executor = stages.resolve_role_stage(state, decision)
+    roles = stages.resolve_role_stage(state, decision)
 
     state.begin("recall")
     recall = stages.recall_stage(state, decision)
 
     state.begin("plan")
-    plan = stages.plan_stage(state, recall=recall, executor=executor)
+    plan = stages.plan_stage(state, recall=recall, roles=roles)
     stages.project_preflight_stage(state, project_root=cwd)
 
     state.save()
-    return state, decision, executor, recall, plan
+    return state, decision, roles, recall, plan
 
 
 def _preflight_doc(
@@ -154,7 +154,6 @@ def _preflight_doc(
         skill={
             "lead_skill": decision.get("selected", ""),
             "support_skills": decision.get("support_skills", []),
-            "skills_loaded": [],
         },
         warnings=warnings,
         artifacts={"loop_state": str(state.state_path())},
@@ -169,13 +168,13 @@ def preflight(
     session_id: str = "",
     cwd: str = "",
     memory_mode: str = "enabled",
-    provider: str = "opencode",
+    provider: str = "host_delegate",
     model: str = "",
     schema_version: str = CONTRACT_VERSION,
 ) -> dict[str, Any]:
     """Run the pre-execution stages and return the preflight contract."""
     try:
-        state, decision, _executor, recall, _plan = _run_preflight(
+        state, decision, _roles, recall, _plan = _run_preflight(
             task=task,
             task_id=task_id,
             session_id=session_id,
@@ -406,7 +405,7 @@ def run(
     *,
     task: str,
     cwd: str = "",
-    provider: str = "opencode",
+    provider: str = "host_delegate",
     model: str = "",
     memory_mode: str = "enabled",
     session_id: str = "",
@@ -421,7 +420,7 @@ def run(
 ) -> dict[str, Any]:
     """Full loop: preflight, execute through the provider, then postflight."""
     try:
-        state, decision, _executor, recall, _plan = _run_preflight(
+        state, decision, _roles, recall, _plan = _run_preflight(
             task=task,
             task_id=task_id,
             session_id=session_id,

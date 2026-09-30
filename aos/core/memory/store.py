@@ -555,7 +555,7 @@ class MemoryStore:
     # achieved; the rest arrive with their own phases. Enforced here rather than
     # by a SQL CHECK because adding a CHECK to an existing table would mean
     # rebuilding it, and this table is referenced by candidates.
-    REVIEW_KINDS = ("promotion", "outcome_label", "conflict", "policy", "skill_improvement")
+    REVIEW_KINDS = ("promotion", "outcome_label", "conflict")
     # `stale` is terminal and means "this promise no longer describes the memory".
     # It has to be a state of its own: a review whose baseline moved can never be
     # applied correctly, and leaving it pending would block the pipeline from
