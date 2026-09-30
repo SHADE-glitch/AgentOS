@@ -166,18 +166,44 @@ def test_postflight_forwards_expected_files_and_no_validate(repo_dir, capsys):
 
 
 # ── the request boundary is visible, not silent ────────────────────────
-def test_unknown_request_fields_are_reported_not_dropped(repo_dir, capsys):
-    """A field the engine ignores must say so.
+def test_host_signals_are_weighed_instead_of_ignored(repo_dir, store, capsys):
+    """A nested ``signals`` object must reach the verdict.
 
-    ``signals`` is the shape the future opencode plugin will send; today the
-    engine reads nothing from it, and this test fails the day it is wired up
-    without being removed — which is the point.
+    This replaces the guard that used to demand a warning for ``signals`` — the
+    field is read now. It is the plugin's whole channel: opencode cannot say
+    "this failed", but it can say the test exited 1, and that is enough.
     """
     pre = _preflight(capsys, cwd=str(repo_dir))
-    code, doc = _postflight(capsys, pre, cwd=str(repo_dir), signals={"tool_errors": 2})
+    code, doc = _postflight(
+        capsys, pre, cwd=str(repo_dir), signals={"test_exit_code": 1, "tool_errors": 3}
+    )
 
     assert code == 0
-    assert any("signals" in warning for warning in doc["warnings"])
+    assert doc["final_status"] == "failed"
+    assert doc["learning"]["needs_review"] is True
+    assert not any("signals" in warning for warning in doc["warnings"])
+
+    rows = [o for o in store.list_observations(loop_id=pre["loop_id"]) if o["memory_id"] is None]
+    assert len(rows) == 1
+    observation = rows[0]
+    assert observation["outcome"] == "failure"
+    assert observation["synthesised"] is True
+    assert observation["needs_review"] is True
+    assert observation["signals"]["test_exit_code"] == 1
+    # Nothing was reinforced or weakened on a verdict the engine had to guess at.
+    assert observation["confidence"] < 0.60
+
+
+def test_genuinely_unknown_fields_still_warn(repo_dir, capsys):
+    """``signals`` became readable; the warning channel did not go away with it."""
+    pre = _preflight(capsys, cwd=str(repo_dir))
+    code, doc = _postflight(
+        capsys, pre, cwd=str(repo_dir), tool_errors=2, definitely_not_a_field=True
+    )
+    assert code == 0
+    warnings = " ".join(doc["warnings"])
+    assert "definitely_not_a_field" in warnings
+    assert "tool_errors" not in warnings
 
 
 def test_unknown_preflight_fields_are_reported_too(capsys):

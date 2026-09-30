@@ -12,14 +12,14 @@ import hashlib
 import re
 from typing import Any, Optional
 
+from aos.core import outcome as outcome_mod
 from aos.core.evidence import collector as evidence_collector
 from aos.core.evidence import recovery
 from aos.core.loop.state import LoopState
 from aos.core.loop.team import plan_executor
 from aos.core.memory import evolve as evolve_mod
-from aos.core.memory import evaluate as evaluate_mod
 from aos.core.memory import inject
-from aos.core.memory.record import record_outcome
+from aos.core.memory import record as record_mod
 from aos.core.memory.retrieve import retrieve
 from aos.core.memory.store import MemoryStore
 from aos.core.validation import project_preflight
@@ -233,9 +233,27 @@ def evidence_stage(
 
 # ── project preflight ──────────────────────────────────────────────────
 def project_preflight_stage(state: LoopState, *, project_root: str = "") -> dict[str, Any]:
-    """Detect the project's build system, runtime and validation commands."""
-    root = project_root or state.cwd or "."
-    result = project_preflight.run_preflight(root).to_dict()
+    """Detect the project's build system, runtime and validation commands.
+
+    No fallback to the process's own directory: a host that omits ``cwd`` would
+    otherwise have the engine inspect — and later run commands in — whatever
+    directory the CLI happened to be started in. The project is what the caller
+    names, or there is no project.
+    """
+    root = project_root or state.cwd
+    if not root:
+        result = {
+            "project_root": "",
+            "status": "skipped",
+            "build_system": "",
+            "build_file": "",
+            "compile_command": "",
+            "test_command": "",
+            "environment_blockers": [],
+            "reason": "no project root reported",
+        }
+    else:
+        result = project_preflight.run_preflight(root).to_dict()
     state.complete(
         "plan",
         project_preflight={
@@ -269,13 +287,20 @@ def validate_stage(
     explicitly supplies ``test_command`` — silently executing an unknown
     project's full test suite is expensive and can have side effects.
     """
-    root = project_root or state.cwd or "."
+    root = project_root or state.cwd
     preflight = state.stage_data("plan").get("project_preflight") or {}
     compile_command = compile_command or preflight.get("compile_command", "")
 
     if not enabled:
         state.complete("validate", validation_status="SKIPPED", reason="disabled by request")
         return {"validation_status": "SKIPPED", "reason": "disabled by request"}
+
+    if not root:
+        # Running a detected build command in a directory nobody named is worse
+        # than not validating: it produces a verdict the host never asked for, in
+        # someone else's project, and the loop then learns from it.
+        state.complete("validate", validation_status="SKIPPED", reason="no project root reported")
+        return {"validation_status": "SKIPPED", "reason": "no project root reported"}
 
     if not compile_command and not test_command:
         reason = "no compile or test command available"
@@ -302,64 +327,119 @@ def validate_stage(
 
 
 # ── record ─────────────────────────────────────────────────────────────
-def _outcome_for(execution: dict[str, Any], test_exit_code: Optional[int]) -> str:
-    status = execution.get("status", "")
-    if status in ("error", "timeout", "failed"):
-        return "failure"
-    if test_exit_code is not None and test_exit_code != 0:
-        return "failure"
-    if status == "success":
-        return "success"
-    return "partial"
-
-
 def record_stage(
     state: LoopState,
     *,
     execution: dict[str, Any],
     plan: dict[str, Any],
-    test_exit_code: Optional[int] = None,
-    outcome: str = "",
-    quality_score: Optional[float] = None,
+    signals: Optional[dict[str, Any]] = None,
+    engine_evidence: Optional[dict[str, Any]] = None,
     store: Optional[MemoryStore] = None,
+    propose: bool = True,
 ) -> dict[str, Any]:
-    """Write observations and candidate changes for the finished loop.
+    """Synthesise the loop's verdict, then write observations and candidates.
 
-    ``outcome`` and ``quality_score`` may be supplied by a host that knows
-    them better than the engine can infer (e.g. a delegated run).
+    ``signals`` is everything the host reported *and* everything the engine
+    observed, already merged by the caller: the point of the merge is that
+    :func:`aos.core.outcome.synthesize` is then the only place a verdict is
+    decided. Nothing here guesses at success any more — a run nobody described is
+    recorded as a run nobody described, and asks.
     """
-    response_text = execution.get("response_text", "") or ""
-    quality = (
-        float(quality_score)
-        if quality_score is not None
-        else evaluate_mod.compute_quality_score(response_text)
-    )
-    resolved_outcome = outcome or _outcome_for(execution, test_exit_code)
-    source_hash = hashlib.sha1(response_text.encode("utf-8")).hexdigest()[:16] if response_text else ""
+    received = dict(signals or {})
 
-    counts = record_outcome(
+    # An engine-owned run reports through `execution`; translate it into the same
+    # vocabulary a host uses so there is one decision path, not two.
+    status = str(execution.get("status") or "")
+    if status in ("error", "timeout", "failed") and not received.get("session_error"):
+        received["session_error"] = execution.get("error") or status
+    response_text = execution.get("response_text", "") or ""
+    if response_text and not received.get("response_summary"):
+        received["response_summary"] = response_text
+
+    evidence = engine_evidence or {}
+    memories_used = [m for m in (plan.get("memory_ids") or []) if m]
+    route = state.stage_data("route") or {}
+    artifact = route.get("artifact") or {}
+    category = str(artifact.get("primary_domain") or route.get("lead_skill") or "")
+    skills = [s for s in ([route.get("lead_skill")] + list(route.get("support_skills") or [])) if s]
+    received["files_changed"] = evidence.get("files_changed") or []
+
+    synthesis = outcome_mod.synthesize(received, engine_evidence=evidence)
+    # The hash identifies the run, not its prose. Deriving it from response_text
+    # alone meant a delegated run — which has no response text in the engine, and
+    # is exactly what opencode produces — never had execution evidence, so every
+    # proposal it made was rejected as fabricated.
+    source_hash = hashlib.sha1(
+        f"{state.loop_id}\n{synthesis['outcome']}\n{response_text}".encode("utf-8")
+    ).hexdigest()[:16]
+
+    proposal = None
+    if propose and record_mod.should_propose(
+        outcome=synthesis["outcome"],
+        memories_used=memories_used,
+        needs_review=synthesis["needs_review"],
+    ):
+        proposal = record_mod.proposal_for_loop(
+            loop_id=state.loop_id,
+            task_text=state.task_text,
+            outcome=synthesis["outcome"],
+            cwd=state.cwd,
+            category=category,
+            skills=skills,
+            files_changed=evidence.get("files_changed"),
+            quality_score=synthesis["quality_score"],
+        )
+
+    # The stored snapshot is what a reviewer reads and what a later label is
+    # applied to, so it carries the run's identity, not only its numbers: after
+    # the loop state file is gone this is the only record of what was asked.
+    snapshot = {
+        **synthesis["signals"],
+        "present": synthesis["present"],
+        "absent": synthesis["absent"],
+        "mass": synthesis["mass"],
+        "score": synthesis["score"],
+        "reasons": synthesis["reasons"],
+        "task": state.task_text[:200],
+        "cwd": state.cwd,
+        "category": category,
+        "skills": skills,
+        "memories_used": memories_used,
+    }
+    counts = record_mod.record_outcome(
         loop_id=state.loop_id,
-        outcome=resolved_outcome,
-        quality_score=quality,
+        outcome=synthesis["outcome"],
+        quality_score=synthesis["quality_score"],
         task_id=state.task_id,
         session_id=state.session_id,
         source_hash=source_hash,
-        memories_used=plan.get("memory_ids", []),
+        memories_used=memories_used,
         store=store,
+        confidence=synthesis["confidence"],
+        signals=snapshot,
+        needs_review=synthesis["needs_review"],
+        synthesised=synthesis["synthesised"],
+        skill_used=str(route.get("lead_skill") or ""),
+        proposal=proposal,
     )
     state.complete(
         "record",
-        outcome=resolved_outcome,
-        quality_score=quality,
+        outcome=synthesis["outcome"],
+        quality_score=synthesis["quality_score"],
+        confidence=synthesis["confidence"],
+        mass=synthesis["mass"],
+        needs_review=synthesis["needs_review"],
+        synthesised=synthesis["synthesised"],
+        explicit=synthesis["explicit"],
         observations=counts["observations_recorded"],
         candidates=counts["candidates_created"],
+        proposals=counts["proposals_created"],
+        memories_used=[m for m in (plan.get("memory_ids") or []) if m],
+        reason=synthesis["reasons"][0] if synthesis["reasons"] else "",
     )
-    return {
-        "outcome": resolved_outcome,
-        "quality_score": quality,
-        "source_hash": source_hash,
-        **counts,
-    }
+    return {"outcome": synthesis["outcome"], "quality_score": synthesis["quality_score"],
+            "confidence": synthesis["confidence"], "needs_review": synthesis["needs_review"],
+            "source_hash": source_hash, **counts}
 
 
 # ── evolve ─────────────────────────────────────────────────────────────
@@ -379,12 +459,19 @@ def evolve_stage(state: LoopState, *, store: Optional[MemoryStore] = None) -> di
 
 
 # ── finalize ───────────────────────────────────────────────────────────
+# The loop's completion state is the recorded verdict seen from the other side:
+# keeping a second, independent calculation of it is how one half of the engine
+# reported "completed" while the other half had no idea what had happened.
+_FINAL_BY_OUTCOME = {"success": "completed", "partial": "partial", "failure": "failed"}
+
+
 def finalize_stage(
     state: LoopState,
     *,
     execution: dict[str, Any],
     evidence: dict[str, Any],
     validation: Optional[dict[str, Any]] = None,
+    outcome: str = "",
 ) -> dict[str, Any]:
     """Detect failures, plan recovery (never execute it) and set the status."""
     failures = recovery.detect_failures(
@@ -396,21 +483,7 @@ def finalize_stage(
     plan = recovery.plan_recovery(failures, task_id=state.task_id, loop_id=state.loop_id)
 
     if state.final_status != "failed":
-        status = execution.get("status", "")
-        after = evidence.get("after", {}) if evidence else {}
-        test_passed = after.get("test_passed")
-        validation_status = (validation or {}).get("validation_status", "SKIPPED")
-        if status in ("error", "timeout", "failed"):
-            state.final_status = "failed"
-        elif validation_status == "FAIL":
-            state.final_status = "partial"
-        elif status == "delegated":
-            # The host owns execution; the loop is only half closed.
-            state.final_status = "partial"
-        elif test_passed is False:
-            state.final_status = "partial"
-        else:
-            state.final_status = "completed"
+        state.final_status = _FINAL_BY_OUTCOME.get(outcome, "partial")
 
     state.complete(
         "finalize",
@@ -418,6 +491,7 @@ def finalize_stage(
         failures_detected=len(failures),
         recovery_needed=plan["recovery_needed"],
         validation_status=(validation or {}).get("validation_status", "SKIPPED"),
+        outcome=outcome,
     )
     return {
         "failures": failures,

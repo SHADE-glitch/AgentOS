@@ -13,6 +13,7 @@ from aos.contract.schema import (
     AOS_STATUS,
     CONTRACT_VERSION,
     FINAL_STATUS,
+    SIGNAL_FIELDS,
     ValidationError,
     declared_version,
     is_enum,
@@ -20,6 +21,37 @@ from aos.contract.schema import (
     validate_phase,
     validate_schema_version,
 )
+
+# Verdicts are not signals: a host that sends ``outcome`` has already judged the
+# run, and :func:`aos.core.outcome.synthesize` believes it instead of averaging.
+# They ride in the same object because a host that accumulates evidence naturally
+# accumulates its conclusion beside it.
+VERDICT_FIELDS = frozenset({"outcome", "quality_score"})
+
+# What a plugin may send, as one named set the plugin and the engine can be
+# checked against each other instead of two lists kept in sync by hand.
+PLUGIN_POSTFLIGHT_REQUEST_FIELDS = SIGNAL_FIELDS | VERDICT_FIELDS | frozenset({"skill_used"})
+
+
+def collect_signals(payload: dict[str, Any]) -> dict[str, Any]:
+    """Gather everything the host reported about a finished run into one object.
+
+    Two shapes are accepted: a nested ``signals`` object — what a plugin with an
+    accumulator sends — and the flat top-level keys, which are what this contract
+    has always read. The nested object wins for any key it carries, because it is
+    the deliberate statement rather than a convenience.
+    """
+    nested = payload.get("signals")
+    nested = nested if isinstance(nested, dict) else {}
+    known = SIGNAL_FIELDS | VERDICT_FIELDS | frozenset({"skill_used"})
+    signals: dict[str, Any] = {}
+    for key in sorted(known):
+        if key in nested:
+            signals[key] = nested[key]
+        elif key in payload:
+            signals[key] = payload[key]
+    return signals
+
 
 _TOP_LEVEL = (
     "schema_version",
@@ -69,6 +101,9 @@ def _learning(data: dict[str, Any] | None) -> dict[str, Any]:
         "candidates_recorded": int(data.get("candidates_recorded", 0)),
         "hypotheses_pending_review": int(data.get("hypotheses_pending_review", 0)),
         "promoted": int(data.get("promoted", 0)),
+        # The engine is telling the host "I could not decide, and a human has to".
+        # Without it the host cannot tell a labelled run from an assumed one.
+        "needs_review": bool(data.get("needs_review", False)),
     }
 
 

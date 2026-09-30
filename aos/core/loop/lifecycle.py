@@ -194,6 +194,24 @@ def preflight(
     return _preflight_doc(state, decision, recall, schema_version=schema_version)
 
 
+def _validator_exit_codes(validation: dict[str, Any]) -> dict[str, Any]:
+    """Pull the test/build exit codes the engine itself watched happen.
+
+    ``validate_stage`` has already run the commands and knows the numbers; not
+    forwarding them would make the engine throw away the strongest evidence it
+    produced and then ask a human about a run it could have judged.
+    """
+    codes: dict[str, Any] = {}
+    for key, field in (("test_exit_code", "test"), ("build_exit_code", "build")):
+        result = validation.get(field) or {}
+        status = str(result.get("status") or "")
+        if status in ("", "SKIPPED", "NOT_AVAILABLE"):
+            continue
+        if "exit_code" in result:
+            codes[key] = result.get("exit_code")
+    return codes
+
+
 def _run_postflight(
     *,
     loop_id: str,
@@ -208,6 +226,7 @@ def _run_postflight(
     execution: Optional[dict[str, Any]] = None,
     outcome: str = "",
     quality_score: Optional[float] = None,
+    signals: Optional[dict[str, Any]] = None,
     store: Optional[MemoryStore] = None,
     schema_version: str = CONTRACT_VERSION,
 ) -> tuple[Optional[LoopState], dict[str, Any]]:
@@ -258,14 +277,31 @@ def _run_postflight(
             enabled=validate,
         )
 
+        # One merged statement of what is known about this run: the host's
+        # evidence, the engine's own observations, and any verdict either of them
+        # declared. Everything after this point reads a verdict out of it, and
+        # nothing invents one.
+        received: dict[str, Any] = dict(signals or {})
+        received.update(_validator_exit_codes(validation))
+        if test_exit_code is not None:
+            received.setdefault("test_exit_code", test_exit_code)
+        if expected_files:
+            received.setdefault("expected_files", expected_files)
+        if outcome:
+            received["outcome"] = outcome
+        if quality_score is not None:
+            received["quality_score"] = quality_score
+
         state.begin("record")
         record = stages.record_stage(
             state,
             execution=execution,
             plan=plan,
-            test_exit_code=test_exit_code,
-            outcome=outcome,
-            quality_score=quality_score,
+            signals=received,
+            engine_evidence={
+                "validation": validation,
+                "files_changed": evidence["after"].get("files_changed", []),
+            },
             store=store,
         )
 
@@ -274,7 +310,11 @@ def _run_postflight(
 
         state.begin("finalize")
         final = stages.finalize_stage(
-            state, execution=execution, evidence=evidence, validation=validation
+            state,
+            execution=execution,
+            evidence=evidence,
+            validation=validation,
+            outcome=record["outcome"],
         )
 
         doc = build_postflight(
@@ -301,6 +341,7 @@ def _run_postflight(
                 "candidates_recorded": record.get("candidates_created", 0),
                 "hypotheses_pending_review": learning.get("pending_reviews", 0),
                 "promoted": learning.get("promoted", 0),
+                "needs_review": bool(record.get("needs_review")),
             },
             replayed=False,
             schema_version=schema_version,
@@ -329,6 +370,7 @@ def postflight(
     execution: Optional[dict[str, Any]] = None,
     outcome: str = "",
     quality_score: Optional[float] = None,
+    signals: Optional[dict[str, Any]] = None,
     schema_version: str = CONTRACT_VERSION,
 ) -> dict[str, Any]:
     """Run the post-execution stages and return the postflight contract."""
@@ -346,6 +388,7 @@ def postflight(
             execution=execution,
             outcome=outcome,
             quality_score=quality_score,
+            signals=signals,
             schema_version=schema_version,
         )
     except Exception as exc:  # fail-open: never break the host on finalisation

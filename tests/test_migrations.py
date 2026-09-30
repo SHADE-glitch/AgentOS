@@ -9,6 +9,7 @@ version, and quietly deletes rows on the way through.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -348,8 +349,12 @@ def test_a_destructive_migration_backs_the_file_up_first(tmp_path):
     report = migrate(conn, db_path=db)
 
     backup = Path(report["backup"])
+    first_destructive = next(m for m in migrations.MIGRATIONS if m.destructive)
     assert backup.exists()
-    assert backup.name == f"aos.db.pre-v{LATEST_VERSION}.bak"
+    # Named for the first destructive step, not for the ceiling: v3 is additive
+    # and cannot lose anything, so the copy that matters is the one taken before
+    # the table rebuild.
+    assert backup.name == f"aos.db.pre-v{first_destructive.version}.bak"
     # The backup is the pre-migration database, not a copy of the migrated one:
     # it must still answer to the v1 column set to be worth anything.
     preserved = sqlite3.connect(str(backup))
@@ -380,11 +385,7 @@ def test_a_file_whose_schema_is_ahead_of_its_stamp_is_refused_with_a_repair_path
         ensure_schema(conn, db_path=db)
 
     assert current_version(conn) == BASELINE_VERSION
-    assert "lane" in _columns_of(conn)
-
-
-def _columns_of(conn: sqlite3.Connection) -> set[str]:
-    return {row[1] for row in conn.execute("PRAGMA table_info(memories)")}
+    assert "lane" in _columns_of(conn, "memories")
 
 
 def test_the_new_vocabulary_is_enforced_by_the_schema(tmp_path):
@@ -453,3 +454,101 @@ def test_a_real_v1_store_opens_reads_and_writes_after_migrating(tmp_path, monkey
     )
     assert store.get_memory("M-new")["scope"] == "project:AgentOS"
     store.close()
+
+
+# ── v3: what the learning loop records about its own reasoning ─────────
+def test_v3_adds_signals_consumption_and_review_kind(tmp_path):
+    db = tmp_path / "aos.db"
+    conn = _v1_connection(db)
+    migrate(conn, db_path=db)
+
+    obs = _columns_of(conn, "observations")
+    assert {"confidence", "signals_json", "needs_review", "synthesised", "skill_used"} <= obs
+    cand = _columns_of(conn, "candidates")
+    assert {"consumed_at", "consumed_by"} <= cand
+    reviews = _columns_of(conn, "learning_reviews")
+    assert {"kind", "outcome"} <= reviews
+
+
+def test_v3_defaults_keep_pre_existing_rows_verifiable(tmp_path):
+    """An old observation must not read as "human confirmed, no review needed".
+
+    The default is the *suspicious* side: confidence 1.0 but needs_review 0 and
+    synthesised 0 says "this verdict was reported to us", which is what a v2 row
+    actually was. A default of needs_review=1 would flood the label queue with
+    history nobody can relabel.
+    """
+    db = tmp_path / "aos.db"
+    conn = _v1_connection(db)
+    _insert_v1_memory(conn, "M1")
+    conn.execute(
+        "INSERT INTO observations(memory_id, loop_id, outcome, quality_score, created_at) "
+        "VALUES ('M1', 'L1', 'success', 4.0, '2026-09-01T00:00:00+00:00')"
+    )
+    conn.commit()
+
+    migrate(conn, db_path=db)
+
+    row = conn.execute("SELECT * FROM observations").fetchone()
+    assert row["needs_review"] == 0
+    assert row["synthesised"] == 0
+    assert row["confidence"] == pytest.approx(1.0)
+    assert json.loads(row["signals_json"]) == {}
+
+
+def test_v3_is_additive_and_needs_no_backup(tmp_path):
+    """A migration that only adds columns must not leave a .bak behind.
+
+    Otherwise every store that upgrades pays a full file copy for a change that
+    cannot lose data, and the presence of backups stops meaning "something
+    destructive happened here".
+    """
+    db = tmp_path / "aos.db"
+    conn = _v1_connection(db)
+    _insert_v1_memory(conn, "M1")
+    conn.commit()
+
+    destructive = migrate(conn, to=2, db_path=db)
+    assert destructive["backup"], "v2 rebuilds the table, so it must copy the file first"
+    Path(destructive["backup"]).unlink()
+
+    additive = migrate(conn, db_path=db)
+    assert additive["applied"] == ["v3 learning_signals", "v4 review_loop_link"]
+    assert additive["backup"] is None
+    assert list(tmp_path.glob("*.bak")) == []
+
+
+def test_v4_lets_a_review_belong_to_a_loop(tmp_path):
+    """An outcome review questions a run, so it needs the run's identity.
+
+    Without a column the queue could not ask "does this loop already have an open
+    review", and the sweep that opens them would stop being idempotent.
+    """
+    db = tmp_path / "aos.db"
+    conn = _v1_connection(db)
+    migrate(conn, db_path=db)
+
+    assert "loop_id" in _columns_of(conn, "learning_reviews")
+    conn.execute(
+        "INSERT INTO learning_reviews (memory_id, loop_id, kind, created_at)"
+        " VALUES ('', 'L-7', 'outcome_label', '2026-09-30T00:00:00+00:00')"
+    )
+    conn.execute(
+        "INSERT INTO learning_reviews (memory_id, kind, created_at)"
+        " VALUES ('M-1', 'promotion', '2026-09-30T00:00:00+00:00')"
+    )
+    conn.commit()
+
+    rows = {
+        r["kind"]: r
+        for r in conn.execute("SELECT * FROM learning_reviews ORDER BY review_id")
+    }
+    assert rows["outcome_label"]["loop_id"] == "L-7"
+    assert rows["outcome_label"]["status"] == "pending"
+    # A promotion review still has no loop, so the two kinds cannot be mistaken
+    # for each other by an empty-string match.
+    assert rows["promotion"]["loop_id"] == ""
+
+
+def _columns_of(conn: sqlite3.Connection, table: str) -> set[str]:
+    return {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}

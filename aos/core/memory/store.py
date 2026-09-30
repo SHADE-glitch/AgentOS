@@ -109,8 +109,18 @@ class MemoryStore:
         Content columns are written by the author; the promotion path uses
         :meth:`update_memory_fields` instead, so learning can never rewrite a
         title or body it did not write.
+
+        ``tags``/``roles`` fall back to the row's own keys, because
+        :func:`authoring.new_memory` returns a complete row and a caller that
+        hands it over wholesale must not lose the two columns that carry no
+        weight anywhere else — a memory whose tags silently vanish stops being
+        findable by the largest single term in its ranking.
         """
         memory_id = memory.get("memory_id") or _new_id("M")
+        if tags is None:
+            tags = list(memory.get("tags") or [])
+        if roles is None:
+            roles = list(memory.get("roles") or [])
         now = _now()
         created_at = memory.get("created_at") or now
         columns = (
@@ -316,26 +326,130 @@ class MemoryStore:
         session_id: str = "",
         quality_score: float = 0.0,
         source_hash: str = "",
+        confidence: float = 1.0,
+        signals: Optional[dict[str, Any]] = None,
+        needs_review: bool = False,
+        synthesised: bool = False,
+        skill_used: str = "",
     ) -> int:
+        """Record what happened on one loop.
+
+        ``signals`` is kept beside the verdict rather than discarded, because
+        ``failure`` alone cannot be reviewed: a human has to see whether the test
+        exited non-zero or the user just stopped talking.
+        """
         cursor = self._conn.execute(
             """
             INSERT INTO observations
-                (memory_id, loop_id, task_id, session_id, outcome, quality_score, source_hash, created_at)
-            VALUES (?,?,?,?,?,?,?,?)
+                (memory_id, loop_id, task_id, session_id, outcome, quality_score, source_hash,
+                 confidence, signals_json, needs_review, synthesised, skill_used, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
-            (memory_id, loop_id, task_id, session_id, outcome, float(quality_score), source_hash, _now()),
+            (
+                memory_id,
+                loop_id,
+                task_id,
+                session_id,
+                outcome,
+                float(quality_score),
+                source_hash,
+                float(confidence),
+                json.dumps(signals or {}, ensure_ascii=False),
+                1 if needs_review else 0,
+                1 if synthesised else 0,
+                skill_used,
+                _now(),
+            ),
         )
         self._conn.commit()
         return int(cursor.lastrowid)
 
-    def list_observations(self, *, memory_id: Optional[str] = None) -> list[dict[str, Any]]:
+    def list_observations(
+        self, *, memory_id: Optional[str] = None, loop_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
+        """Observations, optionally narrowed to one memory or one loop.
+
+        A memory answer is what the learning pipeline scores; a loop answer is
+        what a reviewer of one run needs — which memories were in play, and what
+        the run did with them.
+        """
         if memory_id:
             rows = self._conn.execute(
                 "SELECT * FROM observations WHERE memory_id = ? ORDER BY observation_id", (memory_id,)
             ).fetchall()
+        elif loop_id:
+            rows = self._conn.execute(
+                "SELECT * FROM observations WHERE loop_id = ? ORDER BY observation_id", (loop_id,)
+            ).fetchall()
         else:
             rows = self._conn.execute("SELECT * FROM observations ORDER BY observation_id").fetchall()
-        return [dict(r) for r in rows]
+        return [self._row_to_observation(r) for r in rows]
+
+    def list_loops_needing_review(self) -> list[dict[str, Any]]:
+        """Loop-level observations a human still has to label.
+
+        Only the loop-level row (``memory_id IS NULL``) counts: that is the one
+        written once per run, while per-memory rows inherit its verdict and would
+        otherwise multiply the queue.
+        """
+        rows = self._conn.execute(
+            """
+            SELECT * FROM observations
+            WHERE needs_review = 1 AND memory_id IS NULL
+            ORDER BY observation_id
+            """
+        ).fetchall()
+        return [self._row_to_observation(r) for r in rows]
+
+    def set_observation_outcome(self, observation_id: int, *, outcome: str,
+                                quality_score: float, confidence: float = 1.0,
+                                needs_review: bool = False) -> int:
+        """Replace a synthesized verdict with a human one.
+
+        The signals are deliberately left alone: they are what was observed, and
+        relabelling is a new judgement over them, not new evidence.
+
+        Every row of the loop is corrected, not just the loop-level one. A human
+        saying "that run failed" is a statement about the run, and the per-memory
+        rows carry its verdict — leaving them at the synthesized value would make
+        the learning pipeline score memories against a label nobody gave.
+        """
+        row = self._conn.execute(
+            "SELECT loop_id FROM observations WHERE observation_id = ?", (int(observation_id),)
+        ).fetchone()
+        if row is None:
+            return 0
+        loop_id = row["loop_id"] or ""
+        params = (outcome, float(quality_score), float(confidence), 1 if needs_review else 0)
+        if loop_id:
+            cursor = self._conn.execute(
+                "UPDATE observations SET outcome = ?, quality_score = ?, confidence = ?, "
+                "needs_review = ?, synthesised = 0 WHERE loop_id = ?",
+                (*params, loop_id),
+            )
+        else:
+            cursor = self._conn.execute(
+                "UPDATE observations SET outcome = ?, quality_score = ?, confidence = ?, "
+                "needs_review = ?, synthesised = 0 WHERE observation_id = ?",
+                (*params, int(observation_id)),
+            )
+        self._conn.commit()
+        return cursor.rowcount
+
+    def clear_loop_review_flag(self, loop_id: str) -> int:
+        """Take a run out of the label queue without inventing a verdict.
+
+        A reviewer who declines to label a run has still made a decision — that
+        this one teaches nothing. Without this the sweep would reopen the same
+        review on every cycle, because the sweep is driven by the flag.
+        """
+        if not loop_id:
+            return 0
+        cursor = self._conn.execute(
+            "UPDATE observations SET needs_review = 0 WHERE loop_id = ?", (loop_id,)
+        )
+        self._conn.commit()
+        return cursor.rowcount
 
     # ── retrieval log ──────────────────────────────────────────────
 
@@ -398,7 +512,55 @@ class MemoryStore:
             candidates.append(candidate)
         return candidates
 
+    def list_open_candidates(self) -> list[dict[str, Any]]:
+        """Candidates no learning cycle has dealt with yet.
+
+        This is the only queue the pipeline should read. Feeding it
+        :meth:`list_candidates` instead re-processes the whole history every run,
+        which is why an approved promotion used to re-open a fresh review on the
+        next cycle.
+        """
+        rows = self._conn.execute(
+            "SELECT * FROM candidates WHERE consumed_at IS NULL ORDER BY candidate_id"
+        ).fetchall()
+        candidates = []
+        for row in rows:
+            candidate = dict(row)
+            candidate["payload"] = json.loads(candidate.get("payload_json") or "{}")
+            candidates.append(candidate)
+        return candidates
+
+    def consume_candidates(self, candidate_ids: list[int], *, consumed_by: str) -> int:
+        """Mark candidates dealt with, and by what.
+
+        Rejected groups are consumed too: leaving them open means the next cycle
+        recomputes the same rejection for the same reason, forever.
+        """
+        ids = [int(cid) for cid in candidate_ids if cid]
+        if not ids:
+            return 0
+        marks = ", ".join("?" * len(ids))
+        cursor = self._conn.execute(
+            f"UPDATE candidates SET consumed_at = ?, consumed_by = ? "
+            f"WHERE candidate_id IN ({marks}) AND consumed_at IS NULL",
+            (_now(), str(consumed_by), *ids),
+        )
+        self._conn.commit()
+        return cursor.rowcount
+
     # ── learning reviews (the human gate) ──────────────────────────
+
+    # What a review is asking for. `promotion` decides a memory's evidence;
+    # `outcome_label` asks a human what a run that produced no verdict actually
+    # achieved; the rest arrive with their own phases. Enforced here rather than
+    # by a SQL CHECK because adding a CHECK to an existing table would mean
+    # rebuilding it, and this table is referenced by candidates.
+    REVIEW_KINDS = ("promotion", "outcome_label", "conflict", "policy", "skill_improvement")
+    # `stale` is terminal and means "this promise no longer describes the memory".
+    # It has to be a state of its own: a review whose baseline moved can never be
+    # applied correctly, and leaving it pending would block the pipeline from
+    # filing a fresh one for the same memory — a permanently stuck queue.
+    REVIEW_STATUSES = ("pending", "approved", "rejected", "stale")
 
     def add_review(
         self,
@@ -407,18 +569,25 @@ class MemoryStore:
         proposed_change: dict[str, Any],
         evidence: dict[str, Any],
         candidate_id: Optional[int] = None,
+        kind: str = "promotion",
+        loop_id: str = "",
     ) -> int:
+        if kind not in self.REVIEW_KINDS:
+            raise ValueError(f"kind {kind!r} is not one of {self.REVIEW_KINDS}")
         cursor = self._conn.execute(
             """
             INSERT INTO learning_reviews
-                (memory_id, candidate_id, proposed_change_json, evidence_json, status, created_at)
-            VALUES (?,?,?,?, 'pending', ?)
+                (memory_id, candidate_id, proposed_change_json, evidence_json, status, kind,
+                 loop_id, created_at)
+            VALUES (?,?,?,?, 'pending', ?,?,?)
             """,
             (
                 memory_id,
                 candidate_id,
                 json.dumps(proposed_change, ensure_ascii=False),
                 json.dumps(evidence, ensure_ascii=False),
+                kind,
+                loop_id,
                 _now(),
             ),
         )
@@ -431,28 +600,54 @@ class MemoryStore:
         ).fetchone()
         return self._row_to_review(row) if row else None
 
-    def list_reviews(self, *, status: Optional[str] = None) -> list[dict[str, Any]]:
+    def list_reviews(
+        self, *, status: Optional[str] = None, kind: Optional[str] = None
+    ) -> list[dict[str, Any]]:
+        clauses, params = [], []
         if status:
-            rows = self._conn.execute(
-                "SELECT * FROM learning_reviews WHERE status = ? ORDER BY review_id", (status,)
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT * FROM learning_reviews ORDER BY review_id"
-            ).fetchall()
+            clauses.append("status = ?")
+            params.append(status)
+        if kind:
+            clauses.append("kind = ?")
+            params.append(kind)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        rows = self._conn.execute(
+            f"SELECT * FROM learning_reviews {where} ORDER BY review_id", params
+        ).fetchall()
         return [self._row_to_review(r) for r in rows]
 
-    def has_pending_review(self, memory_id: str) -> bool:
-        row = self._conn.execute(
-            "SELECT 1 FROM learning_reviews WHERE memory_id = ? AND status = 'pending' LIMIT 1",
-            (memory_id,),
-        ).fetchone()
-        return row is not None
+    def pending_review_id(
+        self, memory_id: str, *, kind: Optional[str] = None, loop_id: Optional[str] = None
+    ) -> Optional[int]:
+        """The open review for this memory, or for this loop.
 
-    def set_review_status(self, review_id: int, status: str) -> bool:
+        Returning the id rather than a boolean matters twice over: the pipeline
+        can point a result at the review that already exists instead of reporting
+        one it did not create, and a caller can tell "nothing is open" from
+        "something is, and it is not what you were about to file".
+
+        With ``kind`` given, only that kind is matched: a promotion review should
+        not hide the fact that this run still needs an outcome label, and vice
+        versa.
+        """
+        if loop_id is not None:
+            sql = "SELECT review_id FROM learning_reviews WHERE loop_id = ? AND status = 'pending'"
+            params: list[Any] = [loop_id]
+        else:
+            sql = "SELECT review_id FROM learning_reviews WHERE memory_id = ? AND status = 'pending'"
+            params = [memory_id]
+        if kind:
+            sql += " AND kind = ?"
+            params.append(kind)
+        row = self._conn.execute(sql + " LIMIT 1", params).fetchone()
+        return int(row["review_id"]) if row else None
+
+    def set_review_status(self, review_id: int, status: str, *, outcome: str = "") -> bool:
+        if status not in self.REVIEW_STATUSES:
+            raise ValueError(f"status {status!r} is not one of {self.REVIEW_STATUSES}")
         cursor = self._conn.execute(
-            "UPDATE learning_reviews SET status = ?, reviewed_at = ? WHERE review_id = ?",
-            (status, _now(), int(review_id)),
+            "UPDATE learning_reviews SET status = ?, outcome = ?, reviewed_at = ? WHERE review_id = ?",
+            (status, outcome, _now(), int(review_id)),
         )
         self._conn.commit()
         return cursor.rowcount > 0
@@ -521,6 +716,13 @@ class MemoryStore:
         review["proposed_change"] = json.loads(review.pop("proposed_change_json") or "{}")
         review["evidence"] = json.loads(review.pop("evidence_json") or "{}")
         return review
+
+    def _row_to_observation(self, row: sqlite3.Row) -> dict[str, Any]:
+        observation = dict(row)
+        observation["signals"] = json.loads(observation.pop("signals_json") or "{}")
+        observation["needs_review"] = bool(observation.get("needs_review"))
+        observation["synthesised"] = bool(observation.get("synthesised"))
+        return observation
 
     def _group(self, sql: str, value_key: str) -> dict[str, list[str]]:
         grouped: dict[str, list[str]] = {}

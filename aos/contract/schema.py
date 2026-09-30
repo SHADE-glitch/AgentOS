@@ -84,6 +84,28 @@ REQUEST_REQUIRED: dict[str, tuple[str, ...]] = {
     "postflight": ("task_id", "loop_id"),
 }
 
+# What a host may report about a finished run that the engine could not observe.
+# `outcome` and `quality_score` are deliberately absent: those are verdicts, and
+# a host that sends one is believed outright. These are the *evidence* a verdict
+# is synthesised from, and they are the reason this table exists — opencode has no
+# hook that returns a pass/fail, so without a channel for tool errors, interrupts
+# and diffs, every delegated run would have to be guessed at.
+SIGNAL_FIELDS = frozenset(
+    {
+        "test_exit_code",
+        "build_exit_code",
+        "validation_status",
+        "user_interrupted",
+        "session_error",
+        "tool_errors",
+        "todos_unfinished",
+        "expected_files",
+        "diff",
+        "response_summary",
+        "files_changed",
+    }
+)
+
 # Every inbound field the engine reads, per phase. Anything outside this set is
 # reported as ignored instead of being dropped in silence — silently discarded
 # keys are exactly how the outcome channel went missing in the first place.
@@ -121,6 +143,19 @@ REQUEST_FIELDS: dict[str, frozenset[str]] = {
             "compile_command",
             "expected_files",
             "validate",
+            # Either flat or nested: a host that already accumulates a signals
+            # object may send it whole, and the top-level keys below are the
+            # signals the engine has always read from there.
+            "signals",
+            "build_exit_code",
+            "user_interrupted",
+            "session_error",
+            "tool_errors",
+            "todos_unfinished",
+            "diff",
+            "response_summary",
+            "files_changed",
+            "skill_used",
         }
     ),
 }
@@ -232,6 +267,9 @@ def validate_request(payload: dict[str, Any], *, phase: str) -> list[str]:
         )
     if "validate" in payload:
         require(isinstance(payload["validate"], bool), "validate must be a boolean", errors)
+    signals = payload.get("signals")
+    if signals is not None:
+        require(isinstance(signals, dict), "signals must be an object", errors)
 
     return errors
 

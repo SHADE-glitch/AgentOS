@@ -156,6 +156,34 @@
       "evidence_level": "runtime_validated",
       "confidence": "medium",
       "verified": true
+    },
+    {
+      "memory_id": "M-SEED-SIGNAL11",
+      "type": "failure",
+      "category": "learning",
+      "title": "不要给没人判定的运行记一个默认结论",
+      "body": "postflight 收到空的 execution 时曾兜底 {\"status\":\"success\"}，于是每一次委托运行都被记成成功，主学习信号变成常量，表格在长而能力没长。正确做法：结论只能来自 aos/core/outcome.py 的加权信号，confidence 是「信号权重覆盖率」而非同意度；质量评分器 evaluate.compute_quality_score 只对模型自己的散文打分，奖励 markdown 与中文虚词，必须把它的权重降到 0.00 并作为 host 可选输入保留。没有信号就写 partial + needs_review，交给人门，绝不用算术猜一个 verdict。",
+      "when_to_apply": "要给一次运行落结论、或想引入新的打分信号时。",
+      "scope": "project:AgentOS",
+      "tags": ["outcome", "learning", "signals", "confidence", "human-gate"],
+      "roles": ["backend-architect", "agent-engineer"],
+      "evidence_level": "real_project_validated",
+      "confidence": "high",
+      "verified": true
+    },
+    {
+      "memory_id": "M-SEED-CWD12",
+      "type": "constraint",
+      "category": "validation",
+      "title": "项目根由调用方命名，绝不回退到进程自己的 cwd",
+      "body": "project_preflight_stage 与 validate_stage 曾写 `root = project_root or state.cwd or \".\"`，host 忘传 cwd 时引擎就在 CLI 启动目录里探测构建系统、把发现的 compile 命令真跑一遍，再把这个结果当作任务的证据 —— 于是一个没标注的运行被判成 failure，而它其实什么也没发生。规则：没有命名的项目就没有项目，验证记 SKIPPED/no project root reported，运行落到 partial 并排队等人工标注。副作用不只在结论上，还在别人的目录里跑了命令。",
+      "when_to_apply": "要解析项目根、工作目录，或决定是否执行探测出来的命令时。",
+      "scope": "project:AgentOS",
+      "tags": ["validation", "cwd", "subprocess", "side-effects", "evidence"],
+      "roles": ["backend-architect", "security-engineer"],
+      "evidence_level": "runtime_validated",
+      "confidence": "high",
+      "verified": true
     }
   ]
 }

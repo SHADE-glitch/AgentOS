@@ -264,16 +264,19 @@ def test_run_with_cwd_runs_the_validate_stage(tmp_path):
     assert doc["final_status"] == "completed"
 
 
-def test_run_without_commands_skips_validation_but_completes(tmp_path):
+def test_run_without_commands_skips_validation_and_asks(tmp_path):
     repo = _init_repo(tmp_path / "repo")
     doc = lifecycle.run(task="add a health check", cwd=str(repo), provider="test_provider")
     state = LoopState.load(doc["loop_id"])
     assert state.stage_data("validate")["validation_status"] == "SKIPPED"
     assert state.stage_data("validate")["reason"]
-    assert doc["final_status"] == "completed"
+    # SKIPPED is absence, not a zero: with nothing else reported the run has no
+    # verdict and goes to the label gate instead of being called a completion.
+    assert doc["final_status"] == "partial"
+    assert doc["learning"]["needs_review"] is True
 
 
-def test_failing_validation_marks_partial(tmp_path):
+def test_failing_build_marks_failure(tmp_path):
     repo = _init_repo(tmp_path / "repo")
     doc = lifecycle.run(
         task="add a health check",
@@ -281,7 +284,7 @@ def test_failing_validation_marks_partial(tmp_path):
         provider="test_provider",
         compile_command="false",
     )
-    assert doc["final_status"] == "partial"
+    assert doc["final_status"] == "failed"
 
 
 def test_no_validate_flag_skips(tmp_path):
@@ -295,3 +298,34 @@ def test_no_validate_flag_skips(tmp_path):
     )
     state = LoopState.load(doc["loop_id"])
     assert state.stage_data("validate")["reason"] == "disabled by request"
+
+
+def test_no_project_root_means_no_validation_and_no_lie(tmp_path):
+    """The engine must not fall back to its own working directory.
+
+    `project_root or "."` meant a host that forgot `cwd` had the CLI detect a
+    build system in whatever directory it happened to be launched from, run that
+    command, and then hand the result to the learning loop as if it described the
+    task. An unnamed project is not a failed project.
+    """
+    doc = lifecycle.preflight(task="修复 Lua 脚本的过期逻辑", task_id="T1")
+    assert doc["classification"]["difficulty"]  # the loop still ran
+
+    result = lifecycle.postflight(task_id=doc["task_id"], loop_id=doc["loop_id"])
+    state = LoopState.load(doc["loop_id"])
+
+    assert state.stage_data("validate")["validation_status"] == "SKIPPED"
+    assert state.stage_data("validate")["reason"] == "no project root reported"
+    assert state.stage_data("plan")["project_preflight"]["status"] == "skipped"
+    # Nothing was executed, so nothing is claimed: the run asks instead.
+    assert result["final_status"] == "partial"
+    assert result["learning"]["needs_review"] is True
+
+
+def test_an_empty_cwd_string_is_not_a_project_root(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    doc = lifecycle.preflight(task="add a health check", task_id="T1", cwd="")
+    result = lifecycle.postflight(task_id=doc["task_id"], loop_id=doc["loop_id"], cwd=str(repo))
+
+    assert result["final_status"] == "partial"
+    assert result["learning"]["needs_review"] is True

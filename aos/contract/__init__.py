@@ -14,16 +14,24 @@ from aos.contract.schema import (
     validate_request,
 )
 from aos.contract.preflight import build_preflight, fallback_preflight, validate_preflight
-from aos.contract.postflight import build_postflight, fallback_postflight, validate_postflight
+from aos.contract.postflight import (
+    PLUGIN_POSTFLIGHT_REQUEST_FIELDS,
+    build_postflight,
+    collect_signals,
+    fallback_postflight,
+    validate_postflight,
+)
 
 __all__ = [
     "CONTRACT_VERSION",
     "SUPPORTED_VERSIONS",
+    "PLUGIN_POSTFLIGHT_REQUEST_FIELDS",
     "ValidationError",
     "build_preflight",
     "fallback_preflight",
     "validate_preflight",
     "build_postflight",
+    "collect_signals",
     "fallback_postflight",
     "validate_postflight",
     "validate_request",

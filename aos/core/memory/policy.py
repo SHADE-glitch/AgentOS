@@ -52,8 +52,12 @@ DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
         "max_promotions": 5,
     },
     "rejection": {
-        "reject_create_hypothesis": True,
+        # Whether a weakening candidate must be seen by a human. Flipping this to
+        # false lets the gate demote memories on its own — the safety property the
+        # gate exists for, so it is a switch to pull deliberately, not a default.
         "reject_weaken": True,
+        # A proposal for a *new* memory is a human decision regardless of how many
+        # runs stand behind it: the alternative is a loop that writes itself.
         "hypothesis_requires_review": True,
     },
     "injection": {
@@ -64,6 +68,49 @@ DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
         "max_items": 6,
         "max_body_chars": 280,
         "hypothesis_max_items": 1,
+    },
+    "outcome": {
+        # Weight = how much a signal is trusted, and how much coverage a run gets
+        # for free. Confidence is the *sum of weights actually observed*, so a
+        # host that runs the test suite is believed and one that reports nothing
+        # is not. response_summary stays at 0.00: reading the model's own prose
+        # for "done" is the signal that made the old quality score meaningless.
+        "weights": {
+            "test_exit_code": 0.45,
+            "build_exit_code": 0.20,
+            "validation_status": 0.20,
+            "user_interrupted": 0.20,
+            "session_error": 0.20,
+            "tool_errors": 0.10,
+            "todos_unfinished": 0.10,
+            "expected_files": 0.10,
+            "diff": 0.05,
+            "response_summary": 0.00,
+        },
+        # Lets a deployment re-weight without a code change; a key set to 0.00 here
+        # makes that signal contribute nothing to the score and, for the exit-code
+        # signals, forfeits its hard-fail veto too — the veto is what the weight
+        # buys, so muting a signal the engine still reads would be a silent lie.
+        "weight_overrides": {},
+        "thresholds": {"success": 0.75, "partial": 0.40},
+        "error_cap": 5,
+        # A verdict this thin goes to a human rather than into the learning
+        # signal. opencode alone reaches ~0.10-0.30 mass, so the intended steady
+        # state is that automatic runs queue for `aos review label`.
+        "min_auto_confidence": 0.60,
+        # Below this coverage the weighted average may not name an outcome at all,
+        # in either direction. 0.45 is the weight of the least ambiguous single
+        # signal, so one clean test run can be acted on but one empty diff cannot.
+        "min_verdict_mass": 0.45,
+        # "Not told" is not "failed". Recording a zero-signal run as failure would
+        # weaken the memories that were merely present, which is the opposite of
+        # what an absence of evidence means.
+        "no_signal_outcome": "partial",
+        # Quality when there is no score to derive one from: a host that declared
+        # success is credited some; an unknown run earns nothing.
+        "success_quality": 3.5,
+        "partial_quality": 0.0,
+        "failure_quality": 0.0,
     },
 }
 

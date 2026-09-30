@@ -10,6 +10,13 @@ success rate.
 ``compute_quality_score`` is kept verbatim: it is a pure heuristic used to
 grade an agent response, and callers that still have response text can reuse
 it to produce the quality scores stored in observations.
+
+The engine stopped calling it by default. It grades the *shape* of a response —
+markdown headers, bullets, Chinese function words — not whether the work was
+right, so a delegated run with an empty response could never clear the promotion
+threshold while a confident-looking wrong one always did. That is why it reads as
+weight ``0.00`` in :mod:`aos.core.outcome`: available to a host that wants it as
+an input, never a verdict on its own.
 """
 
 from __future__ import annotations

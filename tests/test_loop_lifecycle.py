@@ -137,11 +137,18 @@ def test_preflight_echoes_a_declared_1_0_version(repo):
 
 
 # ── run ────────────────────────────────────────────────────────────────
-def test_run_with_test_provider_completes(repo):
+def test_run_without_evidence_is_partial_and_asks(repo):
+    """A provider that answered is not a provider that was right.
+
+    Nothing in this run reported a test, a build or a diff, so the engine says it
+    does not know and queues the run for a label. It used to answer ``completed``,
+    which is the constant that made the learning signal meaningless.
+    """
     doc = lifecycle.run(task="add a health check endpoint", cwd=str(repo), provider="test_provider")
 
     validate_postflight(doc)
-    assert doc["final_status"] == "completed"
+    assert doc["final_status"] == "partial"
+    assert doc["learning"]["needs_review"] is True
     assert doc["evidence"]["repo_resolved"] is True
 
 
@@ -163,7 +170,12 @@ def test_run_provider_error_marks_failed(repo):
     assert doc["recovery"]["plan"]["recovery_needed"] is True
 
 
-def test_run_failing_tests_marks_partial(repo):
+def test_run_failing_tests_marks_failure(repo):
+    """A non-zero test exit code is decisive, not an average.
+
+    `partial` used to be the answer here because the loop only looked at the
+    provider's own status; the tests failing is the strongest fact in the payload.
+    """
     doc = lifecycle.run(
         task="add a health check endpoint",
         cwd=str(repo),
@@ -172,7 +184,7 @@ def test_run_failing_tests_marks_partial(repo):
         test_exit_code=1,
     )
 
-    assert doc["final_status"] == "partial"
+    assert doc["final_status"] == "failed"
     assert doc["evidence"]["test_passed"] is False
 
 

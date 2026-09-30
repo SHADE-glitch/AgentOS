@@ -1,9 +1,12 @@
 """The ``aos`` command line entry point.
 
-Phase 1 provides ``--version`` and ``doctor``. The preflight/postflight
-commands already speak the frozen contract (falling back fail-open until
-the core lifecycle is ported); the remaining commands are wired in later
-phases.
+Two kinds of caller use this binary. A host (OpenCode, through its plugin) speaks
+the frozen JSON contract on stdin and gets one on stdout — ``preflight`` and
+``postflight``, which fail open rather than ever raising into a prompt. A human
+speaks argv: ``memory`` authors and inspects the store, ``review`` is the gate
+that decides what becomes knowledge, and ``doctor`` reports whether the loop is
+healthy. The contract is the only way in for a host; there is no second host
+protocol, by design.
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ from aos import __version__
 from aos.config import ConfigError, get_paths
 from aos.contract import (
     CONTRACT_VERSION,
+    collect_signals,
     fallback_postflight,
     fallback_preflight,
     unread_request_fields,
@@ -213,6 +217,10 @@ def cmd_postflight(args: argparse.Namespace) -> int:
         # Every field the lifecycle can act on is forwarded. This list is the
         # learning signal's only path into the engine; dropping from it is what
         # made every host-delegated run record itself as a success.
+        #
+        # `collect_signals` accepts both a nested `signals` object and the flat
+        # keys, so a plugin can send whichever it already has.
+        signals = collect_signals(payload)
         doc = lifecycle.postflight(
             task_id=payload.get("task_id", ""),
             loop_id=payload.get("loop_id", ""),
@@ -227,6 +235,7 @@ def cmd_postflight(args: argparse.Namespace) -> int:
             compile_command=payload.get("compile_command", ""),
             expected_files=payload.get("expected_files"),
             validate=bool(payload.get("validate", True)),
+            signals=signals,
             schema_version=declared,
         )
     validate_postflight(_note_unread(doc, payload, phase="postflight"))
@@ -448,6 +457,52 @@ def cmd_memory(args: argparse.Namespace) -> int:
         store.close()
 
 
+def _describe_review(review: dict[str, Any]) -> str:
+    """One review, rendered for the person who has to decide it.
+
+    An outcome-label review shows the *evidence* rather than a verdict, because
+    the verdict is what is being asked for; a promotion review shows what approving
+    would change, because approving must not surprise anyone.
+    """
+    evidence = review.get("evidence") or {}
+    change = review.get("proposed_change") or {}
+    kind = review.get("kind", "promotion")
+
+    if kind == "outcome_label":
+        signals = evidence.get("signals") or {}
+        shown = ", ".join(
+            f"{key}={signals[key]}" for key in sorted(signals) if signals[key] not in (None, "", [], {})
+        ) or "nothing"
+        memories = evidence.get("memories_used") or []
+        return (
+            f"#{review['review_id']:<4} label    loop={review.get('loop_id') or '-':<14} "
+            f"engine said={evidence.get('outcome')} confidence={evidence.get('confidence')} "
+            f"mass={evidence.get('mass')}\n"
+            f"      任务: {evidence.get('task') or '(unknown)'}\n"
+            f"      信号: {shown}\n"
+            f"      缺席: {', '.join(evidence.get('absent') or []) or '-'}\n"
+            f"      涉及记忆: {', '.join(memories) or '(none recalled)'}\n"
+            f"      -> aos review label {review['review_id']} --outcome success|partial|failure"
+        )
+
+    changes = change.get("changes") or {}
+    before = change.get("before") or {}
+    moved = ", ".join(
+        f"{key}: {before.get(key, '-')!r} -> {value!r}" for key, value in changes.items()
+    ) or "nothing"
+    proposal = evidence.get("proposal") or {}
+    lines = [
+        f"#{review['review_id']:<4} {review['status']:<8} {kind} {review['memory_id']:<12} "
+        f"runs={evidence.get('validation_runs', 0)} quality={evidence.get('quality_score', 0)}"
+    ]
+    if change.get("kind") == "create":
+        lines.append(f"      新建: [{proposal.get('type')}] {proposal.get('title', '')}")
+        lines.append(f"      内容: {proposal.get('body', '')}")
+    lines.append(f"      批准后: {moved}")
+    lines.append(f"      原因: {evidence.get('reason') or change.get('reason') or ''}")
+    return "\n".join(lines)
+
+
 def cmd_review(args: argparse.Namespace) -> int:
     from aos.core.memory import evolve
 
@@ -455,30 +510,41 @@ def cmd_review(args: argparse.Namespace) -> int:
 
     if command == "list":
         reviews = evolve.list_reviews(status=getattr(args, "status", None))
+        if getattr(args, "json", False):
+            _emit(reviews)
+            return 0
         if not reviews:
             print("(no reviews)")
             return 0
         for review in reviews:
-            evidence = review["evidence"]
-            reason = evidence.get("reason") or ""
-            print(
-                f"#{review['review_id']:<4} {review['status']:<9} {review['memory_id']:<12} "
-                f"runs={evidence.get('validation_runs', 0)} quality={evidence.get('quality_score', 0)} {reason}"
-            )
-        print(f"\n{len(reviews)} reviews")
+            print(_describe_review(review))
+            print()
+        pending = [r for r in reviews if r["status"] == "pending"]
+        labels = [r for r in pending if r.get("kind") == "outcome_label"]
+        print(f"{len(reviews)} reviews ({len(pending)} pending, {len(labels)} waiting for a label)")
         return 0
+
+    if command == "label":
+        result = evolve.label_review(args.review_id, args.outcome, quality_score=args.quality)
+        _emit(result)
+        return 0 if result["status"] == "labelled" else 1
 
     if command in ("approve", "reject"):
         if command == "approve":
             result = evolve.approve_review(args.review_id)
             expected = "approved"
         else:
-            result = evolve.reject_review(args.review_id)
+            result = evolve.reject_review(
+                args.review_id, as_outcome=getattr(args, "as_outcome", "") or ""
+            )
             expected = "rejected"
         _emit(result)
         return 0 if result["status"] == expected else 1
 
-    print("usage: aos review list [--status STATUS] | approve <id> | reject <id>", file=sys.stderr)
+    print(
+        "usage: aos review list [--status STATUS] [--json] | label <id> --outcome X | approve <id> | reject <id> [--as X]",
+        file=sys.stderr,
+    )
     return 1
 
 
@@ -488,6 +554,7 @@ def build_parser() -> argparse.ArgumentParser:
     # stay free of the storage layer, as they were before.
     from aos.contract.schema import MEMORY_LANE, MEMORY_TYPE
     from aos.core.memory.authoring import CONFIDENCE_LEVELS, STATUSES
+    from aos.core.outcome import OUTCOMES
     from aos.core.memory.evolve import EVIDENCE_LEVELS
 
     parser = argparse.ArgumentParser(
@@ -585,15 +652,37 @@ def build_parser() -> argparse.ArgumentParser:
         p_mem_detail = mem_sub.add_parser(name, help=help_text)
         p_mem_detail.add_argument("memory_id", help="memory id")
 
-    p_review = sub.add_parser("review", help="review pending memory promotions")
+    p_review = sub.add_parser("review", help="the human gate: label runs, decide reviews")
     review_sub = p_review.add_subparsers(dest="review_command")
     p_review_list = review_sub.add_parser("list", help="list learning reviews")
     p_review_list.add_argument(
-        "--status", choices=["pending", "approved", "rejected"], default=None, help="filter by status"
+        "--status",
+        choices=["pending", "approved", "rejected", "stale"],
+        default=None,
+        help="filter by status",
     )
+    p_review_list.add_argument("--json", action="store_true", help="emit the reviews as JSON")
     for action in ("approve", "reject"):
         p_action = review_sub.add_parser(action, help=f"{action} a pending review")
         p_action.add_argument("review_id", type=int, help="review id")
+        if action == "reject":
+            p_action.add_argument(
+                "--as",
+                dest="as_outcome",
+                choices=list(OUTCOMES),
+                default="",
+                help="also relabel the run this review came from, so a rejection "
+                     "becomes a weakening signal instead of a shrug",
+            )
+    p_label = review_sub.add_parser("label", help="answer an outcome-label review")
+    p_label.add_argument("review_id", type=int, help="review id")
+    p_label.add_argument("--outcome", required=True, choices=list(OUTCOMES), help="what the run achieved")
+    p_label.add_argument(
+        "--quality",
+        type=float,
+        default=None,
+        help="quality score to record instead of the default for that outcome",
+    )
 
     return parser
 

@@ -170,3 +170,26 @@ def test_usage_stats_track_success_rate(store):
     assert stats["usage_count"] == 2
     assert stats["successful_uses"] == 1
     assert stats["success_rate"] == 0.5
+
+
+def test_upsert_keeps_the_tags_that_came_inside_the_row(store):
+    """A complete row handed over wholesale must not quietly lose its tags.
+
+    `authoring.new_memory` returns a row that already carries `tags`, while
+    `upsert_memory` used to write them only when they were also passed as a
+    keyword — so a caller that did the obvious thing stored a memory the recall
+    path can no longer find by its largest scoring term.
+    """
+    from aos.core.memory.authoring import new_memory
+
+    store.upsert_memory(
+        new_memory(
+            title="改 Lua 脚本后先跑 eval 兼容性",
+            body="两类改动分开提交。",
+            type="procedural",
+            tags=["lua", "redis"],
+        )
+    )
+
+    row = store.memories_for_scoring()[0]
+    assert sorted(row["tags"]) == ["lua", "redis"]

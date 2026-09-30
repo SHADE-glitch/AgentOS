@@ -423,6 +423,55 @@ def _v2_memory_lifecycle(conn: sqlite3.Connection) -> None:
     )
 
 
+def _v3_learning_signals(conn: sqlite3.Connection) -> None:
+    """Add what the learning loop needs to record *how* it concluded anything.
+
+    Purely additive, so no rebuild and no backup. The point of these columns is
+    that an outcome without its signals is unverifiable: a reviewer looking at
+    ``failure`` cannot tell whether the tests failed or the model simply gave up,
+    and the engine cannot tell a synthesized verdict from one the host reported.
+    """
+    conn.executescript(
+        """
+        ALTER TABLE observations ADD COLUMN confidence   REAL NOT NULL DEFAULT 1.0;
+        ALTER TABLE observations ADD COLUMN signals_json TEXT NOT NULL DEFAULT '{}';
+        ALTER TABLE observations ADD COLUMN needs_review INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE observations ADD COLUMN synthesised  INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE observations ADD COLUMN skill_used   TEXT NOT NULL DEFAULT '';
+
+        ALTER TABLE candidates ADD COLUMN consumed_at TEXT;
+        ALTER TABLE candidates ADD COLUMN consumed_by TEXT;
+
+        ALTER TABLE learning_reviews ADD COLUMN kind    TEXT NOT NULL DEFAULT 'promotion';
+        ALTER TABLE learning_reviews ADD COLUMN outcome TEXT NOT NULL DEFAULT '';
+
+        CREATE INDEX IF NOT EXISTS idx_obs_review ON observations(needs_review);
+        CREATE INDEX IF NOT EXISTS idx_cand_open ON candidates(consumed_at)
+            WHERE consumed_at IS NULL;
+        CREATE INDEX IF NOT EXISTS idx_reviews_kind ON learning_reviews(kind, status);
+        """
+    )
+
+
+def _v4_review_loop(conn: sqlite3.Connection) -> None:
+    """Link reviews to the loop they are about, not only to a memory.
+
+    ``outcome_label`` reviews question a whole run — "was that a success?" — so
+    they have no single target memory, and the queue has to answer "does this
+    loop already have an open review?" without extracting a field out of a JSON
+    snapshot with ``LIKE``. A column the query can use is cheaper than that
+    query, and it is what makes the sweep that opens them idempotent.
+    """
+    conn.executescript(
+        """
+        ALTER TABLE learning_reviews ADD COLUMN loop_id TEXT NOT NULL DEFAULT '';
+
+        CREATE INDEX IF NOT EXISTS idx_reviews_loop ON learning_reviews(loop_id)
+            WHERE loop_id <> '';
+        """
+    )
+
+
 def _rebuild_table(
     conn: sqlite3.Connection, table: str, ddl: str, column_map: dict[str, str]
 ) -> None:
@@ -454,6 +503,8 @@ def _rebuild_table(
 
 MIGRATIONS: tuple[Migration, ...] = (
     Migration(2, "memory_lifecycle", _v2_memory_lifecycle, destructive=True),
+    Migration(3, "learning_signals", _v3_learning_signals),
+    Migration(4, "review_loop_link", _v4_review_loop),
 )
 
 # Kept for display and for callers that want the ceiling without a call;
