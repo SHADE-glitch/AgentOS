@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from aos.core.memory.policy import load_policy
-from aos.core.memory.store import MemoryStore
+from aos.core.memory.store import MemoryStore, hypothesis_lane
 
 # Default thresholds (overridable via content/policies/retrieval.json).
 TOP_K = 5
@@ -81,22 +81,13 @@ def compute_static_relevance(memory: dict[str, Any], query: dict[str, Any]) -> f
 
     mem_type = memory.get("type", "")
     type_boost = 0.0
-    if mem_type == "failure" and any(d in tags for d in q_domains):
+    # A memory that says "not this" or "not beyond this line" is worth surfacing
+    # for exactly the domain it would have hurt; one that says "do it this way"
+    # only earns its place when the task spans several domains.
+    if mem_type in ("failure", "constraint") and any(d in tags for d in q_domains):
         type_boost = 0.15
-    elif mem_type == "anti-pattern" and len(q_domains) <= 1:
-        type_boost = 0.15
-    elif mem_type == "pattern" and len(q_domains) >= 2:
+    elif mem_type == "procedural" and len(q_domains) >= 2:
         type_boost = 0.05
-
-    difficulty_match = 0.0
-    q_diff = str(query.get("difficulty", "")).lower()
-    if q_diff and q_diff in str(memory.get("difficulty", "")).lower():
-        difficulty_match = 0.10
-
-    tag_overlap = 0.0
-    if tags:
-        all_query_tags = set(q_domains + q_roles + q_keywords)
-        tag_overlap = min(len(set(tags) & all_query_tags) / max(len(tags), 1), 0.05)
 
     relevance = (
         task_text_score * 0.40
@@ -105,8 +96,6 @@ def compute_static_relevance(memory: dict[str, Any], query: dict[str, Any]) -> f
         + type_boost * 0.10
         + role_match * 0.10
         + keyword_match * 0.10
-        + difficulty_match * 0.00
-        + tag_overlap * 0.00
     )
     return round(relevance, 3)
 
@@ -126,25 +115,22 @@ def compute_adaptive_score(
     su = int(usage.get("successful_uses", 0))
     success_rate = (su / uc) if uc > 0 else 0.5
     confidence_score = min(int(memory.get("observation_count", 0)) / 5.0, 1.0)
-    performance_gain = float(memory.get("performance_gain", 0.0))
 
     quality_bonus = (
         success_rate * weights.get("success_rate", 0.15)
         + confidence_score * weights.get("confidence", 0.10)
-        + performance_gain * weights.get("performance", 0.05)
     )
     quality_bonus = min(quality_bonus, cap)
 
     adaptive = static_relevance * (1.0 + quality_bonus)
     final_score = adaptive * decay_factor
 
-    is_hypothesis = memory.get("type") == "hypothesis"
+    is_hypothesis = hypothesis_lane(memory, memory_id)
     return {
         "memory_id": memory_id,
         "static_relevance": round(static_relevance, 3),
         "success_rate": round(success_rate, 3),
         "confidence_score": round(confidence_score, 3),
-        "performance_gain": round(performance_gain, 3),
         "quality_bonus": round(quality_bonus, 3),
         "adaptive_score": round(adaptive, 3),
         "decay_factor": round(decay_factor, 3),
@@ -152,10 +138,30 @@ def compute_adaptive_score(
         "evidence_level": memory.get("evidence_level", "hypothesis"),
         "confidence": memory.get("confidence", "low"),
         "type": memory.get("type", "unknown"),
+        "lane": memory.get("lane", "hypothesis" if is_hypothesis else "standard"),
+        "status": memory.get("status", ""),
+        "scope": memory.get("scope", "global"),
         "category": memory.get("category", ""),
         "title": memory.get("title", ""),
         "body": memory.get("body", ""),
+        # The trigger clause is the single most useful thing to inject: without
+        # it a memory reads to the model as an unmotivated fact.
+        "when_to_apply": memory.get("when_to_apply", ""),
         "tags": memory.get("tags", []),
+        # Provenance, so a recalled memory can be traced back to what produced
+        # it instead of being believed on the strength of having been stored.
+        "source_task": memory.get("source_task", ""),
+        "source_project": memory.get("source_project", ""),
+        "source_session": memory.get("source_session", ""),
+        "source_loop_id": memory.get("source_loop_id", ""),
+        "created_at": memory.get("created_at", ""),
+        "last_verified_at": memory.get("last_verified_at", ""),
+        "revalidate_after": memory.get("revalidate_after", ""),
+        "version": int(memory.get("version", 1) or 1),
+        "supersedes": memory.get("supersedes", ""),
+        "observation_count": int(memory.get("observation_count", 0)),
+        "use_count": int(memory.get("use_count", 0)),
+        "success_count": int(memory.get("success_count", 0)),
         "usage_count": uc,
         "is_hypothesis": is_hypothesis,
         "warning": "Unvalidated hypothesis — not an established engineering rule" if is_hypothesis else None,
@@ -308,8 +314,12 @@ def retrieve(
 ) -> dict[str, Any]:
     """Rank memories for a query and return the top-K results.
 
-    ``query`` keys: task_text, category, domains, roles, keywords, difficulty,
+    ``query`` keys: task_text, category, domains, roles, keywords,
     exclude_hypothesis, exclude_memories.
+
+    ``difficulty`` is deliberately not among them: the memories table keeps the
+    column as review metadata, but no scoring term reads it, so passing it here
+    changes nothing rather than silently changing the ranking.
     """
     owns_store = store is None
     store = store or MemoryStore()
@@ -339,7 +349,7 @@ def retrieve(
         results = []
         for memory in memories:
             mid = memory["memory_id"]
-            if memory.get("type") == "hypothesis" and query.get("exclude_hypothesis", False):
+            if hypothesis_lane(memory, mid) and query.get("exclude_hypothesis", False):
                 continue
             if mid in exclude_memories:
                 continue
@@ -367,8 +377,8 @@ def retrieve(
                 reasons.append(f"success_rate={r['success_rate']}")
             if r["confidence_score"] > 0:
                 reasons.append(f"confidence={r['confidence_score']}")
-            if r["performance_gain"] > 0.5:
-                reasons.append(f"perf_gain={r['performance_gain']}")
+            if r["use_count"]:
+                reasons.append(f"used={r['use_count']}/{r['success_count']}")
             if r["decay_factor"] < 1.0:
                 reasons.append(f"decayed={r['decay_factor']}")
             r["match_reasons"] = reasons or ["default_match"]

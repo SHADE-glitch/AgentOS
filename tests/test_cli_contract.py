@@ -115,7 +115,7 @@ def test_postflight_forwards_quality_score_and_yields_a_reinforce_candidate(stor
     store.upsert_memory(
         {
             "memory_id": "M1",
-            "type": "pattern",
+            "type": "procedural",
             "category": "backend",
             "title": "null guard",
             "body": "check for null before dereferencing",
@@ -244,3 +244,63 @@ def test_a_declared_1_0_request_is_still_served_1_0(capsys):
     )
     assert code == 0
     assert doc["schema_version"] == "1.0"
+
+
+# ── doctor reports the schema without rewriting it ─────────────────────
+def _db_version(db_path):
+    import sqlite3
+
+    from aos.core.memory import migrations
+
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        return migrations.current_version(conn)
+    finally:
+        conn.close()
+
+
+def test_doctor_names_the_schema_version(capsys):
+    """The plugin will negotiate against `aos doctor`, so the version must be in it."""
+    from aos.config import get_paths
+
+    MemoryStore().close()  # build the database the ordinary way
+    assert main(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert "schema:" in out
+    assert f"v{_db_version(get_paths().db_path)} [OK]" in out
+
+
+def test_doctor_does_not_migrate_a_behind_database(capsys, tmp_path):
+    """Diagnosis must not be a write.
+
+    `doctor` is what gets run when something already looks wrong; a diagnostic
+    that rewrites the store on the way past turns an inspection into the
+    incident it was asked about.
+    """
+    from aos.config import get_paths
+    from aos.core.memory import migrations
+
+    db = get_paths().db_path
+    store = MemoryStore(db_path=db)
+    store.close()
+    conn = _v1_downgrade(db)
+
+    assert main(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert "BEHIND" in out
+    assert _db_version(db) == migrations.BASELINE_VERSION, "doctor must not have migrated"
+    assert list(tmp_path.glob("*.bak")) == [], "doctor must not have backed anything up either"
+
+
+def _v1_downgrade(db):
+    """Stamp a migrated file back to v1 so there is something pending to report."""
+    import sqlite3
+
+    from aos.core.memory import migrations
+
+    conn = sqlite3.connect(str(db))
+    conn.execute(f"PRAGMA user_version = {migrations.BASELINE_VERSION}")
+    conn.execute("UPDATE schema_meta SET value = ? WHERE key = 'schema_version'",
+                 (str(migrations.BASELINE_VERSION),))
+    conn.commit()
+    return conn

@@ -78,6 +78,43 @@ def _emit(doc: dict[str, Any]) -> None:
 
 
 # ── Commands ───────────────────────────────────────────────────────────
+def _schema_line(db_path) -> str:
+    """Report the database's schema version without opening it for business.
+
+    Diagnosis must not migrate, create, or repair anything: `doctor` is the
+    command run when something looks wrong, and a diagnostic that rewrites the
+    store is how a diagnosis becomes the incident.
+    """
+    import sqlite3
+
+    from aos.core.memory import migrations
+
+    if not Path(db_path).is_file():
+        return f"no database yet — will be built at v{migrations.LATEST_VERSION}"
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    except sqlite3.Error as exc:
+        return f"unreadable ({exc})"
+    try:
+        version = migrations.current_version(conn)
+    except sqlite3.Error:
+        return "unreadable schema version"
+    finally:
+        conn.close()
+
+    if version == 0:
+        return "unversioned file (pre-migration)"
+    if version < migrations.LATEST_VERSION:
+        pending = ", ".join(m.describe() for m in migrations.pending_migrations(version))
+        return (
+            f"v{version} [BEHIND] — the next write runs {pending}; "
+            "run `aos memory migrate` to do it now, with a backup"
+        )
+    if version > migrations.LATEST_VERSION:
+        return f"v{version} [NEWER THAN ENGINE v{migrations.LATEST_VERSION}]"
+    return f"v{version} [OK]"
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     try:
         paths = get_paths()
@@ -96,6 +133,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
     lifecycle = _load_lifecycle()
     print(f"  core lifecycle:  {'[OK]' if lifecycle else '[NOT PORTED]'}")
+    print(f"  schema:        {_schema_line(paths.db_path)}")
     print()
     print(f"Status: {'READY' if lifecycle else 'FOUNDATION ONLY'}")
     return 0
@@ -233,7 +271,10 @@ def _split_list(value: str) -> list[str]:
 
 def _memory_list(args: argparse.Namespace, store) -> int:
     memories = store.list_memories(
-        type=getattr(args, "type", None), status=getattr(args, "status", None)
+        type=getattr(args, "type", None),
+        status=getattr(args, "status", None),
+        lane=getattr(args, "lane", None),
+        scope=getattr(args, "scope", None),
     )
     limit = getattr(args, "limit", 0) or 0
     if limit:
@@ -243,8 +284,9 @@ def _memory_list(args: argparse.Namespace, store) -> int:
         return 0
     for m in memories:
         print(
-            f"{m['memory_id']:<14} {m['type']:<14} {m['category']:<14} "
-            f"{m['status']:<9} {m['evidence_level']:<24} decay={m['decay_factor']:<5} {m['title']}"
+            f"{m['memory_id']:<17} {m['type']:<11} {m['status']:<11} {m['lane']:<10} "
+            f"{m['evidence_level']:<24} used={m['use_count']}/{m['success_count']:<3} "
+            f"decay={m['decay_factor']:<5} {m['title']}"
         )
     print(f"\n{len(memories)} memories")
     return 0
@@ -264,6 +306,10 @@ def _memory_add(args: argparse.Namespace, store) -> int:
             evidence_level=args.evidence_level,
             confidence=args.confidence,
             status=args.status,
+            scope=args.scope,
+            when_to_apply=args.when,
+            revalidate_after=args.revalidate_after,
+            source_project=args.source_project,
             verified=args.verified,
         )
     except authoring.AuthoringError as exc:
@@ -285,6 +331,25 @@ def _memory_seed(args: argparse.Namespace, store) -> int:
     return 1 if report["errors"] and not report["seeded"] else 0
 
 
+def _memory_migrate(args: argparse.Namespace, store) -> int:
+    from aos.core.memory import migrations
+
+    try:
+        report = migrations.migrate(
+            store.conn,
+            to=args.to if args.to is not None else migrations.LATEST_VERSION,
+            dry_run=args.dry_run,
+            db_path=store.db_path,
+        )
+    except migrations.SchemaError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.dry_run:
+        report["would_apply"] = report.pop("planned")
+    _emit(report)
+    return 0
+
+
 def _memory_show(args: argparse.Namespace, store) -> int:
     for row in store.memories_for_scoring():
         if row["memory_id"] == args.memory_id:
@@ -295,18 +360,62 @@ def _memory_show(args: argparse.Namespace, store) -> int:
 
 
 def _memory_inspect(args: argparse.Namespace, store) -> int:
-    """Everything the store can say about one memory, and why it believes it."""
-    memory = next((row for row in store.memories_for_scoring() if row["memory_id"] == args.memory_id), None)
+    """Everything the store can say about one memory, and why it believes it.
+
+    The point is the trace: a memory that cannot be followed back to the loop,
+    task, session and evidence that produced it is a claim with no way to check
+    it, which is the failure mode this store exists to avoid.
+    """
+    memory = next(
+        (row for row in store.memories_for_scoring() if row["memory_id"] == args.memory_id), None
+    )
     if memory is None:
         print(f"error: no memory {args.memory_id}", file=sys.stderr)
         return 1
 
+    observations = store.list_observations(memory_id=args.memory_id)
     candidates = [c for c in store.list_candidates() if c.get("target_memory") == args.memory_id]
     reviews = [r for r in store.list_reviews() if r.get("memory_id") == args.memory_id]
+    lineage = {
+        "supersedes": memory.get("supersedes", ""),
+        "superseded_by": sorted(
+            row["memory_id"]
+            for row in store.memories_for_scoring()
+            if row.get("supersedes") == args.memory_id
+        ),
+        "version": memory.get("version", 1),
+    }
     _emit(
         {
             "memory": memory,
-            "observations": store.list_observations(memory_id=args.memory_id),
+            "lifecycle": {
+                "status": memory.get("status"),
+                "lane": memory.get("lane"),
+                "scope": memory.get("scope"),
+                "evidence_level": memory.get("evidence_level"),
+                "confidence": memory.get("confidence"),
+                "created_at": memory.get("created_at"),
+                "last_verified_at": memory.get("last_verified_at"),
+                "revalidate_after": memory.get("revalidate_after"),
+                "decay_factor": memory.get("decay_factor"),
+                "observation_count": memory.get("observation_count"),
+                "use_count": memory.get("use_count"),
+                "success_count": memory.get("success_count"),
+                "last_used_at": memory.get("last_used_at"),
+            },
+            "provenance": {
+                "source_project": memory.get("source_project"),
+                "source_task": memory.get("source_task"),
+                "source_loop_id": memory.get("source_loop_id"),
+                "source_session": memory.get("source_session"),
+                "source_evidence": memory.get("source_evidence"),
+                "loops": sorted({obs.get("loop_id", "") for obs in observations if obs.get("loop_id")}),
+                "sessions": sorted(
+                    {obs.get("session_id", "") for obs in observations if obs.get("session_id")}
+                ),
+            },
+            "lineage": lineage,
+            "observations": observations,
             "candidates": candidates,
             "reviews": reviews,
         }
@@ -320,6 +429,7 @@ _MEMORY_COMMANDS = {
     "seed": _memory_seed,
     "show": _memory_show,
     "inspect": _memory_inspect,
+    "migrate": _memory_migrate,
 }
 
 
@@ -376,7 +486,7 @@ def cmd_review(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     # Imported here rather than at module scope so the contract-only commands
     # stay free of the storage layer, as they were before.
-    from aos.contract.schema import MEMORY_TYPE
+    from aos.contract.schema import MEMORY_LANE, MEMORY_TYPE
     from aos.core.memory.authoring import CONFIDENCE_LEVELS, STATUSES
     from aos.core.memory.evolve import EVIDENCE_LEVELS
 
@@ -413,14 +523,16 @@ def build_parser() -> argparse.ArgumentParser:
     mem_sub = p_memory.add_subparsers(dest="memory_command")
 
     p_mem_list = mem_sub.add_parser("list", help="list memories")
-    p_mem_list.add_argument("--type", default=None, help="filter by memory type")
-    p_mem_list.add_argument("--status", default=None, help="filter by lifecycle status")
+    p_mem_list.add_argument("--type", default=None, choices=sorted(MEMORY_TYPE))
+    p_mem_list.add_argument("--status", default=None, choices=list(STATUSES))
+    p_mem_list.add_argument("--lane", default=None, choices=sorted(MEMORY_LANE))
+    p_mem_list.add_argument("--scope", default=None, help="global | project:<id> | session:<id>")
     p_mem_list.add_argument("--limit", type=int, default=0, help="show at most N rows")
 
     p_mem_add = mem_sub.add_parser("add", help="author one memory by hand")
     p_mem_add.add_argument("--title", required=True, help="one line, shown when the budget is tight")
     p_mem_add.add_argument("--body", required=True, help="the lesson itself")
-    p_mem_add.add_argument("--type", default="pattern", choices=sorted(MEMORY_TYPE))
+    p_mem_add.add_argument("--type", default="episodic", choices=sorted(MEMORY_TYPE))
     p_mem_add.add_argument(
         "--category",
         default="",
@@ -430,7 +542,24 @@ def build_parser() -> argparse.ArgumentParser:
     p_mem_add.add_argument("--roles", default="", help="comma separated role ids")
     p_mem_add.add_argument("--evidence-level", default="hypothesis", choices=list(EVIDENCE_LEVELS))
     p_mem_add.add_argument("--confidence", default="low", choices=list(CONFIDENCE_LEVELS))
-    p_mem_add.add_argument("--status", default="active", choices=list(STATUSES))
+    p_mem_add.add_argument(
+        "--status",
+        default=None,
+        choices=list(STATUSES),
+        help="only the gate may set verified; an unverified memory is born candidate",
+    )
+    p_mem_add.add_argument("--scope", default="global", help="global | project:<id> | session:<id>")
+    p_mem_add.add_argument(
+        "--when",
+        default="",
+        help="the trigger clause: when this applies. Without it the memory reads as an unmotivated fact",
+    )
+    p_mem_add.add_argument(
+        "--revalidate-after",
+        default="",
+        help="YYYY-MM-DD after which the memory must be re-checked (facts about a version need one)",
+    )
+    p_mem_add.add_argument("--source-project", default="", help="where the fact was learned")
     p_mem_add.add_argument(
         "--verified",
         action="store_true",
@@ -440,6 +569,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_mem_seed = mem_sub.add_parser("seed", help="load content/memory/**/*.json into the store")
     p_mem_seed.add_argument("--dir", default=None, help="seed directory (default: the content memory dir)")
     p_mem_seed.add_argument("--force", action="store_true", help="rewrite entries that already exist")
+
+    p_mem_migrate = mem_sub.add_parser(
+        "migrate", help="bring the database up to the engine's schema version"
+    )
+    p_mem_migrate.add_argument("--to", type=int, default=None, help="stop at this schema version")
+    p_mem_migrate.add_argument(
+        "--dry-run", action="store_true", help="report what would run without touching the file"
+    )
 
     for name, help_text in (
         ("show", "print one memory as JSON"),

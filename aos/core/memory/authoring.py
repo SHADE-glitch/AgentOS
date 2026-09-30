@@ -21,18 +21,25 @@ import json
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
-from aos.contract.schema import MEMORY_TYPE
+from aos.contract.schema import (
+    MEMORY_LIFECYCLE,
+    MEMORY_SCOPE_EXACT,
+    MEMORY_SCOPE_PREFIXES,
+    MEMORY_TYPE,
+)
 from aos.core.memory.evolve import EVIDENCE_LEVELS
-from aos.core.memory.store import MemoryStore
+from aos.core.memory.store import MemoryStore, _now as _timestamp
 
 CONFIDENCE_LEVELS = ("low", "medium", "high")
 
 MAX_TITLE_CHARS = 120
 MAX_BODY_CHARS = 2000
 
-# The vocabulary the engine writes today. The lifecycle states (superseded,
-# invalidated, archived) arrive with the schema phase, and this table with them.
-STATUSES = ("active", "candidate", "validated", "degraded", "archived_candidate")
+# The lifecycle and type vocabularies come from the contract, not a local copy:
+# a host reading `memory.memories[].type` must be able to switch on the same set
+# the store enforces, or the two drift and one of them starts lying.
+STATUSES = tuple(sorted(MEMORY_LIFECYCLE))
+TYPES = tuple(sorted(MEMORY_TYPE))
 
 
 class AuthoringError(ValueError):
@@ -58,27 +65,53 @@ def seed_id(title: str, body: str) -> str:
     return f"M-{digest.hexdigest()[:8].upper()}"
 
 
+def validate_scope(scope: str) -> str:
+    """Check ``global`` / ``project:<id>`` / ``session:<id>`` and return it.
+
+    The two halves are checked separately on purpose: a bare ``project:`` with no
+    id looks like a scope and is not one, and a store full of those would be
+    filtered by nothing and shown everywhere.
+    """
+    scope = _normalise(scope)
+    if scope in MEMORY_SCOPE_EXACT:
+        return scope
+    for prefix in MEMORY_SCOPE_PREFIXES:
+        if scope.startswith(prefix) and scope[len(prefix):].strip():
+            return scope
+    raise AuthoringError(
+        f"scope {scope!r} must be 'global', 'project:<id>' or 'session:<id>'"
+    )
+
+
 def new_memory(
     *,
     title: str,
     body: str,
-    type: str = "pattern",
+    type: str = "episodic",
     category: str = "",
     tags: Iterable[str] = (),
     roles: Iterable[str] = (),
     evidence_level: str = "hypothesis",
     confidence: str = "low",
-    status: str = "active",
+    status: Optional[str] = None,
+    scope: str = "global",
+    when_to_apply: str = "",
+    revalidate_after: str = "",
     source_task: str = "",
+    source_project: str = "",
+    source_session: str = "",
+    source_loop_id: str = "",
     memory_id: str = "",
     verified: bool = False,
 ) -> dict[str, Any]:
     """Build a storable memory row, or raise :class:`AuthoringError`.
 
-    Without ``verified`` an authored memory is forced down to
-    ``evidence_level=hypothesis`` / ``confidence=low``, which is what keeps the
-    renderer labelling it ``未验证，仅作提示`` instead of handing an unproven claim
-    to the model as established practice.
+    ``verified`` is the gate on birth state, and it is not a label the caller
+    can fake its way past: without it the memory is forced to
+    ``evidence_level=hypothesis``, ``lane=hypothesis``, ``status=candidate``,
+    which is what keeps the renderer marking it ``未验证，仅作提示`` instead of
+    handing an unproven claim to the model as established practice. Reaching
+    ``active`` or ``verified`` is the promotion path's job, not the author's.
     """
     title = _normalise(title)
     body = _normalise(body)
@@ -92,18 +125,30 @@ def new_memory(
     if len(body) > MAX_BODY_CHARS:
         raise AuthoringError(f"body is {len(body)} chars, the cap is {MAX_BODY_CHARS}")
     if type not in MEMORY_TYPE:
-        raise AuthoringError(f"type {type!r} is not one of {sorted(MEMORY_TYPE)}")
+        raise AuthoringError(f"type {type!r} is not one of {TYPES}")
     if evidence_level not in EVIDENCE_LEVELS:
         raise AuthoringError(
             f"evidence_level {evidence_level!r} is not one of {list(EVIDENCE_LEVELS)}"
         )
     if confidence not in CONFIDENCE_LEVELS:
         raise AuthoringError(f"confidence {confidence!r} is not one of {CONFIDENCE_LEVELS}")
-    if status not in STATUSES:
+    scope = validate_scope(scope)
+
+    if status is not None and status not in MEMORY_LIFECYCLE:
+        # Rejected even though an unverified memory is about to be forced to
+        # `candidate` anyway: storing something else in silence would tell the
+        # caller their state was accepted when it was not.
         raise AuthoringError(f"status {status!r} is not one of {STATUSES}")
 
-    if not verified:
+    if verified:
+        lane = "hypothesis" if evidence_level == "hypothesis" else "standard"
+        resolved_status = status or "active"
+        last_verified_at = _timestamp()
+    else:
         evidence_level, confidence = "hypothesis", "low"
+        lane = "hypothesis"
+        resolved_status = "candidate"
+        last_verified_at = ""
 
     row: dict[str, Any] = {
         "memory_id": memory_id or seed_id(title, body),
@@ -113,8 +158,16 @@ def new_memory(
         "body": body,
         "evidence_level": evidence_level,
         "confidence": confidence,
-        "status": status,
+        "status": resolved_status,
+        "lane": lane,
+        "scope": scope,
+        "when_to_apply": _normalise(when_to_apply),
+        "revalidate_after": _normalise(revalidate_after),
+        "last_verified_at": last_verified_at,
         "source_task": source_task,
+        "source_project": source_project,
+        "source_session": source_session,
+        "source_loop_id": source_loop_id,
         # Kept on the row so `add` and `seed` normalise them the same way;
         # MemoryStore.upsert_memory takes them as separate arguments.
         "tags": [str(tag).strip() for tag in tags if str(tag).strip()],

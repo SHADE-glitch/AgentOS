@@ -70,7 +70,7 @@ def test_preflight_recalls_seeded_memory(repo, store):
     store.upsert_memory(
         {
             "memory_id": "M1",
-            "type": "pattern",
+            "type": "procedural",
             "category": "backend",
             "title": "null pointer guard",
             "body": "check for null before dereferencing",
@@ -93,7 +93,7 @@ def test_preflight_ships_the_rendered_injection_block(repo, store):
     store.upsert_memory(
         {
             "memory_id": "M1",
-            "type": "pattern",
+            "type": "procedural",
             "category": "backend",
             "title": "null pointer guard",
             "body": "check for null before dereferencing",
@@ -116,7 +116,7 @@ def test_preflight_ships_the_rendered_injection_block(repo, store):
 
 def test_preflight_reports_recall_as_skipped_when_memory_is_off(repo, store):
     store.upsert_memory(
-        {"memory_id": "M1", "type": "pattern", "title": "t", "body": "b",
+        {"memory_id": "M1", "type": "procedural", "title": "t", "body": "b",
          "evidence_level": "runtime_validated", "tags": []},
         tags=["crash"],
     )

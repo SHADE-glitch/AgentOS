@@ -35,7 +35,7 @@ def store():
     s.close()
 
 
-def _add(store, memory_id, *, evidence_level="benchmark_evaluated", mtype="pattern", tags=None, **overrides):
+def _add(store, memory_id, *, evidence_level="benchmark_evaluated", mtype="procedural", tags=None, **overrides):
     memory = {
         "memory_id": memory_id,
         "type": overrides.pop("type", mtype),
@@ -70,7 +70,7 @@ def _candidate(store, memory_id, loop_id, *, ctype="reinforce", quality=4.0):
 
 # ── (a) hypotheses are held, never auto-promoted ───────────────────────
 def test_hypothesis_only_creates_pending_review(store):
-    _add(store, "H-1", mtype="hypothesis", evidence_level="hypothesis")
+    _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce_hypothesis")
 
@@ -101,7 +101,7 @@ def test_low_evidence_memory_is_held(store):
 
 # ── (b) approve is what writes the memory ──────────────────────────────
 def test_approve_review_applies_promotion(store):
-    _add(store, "H-1", mtype="hypothesis", evidence_level="hypothesis")
+    _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce_hypothesis")
     run_learning(store=store)
@@ -112,13 +112,20 @@ def test_approve_review_applies_promotion(store):
     assert result["status"] == "approved"
     memory = store.get_memory("H-1")
     assert memory["evidence_level"] == "runtime_validated"
-    assert memory["status"] == "validated"
+    # `validated` used to be written into a column whose documented vocabulary
+    # said active|degraded|archived_candidate, so the store held a state nothing
+    # else recognised. The lifecycle name for "strong evidence reached" is
+    # `verified`, and reaching it also ends the hypothesis lane: a promoted
+    # memory must stop being presented as a guess.
+    assert memory["status"] == "verified"
+    assert memory["lane"] == "standard"
+    assert memory["last_verified_at"], "promotion is the event that renews verification"
     assert memory["observation_count"] == 1
     assert store.get_review(review["review_id"])["status"] == "approved"
 
 
 def test_reject_review_leaves_memory_untouched(store):
-    _add(store, "H-1", mtype="hypothesis", evidence_level="hypothesis")
+    _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce_hypothesis")
     run_learning(store=store)
@@ -132,7 +139,7 @@ def test_reject_review_leaves_memory_untouched(store):
 
 
 def test_double_approve_is_rejected(store):
-    _add(store, "H-1", mtype="hypothesis", evidence_level="hypothesis")
+    _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce_hypothesis")
     run_learning(store=store)
@@ -229,7 +236,7 @@ def test_weaken_requires_review(store):
 
 def test_type_confusion_is_rejected(store):
     # reinforce (a normal-lane type) aimed at a hypothesis id.
-    _add(store, "H-1", mtype="hypothesis", evidence_level="hypothesis")
+    _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce")
 
@@ -256,7 +263,7 @@ def test_conflict_routes_to_review_not_promotion(store):
 
 
 def test_no_duplicate_pending_review(store):
-    _add(store, "H-1", mtype="hypothesis", evidence_level="hypothesis")
+    _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce_hypothesis")
 
@@ -311,7 +318,7 @@ def test_group_candidates_counts_independent_loops(store):
 
 
 def test_validate_group_hypothesis_first_observation(store):
-    _add(store, "H-1", mtype="hypothesis", evidence_level="hypothesis")
+    _add(store, "H-1", mtype="semantic", lane="hypothesis", evidence_level="hypothesis")
     _observe(store, "H-1", "L1")
     _candidate(store, "H-1", "L1", ctype="reinforce_hypothesis")
     group = group_candidates(store.list_candidates(), store.list_observations())["H-1"]

@@ -162,7 +162,27 @@ guards against any hardcoded absolute path creeping back into `aos/`.
 
 SQLite is the single source of truth. Tables: `memories`, `memory_tags`,
 `memory_roles`, `observations`, `candidates`, `learning_reviews`,
-`retrieval_log`, `telemetry_events`.
+`retrieval_log`, `telemetry_events`. The schema is versioned by
+`PRAGMA user_version`; `aos/core/memory/schema.sql` is the frozen v1 baseline and
+every change after it is a named migration (`aos memory migrate [--dry-run]`).
+
+A memory has four separate axes, and collapsing any two of them is how a store
+becomes noise:
+
+| Axis | Values | Decides |
+|---|---|---|
+| `type` | `episodic` `semantic` `procedural` `failure` `preference` `constraint` | how it is **worded** in the injected block |
+| `evidence_level` | `hypothesis` → `benchmark_evaluated` → `runtime_validated` → `independent_validated` → `real_project_validated` → `production_validated` | how far it has been **checked** |
+| `status` | `candidate` `active` `verified` `deprecated` `superseded` `invalidated` `archived` | where it is in its **life** |
+| `scope` | `global` `project:<id>` `session:<id>` | where it may be **recalled at all** |
+
+`lane` carries `hypothesis` separately from `type`, because "unproven" is an
+evidence state and not a kind of memory — under v1 it was written three ways
+(a type, an evidence level, and an `H-` id prefix) and the three could disagree.
+
+Nothing becomes `verified` by being observed once. An authored memory is born
+`status=candidate, lane=hypothesis, evidence_level=hypothesis` unless it declares
+`--verified`, and only the promotion path or a human gate moves it out of that.
 
 Retrieval is deterministic: tag / domain / role / keyword overlap, plus a type
 bonus and a quality multiplier, with the decay factor actually applied and the

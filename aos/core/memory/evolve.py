@@ -20,9 +20,11 @@ from typing import Any, Optional
 from aos.core.memory import conflict as conflict_mod
 from aos.core.memory import evaluate as evaluate_mod
 from aos.core.memory.policy import load_policy
-from aos.core.memory.store import MemoryStore
-
-HYPOTHESIS_PREFIX = "H-"
+from aos.core.memory.store import (
+    MemoryStore,
+    _now as _timestamp,
+    hypothesis_lane,
+)
 
 # Candidate change types. ``success``/``failure`` are accepted because
 # ``record.py`` emits them; they mean reinforce/weaken respectively.
@@ -119,7 +121,7 @@ def validate_group(
     a human) or ``rejected`` (insufficient evidence — gather more and retry).
     """
     memory_id = group["memory_id"]
-    is_hypothesis = memory_id.upper().startswith(HYPOTHESIS_PREFIX)
+    is_hypothesis = hypothesis_lane(memory, memory_id)
     candidate_types = {c.get("candidate_type", "") for c in group["candidates"]}
     runs = len(group["executions"])
     best_quality = group["best_quality"]
@@ -222,15 +224,25 @@ def apply_promotion(result: dict[str, Any], store: MemoryStore) -> dict[str, Any
     new_level = _next_evidence_level(old_level, runs)
     new_observations = max(int(memory.get("observation_count", 0)), runs)
     new_confidence = _confidence_for(old_confidence, new_observations)
-    new_status = "validated" if new_level in STRONG_EVIDENCE else old_status
+    # The gate's own verdict is `validated`; the memory's lifecycle state for
+    # "strong evidence reached" is `verified`. Keeping them distinct is what
+    # lets `status` drive recall while the review history stays readable.
+    newly_verified = new_level in STRONG_EVIDENCE
+    new_status = "verified" if newly_verified else old_status
 
-    store.update_memory_fields(
-        memory_id,
-        evidence_level=new_level,
-        confidence=new_confidence,
-        status=new_status,
-        observation_count=new_observations,
-    )
+    updates: dict[str, Any] = {
+        "evidence_level": new_level,
+        "confidence": new_confidence,
+        "status": new_status,
+        "observation_count": new_observations,
+        # Promotion is exactly the event that renews a memory's verification
+        # date, so it is stamped here and nowhere else.
+        "last_verified_at": _timestamp() if newly_verified else memory.get("last_verified_at", ""),
+        # Leaving the hypothesis lane is a one-way move made by evidence, not
+        # by an author declaring it; a promoted memory is no longer a hint.
+        "lane": "standard" if newly_verified else memory.get("lane", "standard"),
+    }
+    store.update_memory_fields(memory_id, **{k: v for k, v in updates.items() if v != ""})
     return {
         "memory_id": memory_id,
         "status": "applied",
@@ -251,7 +263,7 @@ def _can_auto_promote(
         return False
     if memory is None or conflicts:
         return False
-    if memory.get("type") == "hypothesis" or result["memory_id"].upper().startswith(HYPOTHESIS_PREFIX):
+    if hypothesis_lane(memory, result["memory_id"]):
         return False
     if memory.get("evidence_level") not in STRONG_EVIDENCE:
         return False

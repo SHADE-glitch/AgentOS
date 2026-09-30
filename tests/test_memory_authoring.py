@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from aos.contract.schema import MEMORY_TYPE
+from aos.core.memory import authoring
 from aos.core.memory.authoring import AuthoringError, new_memory, seed_from_dir, seed_id
 from aos.core.memory.evolve import EVIDENCE_LEVELS
 from aos.core.memory.inject import render
@@ -42,7 +43,7 @@ def _entry(memory_id="M-AAA", **overrides) -> dict:
         "memory_id": memory_id,
         "title": "run the suite before promoting a memory",
         "body": "promote only after tests pass; a green render is not a green run.",
-        "type": "pattern",
+        "type": "procedural",
         "category": "test",
         "tags": ["learning"],
         "roles": ["testing-engineer"],
@@ -123,6 +124,93 @@ def test_authoring_a_memory_alone_can_never_claim_verified_evidence():
 def test_declaring_verified_keeps_the_evidence_level():
     row = new_memory(title="t", body="b", evidence_level="runtime_validated", verified=True)
     assert row["evidence_level"] == "runtime_validated"
+
+
+# ── the lifecycle gate at birth ────────────────────────────────────────
+def test_an_unverified_memory_is_born_a_candidate_in_the_hypothesis_lane():
+    row = new_memory(title="t", body="b", evidence_level="production_validated")
+    assert row["status"] == "candidate"
+    assert row["lane"] == "hypothesis"
+    assert row["last_verified_at"] == ""
+
+
+def test_no_one_can_author_a_memory_straight_into_verified():
+    """The status argument is not a way to skip the evidence ladder.
+
+    ``verified`` without evidence is exactly how a store fills up with claims
+    nothing confirmed, and every later ranking then treats them as established.
+    """
+    row = new_memory(title="t", body="b", status="verified")
+    assert row["status"] == "candidate"
+
+
+def test_an_unknown_status_is_rejected_even_when_it_would_be_overridden():
+    with pytest.raises(AuthoringError):
+        new_memory(title="t", body="b", status="forgotten")
+
+
+def test_a_verified_memory_is_born_active_and_stamped_when():
+    row = new_memory(title="t", body="b", evidence_level="runtime_validated", verified=True)
+    assert row["status"] == "active"
+    assert row["lane"] == "standard"
+    assert row["last_verified_at"].startswith("20")
+
+
+def test_a_verified_but_hypothesis_levelled_memory_stays_in_the_lane():
+    row = new_memory(title="t", body="b", evidence_level="hypothesis", verified=True)
+    assert row["lane"] == "hypothesis"
+
+
+@pytest.mark.parametrize("scope", ["global", "project:AgentOS", "session:s-1"])
+def test_the_three_scope_shapes_are_accepted(scope):
+    assert new_memory(title="t", body="b", scope=scope)["scope"] == scope
+
+
+@pytest.mark.parametrize("scope", ["", "project:", "whole-world", "AgentOS"])
+def test_a_scope_that_cannot_be_filtered_on_is_rejected(scope):
+    """`project:` with no id would be recalled by nothing and hidden from nothing."""
+    with pytest.raises(AuthoringError):
+        new_memory(title="t", body="b", scope=scope)
+
+
+def test_the_trigger_clause_and_scope_survive_into_the_store(store):
+    """The two fields the lifecycle added must round-trip, not just validate.
+
+    ``when_to_apply`` is what turns a fact into something the model knows when to
+    use, and ``scope`` is what keeps a Java fact out of a JavaScript task; either
+    one silently dropped would leave the schema looking richer than the recall is.
+    """
+    row = new_memory(
+        title="pin the token order first",
+        body="fix the verification order before touching the signature.",
+        type="procedural",
+        scope="project:AgentOS",
+        when_to_apply="editing the auth middleware",
+        revalidate_after="2027-01-31",
+        verified=True,
+    )
+    store.upsert_memory(row, tags=row["tags"], roles=row["roles"])
+    stored = store.get_memory(row["memory_id"])
+    assert stored["scope"] == "project:AgentOS"
+    assert stored["when_to_apply"] == "editing the auth middleware"
+    assert stored["revalidate_after"] == "2027-01-31"
+
+    block = render([stored])["text"]
+    assert "适用：editing the auth middleware" in block
+    assert "做法：fix the verification order" in block
+
+
+def test_the_six_types_render_six_different_shapes():
+    """A type that did not change the sentence would not be worth having."""
+    prefixes = {
+        type_: render([new_memory(title="t", body="b", type=type_, verified=True)])["text"]
+        for type_ in MEMORY_TYPE
+    }
+    for type_, text in prefixes.items():
+        assert any(word in text for word in ("不要：", "做法：", "经过：", "事实：", "偏好：", "约束：")), type_
+    assert "约束：" in prefixes["constraint"]
+    assert "不要：" in prefixes["failure"]
+    assert "经过：" in prefixes["episodic"]
 
 
 # ── ids ────────────────────────────────────────────────────────────────
@@ -299,6 +387,34 @@ def test_every_seed_entry_states_its_rule_inside_the_budget(shipped_seed_entries
     for entry in shipped_seed_entries:
         rule = " ".join(entry["body"].split()).split("。")[0]
         assert len(rule) <= limit, f"{entry['memory_id']} buries its rule: {len(rule)} > {limit}"
+
+
+def test_every_seed_entry_says_when_it_applies(shipped_seed_entries):
+    """The file's own stated rule, asserted rather than trusted.
+
+    A memory with no trigger clause reaches the model as an unmotivated fact and
+    is either ignored or applied where it does not belong.
+    """
+    for entry in shipped_seed_entries:
+        assert entry.get("when_to_apply"), entry["memory_id"]
+
+
+def test_every_seed_entry_declares_a_scope_it_can_be_filtered_by(shipped_seed_entries):
+    for entry in shipped_seed_entries:
+        assert entry.get("scope"), entry["memory_id"]
+        # Raises for a scope recall could never match, e.g. a bare `project:`.
+        authoring.validate_scope(entry["scope"])
+
+
+def test_a_fact_pinned_to_a_host_version_carries_an_expiry(shipped_seed_entries):
+    """Entries citing an observed opencode behaviour must be re-checked.
+
+    An invariant ("stdlib only") never expires; a claim about version 1.18.33
+    does, and saying so is what stops it quietly becoming a permanent falsehood.
+    """
+    for entry in shipped_seed_entries:
+        if "opencode 1.18" in entry["body"] or "opencode 插件" in entry["title"]:
+            assert entry.get("revalidate_after"), f"{entry['memory_id']} pins a version but never expires"
 
 
 def test_seed_ids_are_unique_and_prefixed(shipped_seed_entries):

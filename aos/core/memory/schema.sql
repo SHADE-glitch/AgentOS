@@ -1,8 +1,15 @@
--- Agent OS memory store (SQLite) — schema v1.
+-- Agent OS memory store (SQLite) — schema v1, the frozen baseline.
 --
 -- SQLite is the engine's source of truth for memory metadata, observations
--- and the learning pipeline. Human-readable memory bodies live in the
--- `body` column and may later be mirrored to the content layer.
+-- and the learning pipeline. Human-readable memory bodies live in the `body`
+-- column and may later be mirrored to the content layer.
+--
+-- THIS FILE DESCRIBES v1 AND DOES NOT CHANGE. It is what a brand new database is
+-- built from, and `aos/core/memory/migrations.py` then walks it up to the
+-- engine's current version; editing it to alter an existing installation would
+-- skip every migration and leave live databases with no record of how they got
+-- their columns. The enum comments below are the v1 vocabulary, which migrations
+-- v2 replaces.
 
 PRAGMA foreign_keys = ON;
 

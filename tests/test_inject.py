@@ -11,7 +11,7 @@ from aos.core.memory import inject
 from aos.core.memory import policy as policy_mod
 
 
-def _memory(mid="M-1", *, type="pattern", body="do the thing carefully", **extra):
+def _memory(mid="M-1", *, type="procedural", body="do the thing carefully", **extra):
     row = {
         "memory_id": mid,
         "type": type,
@@ -22,7 +22,9 @@ def _memory(mid="M-1", *, type="pattern", body="do the thing carefully", **extra
         "category": "bugfix",
         "tags": ["crash"],
         "final_score": 0.42,
-        "is_hypothesis": type == "hypothesis",
+        # The row a recall actually hands the renderer: `is_hypothesis` comes
+        # from the lane, never from the type.
+        "is_hypothesis": extra.get("lane", "standard") == "hypothesis",
     }
     row.update(extra)
     return row
@@ -49,12 +51,21 @@ def test_block_carries_the_preamble_and_the_close_tag():
 
 def test_label_carries_id_type_evidence_and_confidence():
     text = inject.render([_memory("M-ABCD1234")])["text"]
-    assert "M-ABCD1234 · pattern · runtime_validated · high" in text
+    assert "M-ABCD1234 · procedural · runtime_validated · high" in text
 
 
 def test_shape_follows_type():
+    """Each of the six types must read as its own kind of sentence.
+
+    The type axis earns its keep exactly here: if every type rendered the same
+    way, the column would be decoration.
+    """
     assert "不要：" in inject.render([_memory(type="failure", body="never do X")])["text"]
-    assert "做法：" in inject.render([_memory(type="pattern", body="always do Y")])["text"]
+    assert "做法：" in inject.render([_memory(type="procedural", body="always do Y")])["text"]
+    assert "经过：" in inject.render([_memory(type="episodic", body="the loop ran twice")])["text"]
+    assert "事实：" in inject.render([_memory(type="semantic", body="the pin is 17")])["text"]
+    assert "偏好：" in inject.render([_memory(type="preference", body="prefer small commits")])["text"]
+    assert "约束：" in inject.render([_memory(type="constraint", body="stdlib only")])["text"]
     # An unrecognised type is still injected, as a note, not silently dropped.
     unknown = inject.render([_memory(type="weird_new_kind", body="z")])["text"]
     assert "内容：z" in unknown
@@ -75,6 +86,66 @@ def test_hints_are_labelled_and_never_lead_the_block():
     assert "未验证，仅作提示" in text
     assert text.index("established") < text.index("guess")
     assert [item["memory_id"] for item in result["structured"]] == ["M-1", "H-9"]
+
+
+# ── expiry ─────────────────────────────────────────────────────────────
+def test_a_memory_past_its_revalidation_date_is_labelled_not_deleted():
+    """History keeps its provenance; the reader is warned instead of misled."""
+    row = _memory("M-EXP", revalidate_after="2026-01-31")
+    text = inject.render([row], today="2026-09-30")["text"]
+    assert "可能已过期（2026-01-31）" in text
+    assert "M-EXP" in text
+
+
+def test_a_date_still_in_the_future_is_not_labelled():
+    row = _memory("M-EXP", revalidate_after="2027-01-31")
+    result = inject.render([row], today="2026-09-30")
+    assert "过期" not in result["text"]
+    assert result["structured"][0]["expired"] is False
+
+
+def test_expiry_compares_dates_not_whole_timestamps():
+    """A stored ISO timestamp with a timezone suffix still compares by day."""
+    row = _memory("M-EXP", revalidate_after="2026-01-31T23:59:59+08:00")
+    assert "可能已过期" in inject.render([row], today="2026-02-01")["text"]
+    assert "可能已过期" not in inject.render([row], today="2026-01-01")["text"]
+
+
+def test_no_expiry_date_means_no_claim_about_expiry():
+    result = inject.render([_memory("M-FOREVER")], today="2099-01-01")
+    assert "过期" not in result["text"]
+    assert result["structured"][0]["revalidate_after"] == ""
+
+
+# ── what travels beside the text ───────────────────────────────────────
+def test_structured_carries_scope_and_provenance_the_text_cannot_show():
+    """A host that reads fields must be able to judge a memory, not just quote it."""
+    row = _memory(
+        "M-META",
+        scope="project:AgentOS",
+        status="verified",
+        lane="standard",
+        source_project="AgentOS",
+        source_loop_id="LOOP-7",
+        created_at="2026-09-01T00:00:00+00:00",
+        last_verified_at="2026-09-12T00:00:00+00:00",
+        version=3,
+    )
+    item = inject.render([row])["structured"][0]
+    assert item["scope"] == "project:AgentOS"
+    assert item["status"] == "verified"
+    assert item["source_loop_id"] == "LOOP-7"
+    assert item["last_verified_at"] == "2026-09-12T00:00:00+00:00"
+    assert item["version"] == 3
+
+
+def test_the_lane_and_the_hypothesis_flag_agree_in_both_views():
+    """`lane` is what makes a memory a hint; both renderings must say so."""
+    row = _memory("M-LANE", lane="hypothesis", evidence_level="runtime_validated")
+    result = inject.render([row])
+    assert "未验证，仅作提示" in result["text"]
+    assert result["structured"][0]["is_hypothesis"] is True
+    assert result["structured"][0]["lane"] == "hypothesis"
 
 
 def test_rank_order_is_preserved_verbatim():

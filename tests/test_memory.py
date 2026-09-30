@@ -23,7 +23,7 @@ def store():
 def _add(store, memory_id, *, tags=None, roles=None, **overrides):
     memory = {
         "memory_id": memory_id,
-        "type": overrides.pop("type", "pattern"),
+        "type": overrides.pop("type", "procedural"),
         "category": overrides.pop("category", "optimization"),
         "title": overrides.pop("title", memory_id),
         "body": overrides.pop("body", ""),
@@ -60,7 +60,7 @@ def test_delete_memory(store):
 
 
 def test_auto_generated_id(store):
-    mid = store.upsert_memory({"type": "task", "body": "x"})
+    mid = store.upsert_memory({"type": "episodic", "body": "x"})
     assert mid.startswith("M-")
 
 
@@ -108,7 +108,7 @@ def test_decay_factor_lowers_score(store):
 
 
 def test_hypotheses_can_be_excluded(store):
-    _add(store, "H1", type="hypothesis", tags=["mysql", "slow-query"], roles=["database-engineer"])
+    _add(store, "H1", type="semantic", lane="hypothesis", tags=["mysql", "slow-query"], roles=["database-engineer"])
     assert retrieve({**QUERY, "exclude_hypothesis": True}, store=store)["results"] == []
     included = retrieve(QUERY, store=store)["results"]
     assert included and included[0]["is_hypothesis"] is True

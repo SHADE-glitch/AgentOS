@@ -28,17 +28,47 @@ ESCALATION = frozenset(
     }
 )
 FINAL_STATUS = frozenset({"completed", "partial", "failed"})
+# What a memory *is*, which decides how it must read: a failure is rendered as
+# "do not repeat X because Y", a procedure as "before X, do Y". Whether it is
+# believed is a separate axis (evidence_level + lane), not a type.
+#
+# This replaces the v1 set (task, effectiveness, pattern, anti-pattern, failure,
+# decision, hypothesis). It is a change to the *values* of a field the 1.0
+# contract already carried, not an addition to it, so it is recorded here rather
+# than hidden in a migration: a host that switched on "pattern" must switch on
+# "procedural". The mapping is task→episodic, pattern→procedural,
+# anti-pattern/failure→failure, decision/effectiveness/hypothesis→semantic.
 MEMORY_TYPE = frozenset(
     {
-        "task",
-        "effectiveness",
-        "pattern",
-        "anti-pattern",
+        "episodic",
+        "semantic",
+        "procedural",
         "failure",
-        "decision",
-        "hypothesis",
+        "preference",
+        "constraint",
     }
 )
+# Where a memory is allowed to be recalled: global, one project, one session.
+# Cross-project injection (a Java fact into a JavaScript task) is the first
+# cause of a memory store that feels like noise.
+MEMORY_SCOPE_EXACT = frozenset({"global"})
+MEMORY_SCOPE_PREFIXES = ("project:", "session:")
+# The lifecycle a memory moves through. Only the human gate and the promotion
+# path write these; nothing becomes `verified` by being observed once.
+MEMORY_LIFECYCLE = frozenset(
+    {
+        "candidate",
+        "active",
+        "verified",
+        "deprecated",
+        "superseded",
+        "invalidated",
+        "archived",
+    }
+)
+# `hypothesis` used to be a type, an evidence level and an id prefix at once. It
+# is an evidence state, so it lives here now.
+MEMORY_LANE = frozenset({"standard", "hypothesis"})
 MEMORY_MODE = frozenset({"enabled", "disabled", "fallback"})
 # Health of the recall step itself, reported next to whatever it returned, so a
 # host can tell "nothing was relevant" from "retrieval did not run".

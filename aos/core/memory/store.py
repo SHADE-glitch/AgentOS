@@ -15,9 +15,13 @@ from pathlib import Path
 from typing import Any, Optional
 
 from aos.config import get_paths
+from aos.core.memory import migrations
 
-_SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = str(migrations.LATEST_VERSION)
+
+# The id convention that predates the `lane` column. Still read, so a row
+# written before the column existed cannot slip past the learning gate.
+HYPOTHESIS_PREFIX = "H-"
 
 
 def _now() -> str:
@@ -26,6 +30,24 @@ def _now() -> str:
 
 def _new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
+
+
+def hypothesis_lane(memory: Optional[dict[str, Any]], memory_id: str = "") -> bool:
+    """Whether a memory belongs in the hypothesis lane.
+
+    This used to be answered in three places that could disagree: the memory
+    ``type``, an ``H-`` prefix on the id, and ``evidence_level``. The ``lane``
+    column is now the single statement of it; the other two are still read so an
+    older row is treated as the weaker claim rather than the stronger one.
+    """
+    if memory is None:
+        return str(memory_id).upper().startswith(HYPOTHESIS_PREFIX)
+    identifier = str(memory.get("memory_id") or memory_id).upper()
+    return (
+        memory.get("lane") == "hypothesis"
+        or memory.get("evidence_level") == "hypothesis"
+        or identifier.startswith(HYPOTHESIS_PREFIX)
+    )
 
 
 class MemoryStore:
@@ -46,15 +68,26 @@ class MemoryStore:
     # ── lifecycle ──────────────────────────────────────────────────
 
     def _ensure_schema(self) -> None:
-        self._conn.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
-        self._conn.execute(
-            "INSERT OR IGNORE INTO schema_meta(key, value) VALUES ('schema_version', ?)",
-            (SCHEMA_VERSION,),
-        )
-        self._conn.commit()
+        """Build the baseline and bring this file up to the engine's version.
+
+        Every open migrates, which is only safe because a migration is one
+        transaction, is preceded by a whole-file backup when it is destructive,
+        and refuses to run at all when the two version records disagree.
+        """
+        migrations.ensure_schema(self._conn, db_path=self.db_path)
 
     def close(self) -> None:
         self._conn.close()
+
+    @property
+    def conn(self) -> sqlite3.Connection:
+        """The live connection, for the one operation that must own it: migration.
+
+        Read-only elsewhere by design — ``MemoryStore`` is the only wrapper
+        around this database, and handing out the connection for queries would
+        reintroduce the drift the wrapper exists to prevent.
+        """
+        return self._conn
 
     def __enter__(self) -> "MemoryStore":
         return self
@@ -71,52 +104,70 @@ class MemoryStore:
         tags: Optional[list[str]] = None,
         roles: Optional[list[str]] = None,
     ) -> str:
-        """Insert or update a memory. Returns the memory id."""
+        """Insert or update a memory. Returns the memory id.
+
+        Content columns are written by the author; the promotion path uses
+        :meth:`update_memory_fields` instead, so learning can never rewrite a
+        title or body it did not write.
+        """
         memory_id = memory.get("memory_id") or _new_id("M")
         now = _now()
         created_at = memory.get("created_at") or now
+        columns = (
+            "memory_id", "type", "category", "title", "body", "difficulty",
+            "evidence_level", "confidence", "status", "lane", "scope",
+            "when_to_apply", "dedupe_key", "version", "supersedes",
+            "last_verified_at", "revalidate_after", "source_task",
+            "source_project", "source_session", "source_evidence",
+            "source_loop_id", "decay_factor", "observation_count",
+            "use_count", "success_count", "last_used_at",
+            "created_at", "updated_at",
+        )
+        values = [
+            memory_id,
+            memory.get("type", "episodic"),
+            memory.get("category", ""),
+            memory.get("title", ""),
+            memory.get("body", ""),
+            memory.get("difficulty", ""),
+            memory.get("evidence_level", "hypothesis"),
+            memory.get("confidence", "low"),
+            memory.get("status", "candidate"),
+            memory.get("lane", "standard"),
+            memory.get("scope", "global"),
+            memory.get("when_to_apply", ""),
+            memory.get("dedupe_key", ""),
+            int(memory.get("version", 1) or 1),
+            memory.get("supersedes", ""),
+            memory.get("last_verified_at", ""),
+            memory.get("revalidate_after", ""),
+            memory.get("source_task", ""),
+            memory.get("source_project", ""),
+            memory.get("source_session", ""),
+            memory.get("source_evidence", ""),
+            memory.get("source_loop_id", ""),
+            float(memory.get("decay_factor", 1.0)),
+            int(memory.get("observation_count", 0)),
+            int(memory.get("use_count", 0)),
+            int(memory.get("success_count", 0)),
+            memory.get("last_used_at", ""),
+            created_at,
+            now,
+        ]
+        placeholders = ",".join("?" * len(columns))
+        # Counters are earned, not declared: an upsert is how an author (or a
+        # `--force` re-seed) rewrites what a memory *says*, and it must never
+        # zero the usage history the learning loop accumulated for it. Promotion
+        # writes those fields through update_memory_fields instead.
+        earned = ("use_count", "success_count", "last_used_at", "observation_count", "decay_factor")
+        updates = ", ".join(
+            f"{c}=excluded.{c}" for c in columns
+            if c not in ("memory_id", "created_at") and c not in earned
+        )
         self._conn.execute(
-            """
-            INSERT INTO memories (
-                memory_id, type, category, title, body, difficulty,
-                evidence_level, confidence, status, taxonomy_skill, source_task,
-                performance_gain, decay_factor, observation_count,
-                created_at, updated_at
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-            ON CONFLICT(memory_id) DO UPDATE SET
-                type=excluded.type,
-                category=excluded.category,
-                title=excluded.title,
-                body=excluded.body,
-                difficulty=excluded.difficulty,
-                evidence_level=excluded.evidence_level,
-                confidence=excluded.confidence,
-                status=excluded.status,
-                taxonomy_skill=excluded.taxonomy_skill,
-                source_task=excluded.source_task,
-                performance_gain=excluded.performance_gain,
-                decay_factor=excluded.decay_factor,
-                observation_count=excluded.observation_count,
-                updated_at=excluded.updated_at
-            """,
-            (
-                memory_id,
-                memory.get("type", "task"),
-                memory.get("category", ""),
-                memory.get("title", ""),
-                memory.get("body", ""),
-                memory.get("difficulty", ""),
-                memory.get("evidence_level", "hypothesis"),
-                memory.get("confidence", "low"),
-                memory.get("status", "active"),
-                memory.get("taxonomy_skill", ""),
-                memory.get("source_task", ""),
-                float(memory.get("performance_gain", 0.0)),
-                float(memory.get("decay_factor", 1.0)),
-                int(memory.get("observation_count", 0)),
-                created_at,
-                now,
-            ),
+            f"INSERT INTO memories ({', '.join(columns)}) VALUES ({placeholders}) "
+            f"ON CONFLICT(memory_id) DO UPDATE SET {updates}",
+            values,
         )
         if tags is not None:
             self._conn.execute("DELETE FROM memory_tags WHERE memory_id = ?", (memory_id,))
@@ -142,15 +193,23 @@ class MemoryStore:
         return self._row_to_memory(row)
 
     def list_memories(
-        self, *, type: Optional[str] = None, status: Optional[str] = None
+        self,
+        *,
+        type: Optional[str] = None,
+        status: Optional[str] = None,
+        scope: Optional[str] = None,
+        lane: Optional[str] = None,
     ) -> list[dict[str, Any]]:
         clauses, params = [], []
-        if type:
-            clauses.append("type = ?")
-            params.append(type)
-        if status:
-            clauses.append("status = ?")
-            params.append(status)
+        for column, value in (
+            ("type", type),
+            ("status", status),
+            ("scope", scope),
+            ("lane", lane),
+        ):
+            if value:
+                clauses.append(f"{column} = ?")
+                params.append(value)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         rows = self._conn.execute(
             f"SELECT * FROM memories {where} ORDER BY created_at, memory_id", params
@@ -431,9 +490,14 @@ class MemoryStore:
             "evidence_level",
             "confidence",
             "status",
+            "lane",
             "observation_count",
             "decay_factor",
-            "performance_gain",
+            "last_verified_at",
+            "supersedes",
+            "use_count",
+            "success_count",
+            "last_used_at",
         }
     )
 

@@ -11,6 +11,7 @@ the scoring work that decides it would be undone at render time.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
 from aos.core.memory.policy import load_policy
@@ -27,19 +28,25 @@ _PREAMBLE = (
 # label. Unknown types fall back to "note" rather than being silently dropped.
 _PREFIX = {
     "avoid": "不要",
-    "apply": "做法",
+    "procedure": "做法",
+    "episode": "经过",
+    "fact": "事实",
+    "preference": "偏好",
+    "constraint": "约束",
     "note": "内容",
 }
 
+# The type axis says what a memory *is*, and that decides the sentence it must
+# be rendered as: a failure has to read as "do not repeat X because Y", a
+# procedure as "before X, do Y". Shape follows type, or the reader gets a fact
+# where it needed a warning.
 _SHAPE_BY_TYPE = {
     "failure": "avoid",
-    "anti-pattern": "avoid",
-    "pattern": "apply",
-    "procedural": "apply",
-    "decision": "apply",
-    "effectiveness": "apply",
-    "preference": "apply",
-    "constraint": "apply",
+    "procedural": "procedure",
+    "episodic": "episode",
+    "semantic": "fact",
+    "preference": "preference",
+    "constraint": "constraint",
 }
 
 _TRUNCATED = "…"
@@ -61,10 +68,25 @@ def _clip(text: str, limit: int) -> tuple[str, bool]:
 
 
 def _is_hint(row: dict[str, Any]) -> bool:
-    return bool(row.get("is_hypothesis")) or row.get("evidence_level") == "hypothesis"
+    return bool(row.get("is_hypothesis")) or row.get("lane") == "hypothesis" or (
+        row.get("evidence_level") == "hypothesis"
+    )
 
 
-def _render_item(row: dict[str, Any], *, limit: int) -> tuple[list[str], bool]:
+def _is_expired(row: dict[str, Any], today: str) -> bool:
+    """Whether a memory's own revalidation date has passed.
+
+    Both sides are cut to ``YYYY-MM-DD`` before comparing: ISO dates sort
+    lexically, so this needs no parsing and a stored timestamp with a timezone
+    suffix still compares correctly against a plain date.
+    """
+    revalidate_after = str(row.get("revalidate_after") or "")
+    if not revalidate_after:
+        return False
+    return revalidate_after[:10] < today[:10]
+
+
+def _render_item(row: dict[str, Any], *, limit: int, today: str) -> tuple[list[str], bool]:
     """Return the block of lines for one memory, and whether its body was cut."""
     body = _normalise(row.get("body") or row.get("title") or "")
     body, clipped = _clip(body, limit)
@@ -77,6 +99,11 @@ def _render_item(row: dict[str, Any], *, limit: int) -> tuple[list[str], bool]:
     ]
     if _is_hint(row):
         label.append("未验证，仅作提示")
+    if _is_expired(row, today):
+        # An expired fact is not deleted: its provenance is still history. It
+        # is labelled so the model is warned rather than silently fed a stale
+        # claim it cannot check.
+        label.append(f"可能已过期（{str(row.get('revalidate_after'))[:10]}）")
     lines = [f"- [{' · '.join(part for part in label if part)}]"]
 
     when = _normalise(row.get("when_to_apply") or "")
@@ -105,6 +132,7 @@ def render(
     hypotheses: Iterable[dict[str, Any]] = (),
     route: Optional[dict[str, Any]] = None,
     budget: Optional[dict[str, Any]] = None,
+    today: Optional[str] = None,
 ) -> dict[str, Any]:
     """Render ranked memories (and optional hints) as one injection block.
 
@@ -113,12 +141,16 @@ def render(
     text, so a host can consume fields instead of parsing them back out;
     ``text`` is ``""`` when nothing qualifies, which the host must treat as
     "push nothing" rather than an empty section.
+
+    ``today`` exists so an expiry label can be asserted without waiting for one
+    to pass; it is an ISO date string, not a datetime.
     """
     limits = {**load_policy("injection"), **(budget or {})}
     max_chars = int(limits["max_chars"])
     max_items = int(limits["max_items"])
     body_limit = int(limits["max_body_chars"])
     hint_limit = int(limits["hypothesis_max_items"])
+    stamp = today or datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     # Hints are appended after every ranked memory, so an unverified note can
     # never set the frame for the block.
@@ -135,7 +167,7 @@ def render(
     truncated = False
 
     for index, row in enumerate(rows):
-        item_lines, clipped = _render_item(row, limit=body_limit)
+        item_lines, clipped = _render_item(row, limit=body_limit, today=stamp)
         cost = sum(len(line) + 1 for line in item_lines)
         if used + cost > max_chars:
             # Stop rather than let a lower-ranked memory take the slot of a
@@ -162,6 +194,20 @@ def render(
                 # Same predicate the text label uses, so a host reading fields
                 # cannot disagree with a host reading the block.
                 "is_hypothesis": _is_hint(row),
+                # Scope and provenance travel with the memory: a host that
+                # consumes fields instead of text still has to be able to tell
+                # where a recalled claim came from and whether it still applies.
+                "scope": row.get("scope", "global"),
+                "lane": row.get("lane", ""),
+                "status": row.get("status", ""),
+                "source_task": row.get("source_task", ""),
+                "source_project": row.get("source_project", ""),
+                "source_loop_id": row.get("source_loop_id", ""),
+                "created_at": row.get("created_at", ""),
+                "last_verified_at": row.get("last_verified_at", ""),
+                "revalidate_after": row.get("revalidate_after", ""),
+                "expired": _is_expired(row, stamp),
+                "version": row.get("version", 1),
             }
         )
 
