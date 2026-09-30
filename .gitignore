@@ -46,7 +46,15 @@ htmlcov/
 node_modules/
 *.tgz
 
-# Agent OS - Generated runtime state
+# Agent OS - runtime store (generated; see store/.gitignore)
+store/aos.db
+store/aos.db-journal
+store/aos.db-wal
+store/loops/
+store/evidence/
+store/pending-postflight/
+
+# Agent OS - legacy generated runtime state
 runtime/loop-controller/state/
 runtime/loop-controller/validation/
 runtime/logs/
