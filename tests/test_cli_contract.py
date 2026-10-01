@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -548,6 +549,106 @@ def test_the_plugin_test_suite_runs_and_passes():
 
     assert finished.returncode == 0, finished.stdout[-4000:] + finished.stderr[-2000:]
     assert "# fail 0" in finished.stdout
+
+
+def _js_without_comments(source: str) -> str:
+    """Strip `//` and block comments; keep the code and the strings intact."""
+    out, i, n = [], 0, len(source)
+    while i < n:
+        two = source[i : i + 2]
+        if two == "//":
+            while i < n and source[i] != "\n":
+                i += 1
+            continue
+        if two == "/*":
+            end = source.index("*/", i + 2)
+            i = end + 2
+            out.append(" ")
+            continue
+        out.append(source[i])
+        i += 1
+    return "".join(out)
+
+
+def _js_payload_keys(source: str, marker: str) -> set[str]:
+    """The top-level keys of the object literal passed to `ask(cfg, "<phase>", {…})`.
+
+    A scanner rather than a regex over the whole file: a key only counts when it sits
+    at the payload object's own depth, so a nested literal, a call argument or a
+    string that happens to contain a colon cannot be mistaken for one.
+    """
+    src = _js_without_comments(source)
+    open_at = src.index("{", src.index(marker))
+    depth = 0
+    keys: set[str] = set()
+    i = open_at
+    while i < len(src):
+        char = src[i]
+        if char in "\"'`":
+            quote = char
+            i += 1
+            while i < len(src):
+                if src[i] == "\\":
+                    i += 2
+                    continue
+                if src[i] == quote:
+                    break
+                i += 1
+            i += 1
+            continue
+        if char in "{[(":
+            depth += 1
+            i += 1
+            continue
+        if char in "})]":
+            depth -= 1
+            if depth == 0:
+                break
+            i += 1
+            continue
+        if char == ":" and depth == 1:
+            j = i - 1
+            while j >= 0 and (src[j].isalnum() or src[j] in "_$"):
+                j -= 1
+            name = src[j + 1 : i]
+            if name and (name[0].isalpha() or name[0] == "_"):
+                keys.add(name)
+        i += 1
+    return keys
+
+
+def test_the_plugin_own_payload_fields_are_the_ones_the_contract_reads():
+    """The seam's other half is written in JS, so read it — do not retype it.
+
+    The field lists in the rest of this file are hand-copied literals: add a key to
+    the plugin and nothing fails until a host ships it and the engine reports it as
+    ignored at runtime. That is how `outcome` went unread for as long as it did —
+    designed on one side and typed on the other. Parsing the source closes the gap,
+    and gives `PLUGIN_POSTFLIGHT_REQUEST_FIELDS` its first reader outside its own
+    module, so it cannot become a list that describes nothing.
+    """
+    from aos.contract import PLUGIN_POSTFLIGHT_REQUEST_FIELDS
+    from aos.contract.schema import REQUEST_FIELDS, SIGNAL_FIELDS
+
+    source = (REPO_ROOT / "integrations" / "opencode" / "plugin" / "agent-os.js").read_text(
+        encoding="utf-8"
+    )
+
+    pre = _js_payload_keys(source, 'ask(cfg, "preflight"')
+    post = _js_payload_keys(source, 'ask(cfg, "postflight"')
+    signals = set(re.findall(r"signals\.([a-z_]+)\s*=", _js_without_comments(source)))
+
+    assert pre and post, "the payload literals were not found — the plugin's shape changed"
+    assert pre <= REQUEST_FIELDS["preflight"], sorted(pre - REQUEST_FIELDS["preflight"])
+    assert post <= REQUEST_FIELDS["postflight"], sorted(post - REQUEST_FIELDS["postflight"])
+    assert signals, "the plugin sends a signals object; if it stopped, say so here"
+    assert signals <= SIGNAL_FIELDS, sorted(signals - SIGNAL_FIELDS)
+    # Everything the plugin can put in `signals` is a field the gate claims to accept.
+    assert signals <= PLUGIN_POSTFLIGHT_REQUEST_FIELDS
+    assert {"tool_errors", "session_error", "user_interrupted"} == signals, (
+        "the signal set the host can observe changed; the synthesis and this guard "
+        "have to be updated together, not one at a time"
+    )
 
 
 def test_every_field_the_plugin_sends_is_one_the_engine_reads(capsys):
