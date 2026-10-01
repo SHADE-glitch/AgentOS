@@ -422,6 +422,85 @@ test("the tool hook names the shape it was given, never its contents", async () 
   }
 });
 
+// The trajectory: what a run actually did, in order. A count of errors cannot tell
+// "one clean run" from "five failures then a fix", and that difference is the whole
+// lesson. The method label is the risk here — a command line is full of paths, tokens
+// and somebody's data — so the label is a normalisation computed inside this process,
+// and nothing else about the command is allowed to leave it.
+test("a step names its method and carries nothing but the method", async () => {
+  const cases = [
+    ["python -m pytest tests/x.py -q", "python -m pytest"],
+    ["go test ./...", "go test"],
+    ["git rebase origin/main", "git rebase"],
+    ['git commit -m "fix: login crash"', "git commit"],
+    ["npm test -- --token=SECRET", "npm test"],
+    ["docker compose up -d", "docker compose up"],
+    ["cd /home/u/app && pytest -q", "pytest"],
+    ["export TOKEN=abc; make build", "make build"],
+    ["./scripts/run.sh --env=prod", null],
+    ['echo "客户手机号 13800000000"', null],
+    ["cat /home/u/.env", "cat"],
+  ];
+  for (const [command, expected] of cases) {
+    const { server } = await hooks();
+    await openTurn(server);
+    await server["tool.execute.after"](
+      { sessionID: "ses-1", tool: "bash", callID: "c1", args: { command } },
+      { title: "t", output: "…", metadata: { exit: expected ? 1 : 0 } },
+    );
+    await server.event({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+    const post = calls().filter((call) => call.argv[0] === "postflight").at(-1);
+    const step = post.payload.signals.tool_trace?.[0];
+    assert.equal(step?.method, expected ?? undefined, `fingerprint of ${JSON.stringify(command)}`);
+    const travelled = JSON.stringify(post.payload.signals.tool_trace ?? "");
+    for (const leak of [/SECRET/, /abc/, /home\/u/, /\.env/, /origin\/main/, /tests\/x\.py/, /--/, /=/, /手机号/, /13800000000/, /login/, /crash/]) {
+      assert.doesNotMatch(travelled, leak, `${leak} must not travel from ${JSON.stringify(command)}`);
+    }
+  }
+});
+
+test("the trace is ordered, bounded, and the bound is honest about its gaps", async () => {
+  const { server } = await hooks();
+  await openTurn(server);
+  for (let index = 1; index <= 20; index += 1) {
+    await server["tool.execute.after"](
+      { sessionID: "ses-1", tool: "bash", callID: `c${index}`, args: { command: `pytest -q case${index}` } },
+      { title: "t", output: "…", metadata: { exit: index < 19 ? 1 : 0 } },
+    );
+  }
+  await server.event({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+  const signals = calls().filter((call) => call.argv[0] === "postflight").at(-1).payload.signals;
+  assert.equal(signals.tool_calls, 20, "the denominator is the truth about how many calls happened");
+  assert.equal(signals.tool_trace.length, 16, "bounded: the middle goes, both ends stay");
+  assert.deepEqual(
+    signals.tool_trace.map((step) => step.n),
+    [1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20],
+    "gaps in the numbering say out loud which steps were dropped",
+  );
+  assert.equal(signals.tool_trace.at(-1).ok, true, "the last attempt is the one that worked");
+  assert.equal(signals.tool_trace.at(-2).ok, true, "…and so is the one before it (19 and 20 both passed)");
+  assert.deepEqual(
+    signals.tool_trace.slice(0, 8).map((step) => step.ok),
+    [false, false, false, false, false, false, false, false],
+    "the window opens on failures and closes on a success: 先败后成 is visible without reading a count",
+  );
+});
+
+test("a non-shell step is recorded with no method and no argument read", async () => {
+  const { server } = await hooks();
+  await openTurn(server);
+  await server["tool.execute.after"](
+    { sessionID: "ses-1", tool: "glob", callID: "g1", args: { path: "/home/u/private", pattern: "**/*.env" } },
+    { title: "t", output: "3 files", metadata: { count: 3, truncated: false } },
+  );
+  await server.event({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+  const step = calls().find((call) => call.argv[0] === "postflight").payload.signals.tool_trace[0];
+  assert.equal(step.tool, "glob");
+  assert.equal(step.method, undefined, "an argument is not a method, and its value is not ours to send");
+  assert.equal(step.exit, undefined, "no exit number, no claim about one");
+  assert.equal(step.ok, undefined, "absence stays absence: unknown is not success");
+});
+
 test("an unanswered postflight is retried, then given up on out loud", async () => {
   // The run ended and the engine did not answer. Marking the session as reported
   // before the call meant that was the end of it: the loop stayed open in the

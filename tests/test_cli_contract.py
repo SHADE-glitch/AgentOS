@@ -783,19 +783,23 @@ def test_the_plugin_own_payload_fields_are_the_ones_the_contract_reads():
     assert signals <= SIGNAL_FIELDS, sorted(signals - SIGNAL_FIELDS)
     # Everything the plugin can put in `signals` is a field the gate claims to accept.
     assert signals <= PLUGIN_POSTFLIGHT_REQUEST_FIELDS
-    assert {"tool_errors", "session_error", "user_interrupted", "response_summary"} == signals, (
+    assert {"tool_errors", "session_error", "user_interrupted", "response_summary",
+            "tool_trace", "tool_calls"} == signals, (
         "the signal set the host can observe changed; the synthesis and this guard "
-        "have to be updated together, not one at a time"
+        "have to be updated together, not one time out of two"
     )
-    # And the one that is new since AG must stay exactly as influential as it is today: the plugin
-    # is now allowed to report what the run answered, so the guard that keeps that out of the
-    # verdict lives here, beside the set that admits it. If someone weights it above zero, the
-    # model's own prose starts deciding whether a run succeeded — the failure `policy.py` names.
+    # And the two that are new since the trajectory landed must stay exactly as uninfluential as
+    # `response_summary`: what a run *did* is material for the person at the gate, not a claim
+    # about how well it went. Weighting the attempt count would give a thrashing run a different
+    # confidence from a clean one, which is the opposite of what coverage measures.
     from aos.core.memory.policy import load_policy
 
     weights = load_policy("outcome")["weights"]
     assert weights["response_summary"] == 0.00, (
         "response_summary is material for a reviewer, never evidence in a verdict"
+    )
+    assert weights["tool_trace"] == 0.00 and weights["tool_calls"] == 0.00, (
+        "a trajectory describes the run; it does not judge it"
     )
 
 

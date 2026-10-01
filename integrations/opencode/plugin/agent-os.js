@@ -1,9 +1,11 @@
 // Agent OS plugin for OpenCode — the advisory seam, nothing more.
 //
-// Three hooks, and each one has exactly one job:
+// Four hooks that do work, plus the event switch that closes the loop:
 //   chat.message                          ask the engine for context (preflight)
 //   experimental.chat.system.transform    append our own system element
-//   event (session.idle / session.error) report the run back (postflight)
+//   tool.execute.after                    keep an ordered account of what was tried
+//   event (session.idle / session.error)  report the run back (postflight)
+//   dispose                               forget the sessions we were watching
 //
 // What it deliberately never does: it does not edit another plugin's system
 // element, never writes to index 0 (DCP reads that slot to decide whether a call
@@ -120,6 +122,81 @@ function assistantText(entry) {
   return said.join("\n").trim().slice(0, 500);
 }
 
+// A method label: what the run *tried*, with everything that could name a person, a project
+// or a secret removed. It exists because "tried A, A failed, switched to B, B worked" is the
+// one lesson worth keeping, and a command line is where that lesson lives — wrapped around a
+// `--token`, an absolute path and somebody's data.
+//
+// So the command is normalised here, inside the host process, and thrown away here: the seam
+// carries at most three words. A token is kept only if it looks like a name and not like a
+// value — no slash, no `=`, no leading `-` (except the module flag, kept only for an
+// interpreter that takes one), no leading dot, no non-ASCII, capped at 24 characters. If
+// nothing survives, the step has no method and the trace says so rather than guessing.
+const RUNNERS = new Set([
+  "python", "python2", "python3", "node", "deno", "bun", "php", "ruby", "go", "cargo",
+  "rustc", "make", "cmake", "npm", "npx", "yarn", "pnpm", "pip", "pip3", "uv", "poetry",
+  "docker", "git", "mvn", "gradle", "dotnet", "mix", "pytest", "jest", "vitest", "mocha",
+  "karma", "rspec", "ctest", "babel", "tsc", "eslint", "prettier", "webpack", "vite",
+]);
+// Words that introduce a command rather than being one.
+const NOISE = new Set(["cd", "export", "env", "sudo", "time", "nohup", "source", "set", "echo", "then", "do"]);
+// A flag that changes *which* program runs, so it is part of the method's name.
+const MODULE_RUNNERS = new Set(["python", "python2", "python3", "node", "deno", "bun", "php", "ruby"]);
+const NAME_TOKEN = /^[A-Za-z][A-Za-z0-9_-]{0,23}$/;
+const SEGMENT = /&&|\|\||[;|\n]/;
+const MAX_LABEL_TOKENS = 3;
+
+function methodOf(command) {
+  if (typeof command !== "string" || !command.trim()) return undefined;
+  for (const segment of command.split(SEGMENT)) {
+    const kept = [];
+    for (const token of segment.trim().split(/\s+/)) {
+      if (!token || NOISE.has(token)) continue;
+      // A quote opens a value: a commit message, a search pattern, somebody's text. Where it
+      // starts, the method's name stops — `git commit -m "fix: login crash"` names `git commit`
+      // and nothing of the message. Splitting on whitespace alone cannot see this, and the words
+      // after the quote are the ones worth keeping out.
+      if (token.startsWith('"') || token.startsWith("'") || token.includes('"') || token.includes("'")) break;
+      if (token === "-m" && kept.length && MODULE_RUNNERS.has(kept[0])) {
+        kept.push("-m");
+        continue;
+      }
+      if (NAME_TOKEN.test(token)) kept.push(token);
+      if (kept.filter((entry) => entry !== "-m").length >= MAX_LABEL_TOKENS) break;
+    }
+    if (kept.length) return kept.join(" ");
+  }
+  return undefined;
+}
+
+// One tool call, in order. `ok` is stated only when something stated it: an exit number is
+// the one unambiguous signal a host can give (the engine says the same about test exit codes),
+// and an error the host named is a failure. Everything else is left absent — a step that
+// reported nothing must not arrive looking like a step that went well.
+const TRACE_MAX_STEPS = 16;
+const TRACE_KEEP_HEAD = 8;
+
+function recordStep(entry, hookInput, output) {
+  entry.toolCalls = (entry.toolCalls || 0) + 1;
+  const step = { n: entry.toolCalls, tool: String((hookInput && hookInput.tool) || "-") };
+  const args = hookInput && hookInput.args;
+  const command = args && (typeof args.command === "string" ? args.command : typeof args.cmd === "string" ? args.cmd : "");
+  const method = methodOf(command);
+  if (method) step.method = method;
+  const metadata = output && output.metadata;
+  const exit = metadata && Number.isInteger(metadata.exit) ? metadata.exit : undefined;
+  if (exit !== undefined) {
+    step.exit = exit;
+    step.ok = exit === 0;
+  }
+  entry.trace = entry.trace || [];
+  entry.trace.push(step);
+  // The middle goes and both ends stay, because the first attempts show what was tried and
+  // the last ones show what it came to. The `n` values then carry the gaps themselves, so a
+  // reader can see that steps are missing rather than being shown a smooth sequence.
+  if (entry.trace.length > TRACE_MAX_STEPS) entry.trace.splice(TRACE_KEEP_HEAD, 1);
+}
+
 // One hook that throws takes the turn down with it. Fail-open is the whole point
 // of an advisor: the host's own work must never depend on us agreeing.
 function safe(name, cfg, state, fn) {
@@ -212,6 +289,11 @@ export default {
           toolErrors: null,
           sessionError: null,
           interrupted: null,
+          // A turn is a loop, and the trajectory belongs to the loop: starting a new turn
+          // starts a new account. Carrying the previous turn's steps into this one would
+          // credit a later question with an earlier run's failures.
+          trace: [],
+          toolCalls: 0,
           reported: false,
         });
         note(`preflight ok loop=${doc.loop_id} chars=${text.length}`);
@@ -266,6 +348,10 @@ export default {
             (hookInput && hookInput.error),
         );
         if (failed) entry.toolErrors = (entry.toolErrors || 0) + 1;
+        // The ordered account of the same call. The count above says how many times
+        // something went wrong; this says what was tried, in what order, and what the
+        // host's own exit number said about each one.
+        recordStep(entry, hookInput, output);
         // Which shape the host actually hands us here is not something a fixture can
         // settle, and an error detector that silently never fires is worse than no
         // detector. Record the field *names* — never the tool's output, which is
@@ -344,6 +430,10 @@ export default {
           toolErrors: null,
           sessionError: null,
           interrupted: null,
+          // Nothing was observed for the part of this session the plugin did not see, and
+          // the account starts empty rather than invented.
+          trace: [],
+          toolCalls: 0,
           reported: false,
         });
       }
@@ -356,6 +446,12 @@ export default {
       if (entry.interrupted !== null && entry.interrupted !== undefined) signals.user_interrupted = entry.interrupted;
       const answer = assistantText(entry);
       if (answer) signals.response_summary = answer;
+      // A turn that used no tool has no trajectory, and sends none: an empty list would read
+      // as "the run made attempts and none of them failed".
+      if (entry.trace && entry.trace.length) {
+        signals.tool_trace = entry.trace;
+        signals.tool_calls = entry.toolCalls || entry.trace.length;
+      }
 
       const answered = await ask(cfg, "postflight", {
         schema_version: "1.2",
