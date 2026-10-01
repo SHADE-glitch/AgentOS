@@ -463,6 +463,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | AD | 同一个概念两套谓词：decay 的假设保护窗读 `type == 'hypothesis'`，而"这是假设"由 `lane`/`evidence_level` 陈述（`store.hypothesis_lane`、注入器 `inject._is_hint` 都读后者） | 红证据：`type='failure', lane='hypothesis'` 超窗行的 reasons 是 `['unused_severe: …', 'low_confidence: 1 observation']` —— Trigger 4 根本不出现。更硬的一条：`hypothesis` **不在 `MEMORY_TYPE` 词表里**（`contract/schema.py`：constraint/episodic/failure/preference/procedural/semantic），所以那个条件对本引擎能写出的任何行都永不成立 —— 伪装成规则的废码。真库现场：`M-7B113D99` 是 `('failure','hypothesis','hypothesis')`，批准之后没有任何东西会让它退场 | **已闭于第十二轮**（Trigger 4 改读 `hypothesis_lane()`，`mem_type` 那行随之删掉——它没有别的读者。屏幕：真库那条（副本上把 created_at 挪到 8 天前）reasons 含 `hypothesis: past protection window`，factor 0.7/degraded）|
 | AE | 分支按"记忆是否存在"路由，而不是按**分类**路由：被判重合并到已存在记忆的负面首现提案撞上 `quality_threshold` 被拒，候选当场消耗 | 真库事件屏幕：`learning.rejected {"memory_id":"M-7B113D99","reason":"best quality 0.0 below threshold 3.0"}` 连着两次，候选 68/69 均 `consumed_by='rejected'`。而 `evolve.py:176-180` 自己的注释写着质量门槛"问的不是第一次 episode —— 尤其不是失败的那次"，豁免条件却没覆盖"记忆已存在但 candidate 仍是 create"这一路。红测试还把**第二个洞**逼了出来：只改路由之后 review 的 `proposed_change.kind` 变成 `reinforce`（"它出现的运行都成功了"），重复的失败会被写成晋升证据 —— 红屏幕 `assert 'reinforce' != 'reinforce'` | **已闭于第十二轮**（`proposal` 无条件求出、分支按 `proposal is not None` 路由；`decide_promotion` 对 `creates ∧ 记忆存在 ∧ 无 weaken/reinforce` 返回 `kind='duplicate'` + `changes={}`，批准走既有 "recorded" 分支，地位不动。**队列增量实测**：真库副本重放一次重复提案 ⇒ pending 2→3，即每次重复负面 episode 多一条人门评审 —— 这是信息，不是否决理由）|
 | AF | rig 自身：`run.sh:47` 在 `:55` 的 `mkdir -p "$RIG/logs"` **之前**就向 `$RIG/logs/<label>.txt` tee ⇒ 换一个全新的 `AOS_RIG` 目录时第一次运行在 `set -e` 下当场死（真库分支 `:46-48` 更早） | 本轮换新 scratch 目录时靠预先 `mkdir -p` 绕开；没写成红测试，所以只登记不宣称已修 | **未闭**（工具面，不影响引擎结论；修法是把 mkdir 提到第一次 tee 之前）|
+| AG | **人门批准写出来的是一条事故流水，不是经验** —— 而 `approve` 只能批准或拒绝、不能编辑，所以每一次批准都*必然*产出这种 stub | 真库那一行原文：`title` = `"opencode plugin 的 export 应该怎么写，loader 会不会把每个 export 当工厂"`（问题回声，57 字符）；`body` = `任务「…」的结果：failure。 路由：report（report）。 位置：/home/shade/Public/test`；`when_to_apply` = `下次处理「…loader 会」这类任务时` —— 被 `record.py:121` 的 `task[:40]` 切在词中间；`observation_count=0`、`revalidate_after=''`、`use/success=0/0`。渲染侧 `inject.py:31,45` 把 `type='failure'` 打成 **`不要：`** 前缀 ⇒ 模型读到的是"不要：任务「…」的结果：failure"。而 MVP 的承诺（`docs/decision/positioning.md:240`）写的是"下次 preflight 看到 **不要…因为…**" —— **这里没有"因为"** | **未闭，设计缺口，本轮不改**（留给 owner 的决定）。两条最小修法：① `review approve` 收 `--title/--body/--when`，批准由人补齐，不补就照今天这样落 stub 但把它标成"未经人写的回声"；② 让 `proposal_for_loop` 蒸馏而不是回声 —— 可现在 `outcome` 里没有失败原因，蒸馏需要新采集面 ⇒ 撞判据 4。本轮已用 `aos memory retire` 退役这一行（理由落在 `memory.retired` 事件里），它不再进任何注入 |
 
 四条共性 `[Judgment]`：A–S 里大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
@@ -522,6 +523,8 @@ reachability 的 allowlist **必须被测试实际执行到**，否则它就成�
    `M-7B113D99`，**紧接着的下一次真实运行注入从 1122 字符/3 条变成 1359 字符/4 条**，插件记录的 `len`
    与引擎 `recall.injection_chars` 两处都是 1359 —— `+237` 这个数字是**跑之前**从真库副本的模拟里预测出来的。
    四家被调研项目都没做成这一段，这是本仓库唯一买得到的东西。
+   （同轮第十二日补：那条 `M-7B113D99` 因为登记为缺陷 AG 的形状问题已被 `aos memory retire` 退役，
+   现在是 `status=deprecated`、不再进注入，行与事件都还在 —— 闭合的证据是当时那两台数字，不依赖它还在。）
 3. **代价可核算** `[Verified]`：13 次免费模型调用（前八次通电验证 + 本轮 5 次：双臂 2、真库 3）、410 测试、
    `~/.config/opencode/**` 零写入（唯一例外是那次批准的符号链接）；反面是登记 Z 的账 ——
    让一条记忆真正退休要 5 次可归因的失败 + 5 次批准。

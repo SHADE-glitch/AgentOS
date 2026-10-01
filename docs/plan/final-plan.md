@@ -913,3 +913,42 @@ owner 给了带硬规则的 brief（`/home/shade/Public/test` 驱动真会话、
 
 调用记账：5 次（双臂 2 + 真库 3），预算内。零写 `~/.config/opencode/**`，插件仍不落文件。
 测试数 **410 不变**（本轮没有代码改动：撞到的三条都属于"改了会动治理语义"，留给 owner）。
+
+### 计划后 · 第十二轮：把晋升路上两个正确性缺陷修掉，并给人门一个受支持的退役出口（2026-10-01，owner 定范围）
+
+owner 改了三处定性，都接受：AE 不是"队列变大"的取舍而是注释被代码违背；AD 收窄成"同一概念两套谓词"；
+并补登我漏掉的 **AG**（晋升产物是事故流水不是经验）—— AG 本轮只登记不改。范围严格按 brief，不扩。
+
+三个 commit，每个可单点 revert：
+
+1. **AD `62606d2`** —— decay 的假设保护窗改读 `hypothesis_lane()`（与 `inject._is_hint`、`store.py` 同一谓词）。
+   比 owner 说的还硬一层：`hypothesis` **根本不在 `MEMORY_TYPE` 词表里** ⇒ 旧条件对本引擎能写出的任何行
+   都永不成立，是伪装成规则的废码。红屏幕：`reasons=['unused_severe: 2465d since creation', 'low_confidence: 1 observation']`
+   （保护窗那条不出现）；绿屏幕：真库那条在副本上把 `created_at` 挪到 8 天前 ⇒ `hypothesis: past protection window`、
+   factor 0.7、state degraded。随之删掉没有别的读者的 `mem_type` 局部。
+2. **AE `7cd79bc`** —— 提案按**分类**路由而不是按"记忆是否存在"：`proposal` 无条件求出、分支改 `proposal is not None`。
+   红测试还逼出**第二个洞**：只改路由后 review 的 `proposed_change.kind` 是 `reinforce`，即把重复的失败写成
+   "它出现的运行都成功了" —— 关掉新分支就复现 `assert 'reinforce' != 'reinforce'`。于是补 `kind='duplicate'`
+   + `changes={}`，批准走既有 "recorded" 分支，地位不动。
+   **队列增量实测**（真库副本重放一次重复提案）：pending 2→3 ⇒ 每次重复负面 episode 多一条人门评审。
+   数字是信息，不是否决理由 —— 这一点 owner 说得对，我上一轮的判断是错的。
+3. **`feat(memory)` retire** —— `aos memory retire <id> --reason …`：写门自己拥有的那一列
+   （`update_memory_fields(status='deprecated')`）、留 `memory.retired` 事件、行与历史不删；
+   无理由或指向不存在的行 ⇒ 拒绝且**一个字节都不写**；重复退役返回 `already_retired` 不堆事件。
+   屏幕（真库）：`M-7B113D99` 退役前重放真运行记下的 query 召回 4 条（它排第 2、0.335），
+   退役后同一条 query 3 条、它消失；`memory list --status deprecated` 仍看得到；
+   `doctor --json` = `total 14 / by_status {active 13, deprecated 1} / recallable 13`。
+   注意：只读重放必须用 loop 文档里记下的那份 query（含 router 的 category/domains/keywords），
+   手搓 `category=''` 会少召回两条、结论就假了。
+4. **AG 登记未改**：那一行的 `title` 是问题回声、`body` 是"任务「…」的结果：failure。路由…。位置…"、
+   `when_to_apply` 被 `record.py:121` 的 `task[:40]` 切在词中间、`observation_count=0`、`revalidate_after=''`；
+   `inject.py:31,45` 把 `type='failure'` 打成 **`不要：`** ⇒ 注入里读到"不要：任务「…」的结果：failure"，
+   而 `positioning.md:240` 承诺的是"不要…**因为**…"。两条最小修法（approve 收 `--title/--body/--when`，
+   或让提案蒸馏而非回声 —— 后者需要 outcome 里没有的失败原因，撞判据 4）写在 §12 那行里，等 owner。
+
+两处自曝，都是跑之前抓的：`retire_memory` 被我**插了两遍**（Edit 一次、脚本一次），Python 取后者、
+测试照样绿，47 行死码藏在中间 —— `git add` 前用 `grep -c` 抓到并删掉一份；本仓库五条守卫里没有一条检测重复顶层定义。
+另一处：AE 那个 commit 的 §12 标题提前引用了 AG，AG 行在本次才补上，中间跨了一个 commit。
+
+测试 Python **410 → 416**（AD 1 条、AE 2 条、retire 3 条，全部先红后绿；JS 20 例由契约用例带着跑）。
+本轮零模型调用。真库数据面动作只有两件：`review approve`（上一轮）与本轮 `memory retire M-7B113D99`。
