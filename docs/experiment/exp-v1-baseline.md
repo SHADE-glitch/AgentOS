@@ -36,6 +36,32 @@ git diff --name-only 53de1ad..exp-v1 -- \
 （契约、合成回显、插件轨迹、身份与轨迹分离、人门可见性都在 `c698094..53de1ad` 之间落地），
 用它打基线会把"经验形成"这一格当成已经存在。
 
+## Model（实验模型，冻结不变量）
+
+```
+model:      opencode/space-bunny-free
+provider:   opencode
+决定日期:    2026-10-01（owner）
+禁止:       实验期间修改模型 id —— 它是本文 §2 冻结不变量清单里的第一项
+```
+
+`space-bunny-free` 在本机目录缓存 `~/.cache/opencode/models.json` 里确实存在（provider `opencode` 与
+`opencode-go` 各一份，`cost` 四项均为 0）。为什么是它，三条：
+
+1. `huoshan/ark-code-latest` 当前不可用：`~/.zshrc:29` 导出的 `HUOSHAN_API_KEY` 值是空串
+   （长度 2，即一对引号），不是"我没配上"，是"配了空的"。
+2. 采集链已经在它身上真跑通过一次：五个 bash 步骤全部落成 method trace，`session.idle → postflight`
+   在无头 `run` 模式首答即中，`AOS_TIMEOUT_MS` 保持默认 1200（见 `integrations/opencode/README.md`
+   的 exp-v1 real-host probe 一节）。
+3. 实验目标不是比较模型能力，而是"固定模型 + 长期经验层"是否让轨迹发生变化 ⇒ **换模型就是换被解释的对象**。
+
+这条决定的代价一起记，别把它写成普适结论：**全部结果只在这个免费模型上有效**。换成任何别的模型都算
+一次新实验，需要重新打基线，`exp-v1` 不覆盖它们。
+
+已有的硬约束（不是本节新立的规矩）：`integrations/opencode/live/run.sh:70` 与 `live/README.md:69` 的
+recipe 把这个 id 写死在 `-m` 上 ⇒ 凡经 rig 跑的运行天然落在冻结模型上；绕过 rig 直接调用宿主时必须显式
+带 `-m opencode/space-bunny-free`（上面那次探针就是这么做的）。
+
 ## 2. 冻结文件列表（实验期间不得修改）
 
 路径全部实测存在（`aos/core/loop/` 与 `aos/contract/` 是整目录）。
@@ -71,8 +97,8 @@ content/policies/*.json             # 六个阈值文件：decay/injection/outco
 **违反任一冻结项 ⇒ 实验作废**：重新打基线、从 Stage 1 重跑，不在旧数据上继续累计。
 允许修改的面只有：`docs/**`、`integrations/opencode/live/**`（rig/脚本）、以及实验项目本体所在目录。
 
-冻结不变量（这些一旦变了，前后两组数字就不可比）：模型 id、插件符号链接指向、backlog 内容与顺序、
-被测项目的 base commit、`AOS_STORE_DIR` 指向哪个库。
+冻结不变量（这些一旦变了，前后两组数字就不可比）：**模型 id**（已固定，见上文 Model 一节）、
+插件符号链接指向、backlog 内容与顺序、被测项目的 base commit、`AOS_STORE_DIR` 指向哪个库。
 
 ## 3. 已验证能力边界
 
