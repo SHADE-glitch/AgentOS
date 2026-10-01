@@ -952,3 +952,33 @@ owner 改了三处定性，都接受：AE 不是"队列变大"的取舍而是注
 
 测试 Python **410 → 416**（AD 1 条、AE 2 条、retire 3 条，全部先红后绿；JS 20 例由契约用例带着跑）。
 本轮零模型调用。真库数据面动作只有两件：`review approve`（上一轮）与本轮 `memory retire M-7B113D99`。
+
+### 计划后 · 第十三轮：AG —— 让晋升出来的东西配得上被召回（2026-10-01，owner 选 A+B+C 全做）
+
+owner 否掉我一条判断：我说"蒸馏需要新采集面 ⇒ 撞判据 4"，实际 `response_summary` 早在 `SIGNAL_FIELDS` 与
+`PLUGIN_POSTFLIGHT_REQUEST_FIELDS`（`aos/contract/postflight.py:33`）里，插件只是从来没发过 —— 发它不新增采集面。
+**断言之前先量，别把"我没查到"写成"不存在"。**
+
+四个 commit，各自可单点 revert：
+
+1. `48f8267` **B** 草稿换成三段可行动结构：`失败于「…」/ 路由 … / 改动 N 个文件 … / 可证：… / 缺证：<字段> 未上报 /
+   未归因：…这一句要人补`；`task[:40]`、`[:120]` 的静默切词换成 `_clip`（拉丁退到词界，一律带 `…`）。
+   过程中撞出自己的 bug：body 在末尾截 500 会把"未归因"整句削掉（红屏幕 `… 缺证：expected_files、use`）
+   ⇒ 改成预算先给洞让步，`test_a_crowded_draft_keeps_the_hole_and_drops_the_least_that_matters` 先红后绿钉住。
+2. `903f80e` **A** `review approve --title/--body/--when`：**只在 create 时接受**（给已存在的行改正文就是 AC 关掉的
+   第二个写入者），空值拒、半填保留 `未归因`、事件记 `authored_by`。屏幕：批准前后同一条注入从"未归因…"变成
+   `不要：不要按配置名取缓存键，因为同一份配置会被两个项目各自解析一遍…`（"不要"重复一次属措辞归属，记进 §12 残留）。
+3. `aa648fa` **C** 插件从 `message.updated` 解析角色后上报助手正文（≤500；**无角色宁可不报** —— 归属不明的 text part
+   可能正是用户的提问，把问题当答案存档就是 AG 本人）；草稿以 `模型自述（未核实）：「…」` 引用，绝不进 `可证`。
+   缝守卫 `test_the_plugin_own_payload_fields_are_the_ones_the_contract_reads` 抓到信号集合变了、要求与合成同改 ⇒
+   就把 `weights["response_summary"] == 0.00` 的断言加在同一条守卫里：**要放宽权重必须先拆开这条守卫**。
+   真机 1 次调用证实 `message.updated` / `message.part.updated` 的形状（此前只从隔壁插件源码推断），
+   并留下 `response_summary chars=500`，库里那条 `confidence=0.0`、`needs_review=1`
+   —— 500 字符散文在真实数据上买到 0 分判决权重，不再只是单元测试里的构造。
+4. 本 commit：§12 AG 转已闭（连两条残留）、标题改为「A–AG 已闭，只剩 AF」、README 命令面补 `approve` 三参与 `memory retire`。
+
+数据留存的改变单独记一句：**Agent OS 第一次把模型的回答正文存进 `store/aos.db`**（每次运行 ≤500 字符，落在观测的
+`signals_json`），`~/.config/opencode/**` 依然零写。将来判 AG 修没修好，看的是**批准后的注入里有没有"因为"**，
+不是看有没有摘要。
+
+测试 Python **416 → 429**、JS **20 → 24**。本轮模型调用 1 次（真机形状确认），写在 scratch 库，不计入判据 1。
