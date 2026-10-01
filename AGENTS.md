@@ -1,8 +1,52 @@
 # AGENTS.md — 这个仓库里不可协商的检查
 
+对象 `/home/shade/Public/AgentOS`，**公开仓库**（`github.com/SHADE-glitch/AgentOS`）。
+它是 opencode 的**外置证据与治理层**：真实运行 → 合成结论 → 人门 → 晋升/降级 → 下次召回改变行为。
+引擎是纯标准库 Python；宿主只经 `bin/aos` + stdin/stdout JSON 契约进入；引擎永不调用 opencode。
+本文件同时约束"用别的 AI agent（如 qoder cn）来开发本仓库"的情形。
+
+**第一优先级是"证明它值得每天用"，不是"再加一层"。** 新功能默认不做；新增模块前必须能在
+`docs/research/open-source-capability-matrix.md` 指到一列"无人实现"。去留由判据决定
+（`docs/decision/positioning.md §6`）：通电后 4 周内 `source='hot'` 的真实运行 < 30 条 ⇒ 停止加功能。
+**现状与聚合数字不写死在这里**——一律 `./bin/aos doctor --json` 现取，不沿用上一轮的记忆值。
+
 细则、证据与缺陷编号不在这里：判定与数字在 `docs/architecture/agent-os-v2.md` §12/§15，
 执行日志在 `docs/plan/final-plan.md` §11，真机规则在 `integrations/opencode/live/README.md`。
 本文件只放"每次开工都要照做"的形状，且每一条都是**跑过**的。
+
+## 开工前先读（别的 agent 尤其）
+
+1. 本文件全文。
+2. `docs/architecture/agent-os-v2.md` §12（缺陷编号）与 §15（已证到哪一层、什么没证）。
+3. `docs/plan/final-plan.md` §11（最近几轮怎么错的、怎么修的）。
+4. `integrations/opencode/live/README.md`（真机怎么跑、隐私线）。
+
+**为什么**：这个仓库反复出现的病是"声明了但没人写 / 写了但没人读 / 读了但不生效 /
+只在 fixture 里跑过就当真的"。上面四份是这些病的历史记录；不读就会重犯。
+
+## 不要做什么（非目标，别"顺手"加回来）
+
+- **不建 skill 系统**：不创建/读/写 skill 文件，不碰 `personal-skills`，`content/skills/` 不得复现
+  （`test_skill_boundary` 拦）。skill 属于 host。
+- **不自建遥测写入者**：遥测的唯一写入者是本机 skill-tracker。要接它的库走 `final-plan §7` 的只读规则
+  （列白名单 + `PRAGMA table_info` 先探后读 + 读不到就降级）；**当前零代码**——接之前先证明它真会改变召回。
+- **不加 MCP、不加第三方依赖**（`test_no_third_party_imports` 是执行方式）。
+- **不写 `~/.config/opencode/**`**（含 `opencode.json`、`plugin/`、`AGENTS.md`、`skill-stats-registry.json`）；
+  引擎唯一的写处是 `store/`。
+- **不把引擎变成会改代码的东西**：recovery 永远 plan-only，`auto_modify_code=False`。
+- **不做编排、不做会话检索、不做代码索引**（与"外置大脑"定位冲突，见 `positioning.md §2/§3`）。
+
+## 非干扰是硬约束（owner 明确要求）
+
+- **停用后必须零影响**：`AGENT_OS_ROOT` 不设 ⇒ 插件加载但每个钩子 no-op，`output.system` 与
+  没有这个插件时**逐字节相同**（`tests/js/plugin.test.mjs` 钉住）。
+- **只增强，不改写邻居**：只 push 自己的元素；绝不占 `output.system[0]`、绝不编辑/重排/删除他人
+  元素（DCP 靠 `[0]` 判内部调用），并保留别人追加进我们自己元素的后缀。
+- **不碰其他组件的状态**：不写 `~/.config/opencode/**`，不读写 DCP / skill-tracker / notifier
+  的库或文件；插件源码除 `existsSync` 外不得 import 任何写 API。
+- **判据 3 优先于一切**：任何能力若必须写 `~/.config/opencode/**`、或必须编辑他人写入的
+  `output.system` 元素才能生效 ⇒ **直接放弃，不讨论收益**。
+- 停用方式就是两条可逆动作：删符号链接、去掉 alias/export 里的 `AGENT_OS_ROOT`。
 
 ## 什么算绿
 
@@ -76,16 +120,21 @@
   桶名从 domains/keywords 剔除、放弃时唯一会给的 role 也清掉。**只动查询侧**，真讲 fallback 的记忆
   仍靠自己的 tag 与题面被找到（这个不对称是故意的，别"顺手"改成两侧）。
 
-## 真机测试（opencode）
+## 真机测试（opencode）——含"别的 agent 驱动"的情形
 
+- **绝不用 `opencode` 这个 shell alias**：本机 `~/.zshrc` 的 alias 注入 `--auto` 和一个内联的
+  `AGENT_OS_ROOT`，你分不清哪个 env 生效，而 `--auto` 会**自动批准当前 cwd 下的编辑与任意 bash**
+  （官方标注 dangerous）。驱动真机一律用绝对路径 `~/.opencode/bin/opencode` + 显式 `AGENT_OS_ROOT`
+  + **指向 scratch 的 `AOS_STORE_DIR`**。
+- **任何测试运行都必须把 store 指到 scratch**（`AOS_STORE_DIR` / `AOS_DB_PATH`）；真库只由 owner 的
+  交互会话增长。`live/run.sh` 会拒绝真库，除非 `AOS_RIG_ALLOW_REAL_STORE=1` 并说清楚。
 - 模型只用 `opencode/space-bunny-free`；`--auto` 需 owner 授权并记录批准范围（cwd/库/批次/模型/日期）；
-  `~/.config/opencode/**` 零写入。（owner 于 2026-10-01 把"绝不传 `--auto`"改成这一条；
-  `live/run.sh` 的头注释与 `live/README.md` 仍写着旧规则、且脚本尚未解析 `--auto` ——
-  那属于 rig，等实验轮真正开工时一并改，不在开发轮顺手动。）
+  `~/.config/opencode/**` 零写入。
+- 无头 `opencode run` 在 `permission.bash=ask` 且无 TTY 时，模型一想调工具就必然失败 ⇒ 要测工具行为
+  必须用真 TUI（tmux 驱动，方法见 `live/README.md`），或只问"知识可答"的问题；**不要用 `--auto` 去修这个**。
+- 驱动真 TUI 时遇到权限弹窗**停下来问 owner**，默认只选 Allow once。
+- 判据 1 的 `hot` 只数 owner 的交互会话，rig / agent 产生的观测不计。
 - 提示词全合成，会话正文不进仓库与文档；插件日志只出现键名/索引/计数，不出现值。
-- 无头 `opencode run` 在 `permission.bash=ask` 且无 TTY 时，模型一想调工具就必然失败 ⇒
-  判据 1 的 `hot` 只数 owner 的交互会话，rig 产生的观测不计。
-- 驱动真 TUI 时遇到权限弹窗**停下来问 owner**，默认只选 Allow once；方法见 `live/README.md`。
 - 需要改 `~/.config/opencode/**` 或需要 host 没有的钩子 ⇒ 停下汇报，那是 owner 的决定。
 
 ## 交付节奏
