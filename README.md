@@ -211,9 +211,16 @@ validate → **gate** → promote. Thresholds come from `content/policies/*.json
 held as a `learning_reviews(status='pending')` row and is never auto-promoted.**
 A human resolves it:
 
+A verdict and an attribution are two different claims. `review label <id> --outcome
+failure` records what the human judged and stops there — nothing is credited or blamed,
+and the CLI says so in terms of what to type next. `--skill <name>` is the second claim
+("this kind of work is what the run proves"), and only memories whose category or tags
+are about that skill are implicated by it. Being recalled is not being the cause: the
+engine's own record path has required that since P2, while a labelled run bypassed it.
+
 ```bash
 ./bin/aos review list                        # each row says what approving would do
-./bin/aos review label <id...> --outcome X    # answer the queue; the consequence prints back
+./bin/aos review label <id...> --outcome X [--skill S]   # answer the queue; the consequence prints back
 ./bin/aos review approve <review-id>         # promotion, or a conflict's supersede
 ./bin/aos review reject  <review-id> [--as X] # --as turns a rejection into a weakening signal
 ./bin/aos review sync                         # settle candidates from any other writer

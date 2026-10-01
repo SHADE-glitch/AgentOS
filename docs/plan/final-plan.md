@@ -312,15 +312,21 @@ P7 只给它读到**历史**，判据 1 仍然要等 `source='hot'` 的运行长
 
 ```bash
 # 全部 Phase 完成后，最终演示（一条命令序列，人敲得动，终端可见）
-./bin/aos preflight  --payload '{"task":"…"}'        # 看到 <agent_os>
-./bin/aos postflight --payload-stdin < run.json      # needs_review=true
-./bin/aos review list                                # 信号 + 缺席 + 下一步
-./bin/aos review label N --outcome failure           # 立刻出现提案
-./bin/aos review approve M --as shade                # 人批准
-./bin/aos preflight  --payload '{"task":"…同类…"}'   # 看到"不要…因为…"
-./bin/aos review approve K --as shade                # 批准 weaken
-./bin/aos preflight  --payload '{"task":"…"}'        # 该条**不再出现** ← 今天的仓库做不到这一步
+./bin/aos preflight  --payload '{"task":"…"}'                 # 看到 <agent_os>
+./bin/aos postflight --payload-stdin < run.json               # needs_review=true
+./bin/aos review list                                         # 信号 + 缺席 + 下一步
+./bin/aos review label N --outcome failure --skill bugfix      # 结论 + 归因；立刻看到候选与提案
+./bin/aos review approve M --as shade                          # 人批准提案
+./bin/aos preflight  --payload '{"task":"…同类…"}'            # 看到"不要…因为…"
+./bin/aos review approve K --as shade                          # 批准 weaken（rank 下降）
+./bin/aos preflight  --payload '{"task":"…"}'                 # 该条**不再出现**
 ```
+
+2026-10-01 这条链在真实形状的数据上跑通了（写在 `/tmp/aos-chain/store` 副本库，真库未被这些运行污染）：
+同一任务 3 次运行 ⇒ 3 条 `outcome_label`；`--skill bugfix` 标注 2 次 ⇒ 每条被召回记忆 2 个 weaken 候选
+⇒ 门排队 3 条 promotion；批准后 `M-SEED-CACHEKEY02` 的 rank 1→3、分数 0.387→0.262；
+**第 5 次**批准才 `active → deprecated` 并从注入块里消失（每秩只降一档，见 §12 Z 行）。
+最后一行原话"今天的仓库做不到这一步"到此作废。
 
 ---
 
@@ -663,3 +669,28 @@ F3（`skill_used` 不发 ⇒ 真实运行不产候选）与 F9（`user_interrupt
 
 另记一次我自己的流程失误：F7普查那条提交是在它的测试仍红的时候打进去的（命令里 `grep` 吞掉了失败码），
 下一轮立刻发现并单独修了测试模式 —— 已写在该提交的说明里，不做 amend。
+
+### 计划后 · 第二轮：多轮会话、归因洞与链条闭合（2026-10-01，同批批准内）
+
+2 次模型调用（`space-bunny-free`），其余全部零成本。真库当前 `observations` 回到 **0**，
+因为第一 hot 那条（`LOOP-20261001013518-F5D1`）带着 T 修复之前采集的 `files_changed`
+—— 它把操作者运行前留下的脏文件算成了运行的产物 ⇒ 用户裁决**删掉**，判据 1 的时钟重新从下一次干净运行开始。
+删除前的库留在 `store/aos.db.pre-drop-obs73.bak`。
+
+**多轮（同一 session 的第二条消息）是好的**：两条 turn 各开一个 loop、各进一条 `outcome_label`，
+`pending` 不会被后一轮覆盖掉前一轮（先前担心的那点不成立）。
+
+**V 在真实用法里又证实一次**：第一轮提示词带英文 token（`retrieve.py`、`cache`）⇒ 注入 394 字符；
+第二轮纯中文追问 ⇒ `chars=0`，什么都没注入。同一个会话、同一个目录，差别只在措辞语言。
+
+**缺陷 Y（本轮最大的一个，零模型调用复现）**：标注路径从来不查归因。一次 `failure` 标注给
+**三条被召回记忆**都发了 weaken 候选，其中包括讲 sqlite 表重建与 postflight 默认值的两条。
+P2 把这条洞在 record 路径上关掉了，label 路径一直敞着；今天没造成后果纯粹是因为
+另一条不相干的守卫（`need >= 2 independent executions`）先挡住了。
+修法是让人点名工种：`--skill`，不点名的结论照记、不怪任何记忆，CLI 打印下一步该怎么补。
+顺带纠正我上一轮报告里的一句错话：我说"真实运行不产候选"——record 路径确实不产，
+label 路径产，而且产得过头。
+
+**链条闭合**（`/tmp/aos-chain/store` 副本，真库未动）：§10 那条"今天的仓库做不到这一步"已经作废 ——
+rank 1→3、分数 0.387→0.262、第 5 次批准后 `active→deprecated` 并从注入里消失。
+副作用是一条记账（§12 Z 行）：让一条既有记忆退出召回需要 5 次可归因的失败，不是一次点击。

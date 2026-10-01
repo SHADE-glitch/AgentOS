@@ -406,7 +406,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–U 已关闭，V 待裁决；此节留作形状记录）
+## 12. 缺陷登记（A–Z 里除 V 外均已关闭；V 是排序策略，待裁决）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -437,6 +437,8 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | T | 脏树仍被判定器当成运行的产物：P5 只做了"把它列出来"，没做"把它扣掉" | 真实屏幕：模型什么都没改，引擎仍合成 `outcome=success, mass=0.45`，信号里 `files_changed=['integrations/opencode/live/run.sh']` —— 那是操作者在运行**之前**留下的修改 | **已闭**（stage 与 postflight doc 都改读可归因列表；原始 bundle 仍存完整 diff 给人复查）|
 | U | 到达证明不能靠"模型服从注入的内容"，而 `--pure` 也不是我们的对照臂 | 植入的校验词 `glorp-7317` 在插件臂同样没出现 —— 注入块的 preamble 自己就写着"不要向用户复述本节"；`--pure` 会把 DCP / notifier / tracker 一起摘掉，差值不是我们的块 | **已闭（方法）**：改用两个不依赖服从的见证 —— ① 引擎 `injection_chars` == 插件记录的元素长度（真库运行 511 == 511）；② 同库同目录**惰臂**（`AGENT_OS_ROOT` 不设）的 input-token 差值 +583 tokens / 1,279 字符 |
 | V | 中文任务的召回下限：纯中文措辞几乎召不出任何记忆 | 实测 `min_score=0.15`，而单个中文 tag 命中的静态分上限只有 **0.080**；`compute_static_relevance` 要求 `len(tag)>=3`（两字中文词被整体排除），keyword 匹配又要求**等于**某个 tag（`agent` ≠ `agent-os`）。本轮两次成功召回都因为路由器恰好吐出英文实体去撞英文 tag | **未闭 ⇒ 需人裁决**：调阈值 / 中文分词 / tag 归一化都是排序策略决定，不属于这轮循环能自己顺手改的东西 |
+| Y | 标注结算把"在场"当"因果"：`apply_verdict` 从不查 `is_attributable` ⇒ 人给一次 `failure` 就给**所有被召回的记忆**发 weaken 候选 | 真实形状的运行复现：一次 cache-key 失败产生 3 条候选，其中 `M-SEED-MIGRATE11`（sqlite 重建）与 `M-SEED-DEFAULT5`（postflight 默认值）与任务无关；P2 的守卫只在 record 路径生效。具名测试先红：`candidates_created` 3 → 0/1 | **已闭**（`review label` / `review reject --as` 必须 `--skill` 才归因；不点名的结论照记但不怪任何记忆，CLI 明说并给出补完命令；skill 写进 `observations.signals` 供后续周期复现）|
+| Z | 记账，非缺陷："削弱到底即退休"实际需要 **5 次** 独立否定，因为每一秩只降一档 | 屏幕：从 `real_project_validated` 起，第 2/3/4 次批准让 rank 1 → 3（0.387→0.309→0.262），第 5 次才 `active → deprecated` 并**从注入块里消失** | 行为正确。这条只是把 final-plan §3 第 8 步的真实成本写清楚：让一条记忆退出召回 = 五次可归因的失败，不是点一下按钮 |
 
 四条共性 `[Judgment]`：A–S 里大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
