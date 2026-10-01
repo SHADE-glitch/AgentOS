@@ -52,7 +52,7 @@ path resolves from `AGENT_OS_ROOT` (defaulting to the repo itself).
 ## Quick start
 
 ```bash
-./bin/aos doctor                       # resolved paths and health
+./bin/aos doctor                       # paths, schema, and what the store has actually done
 ./bin/aos doctor --json                # the same facts as a document (a host negotiates on this)
 ./bin/aos memory seed                  # cold start: load content/memory/seed into the store
 ./bin/aos memory list                  # what the engine knows

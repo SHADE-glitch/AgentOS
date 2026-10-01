@@ -215,6 +215,9 @@ def _doctor_document(paths) -> dict:
             # other in the criterion that decides whether this layer earns its
             # keep.
             document["observations"] = store.observation_counts_by_source()
+            # Whether recall found anything, over the runs the loop itself saw.
+            # `observations` says the loop ran; this says it had something to say.
+            document["recall"] = store.recall_coverage()
         finally:
             store.close()
     return document
@@ -248,6 +251,34 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     lifecycle = _load_lifecycle()
     print(f"  core lifecycle:  {'[OK]' if lifecycle else '[NOT PORTED]'}")
     print(f"  schema:        {_schema_line(paths.db_path)}")
+
+    # The store's own numbers, because "READY" with an empty layer and "READY" with a
+    # working one look the same otherwise. Recall is the one that would otherwise
+    # never show a problem: a run that got nothing back still counts as an observation.
+    document = _doctor_document(paths)
+    if "memories" in document:
+        memories = document["memories"]
+        print(f"  memories:        {memories['total']} ({memories['recallable']} recallable, "
+              f"{memories['without_dedupe_key']} without a fact key)")
+        observations = document.get("observations") or {}
+        counters = " · ".join(f"{source} {count}" for source, count in sorted(observations.items())) or "none"
+        print(f"  observations:    {counters}")
+        recall = document.get("recall") or {}
+        if recall.get("runs"):
+            print(f"  recall:          {recall['runs']} runs · {recall['recalled']} 拿到记忆 · "
+                  f"{recall['zero_recall']} 空手")
+        else:
+            print("  recall:          还没有一次 loop 自己的运行")
+        reviews = document.get("reviews") or {}
+        candidates = document.get("candidates") or {}
+        print(f"  gate:            {reviews.get('pending', 0)} pending reviews · "
+              f"{candidates.get('open', 0)} open candidates")
+        pending = document.get("pending_postflight") or {}
+        if pending.get("outstanding"):
+            print(f"  open loops:      {pending['outstanding']} 条开着没回来报告"
+                  f"（最久 {pending.get('oldest_hours', 0)} 小时）")
+    elif document.get("error"):
+        print(f"  store:           {document['error']}")
     print()
     print(f"Status: {'READY' if lifecycle else 'FOUNDATION ONLY'}")
     return 0

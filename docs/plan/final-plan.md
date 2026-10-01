@@ -807,3 +807,19 @@ review **#24 故意留着不标**：一条真实运行的成败是人的判断�
    `files_changed=[]`、`preexisting_files=['content/memory/seed/agentos.json']` —— 引擎没把我的编辑算成运行的产物。
 
 判据 1 的窗口里现在有 2 条 hot，其中 1 条是修好证据归因之后的第一条干净运行。
+
+### 计划后 · 第八轮：召回命中率进 doctor（2026-10-01，用户选 ①）
+
+`doctor --json` 多一节 `recall: {runs, recalled, zero_recall}`，只统计 `source='hot'` 的 loop 级运行
+（回读来的历史不是"我们为它召回过什么"的证据），人读输出同时多两行：
+
+```
+observations:    hot 2
+recall:          2 runs · 2 拿到记忆 · 0 空手
+```
+
+为什么这条值得存在：V 那类缺陷的症状是"跑得很欢、一条记忆都没回去"，而 `observations` 的计数在
+这种状态下长得跟健康一模一样。有了 0，判据 1 的四周窗口里我第一次能直接看出**这套层是在沉默还是在学**。
+三个分支都过屏幕：没有运行 ⇒ "还没有一次 loop 自己的运行"；有运行但空手 ⇒ 计数出来；真库 ⇒ 2/2/0。
+
+测试 Python **407 → 408**（`test_doctor_reports_whether_recall_found_anything`，先红：`KeyError: 'recall'`）。

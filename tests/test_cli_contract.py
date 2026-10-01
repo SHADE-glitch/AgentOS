@@ -384,6 +384,28 @@ def test_doctor_json_reports_the_store_as_it_really_is(capsys, store):
     assert document["memories"]["without_dedupe_key"] == 0, "every writer fills the key now"
 
 
+def test_doctor_reports_whether_recall_found_anything(capsys, store):
+    """The one number that says whether this layer is silent, not just empty.
+
+    `observations` counts runs; it does not say whether a run got any memory back.
+    A store that never matches the task language looks exactly like a healthy one
+    from that count — which is how the Chinese-recall defect (V) could sit there for
+    as long as it did. Read out over the loop's own runs only: backfilled history is
+    not evidence about recall, because nobody recalled anything for it.
+    """
+    store.add_observation(loop_id="LOOP-HIT", outcome="partial", session_id="ses-hit")
+    store.log_retrieval(memory_id="M-SEED-X", score=0.4, rank=1, loop_id="LOOP-HIT", query_hash="Q1")
+    store.add_observation(loop_id="LOOP-MISS", outcome="partial", session_id="ses-miss")
+    store.add_observation(loop_id="BACKFILL-ses-x", outcome="partial", session_id="ses-x",
+                          source="backfill")
+
+    code = main(["doctor", "--json"])
+    document = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert document["recall"] == {"runs": 2, "recalled": 1, "zero_recall": 1}, document.get("recall")
+
+
 def test_memory_refresh_backfills_keys_and_is_idempotent(capsys, store):
     from aos.core.memory.authoring import new_memory
 

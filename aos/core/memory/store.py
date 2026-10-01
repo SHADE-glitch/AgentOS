@@ -637,6 +637,30 @@ class MemoryStore:
         ).fetchall()
         return {str(row["source"]): int(row["n"]) for row in rows}
 
+    def recall_coverage(self) -> dict[str, int]:
+        """Did the runs that happened actually get a memory back?
+
+        A count of observations says the loop ran; it does not say whether recall
+        found anything for it. Those two look identical in a healthy-looking store,
+        which is exactly how a language mismatch could sit quietly in the ranking —
+        the run reports in, gets zero memories, and nothing anywhere is louder than a
+        zero. Only the loop's own runs count: read history was never recalled for.
+        """
+        row = self._conn.execute(
+            """
+            SELECT COUNT(*) AS runs,
+                   COALESCE(SUM(recalled), 0) AS recalled
+            FROM (
+                SELECT o.loop_id,
+                       EXISTS (SELECT 1 FROM retrieval_log r WHERE r.loop_id = o.loop_id) AS recalled
+                FROM observations o
+                WHERE o.source = 'hot' AND o.memory_id IS NULL
+            )
+            """
+        ).fetchone()
+        runs, recalled = int(row["runs"]), int(row["recalled"])
+        return {"runs": runs, "recalled": recalled, "zero_recall": runs - recalled}
+
     def find_observation_by_loop(self, loop_id: str) -> Optional[dict[str, Any]]:
         """The loop-level row for one loop, if a backfill already wrote one."""
         row = self._conn.execute(
