@@ -17,6 +17,9 @@ from aos.config import get_paths
 DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
     "retrieval": {
         "top_k": 5,
+        # Judged on the relevance score *before* `decay_factor` is applied: a memory
+        # weakened to the decay floor should get quieter, not disappear from recall
+        # while its status still says `active` (defect AA).
         "min_score": 0.15,
         # Only these lifecycle states may reach a host. `candidate` waits for the
         # gate, `deprecated`/`superseded`/`invalidated`/`archived` have been

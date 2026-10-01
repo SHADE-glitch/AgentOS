@@ -412,7 +412,13 @@ def retrieve(
                 weights,
                 cap,
             )
-            if result["final_score"] < min_score:
+            # The threshold is about relevance; decay is about recency and track
+            # record. Judging the threshold on the post-decay number let a memory at
+            # the policy's own 0.5 floor drop out of recall while its status stayed
+            # `active` — retired by arithmetic, invisibly to `doctor` and to the
+            # queue. `evolve.py` says decay should make a memory quieter, not kill it:
+            # so the gate reads the pre-decay score, and decay keeps deciding order.
+            if result["adaptive_score"] < min_score:
                 continue
             results.append(result)
 

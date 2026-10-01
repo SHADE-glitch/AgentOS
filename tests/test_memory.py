@@ -403,3 +403,76 @@ def test_a_two_character_chinese_tag_counts_as_a_task_match():
 
     assert cjk > 0, "a two-character Chinese tag is a real match"
     assert latin == 0, "a two-letter Latin token is still noise"
+
+
+# ── 阈值该判在 decay 之前还是之后（缺陷 AA / 裁决 ②′）──────────────────
+def _two_tag_hit_row(store, s):
+    """A memory whose only claim on this task is two matching Chinese tags."""
+    from aos.core.memory.retrieve import retrieve
+
+    return retrieve(
+        {"task_text": "渲染层能不能自己调整召回排序", "category": "", "domains": [],
+         "roles": [], "keywords": [], "scope_project": ""},
+        store=s,
+        log=False,
+    )["results"]
+
+
+def test_decay_orders_a_memory_but_does_not_ban_it_from_recall(store):
+    """`decay_factor` at the policy's own floor used to retire a memory in silence.
+
+    0.85 multiplying a 0.16 relevance gives 0.136, which is below min_score — so a
+    weakened memory stops being recalled while its status stays `active` and nothing in
+    `doctor` or the queue says so. `evolve.py`'s comment says decay should make a memory
+    quieter, not kill it by arithmetic; the threshold is therefore judged on the
+    pre-decay score, and decay keeps its ordering role.
+    """
+    from aos.core.memory.retrieve import retrieve
+
+    _add(store, "M-WEAK", tags=["渲染层", "召回排序"], confidence="medium",
+         evidence_level="runtime_validated", observation_count=3)
+    _add(store, "M-STRONG", tags=["渲染层", "召回排序", "输出顺序"], confidence="high",
+         evidence_level="runtime_validated", observation_count=3)
+    store.set_decay_factor("M-WEAK", 0.5)
+
+    results = retrieve(
+        {"task_text": "渲染层能不能自己调整召回排序，看输出顺序", "category": "", "domains": [],
+         "roles": [], "keywords": [], "scope_project": ""},
+        store=store,
+        log=False,
+    )["results"]
+    by_id = {r["memory_id"]: r for r in results}
+
+    assert "M-WEAK" in by_id, "a memory at the decay floor is still recalled, just quieter"
+    weak, strong = by_id["M-WEAK"], by_id.get("M-STRONG")
+    assert weak["final_score"] < 0.15 <= weak["adaptive_score"], (
+        "the gate looks at the pre-decay score; that is the whole fix"
+    )
+    assert strong is None or strong["final_score"] > weak["final_score"], (
+        "decay still decides who is shown first"
+    )
+    assert [r["memory_id"] for r in results].index("M-WEAK") >= (
+        0 if strong is None else [r["memory_id"] for r in results].index("M-STRONG")
+    ), "the decayed memory cannot outrank the fresh one"
+
+
+def test_a_single_tag_coincidence_is_still_not_a_recall(store):
+    """The precision half of the same decision, measured rather than assumed.
+
+    Moving the threshold ahead of decay must not turn "the task happened to use one of
+    my tags" into a reason to inject a memory: one hit is 0.08 static, and no quality
+    bonus (capped at +30%) lifts that over 0.15.
+    """
+    from aos.core.memory.retrieve import retrieve
+
+    _add(store, "M-ONE", tags=["缓存键", "配置文件"], confidence="high",
+         evidence_level="runtime_validated", observation_count=5)
+
+    results = retrieve(
+        {"task_text": "这个缓存键的命名风格不好", "category": "", "domains": [],
+         "roles": [], "keywords": [], "scope_project": ""},
+        store=store,
+        log=False,
+    )["results"]
+
+    assert results == [], "one matching tag is a coincidence, not relevance"
