@@ -616,3 +616,50 @@ schema v4→v5、13 条 `dedupe_key` 补齐、5 条 `observation_count` 从演�
 ⇒ 插件是按实例懒加载的，启动日志证明不了它被读到；于是 final-plan §5 里"真实装载验证"要确认的两项
 （钩子顺序、`tool.execute.after` 真实形状）**仍未确认**，要等一次真实会话。
 判据 1 的时钟从那一刻才开始走，今天 `observations.hot` 仍是 0。
+
+上面那句"仍未确认"和"hot 仍是 0"随后就被下一节推翻了 —— 这两项正是
+端到端循环要回答的问题，答案记在那里。
+
+### 计划后 · 端到端测试-修复循环（2026-10-01，用户批准"你来进行测试"）
+
+**目的**：把 `source='hot'` 从 0 变成 ≥1，并且只信屏幕。模型调用 8 次（预算 7–8），全免费非 contributor 的
+`opencode/space-bunny-free`；除最后一次外全部写在 `/tmp/aos-rig/store` 副本库里。
+测试：Python **398 → 401**，JS **13 → 20**（新增的每一条都先在修复前红过一次）。
+
+**验收屏幕（真库那一次，`LOOP-20261001013518-F5D1`）** `[Verified]`：
+
+```
+aos doctor --json  → observations {"hot":1} · reviews {pending:1, by_kind:{outcome_label:1}}
+                     candidates.open 0 · pending_postflight.outstanding 0
+loop 文件          → recall.injection_chars 511 == 插件 stderr 的 len=511（数字配对，不依赖模型服从）
+retrieval_log      → 该 loop 1 行（linkage）；注入的是 M-SEED-CACHEKEY02（scope=project:AgentOS，命中cwd）
+review #23         → 缺席列表把 user_interrupted / tool_errors / session_error 等都列为"缺席"，等人标注
+```
+
+**修掉的 7 条**（每条一次提交、每条测试先红）：F1 成功也要可见、F2/F10 三种沉默各不相同、
+F4 postflight 未答可重试三次、F6 保留邻居写进我们元素尾部的文本、F8 送出 `model`、
+S 注入规模持久化、T 脏树不再被算作运行的产物。F5 把契约漂移守卫从手抄清单改成解析 JS 源码
+（并用"塞一个 `invented_key` 就变红"证明它会红）。F7 由现场普查结论：**不修**，
+`tool.execute.after` 里没有 `error` 键、被拒的调用根本不走 after 钩子 ⇒ `tool_errors` 只能缺席（设计上"缺席不是 0"）。
+F3（`skill_used` 不发 ⇒ 真实运行不产候选）与 F9（`user_interrupted` headless 拿不到）**故意不动**，
+理由分别写进 `record.py` 的反自我奖励约束与代码注释。
+
+**判据 1 的状态**：时钟从今天开始，`hot=1`（那一次运行改了什么由 review #23 等人裁决 ——
+它同时带着 T 修复**之前**采集的 `files_changed`，那条信号不可信，其余信号仍然成立）。
+
+**两条计划里没料到的事**：
+
+1. **只在 fixture 里跑过的东西，等于没跑过。** T（脏树 credited）与 Q（decay 覆盖）都是
+   真实数据才暴露的形状；而"修了一半"的 T 比没修更危险 —— 它旁边就有一句 `preexisting_files`
+   让人以为已经处理了。已写进架构文档 §12 的共性段。
+2. **证明方式会自己推翻自己**：植入校验词想证明注入到达，而注入块的 preamble 明写"不要向用户复述本节"
+   ⇒ 模型不听话恰恰是它对；`--pure` 也不是对照臂（它把所有外部插件一起摘掉）。到达证明改为
+   引擎数字 == 插件数字 + 惰臂（只关我们）的 input-token 差值 +583 / 1,279 字符（U）。
+   惰臂是这一轮才补进 rig 的，`--pure` 那两次调用因此只证明了"没有我们时也能答对" ⇒ 作废了行为证据。
+
+**遗留（需人裁决，不在本轮动手）**：缺陷 V —— 纯中文措辞的任务基本召不出记忆，
+`min_score=0.15` 对单个中文 tag 上限 0.080，且 `len(tag)>=3` 把两字词整体排除、keyword 要求等于 tag。
+今天所有成功召回都靠路由器恰好吐出英文实体。本轮 8 次调用里有 3 次就是被这件事烧掉的（提示词怎么改都召不到）。
+
+另记一次我自己的流程失误：F7普查那条提交是在它的测试仍红的时候打进去的（命令里 `grep` 吞掉了失败码），
+下一轮立刻发现并单独修了测试模式 —— 已写在该提交的说明里，不做 amend。

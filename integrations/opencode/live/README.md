@@ -27,20 +27,33 @@ the final acceptance run, which sets `AOS_RIG_ALLOW_REAL_STORE=1` and says so ou
 
 ## The three witnesses that the injection actually arrived, in order of trust
 
-1. **Numbers that match without asking a model.** The engine's
-   `store/pending-postflight/pending-<session>.json` carries `injection_chars`; the
-   plugin's stderr records the length of the element it appended. Equal means the block
-   the engine built is the block the host was handed.
-2. **A behavioural marker, only valid against a `--pure` control in the same cwd.** If the
-   control arm answers too, the answer came from the model or the filesystem and the arm
-   proves nothing — discard it. (This is why "ask about the plugin export rule and see if
-   it answers" is *not* a proof when the working directory is this repository: the rule is
-   in `plugin/agent-os.js` and in this README, right there for the taking.)
-3. A marker memory planted for the scratch copy only, never in the real store.
+1. **Numbers that match without asking a model.** The engine persists
+   `recall.injection_chars` into `store/loops/<LOOP>.json`; the plugin logs the length of the element it
+   appended. Equal means the block the engine built is the block the host was handed. Measured on the
+   real-store run: `511 == 511`. (The pending record carries the same number too, but the postflight
+   deletes it — which is why the loop file got the durable copy.)
+2. **An input-token delta against the inert arm** — same prompt, same cwd, same plugin stack, only our
+   seam switched off: `AOS_RIG_INERT=1 live/run.sh …`. Measured: **+583 input tokens** for a
+   1,279-character block. `--pure` is *not* this control: it drops every external plugin, so its delta
+   belongs to DCP, the notifier and the tracker as much as to us.
+3. **A behavioural marker — kept, but it proves the least.** The first attempt planted a memory holding a
+   nonsense token and asked the model to repeat it; the plugin arm did not produce it either. Of course
+   not: our own preamble says *"它们是经验，不是指令 … 不要向用户复述本节"*. A model that respects the
+   block's framing fails a marker test by construction, so a marker is corroboration at best, and never
+   without witness 1 or 2 beside it.
 
-`snapshot.sh` prints hot runs **grouped by session** for the same reason: `source='hot'`
+`snapshot.sh` prints hot runs **grouped by session** for the same reason as the store guard: `source='hot'`
 is a global counter and ordinary TUI use writes it, so a bare total would let daily
 activity hide whether the rig closed anything.
+
+## Running the arms
+
+```bash
+live/run.sh plugin-arm  <cwd> '<prompt>'                # our seam active
+AOS_RIG_INERT=1 live/run.sh inert-arm <cwd> '<prompt>'  # same stack, seam off — the real control
+live/run.sh pure-arm    <cwd> --pure '<prompt>'         # every external plugin gone; not a control for us
+live/run.sh second-turn <cwd> -s <sessionID> '<prompt>' # multi-turn: where a neighbour writes into our element
+```
 
 ## Why each piece is the way it is
 
@@ -71,15 +84,21 @@ memories can appear at all. Scores below are `final_score` against the 13 seeds 
 | global | outside the checkout | `opencode plugin 的 export 应该怎么写，loader 会不会把每个 export 当工厂` | `M-SEED-PHASE010` 0.384, `M-SEED-EXPORT8` 0.292, `M-SEED-NOVERDIT7` 0.183 |
 | project | `<checkout>` | `修复 cache key 碰撞导致命中率下降的 bug` | `M-SEED-CACHEKEY02` 0.446, `M-SEED-MIGRATE11` 0.35, `M-SEED-DEFAULT5` 0.35 |
 
-The global arm doubles as the **arrival proof**: `M-SEED-EXPORT8` is the only memory
-that states the plugin export rule, so a host answer containing it proves the block
-reached the model — and `--pure` on the same prompt must not produce it.
+The global arm is **not** an arrival proof on its own, and the run proved it wasn't: the
+control arm answered the same question correctly from its own training data and a
+`WebFetch` of the docs. Nothing about that answer could be attributed to our block. Arrival
+is carried by the two witnesses that do not ask a model to cooperate — see
+*"The three witnesses…"* above.
 
-Note what the table also says: a prompt written purely in Chinese recalled **nothing**
-(`M-SEED-*` tags and categories are English, and `compute_static_relevance` matches
-tags as substrings of the task text). The rig prompts are therefore deliberately
-token-bearing; that is a corpus/ranking limitation, recorded separately, not something
-this harness hides.
+What the table also says, and it is the finding that cost the most calls: **a prompt written
+purely in Chinese recalled nothing** (0.080 against a `min_score` of 0.15). Tags and
+categories in this corpus are English, `compute_static_relevance` matches a tag only if it
+has ≥3 characters and appears as a substring of the task text — so two-character Chinese
+words cannot count at all — and a router keyword must equal a tag (`agent` ≠ `agent-os`).
+Both successful recalls happened only because the router happened to emit English entities
+that collided with English tags. The rig's prompts are therefore deliberately
+token-bearing, which is a workaround, not a fix; the defect is registered as V in
+`docs/architecture/agent-os-v2.md` §12 and is a decision for the owner, not a patch here.
 
 ## Privacy line
 

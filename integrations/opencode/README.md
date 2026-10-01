@@ -84,14 +84,22 @@ The load rule this file respects: a plugin module must be
 `export default { id, server }` — a bare function export makes opencode call every
 export as a factory and abandon the load in silence.
 
-## What is still `[Unconfirmed]`
+## What a live run confirmed, and what still is not
 
-- The order in which opencode runs several registered `system.transform` hooks.
-  Appending is safe under any order; a *reorder* by another plugin is not something
-  this code depends on, but it is also not verified.
-- Whether a real `tool.execute.after` payload exposes an error the way the fixture
-  assumes. The plugin counts only an error it can actually see and otherwise leaves
-  `tool_errors` **absent** — an absent signal lowers the verdict's coverage, while a
-  fabricated `0` would have claimed "nothing went wrong".
-- Anything about a session that the plugin did not observe, which is why the
-  restart path asks `aos pending` instead of guessing from files.
+A real host session ran through this seam on 2026-10-01 (rig: [`live/README.md`](live/README.md)).
+
+- **Confirmed**: `tool.execute.after` hands us `output` with keys `attachments, metadata, output, title`
+  — **no `error` key** — and a tool call whose permission was refused never reaches the hook at all.
+  So `tool_errors` stays absent on this host, which lowers the verdict's coverage and sends the run to
+  the human queue. That is the designed behaviour ("absent is not zero"), not a bug to patch by guessing.
+- **Still unconfirmed**: the order in which opencode runs several registered `system.transform` hooks.
+  Nothing here observed DCP writing to `system` at all, so the collision that defect R describes is
+  proven against a fixture that replays DCP's own line of code, not against the live stack. Appending
+  is safe under any order; the suffix-preserving replace is safe under the worst one.
+- **Arrival is proven by numbers, not by obedience.** The first attempt planted a memory containing a
+  nonsense token and asked the model to repeat it; it never did — our own preamble tells it
+  *"不要向用户复述本节"*, so a model that behaves correctly fails that test by construction. What proves
+  the block reached the request instead: the engine's persisted `injection_chars` equals the length the
+  plugin logged (511 == 511), and an otherwise identical run with only our seam inert costs +583 input
+  tokens for 1,279 characters of block. `--pure` is **not** a control for us: it removes every external
+  plugin, so it measures DCP and the tracker as much as our own work.

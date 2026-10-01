@@ -1,7 +1,8 @@
 # Agent OS 架构：现状与边界
 
-对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新，当前反映到 **P7**：
-v5 schema / **396 tests**（另有 13 例 JS；其中 12 条是仓库级守卫）/ `aos/` 12,232 行 Python（§3）。
+对象 `/home/shade/Public/AgentOS`。本文随 Phase 更新，当前反映到 **P7 之后的端到端循环**：
+v5 schema / **401 tests**（另有 20 例 JS；其中 12 条是仓库级守卫）/ `aos/` 约 12,300 行 Python（§3）。
+P1–P7 逐条如下；§9 记的是 2026-10-01 第一次真实 host 运行之后的事实，§12 的 T/U/V 只有跑真实数据才露得出来。
 P1 收缩：编排、`opencode` provider、两个零写入者的 review kind、`skills_dir`/`knowledge_dir`、
 两个假字段与 `skill.skills_loaded` 已删除，契约推到 **1.2**。
 P2 生效化：召回尊重 status/scope，linkage 与 outcome 分表派生。
@@ -303,14 +304,27 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 ## 9. Plugin 生命周期（代码在仓库里；本机已装载，仓库自身从不安装）
 
 `integrations/opencode/plugin/agent-os.js` 与 `integrations/opencode/README.md` 已落地并通过
-fixture 证明（`tests/js/plugin.test.mjs` 13 例，由 `tests/test_cli_contract.py` 调 `node --test` 一起跑，
+fixture 证明（`tests/js/plugin.test.mjs` **20** 例，由 `tests/test_cli_contract.py` 调 `node --test` 一起跑，
 node 不在场即失败而非跳过）。**2026-10-01 经用户批准在本机装载**，装的东西只有两件可分别撤销的产物：
 `~/.config/opencode/plugin/agent-os.js` 一个符号链接，和 `~/.zshrc:87` 的 alias 前缀
 `AGENT_OS_ROOT=/home/shade/Public/AgentOS`。**没有用 `opencode plugin <module>`**，因为它会顺手改写
 `opencode.json` —— 那个文件不归这个仓库；除上述两处之外 `~/.config/opencode/**` 零写入（其余文件的
-mtime 与装载前一致）。钩子执行顺序与 `tool.execute.after` 的真实形状**仍未确认** `[Unconfirmed]`：
-`opencode serve --print-logs --log-level DEBUG` 的启动日志里没有任何 plugin 行，说明插件是按实例懒加载的，
-所以这两项只能等一次真实会话。
+mtime 与装载前一致）。
+
+**同日跑过真实 host**（`integrations/opencode/live/`，8 次 `space-bunny-free` 无成本调用）。
+`[Verified]` 一次真库运行留下的东西：`observations {hot:1}`、`retrieval_log` 有该 loop 的行、
+`learning_reviews` 一条 `outcome_label` pending、`pending_postflight.outstanding` 回到 0、
+引擎侧 `injection_chars=511` 与插件记录的 `len=511` 相等。
+原来那两条 `[Unconfirmed]` 现在一条已确认、一条仍然没确认：
+
+- `tool.execute.after` 的真实形状**已普查**：`output` 的键是 `attachments, metadata, output, title`
+  （`metadata` 里是 `truncated` / `matches` / `count`），**没有 `error` 键**；而权限被拒的那次工具调用
+  **根本不会走到 after 钩子**。⇒ `tool_errors` 在这个 host 上按现有信息只能保持缺席（设计上"缺席不是 0"），
+  代价是合成的 mass 变低、运行更多交到人门 —— 这是对的，不是缺陷。
+- **多个插件之间 `system.transform` 的执行顺序仍未确认** `[Unconfirmed]`：本机 DCP 在这几轮里
+  一次都没有写过 `system`（日志里 0 行 dcp 活动），所以"我们排在别人之后/之前"这件事仍然只能靠
+  "无论如何都只追加"来保证；缺陷 R 的修法（保留 `</agent_os>` 之后的后缀）正是为最坏情况准备的，
+  它由 fixture 复现 DCP 的真实写入方式钉住，而不是由现场观察钉住。
 
 通电的另一半在引擎侧 `[Verified]`：`aos/core/loop/pending.py` 让
 `store/pending-postflight/` 第一次有了写入者与读取者 —— preflight 落一条
@@ -392,7 +406,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–S 已全部关闭；此节留作形状记录）
+## 12. 缺陷登记（A–U 已关闭，V 待裁决；此节留作形状记录）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -420,11 +434,20 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | R | 插件的原地替换会**抹掉邻居写进同一个元素的文本**：`findIndex` 用 `includes(OPEN)&&includes(CLOSE)` 认块，然后整块换成自己的正文 | 读码定位（`agent-os.js:178-186` vs DCP `hooks.ts:101-105` 的 `output.system[len-1] += …`）；具名测试先红：`another plugin's text appended to our element survives us` 断言第二轮之后后缀仍在 | **已闭**（改为"保留 `</agent_os>` 之后后缀"的原地替换 ⇒ 元素数恒为基线+1，且邻居文本留在我们块外，不再被 preamble 框成"不是指令"）|
 | S | 引擎侧的注入规模只活在 `pending-<session>.json` 里，而 postflight 会删掉它 ⇒ 事后无法证明"引擎产出的块"与"host 拿到的块"是同一块 | 第一次真实运行的屏幕：插件报 `len=1122`，盘上没有任何对应数字可比 | **已闭**（recall stage 持久化 `injection_chars` / `injected_memory_ids`，loop 文件是运行后要留下的那份记录）|
 
+| T | 脏树仍被判定器当成运行的产物：P5 只做了"把它列出来"，没做"把它扣掉" | 真实屏幕：模型什么都没改，引擎仍合成 `outcome=success, mass=0.45`，信号里 `files_changed=['integrations/opencode/live/run.sh']` —— 那是操作者在运行**之前**留下的修改 | **已闭**（stage 与 postflight doc 都改读可归因列表；原始 bundle 仍存完整 diff 给人复查）|
+| U | 到达证明不能靠"模型服从注入的内容"，而 `--pure` 也不是我们的对照臂 | 植入的校验词 `glorp-7317` 在插件臂同样没出现 —— 注入块的 preamble 自己就写着"不要向用户复述本节"；`--pure` 会把 DCP / notifier / tracker 一起摘掉，差值不是我们的块 | **已闭（方法）**：改用两个不依赖服从的见证 —— ① 引擎 `injection_chars` == 插件记录的元素长度（真库运行 511 == 511）；② 同库同目录**惰臂**（`AGENT_OS_ROOT` 不设）的 input-token 差值 +583 tokens / 1,279 字符 |
+| V | 中文任务的召回下限：纯中文措辞几乎召不出任何记忆 | 实测 `min_score=0.15`，而单个中文 tag 命中的静态分上限只有 **0.080**；`compute_static_relevance` 要求 `len(tag)>=3`（两字中文词被整体排除），keyword 匹配又要求**等于**某个 tag（`agent` ≠ `agent-os`）。本轮两次成功召回都因为路由器恰好吐出英文实体去撞英文 tag | **未闭 ⇒ 需人裁决**：调阈值 / 中文分词 / tag 归一化都是排序策略决定，不属于这轮循环能自己顺手改的东西 |
+
 四条共性 `[Judgment]`：A–S 里大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
 Q 是第四种形状，也是唯一一种只有**跑在真实数据上**才会露出来的：**一列两个写入者，其中一个从头赋值**。
 它旁边就写着正确规则（`evolve.py` 的注释），规则没有变成代码，于是每一次 `memory refresh` 都在撤销人门的决定 ——
 "注释里已经写了"不等于"行为已经对了"。
+T/U/V 是第五种：**"修好了"只修到看得见的那一半**。T 把脏树列出来了却没从判定里扣掉；
+U 设计的证明方式被自己的 preamble 推翻（注入块明写"不要复述本节"，却指望模型复述一个校验词）；
+V 是阈值与语言的隐性耦合 —— 分数上限 0.08 对上 `min_score` 0.15，中文语料在这种耦合下结构性沉默，
+而它一直"能用"，因为测试提示词都是英文 token 的。
+一条共同教训：**只在 fixture 里跑过的东西，等于没跑过**（final-plan §11 的计划后条目）。
 所以 final-plan P5 的三个仓库级守卫测试优先级高于新功能 —— 它们是这类失效的自动拦截网。
 排期编号 P1–P7 的定义在 `docs/plan/final-plan.md §4`；每个 Phase 的结果与偏离在 §11 的执行日志。
 

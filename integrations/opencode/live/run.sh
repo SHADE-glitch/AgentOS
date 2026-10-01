@@ -39,9 +39,12 @@ export AOS_PLUGIN_DEBUG=1
 # with test runs.
 export AOS_STORE_DIR="${AOS_STORE_DIR:-$STORE}"
 export AOS_DB_PATH="${AOS_DB_PATH:-$AOS_STORE_DIR/aos.db}"
-if [[ "$AOS_STORE_DIR" == "$AGENT_OS_ROOT/store" ]]; then
+if [[ "$AOS_STORE_DIR" == "$AGENT_OS_ROOT/store" && "${AOS_RIG_ALLOW_REAL_STORE:-}" != "1" ]]; then
   echo "refusing: would write the real store ($AOS_STORE_DIR)" >&2
   exit 1
+fi
+if [[ "${AOS_RIG_ALLOW_REAL_STORE:-}" == "1" ]]; then
+  echo "REAL-STORE RUN: observations written here count toward stop-criterion 1" | tee -a "$RIG/logs/$label.txt"
 fi
 
 "$ROOT/integrations/opencode/live/selfcheck.sh"
