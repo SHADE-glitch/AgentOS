@@ -223,8 +223,10 @@ engine's own record path has required that since P2, while a labelled run bypass
 ./bin/aos review list                        # each row says what approving would do
 ./bin/aos review label <id...> --outcome X [--skill S]   # answer the queue; the consequence prints back
 ./bin/aos review approve <review-id>         # promotion, or a conflict's supersede
-./bin/aos review approve <id> --title T --body B --when W
-                                             # create only: the reviewer writes the 因为 no signal has
+./bin/aos review approve <id> --title T --body B --when W --tags A,B
+                                             # create only: the reviewer writes the 因为 no signal has,
+                                             # and names the subject --tags is what makes the lesson
+                                             # findable again — the router's own tags are not a subject
 ./bin/aos review reject  <review-id> [--as X] # --as turns a rejection into a weakening signal
 ./bin/aos review sync                         # settle candidates from any other writer
 ./bin/aos memory retire <id> --reason R       # stop trusting one; the row and its history stay
