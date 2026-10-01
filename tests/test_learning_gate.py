@@ -708,3 +708,73 @@ def test_a_stale_approval_recovers_by_rerunning_learning(store):
     assert fresh[0]["proposed_change"]["before"]["evidence_level"] == "production_validated"
     approve_review(fresh[0]["review_id"], store=store)
     assert store.get_memory("M1")["evidence_level"] == "real_project_validated"
+
+
+def test_a_labelled_verdict_blames_only_the_skill_the_human_names(store, tmp_path):
+    """P2 required attribution when the *engine* recorded a verdict; the label path
+    never did, so a human's "this run failed" silently implicated every memory that
+    happened to be in the room.
+
+    Measured on the first real host session: one labelled failure created `weaken`
+    candidates against all three recalled memories — including two about sqlite table
+    rebuilds and postflight defaults, which had nothing to do with the cache-key task.
+    """
+    from aos.core.loop import lifecycle
+    from aos.core.memory import evolve
+    from aos.core.memory.authoring import new_memory
+
+    blamed = store.upsert_memory(
+        new_memory(
+            title="cache key 必须带解析后的真实路径",
+            body="不要：用配置名当缓存键，发布时会撞车。",
+            type="failure",
+            category="release",
+            tags=["cache", "bug", "release"],
+            status="active",
+            evidence_level="runtime_validated",
+            verified=True,
+        )
+    )
+    bystander = store.upsert_memory(
+        new_memory(
+            title="cache 命中率下降要先看配额",
+            body="先看磁盘配额，再猜键的问题。",
+            type="semantic",
+            category="infra",
+            tags=["cache", "bug"],
+            status="active",
+            evidence_level="runtime_validated",
+            verified=True,
+        )
+    )
+
+    pre = lifecycle.preflight(task="修复 cache 命中率下降的 bug", cwd=str(tmp_path), session_id="ses-attr-1")
+    assert {blamed, bystander} <= set(pre["memory"]["injection"]["memory_ids"]), (
+        "the run needs two memories in the room to prove the point"
+    )
+    lifecycle.postflight(
+        task_id=pre["task_id"], loop_id=pre["loop_id"], session_id="ses-attr-1", cwd=str(tmp_path)
+    )
+
+    first = [r for r in evolve.list_reviews(store=store, status="pending") if r["kind"] == "outcome_label"]
+    assert len(first) == 1
+    naked = evolve.label_review(first[0]["review_id"], "failure", store=store)
+    assert naked["candidates_created"] == 0, "a verdict alone implicates nobody"
+    assert not [
+        c for c in store.list_candidates()
+        if c["candidate_type"] == "weaken" and c["loop_id"] == pre["loop_id"]
+    ]
+
+    pre2 = lifecycle.preflight(task="修复 cache 命中率下降的 bug", cwd=str(tmp_path), session_id="ses-attr-2")
+    lifecycle.postflight(
+        task_id=pre2["task_id"], loop_id=pre2["loop_id"], session_id="ses-attr-2", cwd=str(tmp_path)
+    )
+    second = [r for r in evolve.list_reviews(store=store, status="pending") if r["kind"] == "outcome_label"]
+    named = evolve.label_review(second[0]["review_id"], "failure", skill_used="release", store=store)
+
+    assert named["candidates_created"] == 1, "the named skill implicates the memory about it"
+    weaken = [
+        c for c in store.list_candidates()
+        if c["candidate_type"] == "weaken" and c["loop_id"] == pre2["loop_id"]
+    ]
+    assert [c["target_memory"] for c in weaken] == [blamed], "the bystander is not blamed for a release failure"

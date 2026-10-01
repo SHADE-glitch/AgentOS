@@ -757,9 +757,14 @@ def cmd_review(args: argparse.Namespace) -> int:
 
     if command == "label":
         results = [
-            evolve.label_review(review_id, args.outcome, quality_score=args.quality)
+            evolve.label_review(
+                review_id, args.outcome, quality_score=args.quality, skill_used=args.skill or ""
+            )
             for review_id in args.review_ids
         ]
+        for result in results:
+            if result["status"] == "approved":
+                _report_attribution(result["review_id"], args.outcome, result)
         if len(results) == 1:
             _emit(results[0])
         else:
@@ -774,18 +779,41 @@ def cmd_review(args: argparse.Namespace) -> int:
             expected = "approved"
         else:
             result = evolve.reject_review(
-                args.review_id, as_outcome=getattr(args, "as_outcome", "") or ""
+                args.review_id,
+                as_outcome=getattr(args, "as_outcome", "") or "",
+                skill_used=getattr(args, "skill", "") or "",
             )
             expected = "rejected"
+        if result.get("relabelled"):
+            _report_attribution(
+                args.review_id, getattr(args, "as_outcome", "") or "", result["relabelled"]
+            )
         _emit(result)
         return 0 if result["status"] == expected else 1
 
     print(
         "usage: aos review list [--status STATUS] [--json] | sync"
-        " | label <id...> --outcome X | approve <id> | reject <id> [--as X]",
+        " | label <id...> --outcome X [--skill S] | approve <id> | reject <id> [--as X [--skill S]]",
         file=sys.stderr,
     )
     return 1
+
+
+def _report_attribution(review_id: int, outcome: str, verdict: dict) -> None:
+    """A verdict that blamed nothing is worth saying out loud.
+
+    The queue's own hint pushes `--outcome`; without `--skill` the run is judged and
+    every memory in it is left alone. That is the intended default, but a person who
+    does not know it will conclude the loop did nothing.
+    """
+    if verdict.get("candidates_created") or verdict.get("blamed_memories"):
+        return
+    print(
+        f"#{review_id}: 结论已记为 {outcome}，但未点名 skill ⇒ 没有归因任何记忆"
+        f"（召回过 ≠ 造成了结果）。要让它生效：aos review label {review_id}"
+        f" --outcome {outcome} --skill <这次的工种，如 bugfix>",
+        file=sys.stderr,
+    )
 
 
 # ── Parser ─────────────────────────────────────────────────────────────
@@ -947,6 +975,12 @@ def build_parser() -> argparse.ArgumentParser:
                 help="also relabel the run this review came from, so a rejection "
                      "becomes a weakening signal instead of a shrug",
             )
+            p_action.add_argument(
+                "--skill",
+                default="",
+                help="with --as: which kind of work this verdict is evidence about "
+                     "(e.g. bugfix, migration). Without it no memory is blamed",
+            )
     p_label = review_sub.add_parser("label", help="answer an outcome-label review")
     p_label.add_argument(
         "review_ids",
@@ -955,6 +989,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="one or more label reviews — a queue of the same verdict is answered in one go",
     )
     p_label.add_argument("--outcome", required=True, choices=list(OUTCOMES), help="what the run achieved")
+    p_label.add_argument(
+        "--skill",
+        default="",
+        help="which kind of work this verdict is evidence about (e.g. bugfix). Without it "
+             "no memory is credited or blamed: being recalled is not being the cause",
+    )
     p_label.add_argument(
         "--quality",
         type=float,

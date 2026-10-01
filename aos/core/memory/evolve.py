@@ -25,6 +25,7 @@ from aos.core.memory.record import (
     PROPOSAL_TYPES,
     add_candidates_for_memories,
     candidate_type_for,
+    is_attributable,
     memories_of_loop,
     proposal_for_loop,
     should_propose,
@@ -1062,7 +1063,11 @@ def approve_review(review_id: int, *, store: Optional[MemoryStore] = None) -> di
 
 
 def reject_review(
-    review_id: int, *, as_outcome: str = "", store: Optional[MemoryStore] = None
+    review_id: int,
+    *,
+    as_outcome: str = "",
+    skill_used: str = "",
+    store: Optional[MemoryStore] = None,
 ) -> dict[str, Any]:
     """Reject a pending review.
 
@@ -1070,7 +1075,8 @@ def reject_review(
     behind it are already consumed by the cycle that opened this review, so the
     same proposal does not come back every run; and ``as_outcome`` relabels the
     run the review was about, which is how "that was a failure" becomes a
-    weakening signal instead of a shrug.
+    weakening signal instead of a shrug. Like the label path, it blames a memory
+    only when ``skill_used`` names the kind of work the verdict is about.
     """
     owns_store = store is None
     store = store or MemoryStore()
@@ -1090,6 +1096,7 @@ def reject_review(
                 loop_id=review.get("loop_id") or "",
                 outcome=as_outcome,
                 source=f"review:{review_id}",
+                skill_used=skill_used,
             )
             if relabelled is None and review.get("kind") == "outcome_label":
                 return {"review_id": review_id, "status": "not_found", "error": "loop observation is gone"}
@@ -1126,6 +1133,7 @@ def label_review(
     quality_score: Optional[float] = None,
     store: Optional[MemoryStore] = None,
     settle: bool = True,
+    skill_used: str = "",
 ) -> dict[str, Any]:
     """Answer an outcome-label review: the human verdict becomes the run's record.
 
@@ -1133,6 +1141,10 @@ def label_review(
     and diffs but no pass/fail, so almost every automatic loop arrives here with
     ``needs_review`` set and no candidates; whatever is decided here is what the
     learning pipeline gets to work with.
+
+    ``skill_used`` is the second half of that decision — which kind of work this
+    verdict is evidence about. It is deliberately not inferred from the run: without
+    it the outcome is recorded and nothing is credited or blamed.
     """
     owns_store = store is None
     store = store or MemoryStore()
@@ -1158,6 +1170,7 @@ def label_review(
             outcome=outcome,
             quality_score=quality_score,
             source=f"review:{review_id}",
+            skill_used=skill_used,
         )
         if applied is None:
             return {"review_id": review_id, "status": "not_found", "error": "loop observation is gone"}
@@ -1165,7 +1178,12 @@ def label_review(
         store.set_review_status(review_id, "approved", outcome=outcome)
         store.add_event(
             event_type="learning.run_labelled",
-            payload={"review_id": review_id, "loop_id": review.get("loop_id"), "outcome": outcome},
+            payload={
+                "review_id": review_id,
+                "loop_id": review.get("loop_id"),
+                "outcome": outcome,
+                "skill_used": skill_used,
+            },
         )
         settled = run_learning(store=store) if settle else None
         return {
@@ -1181,6 +1199,8 @@ def label_review(
             "candidates_created": applied["candidates_created"],
             "proposal_created": applied["proposal_created"],
             "observations_updated": applied["observations_updated"],
+            "attributed_skill": applied["attributed_skill"],
+            "blamed_memories": applied["blamed_memories"],
         }
     finally:
         if owns_store:
@@ -1194,6 +1214,7 @@ def apply_verdict(
     outcome: str,
     quality_score: Optional[float] = None,
     source: str = "",
+    skill_used: str = "",
 ) -> Optional[dict[str, Any]]:
     """Rewrite a run's observations with a human verdict, then propose what it implies.
 
@@ -1226,11 +1247,25 @@ def apply_verdict(
     promotion = load_policy("promotion")
     created = 0
     candidate_type = candidate_type_for(outcome, quality, promotion=promotion)
-    if candidate_type:
+    # A verdict is about the run; saying which memory caused it is a second claim, and
+    # the person judging the run is the one allowed to make it. Without `skill_used`
+    # nothing is credited or blamed — implicated-by-presence is the exact positive
+    # feedback P2 removed on the record path, and the label path had quietly kept it.
+    skill = (skill_used or signals.get("skill_used") or "").strip()
+    if skill and skill != str(signals.get("skill_used") or ""):
+        store.update_observation_fingerprint(
+            int(target["observation_id"]),
+            signals={**signals, "skill_used": skill},
+            source_hash=target.get("source_hash") or "",
+        )
+    blamed: list[str] = []
+    if candidate_type and skill:
+        rows = {m["memory_id"]: m for m in store.memories_for_scoring()}
+        blamed = [m for m in memories if is_attributable(rows.get(m) or {}, skill)]
         created = add_candidates_for_memories(
             store,
             candidate_type=candidate_type,
-            memories=memories,
+            memories=blamed,
             loop_id=loop_id,
             payload={
                 "task_id": target.get("task_id") or "",
@@ -1239,6 +1274,7 @@ def apply_verdict(
                 "session_id": target.get("session_id") or "",
                 "source_hash": target.get("source_hash") or "",
                 "confidence": 1.0,
+                "skill_used": skill,
                 "labelled_by": source,
             },
         )
@@ -1275,4 +1311,6 @@ def apply_verdict(
         "observations_updated": updated,
         "candidates_created": created,
         "proposal_created": proposed,
+        "attributed_skill": skill,
+        "blamed_memories": blamed,
     }
