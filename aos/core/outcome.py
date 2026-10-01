@@ -37,6 +37,11 @@ _SIGNALS = (
     "expected_files",
     "diff",
     "response_summary",
+    # Echoed, never scored. This tuple — not `SIGNAL_FIELDS` — decides what survives synthesis
+    # into the row a human will read, so a trajectory declared only in the contract is discarded
+    # here before the store ever sees it.
+    "tool_trace",
+    "tool_calls",
 )
 
 _VALIDATION_VALUES = {"PASS": 1.0, "PARTIAL": 0.5, "FAIL": 0.0, "BLOCKED": 0.0}
@@ -252,6 +257,12 @@ def synthesize(
         1.0 if _is_present(received, "response_summary") else 0.0,
         _is_present(received, "response_summary"),
     )
+    # The trajectory is reported the same way: listed so a reviewer can see it was sent, weighted 0.00
+    # so it cannot add coverage. An empty list counts as *not said* — a host that reports zero
+    # attempts has not described the run's process, it has described nothing.
+    trace_present = _is_present(received, "tool_trace") and bool(received.get("tool_trace"))
+    consider("tool_trace", 1.0 if trace_present else 0.0, trace_present)
+    consider("tool_calls", 1.0, _is_present(received, "tool_calls"))
 
     mass = sum(float(weights.get(name, 0.0)) for name in present)
     score = (

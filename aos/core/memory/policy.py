@@ -94,6 +94,12 @@ DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
             "expected_files": 0.10,
             "diff": 0.05,
             "response_summary": 0.00,
+            # Both at 0.00 for the same reason as the prose above: what a run *did* is for the human
+            # gate to read, not for the arithmetic to reward or punish. Weighting the number of
+            # attempts would make a thrashing run and a clean one differ in confidence, which is the
+            # opposite of what a coverage measure has to mean.
+            "tool_trace": 0.00,
+            "tool_calls": 0.00,
         },
         # Lets a deployment re-weight without a code change; a key set to 0.00 here
         # makes that signal contribute nothing to the score and, for the exit-code

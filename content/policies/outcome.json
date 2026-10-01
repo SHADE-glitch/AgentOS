@@ -9,7 +9,9 @@
     "todos_unfinished": 0.1,
     "expected_files": 0.1,
     "diff": 0.05,
-    "response_summary": 0.0
+    "response_summary": 0.0,
+    "tool_trace": 0.0,
+    "tool_calls": 0.0
   },
   "weight_overrides": {},
   "thresholds": {

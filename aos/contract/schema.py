@@ -108,6 +108,12 @@ SIGNAL_FIELDS = frozenset(
         "diff",
         "response_summary",
         "files_changed",
+        # The ordered attempts a host made, and how many tool calls it made at all. A count of
+        # errors alone cannot tell "one clean run" from "five failures then a fix", which is the
+        # difference between an incident and a lesson. Weighted 0.00 like `response_summary`:
+        # material for the human gate, never evidence in a verdict.
+        "tool_trace",
+        "tool_calls",
     }
 )
 

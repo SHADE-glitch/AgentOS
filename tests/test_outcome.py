@@ -25,6 +25,8 @@ DEFAULTS = {
         "expected_files": 0.10,
         "diff": 0.05,
         "response_summary": 0.00,
+        "tool_trace": 0.00,
+        "tool_calls": 0.00,
     },
     "weight_overrides": {},
     "thresholds": {"success": 0.75, "partial": 0.40},
@@ -249,3 +251,38 @@ def test_synthesis_is_deterministic():
     a = _synth({"test_exit_code": 0, "tool_errors": 2, "diff": [{"file": "a"}]})
     b = _synth({"test_exit_code": 0, "tool_errors": 2, "diff": [{"file": "a"}]})
     assert a == b
+
+
+def test_the_trace_survives_the_synthesis_echo():
+    """A trajectory that is dropped on its way through synthesis is a trajectory that never happened.
+
+    The contract and the synthesiser keep **two independent lists** (`SIGNAL_FIELDS` and `_SIGNALS`), and the
+    echo keeps only the latter: a key declared in one place is silently discarded before the store ever sees
+    it. The method-level lesson lives or dies on that echo, so the coupling is pinned here rather than left
+    to whoever adds the next signal.
+    """
+    trace = [
+        {"n": 1, "tool": "bash", "method": "pytest", "exit": 1},
+        {"n": 2, "tool": "bash", "method": "python -m pytest", "exit": 0},
+    ]
+    result = _synth({"tool_trace": trace, "tool_calls": 2, "test_exit_code": 0})
+    assert result["signals"].get("tool_trace") == trace, "the ordered attempts must survive verbatim"
+    assert result["signals"].get("tool_calls") == 2, "the denominator is what makes the failures countable"
+
+
+def test_a_trajectory_buys_no_verdict_confidence():
+    """The trajectory is material for a reviewer, never evidence in a verdict — the `response_summary` rule.
+
+    If reporting attempts raised `mass`, a run that flailed its way to success would look *more* certain than
+    one that went straight through, and the gate would learn to trust thrashing.
+    """
+    bare = _synth({"test_exit_code": 0})
+    with_trace = _synth({
+        "test_exit_code": 0,
+        "tool_trace": [{"n": i, "tool": "bash", "method": "pytest", "exit": 1} for i in range(1, 6)],
+        "tool_calls": 5,
+    })
+    assert with_trace["mass"] == bare["mass"], "an unweighted signal cannot add coverage"
+    assert with_trace["confidence"] == bare["confidence"]
+    assert with_trace["outcome"] == bare["outcome"]
+    assert with_trace["score"] == bare["score"]
