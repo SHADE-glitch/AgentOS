@@ -90,6 +90,7 @@ A real host session ran through this seam on 2026-10-01 (rig: [`live/README.md`]
 
 - **Confirmed**: `tool.execute.after` hands us `output` with keys `attachments, metadata, output, title`
   — **no `error` key** — and a tool call whose permission was refused never reaches the hook at all.
+- **Confirmed from the host's own typings, then used**: the same hook is handed `{tool, sessionID, callID, args}` (`@opencode-ai/plugin/dist/index.d.ts:249-258`). The plugin now reads `args` — and only the two keys `command` / `cmd` — to build a **normalised method label** (name-shaped tokens, ≤3 words, `-m` kept only for an interpreter, a quote ends the segment). The command itself is computed inside the host process and thrown away there: no path, argument, environment value or quoted text crosses the seam, and `metadata.exit` is recorded verbatim with no claim about whether the command was a build or a test (that mapping stays unapproved, defect AI).
   So `tool_errors` stays absent on this host, which lowers the verdict's coverage and sends the run to
   the human queue. That is the designed behaviour ("absent is not zero"), not a bug to patch by guessing.
 - **Still unconfirmed**: the order in which opencode runs several registered `system.transform` hooks.
