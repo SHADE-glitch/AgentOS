@@ -218,3 +218,111 @@ export AOS_RIG=/home/shade/stage0/E/rig AOS_STORE_DIR=/home/shade/stage0/E/store
 bash integrations/opencode/live/run.sh LGD-06-R3 /home/shade/Public/test --auto \
   "$(cat /home/shade/stage0/tickets/LGD-06.md)"
 ```
+
+## 9. 逐票记录
+
+### LGD-06-R3（干净重跑，计入 Stage 0）
+
+**Ticket**：`amount_cents` 定点化第一步 —— 新迁移只加列（历史行留 NULL）、加可反复执行的
+`backfill-amount` 子命令、读路径不动、不改已有三个脚本；验收含"migrate 连跑两次为 no-op"与
+"回填后无 NULL、与 `CAST(ROUND(amount*100) AS INTEGER)` 全等"。
+
+**①-A Project friction**
+
+```text
+Result: Verified
+```
+
+Evidence（一律不看 Agent OS 的产物）：
+
+| 来源 | 读数 |
+|---|---|
+| 宿主库只读（第 44 步） | 命令 `cd … && rm -f /tmp/lg6-old.db* && python3 - <<PY`，输出第一行 **`zsh:1: no matches found: /tmp/lg6-old.db*`**，而该步 `exit=0 / status=completed` |
+| Agent 自己的叙述（日志 1192 行） | "The `rm -f /tmp/lg6-old.db*` glob failed in zsh (nomatch aborts the whole line), so the history DB was never created and **that check was invalid. Redoing it:**" |
+| 返工（第 45、46 步） | 第 45 步把文件名写全（`rm -f a.db a.db.imported.json`）才真造出"只到 0003 的历史库"；第 46 步才验到 `version before 0004 = 3`、列里没有 `amount_cents`、历史行 2 → `apply 0004` → 回填前 NULL=2、`updated=2` → 再跑 `updated=0` |
+| oracle | 51 parts：`success=20 / failure=0 / unknown=31`，`masked_test_failures=0` —— **oracle 也没抓到这次摩擦**（见 §10 AQ） |
+| 项目测试数 | `47 passed → 51 passed`（新增 4 条用例，见 `git diff --stat d5bf777 HEAD`：5 个文件、+137/−5） |
+| 我的独立验收复算 | `migrate` 连跑两次（第二次打印 `no pending migrations`）均 0；`ingest` 插入 4；`backfill-amount` `updated=4`；`amount_cents IS NULL` 计数 0；与 `CAST(ROUND(amount*100) AS INTEGER)` 不一致计数 0；`schema_version` = 1,2,3,4；`pytest -q` 51 passed |
+
+摩擦的形状要说准：**这一票没有"测试红"，但有一次"验收静默失效 + 返工"** —— 通配符在 zsh 下无匹配会中断整行，
+`rm` 根本没执行，而复合命令的退出码仍是最后一段给的 0。真实成本存在，只是它不长在 pytest 上。
+
+**①-B Agent OS visibility**
+
+```text
+Result: Failed
+```
+
+| 项 | 读数 |
+|---|---|
+| observation | `LOOP-20261001133757-29E5`，`outcome=partial`（`mass=0.4` < 门限 0.45 ⇒ 交人标注），`tool_calls=51`，`tool_trace` 16 步（`n=1–8` + `n=44–51`），**`ok=false` 0 个** |
+| 第 44 步在不在窗口里 | **在**。它被记成 `{"n":44,"tool":"bash","method":"rm","exit":0,"ok":true}` —— 这一次连"被截断"都不是借口，是 `ok` 的语义本身把它读成通过 |
+| 提案正文的过程行 | `#1 find f 通过 → #2 ls 通过 → #3–6 read → #47 python3 -m pytest 通过 → #48 git log 通过 → #49 git add 通过 → #50 cat 通过 → #51 git log 通过（省略 5 步）`；唯一带摩擦的 44/45/46 在 170 字额度里被省掉 |
+| Agent OS 观察到的 | 51 次调用的量、终局成功、构建退出码 0、路由 `data_model` |
+| Agent OS 没观察到的 | 那次静默失效、它被判无效并返工、以及"用显式文件名替代 glob"这个方法级差异 —— **恰好是这张票上唯一值得记的经验** |
+
+**关键事件**
+
+| 问题 | 读数 |
+|---|---|
+| 是否发生失败 | 项目侧：是（第 44 步的检查无效）；测试层：否（4 次 pytest 全绿） |
+| 是否发生方法变化 | 是：`rm -f <路径>*` → `rm -f <显式文件列表>`（同一目的两种做法，先后顺序真实存在） |
+| 是否出现 compound / pipeline | 是：第 44/45/46 都是 `cd … && rm … && python3 - <<PY`；#47/#49/#51 带管道 |
+| test result 与 shell exit 是否不一致 | 是，但**新增一种形状**：不是"pytest 红而 exit 0"，是"shell 自己报错而 exit 0" |
+| AL / AM / AN | 三条全部复现，见下 |
+
+**是否进入 Stage 0 统计**：**Yes**。票面未改、脚手架在被试项目之外、放置守卫先跑过；
+宿主库只读复核 `resolved path` 与权限评估里**没有任何 `.arms` / `stage0` 命中**（对照 R2 的 6 次命中）。
+人门：`review label 3 --outcome success`（不带 `--skill`，因为召回为 0，无从归因）⇒ 一份提案
+⇒ `M-21AE3B79`（`tags=migrate,backfill,fixture`，因果句由人补）。
+
+### AL / AM / AN 在 R3 的复现
+
+- **AL 复现（更强）**：LGD-02 那次还能说"失败步被位置裁掉"，R3 的失败步 `#44` **就在保留窗口内**，
+  仍被记为 `ok=true`。所以 AL 与截断无关，是 `ok = (整条 shell 的 exit == 0)` 的语义问题；
+  而且这次连 pytest 汇总都不存在（`no matches found` 不是测试失败），`test_exit_code` 依然缺席。
+- **AM 复现**：observation 的 `present` 含 `build_exit_code` + `validation_status`，正文照例打
+  "可证：构建退出码 0"（引擎自跑的 `compileall`），而真正跑的 4 次 pytest 只以 `observed_test_results`
+  存在 my oracle 里，**在 Agent OS 侧 `test_exit_code` 仍是 absent**。
+- **AN 复现**：`#44 rm`、`#45 rm` 的真实动作是"造历史库并验升级路径"，指纹只给第一个片段；
+  `#1 find f` 再次出现。
+
+### 10. AQ —— 我自己仪器的盲区（登记，本轮不改）
+
+R3 证明 oracle 也会漏：`masked_test_failures` 的定义要求"解析出 pytest 汇总且有失败"，
+而第 44 步的失败是 shell 自身的 `zsh:1: no matches found`，没有 pytest 汇总可解析 ⇒ 报成 `success`。
+
+```text
+observed_test_results = null  →  不代表这一步没问题
+```
+
+要补的形状（属于允许面，等下一轮再动，避免在看清样本前调仪器）：识别 shell 自己的报错前缀
+（`zsh:`、`command not found`、`No such file or directory` 之类），单独记成
+`observed_shell_error`，**仍然不得回写成 exit**。
+
+### 11. 只读预检：R3 之后我对"下一票能不能召回这条经验"的预测（跑前写下，跑后核对）
+
+用引擎自己的查询形状（`recall_stage`：`scope_project` 取 cwd 目录名，`keywords` 走 `_keywords`）做只读
+`retrieve(log=False)`：
+
+| 票面 | route | considered | 命中 | 分数 |
+|---|---|---|---|---|
+| LGD-07（退避） | `config` | 2 | 无 | 低于门限 |
+| LGD-11（迁移幂等） | `data_model` | 2 | `M-21AE3B79` | **0.422** |
+
+预测：**LGD-11 开跑时应召回 `M-21AE3B79`**（`injection_chars > 0` 且 `memory_ids` 含它）。
+这条是判据 ④ 在 Stage 0 里第一次真正可检的点。
+
+**同时纠正我自己**：上一轮我用同一方法"预检" LGD-06 召回为 0，但那次查询**漏了 `scope_project`**，
+`total_considered` 因此是 0 —— 结论碰巧对了，方法是错的，当时那句"与预期一致"不该写。
+用正确形状复算：R3 开跑时库内只有 `M-F8993E1D`（月度窗口，tag 在 06 票面命中 1 个 < 门限），
+所以 R3 的真 `retrieved=0` 与打分一致，不是 scope 过滤掉了。
+
+两点必须并写：
+
+1. **R3 当时召回为 0 是真的**：那一刻库里只有 `M-F8993E1D`（月度口径那条，`tags=reconcile,monthly`，
+   category `test`），对 LGD-06 的票面过不了 0.15 —— 用正确查询复算：`considered=2 / after_filter=1`，
+   留下的那条是 R3 自己后来生成的 `M-21AE3B79`，`M-F8993E1D` 被过滤掉。
+2. **我上一轮那次"只读预检"方法是错的**：查询里漏了 `scope_project`（引擎在 `recall_stage` 会带上，
+   取 cwd 目录名），于是 `total_considered=0`，报出来的 `retrieved=0` 是"我什么都没给它比"而不是"比了不够"。
+   结论蒙对、过程无效，因此那轮报告里"与预期一致"这句话不成立；本节表格才是可复算的版本。
