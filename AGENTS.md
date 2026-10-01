@@ -19,6 +19,9 @@
   `retrieve(query, k=5, store=MemoryStore(<db 路径>), log=False)`，`log=False` 是关键，否则写 `retrieval_log`。
 - 需要跑完整引擎路径（router/scope/gate 全链路）时，先把 `AOS_STORE_DIR` 指到 scratch 副本，
   不要"就用真库试一下"。
+- `retrieve()` 是只读的，`compute_all_decay()` / `memory refresh` **不是**：后者写 `decay_factor`，
+  而且写的是"新旧里更低的那个"（人的降级不许被重算抬回去）⇒ **降下去就再也升不回来**，没有对称的命令。
+  第十五轮就是在"只读检验"的口号下调了它，把真库 3 条种子从 0.85 永久降到 0.5。
 - `store/` 没有任何删除命令。退出召回只有两条路：`aos memory retire <id> --reason …`（人敲一次，
   无 reason 不写）与证据阶梯（5 次可归因失败 + 5 次批准，§12 行 Z）；两条都保留行与事件，
   所以"撤回一条教训"永远不是删数据，是改状态。
