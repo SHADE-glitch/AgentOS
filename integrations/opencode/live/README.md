@@ -12,7 +12,12 @@ installed plugin actually closes the loop.
 live/selfcheck.sh                             # before spending any model call
 live/snapshot.sh <label>                      # read-only store + engine snapshot
 live/run.sh <label> <cwd> [flags] '<prompt>'  # selfcheck, snapshot, one host run, snapshot
+live/friction_oracle.py --from-log <log> --project <cwd> --out <file>   # measurement only
+python3 -m pytest integrations/opencode/live/tests -q                   # the oracle's own tests
 ```
+
+`run.sh` calls the oracle for you after every host run and appends its one-line summary to
+the run log, so a ticket's friction evidence exists whether or not `tool_trace` recorded any.
 
 Flags passed through to the host: `--pure` (no external plugins — the control arm)
 and `-s <sessionID>` (continue a session, which is how the multi-turn case is reached).
@@ -155,9 +160,37 @@ that collided with English tags. The rig's prompts are therefore deliberately
 token-bearing, which is a workaround, not a fix; the defect is registered as V in
 `docs/architecture/agent-os-v2.md` §12 and is a decision for the owner, not a patch here.
 
+## The friction oracle — an instrument, not a capability
+
+`friction_oracle.py` exists because exp-v1 cannot answer Stage 0's first exit criterion about
+itself. Measured on the LGD-02 ticket (`docs/experiment/stage-0-ledgerd.md` §4): 42 host tool
+parts, 19 of them bash, 18 of those compound (`&&`/`;`) and 9 piped, and **zero** non-zero exit
+numbers — while the project genuinely went red twice (`8 failed, 35 passed`, then a deliberate
+falsification `8 failed, 39 passed` followed by `47 passed`). The plugin's `ok` is derived from
+the exit number of the whole shell call, so `pytest | tail -30` reports `tail`'s zero: the trace
+showed the run as entirely successful. That is defect AL, and raising `TRACE_MAX_STEPS` would not
+fix it — the failing step was already inside the retained window.
+
+The rule the oracle follows, and the reason it is not just a bigger trace:
+
+- `exit == 0` → `success`, `exit != 0` → `failure`, **no exit → `unknown`** — never success;
+- a test result read out of the host's output text is reported as `observed_test_results`, a list
+  (one compound call can hold the break *and* the repair), and is never written back into `exit`;
+- a command it does not recognise gets `test_command: null`, which means "not parsed", not "no failures";
+- `masked_test_failures` names the steps where a parsed test run failed while the verdict is not
+  `failure` — that list is the measurable form of AL;
+- it names **every** shell segment (`command_classes`), deliberately not sharing code with the
+  plugin's `methodOf`: an instrument that reuses the subject's normaliser can only agree with it.
+
+Hard boundaries, all four: it opens the host database `file:…?mode=ro` (and a test asserts a write
+raises); it writes nothing to the host, the engine or the store; its output never enters a prompt
+and is never shown to the model; and nothing in `aos/` reads it. Command text and tool output are
+read in-process and discarded — the artifact carries name-shapes, integers and a digest of the
+project's git state, not content.
+
 ## Privacy line
 
 Prompts are synthetic and contain no conversation text from anyone. The plugin's own
 reporting is limited to key names, indices and counts — never payload values.
 Host sessions written by a run land in `~/.local/share/opencode/opencode.db`, which
-this rig reads never and writes never.
+this rig now reads **read-only** (`mode=ro`, via the oracle) and writes never.

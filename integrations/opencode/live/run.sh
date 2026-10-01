@@ -84,4 +84,16 @@ rc=$?
 set -e
 echo "run exit=$rc  log=$log" | tee -a "$log"
 
+# Measurement only, and only after the host finished: the friction oracle reads the
+# host's own session database so "did this task really fail and recover" can be answered
+# without asking Agent OS about itself. It never writes the host db, never touches the
+# store, and its output is never put in front of the model — see live/README.md.
+set +e
+oracle_out="$(python3 "$ROOT/integrations/opencode/live/friction_oracle.py" \
+  --from-log "$log" --project "$cwd" --out "$RIG/oracle/$label.json" 2>&1)"
+oracle_rc=$?
+set -e
+printf '%s\n' "$oracle_out" | tee -a "$log"
+echo "oracle exit=$oracle_rc  report=$RIG/oracle/$label.json" | tee -a "$log"
+
 "$ROOT/integrations/opencode/live/snapshot.sh" "after-$label"
