@@ -380,3 +380,26 @@ def test_upsert_keeps_the_tags_that_came_inside_the_row(store):
 
     row = store.memories_for_scoring()[0]
     assert sorted(row["tags"]) == ["lua", "redis"]
+
+
+def test_a_two_character_chinese_tag_counts_as_a_task_match():
+    """`len(tag) >= 3` is a Latin assumption that falls straight through to Chinese.
+
+    缓存 / 配置 / 排序 are ordinary two-character Chinese words; `id` and `to` are not
+    words worth matching on. Scoring the first like the second is one reason a purely
+    Chinese task recalls nothing (defect V) — and no amount of hand-tagging fixes it
+    while this rule treats character count as wordhood.
+    """
+    from aos.core.memory.retrieve import compute_static_relevance
+
+    cjk = compute_static_relevance(
+        {"category": "", "tags": ["缓存"], "roles": []},
+        {"task_text": "清一下缓存的问题", "keywords": [], "domains": [], "roles": []},
+    )
+    latin = compute_static_relevance(
+        {"category": "", "tags": ["id"], "roles": []},
+        {"task_text": "fix the id collision", "keywords": [], "domains": [], "roles": []},
+    )
+
+    assert cjk > 0, "a two-character Chinese tag is a real match"
+    assert latin == 0, "a two-letter Latin token is still noise"

@@ -29,6 +29,21 @@ def query_hash(query: dict[str, Any]) -> str:
 
 
 # ── static relevance ───────────────────────────────────────────────────
+def _is_matchable_tag(tag: str) -> bool:
+    """Whether a tag is long enough to be trusted as a substring match.
+
+    Three characters is a *Latin* heuristic: it keeps `id` and `to` from matching half
+    the corpus, and Chinese words are normally two characters — 缓存, 配置, 排序. One
+    rule for both scripts means Chinese tags are silently unmatchable, which is half of
+    why a purely Chinese task recalls nothing (defect V).
+    """
+    if not tag:
+        return False
+    if any("\u4e00" <= char <= "\u9fff" for char in tag):
+        return len(tag) >= 2
+    return len(tag) >= 3
+
+
 def compute_static_relevance(memory: dict[str, Any], query: dict[str, Any]) -> float:
     """Deterministic, metadata-driven relevance score (ported verbatim)."""
     category = memory.get("category", "")
@@ -45,7 +60,7 @@ def compute_static_relevance(memory: dict[str, Any], query: dict[str, Any]) -> f
     if task_text and tags:
         task_tag_matches = 0
         for tag in tags:
-            if len(tag) >= 3 and tag in task_text:
+            if _is_matchable_tag(tag) and tag in task_text:
                 task_tag_matches += 1
         task_text_score = min(task_tag_matches * 0.20, 0.60)
 
