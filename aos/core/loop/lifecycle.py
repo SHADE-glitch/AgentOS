@@ -220,17 +220,24 @@ def preflight(
         # Written before the host starts working: if it never comes back, this file
         # is the only sign the run existed. A fail-open document records nothing —
         # there is no loop to close.
+        injection = doc["memory"]["injection"]
         pending.record(
             session_id=doc["session_id"],
             loop_id=doc["loop_id"],
             task_id=doc["task_id"],
             cwd=cwd,
             task=task,
-            injected_memories=[m["memory_id"] for m in doc["memory"]["injection"]["structured"]]
-            if doc["memory"]["injection"]["structured"]
-            else doc["memory"]["injection"]["memory_ids"],
-            injection_chars=doc["memory"]["injection"]["char_count"],
+            injected_memories=[m["memory_id"] for m in injection["structured"]]
+            if injection["structured"]
+            else injection["memory_ids"],
+            injection_chars=injection["char_count"],
         )
+        # The pending record is deleted by the postflight, but the number is the
+        # durable half of "the block the engine built is the block the host was
+        # handed" — the plugin logs the length it appended, and without a persisted
+        # counterpart there is nothing to compare it to after the run.
+        state.record("recall", injection_chars=injection["char_count"], injected_memory_ids=injection["memory_ids"])
+        state.save()
     return doc
 
 

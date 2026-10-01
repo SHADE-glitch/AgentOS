@@ -117,6 +117,37 @@ def test_preflight_ships_the_rendered_injection_block(repo, store):
     assert injection["structured"][0]["body"] == doc["memory"]["memories"][0]["content"]
 
 
+def test_preflight_persists_the_injection_size_for_later_proof(repo, store):
+    """The loop file must carry the number that pairs with what the host appended.
+
+    `pending-<session>.json` holds the injection size only until the postflight
+    clears it, so the one durable witness that "the block the engine built is the
+    block the host was handed" would evaporate with the run it describes. Measured
+    on the first live host run: the plugin reported `len=1122`, and nothing on the
+    engine side could be compared against it afterwards.
+    """
+    from aos.core.loop.state import LoopState
+
+    store.upsert_memory(
+        {
+            "memory_id": "M1",
+            "type": "procedural",
+            "category": "backend",
+            "title": "null pointer guard",
+            "body": "check for null before dereferencing",
+            "evidence_level": "runtime_validated",
+            "status": "active",
+        },
+        tags=["null", "crash", "parser"],
+    )
+    doc = lifecycle.preflight(task="fix the null pointer crash in the parser", cwd=str(repo))
+
+    state = LoopState.load(doc["loop_id"])
+    recall = state.stage_data("recall")
+    assert recall["injection_chars"] == doc["memory"]["injection"]["char_count"]
+    assert recall["injected_memory_ids"] == doc["memory"]["injection"]["memory_ids"]
+
+
 def test_preflight_reports_recall_as_skipped_when_memory_is_off(repo, store):
     store.upsert_memory(
         {"memory_id": "M1", "type": "procedural", "title": "t", "body": "b",
