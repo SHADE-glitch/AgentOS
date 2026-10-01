@@ -330,3 +330,11 @@ the role catalog and the taxonomy map are resolved from
 `aos/core/routing/registry/` first, and `AOS_REGISTRY_PATH` overrides that — the
 engine works with an entirely empty `content/`, which is why every path here is
 optional and none is validated.
+
+## Working on this repository
+
+`AGENTS.md` holds the checks that are not negotiable for anybody editing it: which commands count as
+green (and the one that reports a false red), how to probe the real store without writing to it, when
+a fix must ship in two halves, and what may not be asserted without being measured. It is deliberately
+thin — every line in it is something that was actually run, and the evidence lives in the documents it
+points to rather than being restated there.
