@@ -12,15 +12,16 @@ Stage 0 的第一条出口判据原来写成一句话："项目是否产生可�
 所以"项目有"与"系统看得见"必须分栏报告，否则同一份数据既能判过又能判不过。
 判据 ① 自本文件起拆成 **①-A（项目侧摩擦）** 与 **①-B（Agent OS 可见性）**。
 
-## 1. 实验设置（本轮未改）
+## 1. 实验设置
 
 | 项 | 值 |
 |---|---|
 | 项目 | `ledgerd` @ `/home/shade/Public/test`（流水导入与月度对账，Python 3.14 标准库 + pytest） |
-| base commit | `70c935f93a6b811ba3cc848cae9fc1e341582f2f`（种子两笔：`e5f5921` 初始导入、`70c935f` README 用法） |
+| 当前基线 | `d5bf7773fff32feb87c82767a7ffab3be5ff59c6`（LGD-02 完成后；种子 base 为 `70c935f`） |
 | 票与顺序 | LGD-02 → LGD-06 → LGD-07 → LGD-11，一任务一会话、一任务一 commit，项目不 reset |
 | 臂 | Stage 0 只跑臂 E（+Agent OS）；对照臂用 `AOS_RIG_INERT=1`，**不用 `--pure`** |
-| store 隔离 | `AOS_STORE_DIR=/home/shade/Public/test/.arms/E/store`（真库 `store/aos.db` 一字未动，见 §7） |
+| **脚手架位置** | **一律在被试项目之外**：`/home/shade/stage0/`（`tickets/`、`E/store`、`E/rig`、`E/inflight`、`E/manifest.tsv`）。原先放在 `<project>/.arms/` 导致了 AO（§5bis），已整体搬出并由 `run.sh` 的放置守卫禁止再犯 |
+| store 隔离 | `AOS_STORE_DIR=/home/shade/stage0/E/store`（真库 `store/aos.db` 一字未动，见 §7） |
 | 模型 | `opencode/space-bunny-free`（exp-v1 冻结不变量，未改） |
 | 权限 | `--auto`，owner 2026-10-01 授权，批准范围逐轮记录在 `$RIG/logs/<label>.txt` 首行 |
 
@@ -95,7 +96,7 @@ exit != 0            → failure
 | `masked_test_failures` | `observed_test_results` 里有失败而 `verdict != failure` 的步 | 这就是 AL 的可测量定义 |
 
 隐私线：命令原文与工具输出在本进程里被读完即丢，落盘的只有名称形状、整数与摘要哈希。
-`--out` 落在 `$RIG`（`/tmp/aos-rig` 或项目的 `.arms/`，两者都不入库）。
+`--out` 落在 `$RIG/oracle/`（Stage 0 用 `/home/shade/stage0/E/rig`，在被试项目之外，且不入库）。
 
 ## 4. LGD-02 = 校准样本（不是 Stage 1 数据）
 
@@ -137,6 +138,45 @@ Independent oracle evidence:   Verified
 另外，`exp-v1-baseline.md` §3.3 的"轨迹上限 16 步会丢中部"这一条要降级为**次要**：LGD-02 里真正的
 失败步（`#23`、`#39`）分别是"被位置裁掉"和"**已被保留但记成了成功**"。上限不是瓶颈，`ok` 的语义才是。
 
+## 5bis. AO —— 仪器泄漏：脚手架一度住在被试项目里
+
+这不是 Agent OS 的能力问题，是我把尺子放错了地方。**LGD-06 因此作废两次**：
+
+| 次 | 标签 | 会话 | 怎么作废的 | 计不计数 |
+|---|---|---|---|---|
+| 1 | `LGD-06` | `ses_f088b5508ffedHbNJtJfNrfFJF` 之后的 `…153B` loop | 我在中途掐掉（当时 `3 failed, 44 passed`、未提交） | **不计** |
+| 2 | `LGD-06-R2` | `ses_f085d3748ffeUK8ZmoD0fcqFtU` | 25 步、**零失败、唯一一次 pytest 直接 49 passed** —— 因为它先读了答案（见下） | **不计** |
+
+R2 的实际行为（宿主 `resolved path` + 权限评估记录，全部只读取证）：第 1–7 步正常侦察，
+其中读了 **`.gitignore`**；第 8 步 `cat .arms/tickets/LGD-06.md`；第 11 步 `tail -40 .arms/E/rig/logs/LGD-06.txt`
+（上一次中止运行的宿主日志）；第 12 步 `cat .arms/E/manifest.tsv`（我的实验清单，列名写着
+`trace_retained`/`recall_ids`，还有"LGD-06 killed mid-run"）；第 13–14 步 `head -60` / `sed -n '60,200p'`
+读了 `.arms/E/inflight/LGD-06.diff`，并 `cat` 了 `inflight/backfill.py`、`0004_amount_cents.sql`、
+`pytest-at-abort.txt`。然后它写出**同名的两个文件**，一次测试就绿。
+
+泄漏机制：我把 tickets、rig 日志、实验清单和"上一次尝试的完整答案"放在 `<project>/.arms/`，
+而这个目录同时被写进 `.gitignore` —— 被试只要 `ls` 加读 `.gitignore` 就能发现它。**答案放在被测量对象
+读得到的地方，实验就不再测量任何东西**：R2 的"零摩擦"是泄漏的产物，不是开发的样子（对照 LGD-02：
+42 步、2 次真实红、43→47）。
+
+处置（全在允许面内，不改 `aos/**`）：
+
+1. 脚手架整体搬出项目树 ⇒ `/home/shade/stage0/{tickets,E/store,E/rig,E/inflight,E/manifest.tsv}`；
+   项目内不再有 `.arms/`（空壳用 `rmdir` 收掉，搬移前后 md5 核对一致）。
+2. `run.sh` 加两条**放置守卫**，在任何模型调用之前拒绝开跑：被试目录内存在 `.arms/`、
+   或 `$RIG`/`$STORE` 落在被试目录内 ⇒ `exit 1`。测试：`live/tests/test_run_guard.py`（4 条，先红 ——
+   红屏是 `missing placement guard`，两条拒绝路径的断言失败不是因为消息不存在就是因为守卫不存在，
+   都由第 4 条按源码顺序钉住"两条守卫必须早于宿主启动行"）。
+3. oracle 的 `command_classes` 顺手修掉同一类噪声：shell 控制词（`for`/`do`/`done`/`in`…）与
+   单字母 flag 值不再当命令名 —— `for f in …; do cat …; done` 现在是 `cat`，`find . -maxdepth 1 -type f`
+   现在是 `find`（`test_shell_control_words_and_flag_values_are_not_command_names` 先红后绿）。
+4. R2 现场：4 项改动按字节抓到 `/home/shade/stage0-void/LGD-06-R2/`，再 `git stash push -u` 封存为
+   `stash@{0}`（`LGD-06-R2 contaminated-run 2026-10-01 …`）；第 1 次的 stash 顺位下移为 `stash@{1}`（`64a7e98d…`）。
+   两次都不 apply、不 drop、不进统计。
+
+我自己在这轮还犯过一次同类错误：**在运行进行中的项目里跑了 `python3 -m pytest`**（仪器动了被测量对象，
+当时那份 `3 failed` 读数因此不可用）。R3 起，运行期间不碰项目目录，取证只读日志、宿主库与 oracle。
+
 ## 6. 本轮明确没做的事
 
 - 未改 `aos/**`、`content/**`、`tests/**`、`integrations/opencode/plugin/agent-os.js`；
@@ -150,22 +190,31 @@ Independent oracle evidence:   Verified
 
 | 事项 | 值 |
 |---|---|
-| 臂 E store | `/home/shade/Public/test/.arms/E/store/aos.db`（1 条 active 记忆 `M-F8993E1D`、1 条 hot observation、2 条 loop） |
+| 臂 E store | `/home/shade/stage0/E/store/aos.db`（1 条 active 记忆 `M-F8993E1D`、1 条 hot observation（LGD-02）、2 条 loop —— `LOOP-…-38B2` 已完整回报，`LOOP-…-153B` 属于作废的第 1 次 LGD-06，开着没回来） |
 | 开发真库 | `store/aos.db` sha256 前缀 `c3907554319a0fe3`，本轮未变 |
 | LGD-06 | **中止，不作实验数据**：中途被我掐断，未发 postflight，臂库里留下一条开着没回来的 loop（`LOOP-20261001124603-153B`） |
-| LGD-06 现场捕获 | `/home/shade/Public/test/.arms/E/inflight/`（`LGD-06.diff` + `backfill.py` + `0004_amount_cents.sql` + `pytest-at-abort.txt`，md5 与原文件一致） |
-| LGD-06 可恢复位 | `git stash` `stash@{0}` = `64a7e98d0b91cdd7901170a96ef5990de4eed765`，消息 `LGD-06 aborted-run 2026-10-01 (killed mid-flight; not experiment data)`；恢复用 `git stash apply 'stash@{0}'`（apply 而非 pop，本轮不 drop） |
-| 中止点内容 | `ledgerd/cli.py`（+`backfill-amount` 注册）、`ledgerd/backfill.py`、`ledgerd/migrations/0004_amount_cents.sql`；`3 failed, 44 passed`（都是半张迁移网造成的） |
-| 恢复后 | 项目回到 `d5bf777`、工作树 0 项、`47 passed` |
+| LGD-06 现场捕获 | 第 1 次：`/home/shade/stage0/E/inflight/`（搬自原 `.arms/E/inflight`，md5 与原文件一致）；第 2 次：`/home/shade/stage0-void/LGD-06-R2/`（`state-and-diff.txt` + `files/` 四件，md5 核对过） |
+| LGD-06 可恢复位 | `stash@{1}` = `64a7e98d0b91cdd7901170a96ef5990de4eed765`（第 1 次中止，消息 `LGD-06 aborted-run …`）；`stash@{0}`（第 2 次污染，消息 `LGD-06-R2 contaminated-run …`）。恢复一律用 `apply`，不 `pop`、不 drop，且**都不进 Stage 0 统计** |
+| 中止点内容 | 第 1 次：`cli.py`（+`backfill-amount`）、`backfill.py`、`0004_amount_cents.sql`，`3 failed, 44 passed`；第 2 次：再加 `tests/test_migrations.py`，唯一一次 pytest 直接 `49 passed`（零失败，见 §5bis） |
+| 恢复后 | 项目回到 `d5bf777`、工作树 0 项、`47 passed`；项目内已无 `.arms/` |
 
 ## 8. Stage 0 继续前的检查单
 
 ```bash
 git -C /home/shade/Public/test status --porcelain          # 必须为空
 git -C /home/shade/Public/test rev-parse HEAD              # 必须是 d5bf777…（LGD-02 之后）
+test ! -e /home/shade/Public/test/.arms                    # 脚手架不得在被试项目内（AO）
 cd /home/shade/Public/AgentOS
 python3 -m pytest -q                                       # 447 passed（冻结面未动，计数不应变）
 node --test tests/js/plugin.test.mjs                       # 27 pass —— 不要写 `node --test tests/js/`，那是假红
-python3 -m pytest integrations/opencode/live/tests -q      # 9 passed（oracle，本轮新增）
+python3 -m pytest integrations/opencode/live/tests -q      # 15 passed（10 oracle + 4 放置守卫 + 1 控制词）
 git status --porcelain                                     # 只允许 docs/experiment/** 与 integrations/opencode/live/**
+```
+
+跑票时（脚手架在项目外）：
+
+```bash
+export AOS_RIG=/home/shade/stage0/E/rig AOS_STORE_DIR=/home/shade/stage0/E/store
+bash integrations/opencode/live/run.sh LGD-06-R3 /home/shade/Public/test --auto \
+  "$(cat /home/shade/stage0/tickets/LGD-06.md)"
 ```

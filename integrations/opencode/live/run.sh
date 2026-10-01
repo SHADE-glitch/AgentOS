@@ -28,6 +28,22 @@ while [[ $# -gt 1 ]]; do
   esac done
 prompt="${1:?usage: run.sh <label> <cwd> [--pure] [--auto] [-s <sessionID>] <prompt>}"
 
+# Placement guards, before anything can cost a model call. LGD-06-R2 was voided because the rig
+# kept its tickets, logs, manifest and a captured previous answer *inside* the measured project:
+# the agent listed the workspace, read `.gitignore`, found `.arms/`, and read the last attempt's
+# diff before writing its own. An instrument must not sit inside what it measures.
+if [[ -e "$cwd/.arms" ]]; then
+  echo "refusing: experiment scaffolding .arms/ found in $cwd — move the rig out of the measured project" >&2
+  exit 1
+fi
+for placed in "$RIG" "$STORE"; do
+  case "$placed" in
+    "$cwd"/*)
+      echo "refusing: rig or store sits inside the measured project ($cwd)" >&2
+      exit 1 ;;
+  esac
+done
+
 # The log directory is created before anything writes to the log: the real-store notice
 # below used to `tee` here while `mkdir -p` lived 10 lines further down, so the first run
 # against a fresh AOS_RIG died inside `set -e` before producing anything (defect AF).

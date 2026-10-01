@@ -46,10 +46,14 @@ VERDICT_SUCCESS = "success"
 VERDICT_FAILURE = "failure"
 VERDICT_UNKNOWN = "unknown"
 
-# Words that introduce a command instead of being one.
-NOISE = {"cd", "env", "export", "sudo", "time", "nohup", "source", "set", "echo"}
+# Words that introduce a command instead of being one — including shell control words, because
+# `for f in *.csv; do cat "$f"; done` names `cat` and nothing else.
+NOISE = {"cd", "env", "export", "sudo", "time", "nohup", "source", "set", "echo",
+         "for", "do", "done", "in", "while", "until", "if", "then", "else", "elif", "fi",
+         "case", "esac", "select", "function"}
 INTERPRETERS = {"python", "python2", "python3", "node", "deno", "bun", "php", "ruby"}
-NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,23}$")
+# Two characters minimum: a single letter is a flag's value (`-type f`), not a program's name.
+NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,23}$")
 SEGMENT = re.compile(r"&&|\|\||[;|\n]")
 MAX_CLASS_TOKENS = 3
 

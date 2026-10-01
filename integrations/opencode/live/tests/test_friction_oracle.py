@@ -160,6 +160,18 @@ def test_project_state_is_summarised_without_naming_files(tmp_path):
     assert "dirty.py" not in json.dumps(project)
 
 
+def test_shell_control_words_and_flag_values_are_not_command_names(tmp_path):
+    """LGD-06-R2's own classes: `for f in|do|cat|done` and `find f` are noise, not methods."""
+    db = tmp_path / "host.db"
+    make_host_db(db, [
+        {"tool": "bash", "command": 'for f in tests/data/*.csv; do cat "$f"; done', "metadata": {"exit": 0}},
+        {"tool": "bash", "command": "find . -maxdepth 1 -type f | sort", "metadata": {"exit": 0}},
+    ])
+    steps = tool_parts(build_report(db, "ses_fixture", project_root=None))
+    assert steps[0]["command_classes"] == ["cat"]
+    assert steps[1]["command_classes"] == ["find", "sort"]
+
+
 def test_a_run_with_no_tool_calls_reports_zero_steps_instead_of_nothing(tmp_path):
     db = tmp_path / "host.db"
     make_host_db(db, [])
