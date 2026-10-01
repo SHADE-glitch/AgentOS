@@ -460,9 +460,9 @@ V 是阈值与语言的隐性耦合 —— 分数上限 0.08 对上 `min_score` 
 
 ---
 
-## 13. 仓库级守卫（P5 上线的自动拦截网）
+## 13. 仓库级守卫（P5 上线，第八轮之后共五条）
 
-三条，全部是"结构检查"而非"review 习惯"，因为它们拦的是本仓库与四个外部项目反复犯过的同一类病：
+全部是"结构检查"而非"review 习惯"，因为它们拦的是本仓库与四个外部项目反复犯过的同一类病：
 
 | 守卫 | 拦什么 | 反向验证（证明它能红） |
 |---|---|---|
@@ -470,9 +470,10 @@ V 是阈值与语言的隐性耦合 —— 分数上限 0.08 对上 `min_score` 
 | 同上 `test_no_route_off_the_machine` | 网络出机。`socket` 只允许**字面 loopback** 目标（服务探测），非 127.0.0.1/localhost/::1 即失败 | `socket.create_connection(("example.com",80))` ⇒ 红 |
 | `tests/test_reachability.py` | `aos/` 里没有任何引用点的 public 定义（写了不读） | 建一个孤儿函数 ⇒ 红；allowlist 里的 5 个 host-facing API 若失去引用也报"unproven API" |
 | `tests/test_skill_boundary.py` | 重新长出 skill 来源/skill 写入/驱动 host 的 provider/写 host 目录的路径常量 | `skills_dir` + `AOS_SKILLS_DIR` + `subprocess.run(["opencode","run",…])` ⇒ 红 |
+| `tests/test_memory.py::test_the_author_path_cannot_touch_a_single_gate_column`（配 `…earned_list_is_derived_from_the_gate_whitelist`） | 作者路径（`upsert_memory` / `memory seed --force`）写到人门所辖的任一列；或 `earned` 从门那份列表退回手抄字面量 ⇒ 门与作者两条路径的列集合必须互补 | 把 `earned` 换回旧的字面量 ⇒ 三条相关用例一起红 |
 
-两条刻意的设计：守卫**看 AST 不看文本**（docstring 里解释"为什么删掉 skills_loaded"不算复活它），
-以及 reachability 的 allowlist **必须被测试实际执行到**，否则它就成了下一个孤儿的停车场。
+三条刻意的设计：守卫**看 AST 不看文本**（docstring 里解释"为什么删掉 skills_loaded"不算复活它），
+reachability 的 allowlist **必须被测试实际执行到**，否则它就成了下一个孤儿的停车场；以及互补那条**不承诺约定** —— 它把"门能写的列"直接当成"作者不许写的列"的来源，所以给门加一列的同时忘记保护它，会在测试里红而不是在某人的库里生效。
 
 ---
 

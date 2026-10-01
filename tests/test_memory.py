@@ -514,3 +514,65 @@ def test_re_seeding_a_memory_cannot_undo_a_demotion(store):
     assert after["confidence"] == "low", "nor restore confidence the human lowered"
     row = next(m for m in store.memories_for_scoring() if m["memory_id"] == memory_id)
     assert sorted(row["tags"]) == ["loader", "opencode", "plugin"], "tags are content: those follow the author"
+
+
+def test_the_author_path_cannot_touch_a_single_gate_column(store):
+    """One list decides it: whatever the gate may write, a re-seed may not.
+
+    Not a comment promising it — every column in `update_memory_fields`'s whitelist is
+    set through the gate, then the memory is upserted again with none of them present.
+    If the author path could write any one of them, this fails. That is what keeps the
+    two lists from drifting apart later: adding a standing column to the gate without
+    protecting it from `upsert_memory` breaks here rather than in somebody's store.
+    """
+    from aos.core.memory.authoring import new_memory
+    from aos.core.memory.store import MemoryStore
+
+    memory_id = store.upsert_memory(
+        new_memory(title="原正文", body="原内容。", category="config", verified=True),
+        tags=["old"],
+    )
+    standing = {
+        "evidence_level": "runtime_validated",
+        "confidence": "high",
+        "status": "verified",
+        "lane": "standard",
+        "observation_count": 7,
+        "decay_factor": 0.62,
+        "last_verified_at": "2026-01-02T00:00:00+00:00",
+        "supersedes": "M-GONE",
+        "use_count": 3,
+        "success_count": 2,
+        "last_used_at": "2026-01-03T00:00:00+00:00",
+    }
+    assert sorted(standing) == sorted(MemoryStore._PROMOTABLE_FIELDS), (
+        "the whitelist grew; this test has to cover the new column too"
+    )
+    store.update_memory_fields(memory_id, **standing)
+
+    store.upsert_memory(
+        {**new_memory(title="改过的正文", body="重新写过内容。", category="config", verified=True),
+         "memory_id": memory_id},
+        tags=["new"],
+    )
+
+    after = store.get_memory(memory_id)
+    assert after["title"] == "改过的正文", "content still follows the author"
+    assert sorted(store.memories_for_scoring()[0]["tags"]) == ["new"]
+    moved = {key: (value, after[key]) for key, value in standing.items() if after[key] != value}
+    assert not moved, f"the author path wrote gate columns: {moved}"
+
+
+def test_the_earned_list_is_derived_from_the_gate_whitelist():
+    """The exclusion is computed from `update_memory_fields`'s list, not retyped.
+
+    A second literal list would be correct today and wrong the first time someone adds
+    a column to one of them — the exact failure shape this repository keeps recording
+    (declared in one place, honoured in another).
+    """
+    from aos.core.memory import store as store_module
+    from pathlib import Path
+
+    source = Path(store_module.__file__).read_text(encoding="utf-8")
+    line = next(line for line in source.splitlines() if "earned =" in line)
+    assert "_PROMOTABLE_FIELDS" in line, f"earned is hardcoded again: {line.strip()}"
