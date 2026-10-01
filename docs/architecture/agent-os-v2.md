@@ -589,5 +589,29 @@ reachability 的 allowlist **必须被测试实际执行到**，否则它就成�
 **明确不做的**：不加采集面（判据 4 要求先在能力矩阵指到"无人实现"那一列）；不开 `AOS_BACKFILL_DB`
 （回读不产 verdict，灌进人门的又是标不了的历史）；不做质量盲评，除非换一个评得出差异的模型。
 
+## 16. Exp-v1 能力边界（冻结于 `53de1ad`，2026-10-01）
+
+实验读者只需要这一节就能知道"该拿这套层测什么、不该拿它测什么"。完整冻结记录（文件清单、复核命令、
+判据归属）在 `docs/experiment/exp-v1-baseline.md`；"刻意不存在的东西"见 §11，此处不复述。
+
+```text
+Agent OS = OpenCode 的长期经验层
+
+负责：experience capture（含方法级轨迹）· memory lifecycle（候选→人门→晋升→退休）
+     · retrieval（确定性排序，两条入口）· injection（单个自标识元素）· 治理与审计（事件、评审、原因）
+
+不负责：agent planning · agent execution · tool orchestration · 代码生成
+       · skill 管理与遥测（skill-tracker 拥有）· 多 agent 编排（P1 已删）· 第二个 memory 后端
+```
+
+三栏分开的意义：**左栏可以拿去复跑，中栏是实验要回答的问题，右栏是本基线的固有形状、不在实验期间修。**
+
+| 已证明 `[Verified]` | 未证明 `[Unconfirmed]` | 已知限制 |
+|---|---|---|
+| 经验能形成（含"试 A 败→换 B 成"），能存、能被召回、能被注入；一次教训只对应一次决定；人门的一次决定改变下一次召回（1122→1359）；真宿主能产出 method trace，`session.idle→postflight` 在无头 `run` 成立；原命令不出宿主（canary 六处为 0）；轨迹买到 0 判决权重（三臂 `mass` 相同） | 经验是否减少未来试错；是否改变首次动作；是否让"模型本来不会答"的任务从错变对；相对 `AGENTS.md` 与普通 memory 的增量；旧问题复发率是否下降；跨轮粘性（第十四轮实测第二轮召回为 0） | 非 shell 工具无 exit、宿主无 `error` 键 ⇒ 编辑/读类失败不可见；被拒调用不进钩子；纯思考转向不可观察；跨 loop 方法迁移不支持；`exit=0` 只给相邻性不给因果；轨迹 16 步去中间留两端；backfill 行无轨迹；`user_interrupted` 读了没人写（AK）；exit→构建/测试的归属未获批（AI） |
+
+**违反 `docs/experiment/exp-v1-baseline.md` §2 的冻结清单 ⇒ 实验作废**，重新打基线并从 Stage 1 重跑。判据 1 只数 owner 的交互会话，
+探针/rig/手喂产生的观测一律不计入（本轮探针写在一个 `AOS_STORE_DIR` 指向的隔离库里）。
+
 See also: `docs/decision/positioning.md`（裁决与判据）、`docs/plan/final-plan.md`（归类表与排期）、
 `docs/audit/current-state.md`（现状与流程偏差）、`docs/research/findings.md`（外部证据）。

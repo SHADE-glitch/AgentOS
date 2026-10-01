@@ -104,3 +104,40 @@ A real host session ran through this seam on 2026-10-01 (rig: [`live/README.md`]
   plugin logged (511 == 511), and an otherwise identical run with only our seam inert costs +583 input
   tokens for 1,279 characters of block. `--pure` is **not** a control for us: it removes every external
   plugin, so it measures DCP and the tracker as much as our own work.
+
+## The exp-v1 real-host probe: the capture chain works on the actual host `[Verified]`
+
+One run on 2026-10-01 (`opencode run --auto -m opencode/space-bunny-free`, smoke project under
+`/home/shade/Public/test`, engine store pinned to an isolated directory by a single `AOS_STORE_DIR`,
+`AOS_TIMEOUT_MS` left at its default) settled the four things the fixtures could not settle:
+
+```text
+tool.execute.after      5 bash steps, logged as key names only
+  → args.command         present — the host's own persisted tool parts name the key `command`
+  → method fingerprint   ls / pytest tests / python3 -m pytest probe_tests / cat / grep
+  → entry.trace          ordered, bounded; `metadata.exit` recorded verbatim (0 / 4 / 0 / 0 / 0)
+  → session.idle         fires in headless `run` mode:  postflight sent … answered=true
+  → postflight           signals = tool_trace, tool_calls, response_summary
+  → observation          signals_json.tool_trace survives; present lists it; needs_review=1
+```
+
+Two properties were proven by construction rather than by trust. A canary string existed only in a
+project file and inside a quoted command argument: it is absent from the store, from our log lines,
+from `review list` output and from this repository — the quote rule ended the fingerprint at `grep`,
+so the command's content never left the host process. And three arms fed the same `test_exit_code`-free
+signal set with, without a trace: `mass` was identical, which is the weight-0.00 pinning holding on
+real data rather than in a unit test.
+
+What the probe deliberately did **not** buy:
+
+- Non-shell tools report no exit code (`glob` gives `count/truncated`), and the host hands no `error`
+  key, so failures of edit/read tools stay invisible; `tool_errors` is absent on this machine, not zero.
+- A tool call whose permission was refused never reaches the hook, so "that direction was rejected" —
+  the most informative event — leaves no trace at all.
+- A method switch the model only thinks about is unobservable; only executed steps appear.
+- Each prompt opens a new loop and resets the accumulator, so a failure in turn 1 and a fix in turn 3
+  are two trajectories that never meet.
+- `exit=0` says the step returned 0, not that this step was the right method: the trace carries
+  adjacency, never causality. Attribution still needs a human (`review approve --body`).
+
+Freeze point, the frozen file list and the Verified / Unconfirmed split: `docs/experiment/exp-v1-baseline.md`.
