@@ -6,7 +6,10 @@
 ## 1. 基线身份
 
 被冻结的**代码状态**是 `53de1ad`；`exp-v1` 这个 tag 落在紧随其后的一笔**只含文档**的提交上
-（因为冻结记录本身必须进仓库）。两者代码树逐字节相同，用下面第三条命令自证：只出现 `docs/**` 路径。
+（因为冻结记录本身必须进仓库）。两者**在冻结面上逐字节相同**，自证命令见下面最后一条 ——
+注意比较范围必须限定成 §2 的冻结面：本文件与 §2 列的文件之外还有两份文档会被这笔提交改动，
+其中一份按仓库惯例放在 `integrations/opencode/README.md`（接缝说明，属文字不是代码）。
+所以"整个 diff 只含 `docs/`"这种断言一上手就是假的（我第一次就写错了它），必须按范围断言。
 
 ```
 被冻结的代码 commit:  53de1adc5fb5ff92877ae11e37606e2f9e8f6dbc  (= 53de1ad)
@@ -25,7 +28,8 @@ git rev-parse HEAD; git status --short
 python3 -m pytest                                   # 期望 447 passed
 node --test tests/js/plugin.test.mjs                # 期望 # pass 27 / # fail 0
 sqlite3 "file:store/aos.db?mode=ro" "PRAGMA user_version"   # 期望 5
-git diff --name-only 53de1ad..exp-v1                 # 期望只有 docs/ 下的路径
+git diff --name-only 53de1ad..exp-v1 -- \
+    aos/ content/ tests/ integrations/opencode/plugin/     # 期望：空（冻结面零差异）
 ```
 
 **不允许回退到的旧点**：`4e9bfec`。它早于第十六轮，缺 `tool_trace`/`tool_calls` 这条采集链
@@ -131,3 +135,18 @@ content/policies/*.json             # 六个阈值文件：decay/injection/outco
 
 复核输出（`git show exp-v1` 的主题、`git diff --name-only 53de1ad..exp-v1`、测试计数、真库未变的 sha256）
 在提交后写进本节，见本文件末尾的"冻结复核"。
+
+### 冻结复核（实测输出，不是承诺）
+
+```
+git rev-parse HEAD（提交后）      = e501a2b 及其后的修正提交；被冻结代码点 = 53de1adc5fb5ff92877ae11e37606e2f9e8f6dbc
+git diff --name-only 53de1ad..exp-v1 -- aos/ content/ tests/ integrations/opencode/plugin/   = （空）
+python3 -m pytest                 = 447 passed
+node --test tests/js/plugin.test.mjs = # tests 27 / # pass 27 / # fail 0
+sqlite3 "file:store/aos.db?mode=ro" "PRAGMA user_version" = 5
+git status --short                = （空）
+真库 store/aos.db sha256 前缀      = c3907554319a0fe3…（探针前后一致，实验数据未进真库）
+```
+
+一处本轮自我修正：本节最初写的是"`git diff --name-only 53de1ad..exp-v1` 只应出现 `docs/` 下的路径"，
+实跑发现该提交还含 `integrations/opencode/README.md` ⇒ 断言按范围重写，tag 随之重指到修正提交。
