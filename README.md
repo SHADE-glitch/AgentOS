@@ -58,6 +58,7 @@ path resolves from `AGENT_OS_ROOT` (defaulting to the repo itself).
 ./bin/aos memory list                  # what the engine knows
 ./bin/aos memory inspect <id>          # a memory and why it believes it
 ./bin/aos memory refresh               # recompute derived state: expiry, fact keys, counts, decay
+./bin/aos memory retire <id> --reason  # stop trusting one: out of recall, row and history kept
 ./bin/aos route "fix the null pointer crash"
 ./bin/aos run "add a /health endpoint" --cwd /path/to/project --provider test_provider
 ./bin/aos review list                  # what the gate is asking a person about

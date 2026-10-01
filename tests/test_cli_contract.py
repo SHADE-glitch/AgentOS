@@ -406,6 +406,43 @@ def test_doctor_reports_whether_recall_found_anything(capsys, store):
     assert document["recall"] == {"runs": 2, "recalled": 1, "zero_recall": 1}, document.get("recall")
 
 
+def test_memory_retire_is_a_supported_exit_from_recall_that_keeps_the_row(capsys, store, tmp_path):
+    """The CLI has to offer the exit the gate implies: stop trusting a memory, keep its history.
+
+    `aos memory` could add, seed, refresh and inspect, while the only writer of `status` was the
+    promotion ladder — so a memory a human could see was junk stayed in every injection until it had
+    been demoted five times (defect Z's bill), or until somebody ran an UPDATE against the database
+    by hand, which is how a column quietly acquires a third writer.
+    """
+    cwd = str(tmp_path / "proj")
+    Path(cwd).mkdir(parents=True, exist_ok=True)
+
+    code = main([
+        "memory", "add", "--verified", "--evidence-level", "runtime_validated",
+        "--title", "kafka 消费失败先看重试次数", "--body", "先确认 retry 次数是否已经耗尽，再谈别的。",
+        "--tags", "kafka,retry", "--category", "bugfix",
+    ])
+    assert code == 0
+    memory_id = json.loads(capsys.readouterr().out)["memory_id"]
+    task = "kafka 消费失败该先看什么"
+
+    pre = _preflight(capsys, task=task, cwd=cwd)
+    assert memory_id in pre["memory"]["injection"]["memory_ids"], "recalled while it is active"
+
+    assert main(["memory", "retire", memory_id, "--reason", "写错了，从未成立"]) == 0
+    capsys.readouterr()
+
+    after = _preflight(capsys, task=task, cwd=cwd)
+    assert memory_id not in (after["memory"]["injection"]["memory_ids"] or []), "retired must not be injected"
+
+    assert main(["memory", "list"]) == 0
+    listing = capsys.readouterr().out
+    assert memory_id in listing and "deprecated" in listing, "retirement is not deletion"
+
+    # A refusal costs nothing: no row, no write.
+    assert main(["memory", "retire", "M-NOPE", "--reason", "不存在也要留痕吗"]) == 1
+
+
 def test_memory_refresh_backfills_keys_and_is_idempotent(capsys, store):
     from aos.core.memory.authoring import new_memory
 

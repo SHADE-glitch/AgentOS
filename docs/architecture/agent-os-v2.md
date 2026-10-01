@@ -241,6 +241,9 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 
 存在的：
 - **记忆侧**：weaken 降一档证据 + 降置信 + `decay_factor *= 0.8`（下限 0.5），到底或已 deprecated ⇒ `status` 改 `deprecated`；
+  另有 `aos memory retire <id> --reason …`（第十二轮）让人一步退役：**写的还是门拥有的那一列**
+  （`update_memory_fields(status=...)`），留一条 `memory.retired` 事件，行与历史都不删（`memory list` 仍可见）。
+  缺理由或指向不存在的行 ⇒ 拒绝且**一个字节都不写**；已经退役的再退一次返回 `already_retired`，不堆事件。
   reinforce 升档受 `STRONG_EVIDENCE` 阈与人门约束。
   `decay_factor` 有**两个写入者**（人门的失败惩罚、`retrieve.compute_all_decay` 的时长/用量衰减），二者**取较低值**：
   衰减 pass 可以使人沉默，不可以撤销一个人已经做过的降级（缺陷 Q）。

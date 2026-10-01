@@ -419,6 +419,33 @@ def _split_list(value: str) -> list[str]:
     return [part.strip() for part in str(value or "").split(",") if part.strip()]
 
 
+def _memory_retire(args: argparse.Namespace, store) -> int:
+    """Take one memory out of recall, on the record, with a stated reason.
+
+    The ladder was the only way a memory stopped being trusted — five attributable failures and
+    five approvals — so a row a human could already see was junk had no exit except editing the
+    database by hand. This writes the same column the gate writes and refuses to act without a
+    reason, because a retirement with no stated cause is indistinguishable from a memory nobody
+    ever trusted.
+    """
+    from aos.core.memory.evolve import retire_memory
+
+    result = retire_memory(args.memory_id, reason=args.reason, store=store)
+    status = result.get("status")
+    if status == "retired":
+        print(
+            f"{result['memory_id']}: {result.get('previous_status') or '-'} -> deprecated"
+            f"（不再被召回，行仍在：aos memory list 能看到）"
+        )
+        print(f"  理由: {result['reason']}")
+        return 0
+    if status == "already_retired":
+        print(f"{result['memory_id']}: 已经是 deprecated，没有再写任何东西")
+        return 0
+    print(f"error: {result.get('error') or result.get('status')}", file=sys.stderr)
+    return 1
+
+
 def _memory_list(args: argparse.Namespace, store) -> int:
     memories = store.list_memories(
         type=getattr(args, "type", None),
@@ -617,6 +644,7 @@ _MEMORY_COMMANDS = {
     "list": _memory_list,
     "add": _memory_add,
     "refresh": _memory_refresh,
+    "retire": _memory_retire,
     "seed": _memory_seed,
     "show": _memory_show,
     "inspect": _memory_inspect,
@@ -677,7 +705,7 @@ def cmd_memory(args: argparse.Namespace) -> int:
 
     handler = _MEMORY_COMMANDS.get(getattr(args, "memory_command", None) or "list")
     if handler is None:
-        print("usage: aos memory list|add|seed|refresh|migrate|show|inspect", file=sys.stderr)
+        print("usage: aos memory list|add|seed|refresh|retire|migrate|show|inspect", file=sys.stderr)
         return 1
 
     store = MemoryStore()
@@ -961,6 +989,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_mem_refresh.add_argument("--today", default="", help="override the date used for expiry (YYYY-MM-DD)")
     p_mem_refresh.add_argument("--json", action="store_true", help="emit the report as JSON")
+    p_mem_retire = mem_sub.add_parser(
+        "retire",
+        help="take one memory out of recall, on the record — the row and its history stay",
+    )
+    p_mem_retire.add_argument("memory_id")
+    p_mem_retire.add_argument(
+        "--reason",
+        required=True,
+        help="why this stopped being trusted; the only durable record of the decision",
+    )
     p_mem_seed = mem_sub.add_parser("seed", help="load content/memory/**/*.json into the store")
     p_mem_seed.add_argument("--dir", default=None, help="seed directory (default: the content memory dir)")
     p_mem_seed.add_argument("--force", action="store_true", help="rewrite entries that already exist")

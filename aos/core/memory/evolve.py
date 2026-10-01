@@ -1151,6 +1151,60 @@ def reject_review(
             store.close()
 
 
+def retire_memory(memory_id: str, *, reason: str, store: Optional[MemoryStore] = None) -> dict[str, Any]:
+    """Take a memory out of recall because a human said so, and say why on the record.
+
+    The ladder was the only exit: `status` is a gate column, and the gate reached
+    `deprecated` by walking evidence down a rung at a time — five attributable failures and
+    five approvals for one memory (defect Z's bill). That left two bad options for a row
+    anybody could see was junk: wait, or edit the database outside the engine, which is how
+    a column ends up with an undocumented third writer. This is the supported third path,
+    and it writes only columns the gate already owns.
+
+    A stated reason is required. Retirement is the one decision that *removes* evidence from
+    every future run, and a row that quietly stopped being trusted is indistinguishable from a
+    row that was never trusted — the audit trail has to carry the difference.
+    """
+    owns_store = store is None
+    store = store or MemoryStore()
+    try:
+        stated = (reason or "").strip()
+        if not stated:
+            return {
+                "memory_id": memory_id,
+                "status": "rejected",
+                "error": "a retirement needs a stated --reason; it is the only record of why this stopped being trusted",
+            }
+        memory = store.get_memory(memory_id)
+        if memory is None:
+            return {"memory_id": memory_id, "status": "not_found"}
+        previous = memory.get("status", "")
+        if previous == "deprecated":
+            return {
+                "memory_id": memory_id,
+                "status": "already_retired",
+                "reason": stated,
+                "previous_status": previous,
+            }
+
+        applied = store.update_memory_fields(memory_id, status="deprecated")
+        store.add_event(
+            event_type="memory.retired",
+            payload={"memory_id": memory_id, "reason": stated, "previous_status": previous},
+        )
+        return {
+            "memory_id": memory_id,
+            "status": "retired",
+            "applied": applied,
+            "previous_status": previous,
+            "reason": stated,
+            "title": memory.get("title", ""),
+        }
+    finally:
+        if owns_store:
+            store.close()
+
+
 def label_review(
     review_id: int,
     outcome: str,

@@ -21,6 +21,7 @@ from aos.core.memory.evolve import (
     group_candidates,
     list_reviews,
     reject_review,
+    retire_memory,
     run_learning,
     validate_group,
 )
@@ -778,3 +779,59 @@ def test_a_labelled_verdict_blames_only_the_skill_the_human_names(store, tmp_pat
         if c["candidate_type"] == "weaken" and c["loop_id"] == pre2["loop_id"]
     ]
     assert [c["target_memory"] for c in weaken] == [blamed], "the bystander is not blamed for a release failure"
+
+
+# ── retirement ─────────────────────────────────────────────────────────
+def test_retiring_a_memory_ends_its_participation_without_erasing_its_provenance(store):
+    """A human needs a way out that is neither the five-step ladder nor a hand-written UPDATE.
+
+    Until now the only writer of `status` was the promotion ladder, so retiring a memory the human
+    could already see was junk meant either five attributable failures plus five approvals (defect
+    Z's bill) or editing the database outside the engine. `retire` writes through the gate's own
+    whitelisted columns, records the reason as an event, and leaves the row where `memory list` and
+    `memory inspect` can still show it: retirement ends participation, not provenance.
+    """
+    from aos.core.memory.retrieve import retrieve
+
+    _add(store, "M-JUNK", tags=["kafka", "retry"], evidence_level="runtime_validated",
+         status="active", lane="standard")
+    query = {"task_text": "kafka retry 参数", "keywords": ["kafka"], "scope_project": ""}
+    assert retrieve(query, store=store, log=False)["results"], "recalled while it is active"
+
+    result = retire_memory("M-JUNK", reason="rig artifact; see defect AG", store=store)
+
+    assert result["status"] == "retired", result
+    assert retrieve(query, store=store, log=False)["results"] == [], "retired means it is not injected"
+    row = store.get_memory("M-JUNK")
+    assert row is not None and row["status"] == "deprecated", "the row survives; retirement is not deletion"
+    assert row["title"], "and it still says what it was about"
+    assert [m["memory_id"] for m in store.list_memories()] == ["M-JUNK"], "history stays enumerable"
+
+    events = store.list_events(event_type="memory.retired")
+    assert len(events) == 1
+    assert json.loads(events[0]["payload_json"])["reason"] == "rig artifact; see defect AG", (
+        "the cause is on the record, not implied"
+    )
+
+
+def test_retire_refuses_to_act_without_a_target_or_a_reason(store):
+    """Two ways to lose an audit trail: retire a row that is not there, or retire it for no stated reason."""
+    _add(store, "M-OK", tags=["kafka"], status="active", lane="standard")
+
+    missing = retire_memory("M-NOPE", reason="whatever", store=store)
+    assert missing["status"] == "not_found"
+    assert store.get_memory("M-OK")["status"] == "active", "a failed retire writes nothing"
+
+    for empty in ("", "   "):
+        refused = retire_memory("M-OK", reason=empty, store=store)
+        assert refused["status"] == "rejected", refused
+        assert "reason" in refused["error"]
+    assert store.get_memory("M-OK")["status"] == "active", "a refused retire writes nothing either"
+    assert store.list_events(event_type="memory.retired") == []
+
+    # A second retirement is not a second decision: the row is already out, and stacking
+    # events would make the audit trail look like repeated judgement.
+    assert retire_memory("M-OK", reason="rig artifact", store=store)["status"] == "retired"
+    again = retire_memory("M-OK", reason="rig artifact", store=store)
+    assert again["status"] == "already_retired", again
+    assert len(store.list_events(event_type="memory.retired")) == 1
