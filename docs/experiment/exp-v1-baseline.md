@@ -108,13 +108,13 @@ content/policies/*.json             # 六个阈值文件：decay/injection/outco
 
 | 主张 | 证据与复跑方法 |
 |---|---|
-| 经验可以形成（含"试 A 败 → 换 B 成"这类方法级经验） | 第十六轮 CLI 屏幕 + 第十七轮真宿主：`observations.signals_json.tool_trace` 里有序步骤，`_attempts` 判出 `changed=True` |
+| 经验可以形成（含"试 A 败 → 换 B 成"这类方法级经验）——**条件是轨迹里真的带有失败位** | 第十六轮 CLI 屏幕（手工喂入含 `ok=false` 的轨迹）+ 第十七轮真宿主：`_attempts` 判出 `changed=True`。形状已证；**真实宿主自己产出失败位这一段在 Stage 0 被判为 Failed**（见 §3.3 的 AL 与 `docs/experiment/stage-0-ledgerd.md` §4），所以这一行不能读成"实盘上已经能长出方法级经验" |
 | 经验可以保存 | `review approve` 后 `memories` 出现 `procedural` 行，body 含 `过程：…`，`dedupe_key` 由不含轨迹的正文算出 |
 | 一次教训只对应一次决定 | 同一任务第二次带不同轨迹 ⇒ 同一 `memory_id`、库里 1 行；`test_two_traces_of_one_task_leave_one_review_not_two` |
 | 经验可以检索 | 批准并给 `--tags` 后，同主题提问召回该条（真库只读实测：路由命中 0.15、tag 命中 0.16/0.24/0.39 两条入口） |
 | 经验可以注入 | 引擎 `recall.injection_chars` == 插件日志 `len=`（第十一轮 511==511、第十四轮 TUI 323==323、第十五轮 1122→1359 且 +237 为跑前预测） |
 | 人门的一次决定会改变下一次召回 | 真库闭合：注入块从 1122 字符/3 条变 1359 字符/4 条，两处 `len` 一致 |
-| 真实宿主能产生 method trace | 第十七轮一次 `opencode run --auto`：5 个 bash 步全部落库，指纹 `ls` / `pytest tests` / `python3 -m pytest probe_tests` / `cat` / `grep` |
+| 真实宿主能产生 method trace | 第十七轮一次 `opencode run --auto`：5 个 bash 步全部落库，指纹 `ls` / `pytest tests` / `python3 -m pytest probe_tests` / `cat` / `grep`。**但 Stage 0 的 LGD-02（42 步真任务）里 `ok=false` 出现 0 次，而项目确实红了两次** ⇒ 轨迹能落库，失败位不能可靠落库，见 AL |
 | `session.idle → postflight` 在无头 `run` 模式成立 | `agent-os: postflight sent … answered=true`，且 `doctor.pending_postflight.outstanding=0`（默认 1200ms 未改） |
 | `args.command` 真存在 | 宿主自身库里本次会话 5 个 bash tool part 的 `state.input` 键名均为 `command`（只读查键名） |
 | 原命令不出宿主 | canary 在 `observations`/`learning_reviews`/`$store`/我方日志/`review list` 输出/仓库六处计数全 0；`grep` 那步的指纹恰为 `grep` |
@@ -141,7 +141,10 @@ content/policies/*.json             # 六个阈值文件：decay/injection/outco
 | 纯思考层的转向无法观察 | 只执行了的方法切换才记得到；想明白但没动手的记不到 |
 | 跨 loop 的方法迁移不支持 | 每次提问开新 loop 并重置累加器 ⇒ 第 1 轮失败、第 3 轮成功是两个轨迹，永不相见 |
 | `exit=0` ≠ "这一步才是对的方法" | 轨迹只给相邻性，不给因果；归因仍要人写（`review approve --body`） |
-| 轨迹上限 16 步（去中间留两端） | 长会话中部丢失，但步号自带缺口，且 `tool_calls` 给真实总数 |
+| 轨迹上限 16 步（去中间留两端） | 长会话中部丢失，但步号自带缺口，且 `tool_calls` 给真实总数。**Stage 0 实测：上限不是瓶颈** —— LGD-02 的失败步之一（`#39`）就在保留窗口里，仍被记成"通过"；瓶颈是下一行 AL |
+| **AL**（Stage 0 新增，实测于 LGD-02）：`ok` 取的是**整条 shell 调用**的退出码 | `python3 -m pytest -q \| tail -30` 取 `tail` 的 0；`cp … && pytest … && git diff` 取 `git diff` 的 0。该票 19 次 bash 里 18 次复合、9 次含管道，宿主记录的非零退出码 **0 个**，而项目真实红了两次 ⇒ **`ok` 不能当项目失败的测量**，审核材料会把有失败的运行显示成一次通过。修它要动插件（冻结面）⇒ 归 exp-v2；Stage 0 用 `live/friction_oracle.py` 从宿主库独立量摩擦 |
+| **AM**（Stage 0 新增）：引擎的 validate 会在被观测项目里**执行**自动探测出的构建命令 | LGD-02 的 loop：`build_system=pip`、`compile_command="python3 -m compileall -q ."`、`build_status=PASS`；observation 里 `build_exit_code=0` 进了 `present`，`mass=0.4`（门限 0.45），提案正文打出"可证：构建退出码 0" ⇒ ①任何"Agent OS 不进项目执行代码"的表述作废；②自证结果**不是**独立项目摩擦证据，也不许替 Agent 的成绩说话（缺陷 AI 的实体化）。本轮不改 validate 归属 |
+| **AN**（Stage 0 新增）：`methodOf` 对复合命令只取第一个存活片段 | 同一条票里 `#38 printf`、`#39 cp` 才是真名 `python3 -m pytest` 的两次运行；`find . -maxdepth 1 -type f` 被记成 `find f` ⇒ 方法身份保真度低，"用什么方法验证"经常丢失。只登记，改指纹归 exp-v2 |
 | 回读（backfill）产生的行没有轨迹 | `source='backfill'` 与 `source='hot'` 形状不一致 |
 | `user_interrupted` 读了没人写（缺陷 AK） | 中断这条硬否决对 opencode 实际从不生效 |
 | 退出码→构建/测试的归属映射未获批准（缺陷 AI） | 轨迹里有 exit，但 `test_exit_code`/`build_exit_code` 仍为空，verdict 不因此变准 |
