@@ -463,6 +463,7 @@ def record_stage(
             skills=skills,
             files_changed=evidence.get("files_changed"),
             quality_score=synthesis["quality_score"],
+            signals=synthesis.get("signals"),
         )
 
     # The stored snapshot is what a reviewer reads and what a later label is

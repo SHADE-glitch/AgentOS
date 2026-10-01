@@ -1369,6 +1369,7 @@ def apply_verdict(
             skills=signals.get("skills", []),
             files_changed=signals.get("files_changed", []),
             quality_score=quality,
+            signals=signals,
         )
         store.add_candidate(
             candidate_type="create",

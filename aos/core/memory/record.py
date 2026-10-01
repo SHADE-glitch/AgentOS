@@ -67,6 +67,70 @@ def should_propose(*, outcome: str, memories_used: list[str], needs_review: bool
     return not memories_used or outcome == "failure"
 
 
+def _clip(text: Any, limit: int) -> str:
+    """Cut for display without pretending the cut did not happen.
+
+    A silent `[:40]` turned a truncated claim into a claim that reads as finished — the draft's
+    `when_to_apply` ended mid-token and the injected line asserted something nobody wrote. Latin
+    backs off to a word boundary; CJK has none, so it gets the marker and the reader sees the seam.
+    """
+    collapsed = " ".join(str(text or "").split())
+    if len(collapsed) <= limit:
+        return collapsed
+    cut = collapsed[:limit]
+    if cut[-1:].isascii() and cut[-1:].isalpha() and " " in cut:
+        cut = cut[: cut.rfind(" ")]
+    return cut.rstrip(" ，,、。;；:：") + "…"
+
+
+# Signals that state a fact about how a run ended, each with the phrase it earns.
+# `response_summary` is deliberately absent: the model's own prose is material a human may read
+# when approving, never a fact this draft asserts — the same reason its verdict weight is 0.00.
+_SIGNAL_PHRASES = (
+    ("tool_errors", "工具错误 {n}"),
+    ("test_exit_code", "测试退出码 {v}"),
+    ("build_exit_code", "构建退出码 {v}"),
+    ("validation_status", "校验 {v}"),
+    ("todos_unfinished", "未完成 todo {n}"),
+    ("expected_files", "期望改动 {n} 个文件"),
+    ("user_interrupted", "用户中断"),
+    ("session_error", "硬失败：session_error"),
+)
+
+# Reported, and says nothing: an absent-in-name-only signal that should not read as a fact.
+_NOTHING_REPORTED = {"tool_errors", "user_interrupted", "session_error", "todos_unfinished"}
+
+_OUTCOME_LEAD = {"failure": "失败于", "partial": "部分完成于", "success": "完成于"}
+
+_HOLE = {
+    "failure": "未归因：为什么失败 —— 信号里没有原因，这一句要人补。",
+    "partial": "未归因：哪一半没做到 —— 信号里没有，这一句要人补。",
+    "success": "未归因：为什么这次成了 —— 信号里没有原因，这一句要人补。",
+}
+
+
+def _distil(signals: Optional[dict[str, Any]]) -> tuple[list[str], list[str]]:
+    """Split the reported signals into facts worth writing and holes worth naming."""
+    given = dict(signals or {})
+    facts: list[str] = []
+    not_reported: list[str] = []
+    for key, phrase in _SIGNAL_PHRASES:
+        if key not in given or given[key] is None:
+            not_reported.append(key)
+            continue
+        value = given[key]
+        if value in (0, False, [], {}, "") and key in _NOTHING_REPORTED:
+            continue  # reported, and the report is "none" — not a fact, not a hole
+        if isinstance(value, (list, tuple)):
+            rendered = phrase.format(n=len(value), v=len(value))
+        elif isinstance(value, bool):
+            rendered = phrase.format(n=1, v="")
+        else:
+            rendered = phrase.format(n=value, v=value)
+        facts.append(rendered.rstrip())
+    return facts, not_reported
+
+
 def proposal_for_loop(
     *,
     loop_id: str,
@@ -77,36 +141,59 @@ def proposal_for_loop(
     skills: Optional[list[str]] = None,
     files_changed: Optional[list[str]] = None,
     quality_score: float = 0.0,
+    signals: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Draft the episodic memory a run would remember as itself.
 
-    The engine does not summarise with a model, so this is a factual record: what
-    was asked, how it was routed, what changed, how it ended. A human reviewing
-    the proposal decides whether it is worth keeping as knowledge; the payload is
-    what they review, not something injected into the store on its own.
+    The engine summarises with no model, so this is a factual record — and only a factual record.
+    Defect AG was that the previous draft echoed the question and called it a lesson: the approved
+    row read `任务「…」的结果：failure。 路由：report。 位置：…`, and because `inject` renders
+    `type='failure'` behind `不要：`, the next prompt was told "不要：<an incident line>" where the
+    promise this layer makes is `不要…因为…`. There is no `因为` in any signal, and inventing one is
+    how a store fills itself with plausible noise.
+
+    So the draft now states what the signals prove, names what they do not, and marks the missing
+    cause as a hole for the human to fill at approval time. Nothing here decides the lesson.
     """
-    task = " ".join((task_text or "").split())[:120]
+    task = " ".join((task_text or "").split())
     changed = [str(path) for path in (files_changed or [])][:8]
-    body_parts = [f"任务「{task}」的结果：{outcome}。"]
+    facts, not_reported = _distil(signals)
+
+    parts = [f'{_OUTCOME_LEAD.get(outcome, "结束于")}「{_clip(task, 80)}」']
     if category:
-        body_parts.append(f"路由：{category}（{', '.join(skills) if skills else '无 skill'}）。")
+        parts.append(f"路由 {category}" + (f"（技能 {'、'.join(s for s in skills if s)}）" if skills else ""))
     if changed:
-        body_parts.append("改动：" + ", ".join(changed))
-    if cwd:
-        body_parts.append(f"位置：{cwd}")
+        parts.append(f"改动 {len(changed)} 个文件（{'、'.join(changed)}）")
+    if facts:
+        parts.append("可证：" + "、".join(facts))
+
+    # The hole is reserved, not appended and hoped-for: the body is capped, and a long file list
+    # with every signal reported used to slice the sentence off the end — leaving a draft that
+    # asserted an incident and named nothing missing, which is the same silence as the old echo.
+    hole = _HOLE.get(outcome, "未归因：原因不在信号里，要人补一句。")
+    head = " ".join(parts)
+    budget = 500 - len(hole) - 1
+    if not_reported:
+        gaps = f"缺证：{'、'.join(not_reported)} 未上报"
+        if len(head) + len(gaps) + 1 <= budget:
+            head = f"{head} {gaps}"
+    if len(head) > budget:
+        head = _clip(head, budget)
+    body = f"{head} {hole}"
     mtype = "failure" if outcome == "failure" else "episodic"
     scope = f"project:{Path(cwd).name}" if cwd else "global"
-    body = " ".join(body_parts)[:500]
+    title = _clip(task, 110) or loop_id
+    where = f"在 {Path(cwd).name} 里" if cwd else ""
     return {
         # Derived from what the episode says, not handed out randomly: the same
         # task failing three times is one thing worth remembering once, and a
         # stable id is what lets the review queue recognise the second arrival
         # instead of opening a third decision for a human to make again.
         "memory_id": identity.proposal_id(
-            scope=scope, category=category, mtype=mtype, title=task[:110] or loop_id, body=body
+            scope=scope, category=category, mtype=mtype, title=title, body=body
         ),
         "type": mtype,
-        "title": task[:110] or loop_id,
+        "title": title,
         "body": body,
         "category": category,
         # The route's skills become tags because a tag hit is the largest single
@@ -118,7 +205,7 @@ def proposal_for_loop(
         # not a fact about another, and an unscoped proposal is how Java advice
         # ends up in a JavaScript task.
         "scope": scope,
-        "when_to_apply": f"下次处理「{task[:40]}」这类任务时" if task else "",
+        "when_to_apply": f"下次{where}处理「{_clip(task, 48)}」这类任务时" if task else "",
         "outcome": outcome,
         "quality_score": float(quality_score),
         "loop_id": loop_id,

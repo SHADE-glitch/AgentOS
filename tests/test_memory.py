@@ -607,3 +607,90 @@ def test_the_earned_list_is_derived_from_the_gate_whitelist():
     source = Path(store_module.__file__).read_text(encoding="utf-8")
     line = next(line for line in source.splitlines() if "earned =" in line)
     assert "_PROMOTABLE_FIELDS" in line, f"earned is hardcoded again: {line.strip()}"
+
+
+# ── proposal drafting (defect AG) ──────────────────────────────────────
+_LONG_TASK = (
+    "给配置文件加缓存时缓存键该怎么取才不会撞，另外阶段汇报里的回滚成本要不要单独写一句，"
+    "还有如果同一份配置被两个项目各自解析一遍会不会出现两种键，还有测试里要不要专门造一个碰撞的用例，"
+    "以及文档里是不是该把这条写进维护手册的常见坑一节里，顺手也看看 CI 的缓存目录"
+)
+
+
+def _draft(**extra):
+    from aos.core.memory.record import proposal_for_loop
+
+    kwargs = {
+        "loop_id": "LOOP-AG-1",
+        "task_text": _LONG_TASK,
+        "outcome": "failure",
+        "cwd": "/home/dev/repos/warehouse",
+        "category": "bugfix",
+        "skills": ["bugfix"],
+        "files_changed": ["app/cache.py", "app/config.py"],
+    }
+    kwargs.update(extra)
+    return proposal_for_loop(**kwargs)
+
+
+def test_a_proposal_states_what_is_provable_and_names_the_hole_it_cannot_fill():
+    """The draft is a factual record, so it must say what it knows and mark what it cannot know.
+
+    Measured on the real store: the memory the human gate approved read
+    `任务「<the question, echoed>」的结果：failure。 路由：report。 位置：…`, `when_to_apply` was cut
+    mid-token by `task[:40]`, and `inject` renders `type='failure'` behind `不要：` — so a prompt was
+    told "不要：<an incident line>" while the promise this layer makes
+    (`docs/decision/positioning.md:240`) is "不要…**因为**…". The engine summarises with no model, and
+    no signal states *why* a run failed: distilling the signals that do exist is the honest half, and
+    the other half is labelling the hole instead of hiding it behind an echo of the question.
+    """
+    draft = _draft(signals={"tool_errors": 2, "test_exit_code": 1, "session_error": True})
+
+    assert "改动 2 个文件" in draft["body"], draft["body"]
+    assert "工具错误 2" in draft["body"]
+    assert "测试退出码 1" in draft["body"]
+    assert "session_error" in draft["body"], "a hard failure is a fact worth carrying"
+    assert "未归因" in draft["body"], "the cause no signal shows must be marked, not papered over"
+    assert "结果：failure。" not in draft["body"], "the body is no longer a template repeating the title"
+
+    assert draft["when_to_apply"].endswith("时"), draft["when_to_apply"]
+    assert "warehouse" in draft["when_to_apply"], "the project it happened in is part of when it applies"
+    assert draft["title"].endswith("…"), "a cut title must look cut, not read as a finished claim"
+    assert len(draft["body"]) <= 500
+
+
+def test_a_draft_with_no_signals_invents_nothing_and_still_marks_the_hole():
+    """Absence is stated as absence: no tool errors observed is not "no tool errors happened"."""
+    draft = _draft(files_changed=[], signals={})
+
+    assert "改动" not in draft["body"], draft["body"]
+    assert "工具错误" not in draft["body"]
+    assert "未归因" in draft["body"]
+    assert "缺证" in draft["body"], "the reviewer must see that the run reported nothing to distil"
+
+
+def test_the_same_episode_drafts_the_same_thing_twice():
+    """Identity is derived from the draft, so drafting must be deterministic or dedupe breaks."""
+    a = _draft(signals={"tool_errors": 1})
+    b = _draft(signals={"tool_errors": 1})
+    assert a["memory_id"] == b["memory_id"] and a["body"] == b["body"]
+
+
+def test_a_crowded_draft_keeps_the_hole_and_drops_the_least_that_matters():
+    """The budget may not eat the one clause that tells a human something is missing.
+
+    The draft ends by naming what it cannot know, and the body is capped — so a long file list and a
+    full set of signals would slice off exactly the part that makes the row reviewable. When the
+    budget bites, the droppable clause is the 缺证 list; the hole is not.
+    """
+    draft = _draft(
+        files_changed=[f"src/module_{i}/deeply/nested/path_{i}.py" for i in range(8)],
+        signals={
+            "tool_errors": 3, "test_exit_code": 1, "build_exit_code": 0,
+            "validation_status": "FAILED", "todos_unfinished": 2, "session_error": True,
+        },
+    )
+
+    assert len(draft["body"]) <= 500, len(draft["body"])
+    assert draft["body"].rstrip().endswith("。"), draft["body"][-80:]
+    assert "未归因" in draft["body"], "the hole must survive the cap"
