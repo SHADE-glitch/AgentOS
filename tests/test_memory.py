@@ -9,7 +9,7 @@ import pytest
 from aos.config import get_paths
 from aos.core.memory import policy as policy_mod
 from aos.core.memory.record import record_outcome
-from aos.core.memory.retrieve import compute_all_decay, retrieve
+from aos.core.memory.retrieve import compute_all_decay, compute_decay_factor, retrieve
 from aos.core.memory.store import MemoryStore
 
 
@@ -268,6 +268,37 @@ def test_decay_pass_still_lowers_and_reports_what_it_persisted(store):
     assert report["memories"][0]["decay_factor"] == persisted, (
         "the reported factor must be the one a reader will find in the store"
     )
+
+
+def test_the_hypothesis_protection_window_uses_the_one_predicate_the_project_has():
+    """A human-approved `failure` memory is in the hypothesis lane, and must age out like one.
+
+    The project states "this row is a hypothesis" in `lane`/`evidence_level` — that is what
+    `store.hypothesis_lane` reads and what the injector reads to mark a row "未验证，仅作提示".
+    The decay pass was the one place still reading the `type` column, so a memory the human gate
+    created from a failed run (`type='failure'`, `lane='hypothesis'`) kept its protection window
+    forever: measured on the real store, `M-7B113D99` was injected into the next run and would be
+    injected into every later one, with nothing ageing it. Two predicates for one concept is how
+    a rule ends up honoured in one file and missed in another.
+    """
+    policy = policy_mod.load_policy("decay")
+    past_window = "2020-01-01T00:00:00+00:00"  # far beyond hypothesis_max_days
+
+    stub = {
+        "memory_id": "M-STUB", "type": "failure", "lane": "hypothesis",
+        "evidence_level": "hypothesis", "created_at": past_window, "observation_count": 1,
+    }
+    reasons = compute_decay_factor(stub, {}, 0.0, policy)["reasons"]
+    assert "hypothesis: past protection window" in reasons, (
+        "a hypothesis-lane row past its window must be decayed, whatever its type says"
+    )
+
+    # The same predicate the injector uses, not a blanket rule for every old memory.
+    standard = {
+        "memory_id": "M-REAL", "type": "failure", "lane": "standard",
+        "evidence_level": "runtime_validated", "created_at": past_window, "observation_count": 1,
+    }
+    assert "hypothesis: past protection window" not in compute_decay_factor(standard, {}, 0.0, policy)["reasons"]
 
 
 # ── recording ──────────────────────────────────────────────────────────

@@ -209,7 +209,6 @@ def compute_decay_factor(
     uc = int(usage.get("usage_count", 0))
     success_rate = float(usage.get("success_rate", 0.5))
     observation_count = int(memory.get("observation_count", 0))
-    mem_type = memory.get("type", "unknown")
 
     factors: list[float] = []
     reasons: list[str] = []
@@ -249,7 +248,7 @@ def compute_decay_factor(
         reasons.append("low_confidence: 1 observation")
 
     # Trigger 4: hypothesis protection
-    if mem_type == "hypothesis":
+    if hypothesis_lane(memory, memory_id):
         days = _days_since(memory.get("created_at", ""))
         if days is None or days > policy["hypothesis_max_days"]:
             factors.append(policy["hypothesis_factor"])
