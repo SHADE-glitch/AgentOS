@@ -9,7 +9,12 @@ import pytest
 from aos.config import get_paths
 from aos.core.memory import policy as policy_mod
 from aos.core.memory.record import record_outcome
-from aos.core.memory.retrieve import compute_all_decay, compute_decay_factor, retrieve
+from aos.core.memory.retrieve import (
+    compute_all_decay,
+    compute_decay_factor,
+    compute_static_relevance,
+    retrieve,
+)
 from aos.core.memory.store import MemoryStore
 
 
@@ -607,6 +612,54 @@ def test_the_earned_list_is_derived_from_the_gate_whitelist():
     source = Path(store_module.__file__).read_text(encoding="utf-8")
     line = next(line for line in source.splitlines() if "earned =" in line)
     assert "_PROMOTABLE_FIELDS" in line, f"earned is hardcoded again: {line.strip()}"
+
+
+# ── the fallback bucket and the gate's arithmetic (defect AH) ─────────
+def test_the_routers_confession_of_ignorance_is_not_a_subject(store):
+    """`fallback` means "I could not classify this" — two of those must not add up to a match.
+
+    Measured live (round 14, defect AH): a human-approved lesson about checking a directory before
+    naming a config file was injected into "写一首关于秋天的短诗", because the only thing the two tasks
+    shared was the router's failure bucket — `category=fallback` on both sides, worth 0.15, and 0.15
+    is exactly `min_score`. A bucket that fires precisely when nothing is known cannot be evidence of
+    relevance, and it self-selects the unclassifiable — where a memory should be least trusted.
+    """
+    _add(store, "M-FALLBACK", category="fallback", tags=["fallback", "bugfix", "retry"],
+         status="active", lane="standard", observation_count=0)
+
+    unrelated = {"task_text": "帮我写一首关于秋天的短诗，四行就行", "category": "fallback",
+                 "domains": [], "roles": ["code-reviewer"], "keywords": [], "scope_project": "test"}
+    assert retrieve(unrelated, store=store, log=False)["results"] == [], (
+        "a router that gave up on both sides must not produce a match"
+    )
+
+    # The subject still works when it is actually in the words: two real tag hits, no fallback.
+    subject = {"task_text": "the glob and bugfix retry path is slow", "category": "",
+               "domains": [], "roles": [], "keywords": [], "scope_project": ""}
+    ids = [m["memory_id"] for m in retrieve(subject, store=store, log=False)["results"]]
+    assert "M-FALLBACK" in ids, "content overlap must still be able to reach the gate"
+
+
+def test_a_single_tag_hit_reveals_how_high_the_gate_actually_is(store):
+    """The arithmetic behind defect V, stated where it cannot be missed.
+
+    One tag hit is `0.20 * 0.40 = 0.08` of static relevance; with the best quality bonus a fresh
+    memory can hold it lands near 0.086 — under `min_score = 0.15`. Two hits (0.16 → ~0.172) clear it.
+    So a memory is findable only when the task text literally contains at least two of its tags: not
+    one, and the language does not matter to the engine, only the overlap does. This pins the numbers;
+    moving the threshold is the owner's call (defect V).
+    """
+    _add(store, "M-ONE", tags=["zephyr"], status="active", lane="standard", observation_count=0)
+    _add(store, "M-TWO", tags=["zephyr", "quux"], status="active", lane="standard", observation_count=0)
+    q = {"task_text": "the zephyr quux handler", "category": "", "domains": [], "roles": [],
+         "keywords": [], "scope_project": ""}
+    # The scoring view, not `get_memory`: tags live in a join table and only
+    # `memories_for_scoring` assembles them, which is what the scorer is given in production.
+    rows = {m["memory_id"]: m for m in store.memories_for_scoring()}
+    one = compute_static_relevance(rows["M-ONE"], q)
+    two = compute_static_relevance(rows["M-TWO"], q)
+    assert one == pytest.approx(0.08) and two == pytest.approx(0.16)
+    assert one * 1.075 < 0.15 <= two * 1.075, "one tag is not findable; two are"
 
 
 # ── proposal drafting (defect AG) ──────────────────────────────────────

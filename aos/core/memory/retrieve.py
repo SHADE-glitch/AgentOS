@@ -44,6 +44,13 @@ def _is_matchable_tag(tag: str) -> bool:
     return len(tag) >= 3
 
 
+# The router's own word for "I could not classify this". It is a confession of
+# ignorance, not a subject: two tasks that both landed in it share nothing, so it
+# must not create relevance on either side of a comparison. Only the query side is
+# special — a memory genuinely about a fallback path may still be found.
+UNCLASSIFIED = "fallback"
+
+
 def compute_static_relevance(memory: dict[str, Any], query: dict[str, Any]) -> float:
     """Deterministic, metadata-driven relevance score (ported verbatim)."""
     category = memory.get("category", "")
@@ -54,6 +61,13 @@ def compute_static_relevance(memory: dict[str, Any], query: dict[str, Any]) -> f
     q_domains = [str(d).lower() for d in query.get("domains", [])]
     q_roles = [str(r).lower() for r in query.get("roles", [])]
     q_keywords = [str(k).lower() for k in query.get("keywords", [])]
+    # A fallback route carries no subject, so its derived tags are noise: drop the
+    # bucket itself before anything compares against it.
+    if q_category == UNCLASSIFIED:
+        q_category = ""
+        q_domains = [d for d in q_domains if d != UNCLASSIFIED]
+        q_keywords = [k for k in q_keywords if k != UNCLASSIFIED]
+        q_roles = []
 
     task_text = str(query.get("task_text", "")).lower()
     task_text_score = 0.0
