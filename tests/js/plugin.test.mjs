@@ -318,6 +318,24 @@ test("why the plugin said nothing is itself said", async () => {
   }
 });
 
+test("an unanswered postflight is retried, then given up on out loud", async () => {
+  // The run ended and the engine did not answer. Marking the session as reported
+  // before the call meant that was the end of it: the loop stayed open in the
+  // store, and the plugin — which had promised to report — said nothing more.
+  // A retry costs the host nothing, and a bounded one cannot loop forever.
+  process.env.AOS_FAKE_MODE = "postdead";
+  const { server } = await hooks();
+  await openTurn(server);
+
+  for (let turn = 0; turn < 4; turn += 1) {
+    await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+  }
+
+  const posts = calls().filter((call) => call.argv[0] === "postflight");
+  assert.equal(posts.length, 3, "two retries, then it stops asking");
+  assert.equal(new Set(posts.map((call) => call.payload.loop_id)).size, 1, "always the same loop");
+});
+
 test("a hook that works says so, when debugging is on", async () => {
   // The plugin fails open everywhere, which is right for a prompt and fatal for a
   // diagnosis: "the engine had nothing to say" and "the hook threw" and "the plugin

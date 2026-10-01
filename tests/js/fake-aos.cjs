@@ -82,6 +82,16 @@ const doc = {
   warnings: [],
   artifacts: {},
 };
+if (mode === "postdead") {
+  // Preflight works, postflight is met with silence: the shape of "the engine was
+  // down by the time the run ended", which is the case a plugin must not treat as
+  // already handled.
+  if (argv[0] === "postflight") {
+    emit("");
+    process.exit(0);
+  }
+}
+
 if (mode === "fallback") {
   // What the engine answers when it could not run a loop at all: a document, but
   // with no loop to close. A plugin that treats this like "nothing to inject" hides

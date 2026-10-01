@@ -294,7 +294,7 @@ export default {
         });
       }
       if (!entry || entry.reported) return;
-      entry.reported = true;
+      entry.attempts = (entry.attempts || 0) + 1;
 
       const signals = {};
       if (entry.toolErrors !== null && entry.toolErrors !== undefined) signals.tool_errors = entry.toolErrors;
@@ -311,9 +311,26 @@ export default {
         provider: "host_delegate",
         signals,
       });
+      if (!answered) {
+        // Silence from the engine is not "reported". The run ends here or later, and
+        // another event costs the host nothing — but a dead engine must not turn this
+        // into an endless retry, so the attempts are bounded and the last one is said
+        // out loud. Either way the pending record stays behind, which is the trace
+        // `aos pending` and `doctor` exist to surface.
+        note(`postflight unanswered loop=${entry.loopId} attempt=${entry.attempts}`);
+        if (entry.attempts >= 3) {
+          entry.reported = true;
+          note(
+            `postflight abandoned loop=${entry.loopId} after ${entry.attempts} attempts; ` +
+              "the loop stays open in the store and `aos pending` will show it",
+          );
+        }
+        return;
+      }
+      entry.reported = true;
       note(
         `postflight sent loop=${entry.loopId} signals=${Object.keys(signals).length}` +
-          ` answered=${Boolean(answered)}`,
+          ` answered=true`,
       );
       state.sessions.delete(sessionID);
     }
