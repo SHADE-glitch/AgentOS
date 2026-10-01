@@ -50,9 +50,22 @@ fi
 
 log="$RIG/logs/$label.txt"
 mkdir -p "$RIG/logs"
+# `--pure` is not a control for us: it drops every external plugin, so the delta it
+# shows is DCP and the notifier and the tracker, not our block. The clean arm is the
+# same plugin stack with our seam inert (AGENT_OS_ROOT unset), which is also exactly
+# the disable-clean case the fixture claims.
+#
+# `command` is a shell builtin, so an inert arm has to exec the resolved path — a
+# bare `env … command opencode` exits 127 and runs nothing at all.
+host="${AOS_HOST_BIN:-$(command -v opencode)}"
+runner=()
+if [[ "${AOS_RIG_INERT:-}" == "1" ]]; then
+  runner=(env -u AGENT_OS_ROOT -u AOS_PLUGIN_DEBUG)
+  echo "inert arm: AGENT_OS_ROOT unset for this run only" | tee -a "$log"
+fi
 set +e
-( cd "$cwd" && command opencode run -m opencode/space-bunny-free \
-    --print-logs --log-level DEBUG "${extra[@]}" "$prompt" ) > "$log" 2>&1
+( cd "$cwd" && "${runner[@]}" "$host" run -m opencode/space-bunny-free \
+    --print-logs --log-level DEBUG "${extra[@]}" "$prompt" ) >> "$log" 2>&1
 rc=$?
 set -e
 echo "run exit=$rc  log=$log" | tee -a "$log"
