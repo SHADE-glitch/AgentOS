@@ -147,7 +147,12 @@ export default {
         const sessionID = hookInput && hookInput.sessionID;
         if (!sessionID) return;
         const task = userText(output);
-        if (!task) return;
+        if (!task) {
+          // A message of only file parts is a real case, and it is not the same
+          // thing as the engine having nothing to say.
+          note("chat.message skipped: no text part in this message");
+          return;
+        }
 
         const model = hookInput && hookInput.model;
         const doc = await ask(cfg, "preflight", {
@@ -162,7 +167,17 @@ export default {
           // fact that transfers untouched to another.
           model: model && model.modelID ? `${model.providerID || ""}/${model.modelID}` : "",
         });
-        if (!doc || !doc.loop_id) return;
+        if (!doc) {
+          note("preflight returned no document: the engine said nothing or said it in no JSON");
+          return;
+        }
+        if (!doc.loop_id) {
+          // Degraded is not empty. There is no loop to close, which is a different
+          // fact from "the loop opened and recalled nothing" — and only the operator
+          // can tell them apart unless someone writes it down.
+          note(`preflight degraded status=${doc.aos_status || "-"} warnings=${(doc.warnings || []).length}`);
+          return;
+        }
 
         const text = (doc.memory && doc.memory.injection && doc.memory.injection.text) || "";
         remember(sessionID, {

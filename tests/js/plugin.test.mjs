@@ -266,6 +266,58 @@ test("another plugin's text appended to our element survives us", async () => {
   assert.equal(second[0], base[0], "and we still never touch anyone else's element");
 });
 
+async function captureStderr(fn) {
+  const written = [];
+  const original = process.stderr.write.bind(process.stderr);
+  process.stderr.write = (chunk) => {
+    written.push(String(chunk));
+    return true;
+  };
+  try {
+    await fn();
+  } finally {
+    process.stderr.write = original;
+  }
+  return written.join("");
+}
+
+test("why the plugin said nothing is itself said", async () => {
+  // Three silences used to look the same from outside: the engine answered but
+  // opened no loop, the message carried no text at all, and the engine recalled
+  // nothing for a real task. Each is a different diagnosis, so each gets its own
+  // record — otherwise the operator is left guessing which of the three broke.
+  process.env.AOS_PLUGIN_DEBUG = "1";
+  try {
+    process.env.AOS_FAKE_MODE = "fallback";
+    const degraded = await captureStderr(async () => {
+      const { server } = await hooks();
+      await openTurn(server);
+    });
+    assert.match(degraded, /preflight degraded status=fallback/, "an opened-but-dead loop is named");
+    assert.match(degraded, /warnings=1/, "and says the engine carried a reason");
+
+    process.env.AOS_FAKE_MODE = "ok";
+    const noText = await captureStderr(async () => {
+      const { server } = await hooks();
+      await server["chat.message"](
+        { sessionID: "ses-1", model: { providerID: "p", modelID: "m" } },
+        { message: {}, parts: [{ type: "file", url: "file:///tmp/x", filename: "x" }] },
+      );
+    });
+    assert.match(noText, /chat\.message skipped: no text part/, "a non-text first message is not silence");
+
+    const emptyRecall = await captureStderr(async () => {
+      process.env.AOS_FAKE_MODE = "noinject";
+      const { server } = await hooks();
+      await openTurn(server);
+    });
+    assert.match(emptyRecall, /preflight ok loop=LOOP-FAKE chars=0/, "nothing recalled is a working call that said zero");
+  } finally {
+    delete process.env.AOS_PLUGIN_DEBUG;
+    delete process.env.AOS_FAKE_MODE;
+  }
+});
+
 test("a hook that works says so, when debugging is on", async () => {
   // The plugin fails open everywhere, which is right for a prompt and fatal for a
   // diagnosis: "the engine had nothing to say" and "the hook threw" and "the plugin

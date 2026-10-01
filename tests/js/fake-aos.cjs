@@ -82,6 +82,19 @@ const doc = {
   warnings: [],
   artifacts: {},
 };
+if (mode === "fallback") {
+  // What the engine answers when it could not run a loop at all: a document, but
+  // with no loop to close. A plugin that treats this like "nothing to inject" hides
+  // the one failure an operator would want named.
+  emit({
+    ...doc,
+    aos_status: "fallback",
+    loop_id: "",
+    session_id: "",
+    warnings: ["preflight failed: store unreadable"],
+  });
+  process.exit(0);
+}
 if (mode === "noinject") {
   doc.memory.injection = {
     text: "",
