@@ -171,11 +171,13 @@ class MemoryStore:
             now,
         ]
         placeholders = ",".join("?" * len(columns))
-        # Counters are earned, not declared: an upsert is how an author (or a
-        # `--force` re-seed) rewrites what a memory *says*, and it must never
-        # zero the usage history the learning loop accumulated for it. Promotion
-        # writes those fields through update_memory_fields instead.
-        earned = ("use_count", "success_count", "last_used_at", "observation_count", "decay_factor")
+        # The two write paths are deliberately disjoint. An author — or a `--force`
+        # re-seed — rewrites what a memory *says*: title, body, tags, scope. Standing
+        # (how far to trust it, and the counters recording what happened to it) belongs
+        # to the gate, and is exactly the set `update_memory_fields` will write;
+        # deriving one list from the other is what stops them drifting apart. Without
+        # this a re-run of a seed file raised a memory the human gate had demoted.
+        earned = self._PROMOTABLE_FIELDS | {"version"}
         updates = ", ".join(
             f"{c}=excluded.{c}" for c in columns
             if c not in ("memory_id", "created_at") and c not in earned

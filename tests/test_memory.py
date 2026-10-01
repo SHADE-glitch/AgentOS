@@ -476,3 +476,41 @@ def test_a_single_tag_coincidence_is_still_not_a_recall(store):
     )["results"]
 
     assert results == [], "one matching tag is a coincidence, not relevance"
+
+
+def test_re_seeding_a_memory_cannot_undo_a_demotion(store):
+    """`--force` is an author's tool; standing belongs to the gate.
+
+    Measured before the fix: re-seeding raised a memory the gate had demoted from
+    `benchmark_evaluated/low` back to whatever the seed file declares
+    (`real_project_validated/high`) — a re-run of somebody's JSON overruled a human
+    decision recorded in the store. Counters were already protected by this rule
+    ("earned, not declared"); the fields that say how much to trust a memory were not.
+    """
+    from aos.core.memory.authoring import new_memory
+
+    first = new_memory(
+        title="插件只能 export default { id, server }",
+        body="加载器会把每个导出当工厂调用。",
+        category="config",
+        evidence_level="runtime_validated",
+        verified=True,
+    )
+    memory_id = store.upsert_memory(first, tags=["opencode", "plugin"])
+    store.update_memory_fields(memory_id, evidence_level="benchmark_evaluated", confidence="low")
+
+    rewritten = new_memory(
+        title="插件只能 export default { id, server }（改过措辞）",
+        body="加载器会把每个函数导出当工厂调用，整个插件会静默不加载。",
+        category="config",
+        evidence_level="runtime_validated",
+        verified=True,
+    )
+    store.upsert_memory({**rewritten, "memory_id": memory_id}, tags=["opencode", "plugin", "loader"])
+
+    after = store.get_memory(memory_id)
+    assert after["title"].endswith("（改过措辞）"), "the author's rewrite of what it says still lands"
+    assert after["evidence_level"] == "benchmark_evaluated", "a re-seed cannot un-demote"
+    assert after["confidence"] == "low", "nor restore confidence the human lowered"
+    row = next(m for m in store.memories_for_scoring() if m["memory_id"] == memory_id)
+    assert sorted(row["tags"]) == ["loader", "opencode", "plugin"], "tags are content: those follow the author"
