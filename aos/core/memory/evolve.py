@@ -1033,21 +1033,35 @@ def approve_review(
     title: Optional[str] = None,
     body: Optional[str] = None,
     when_to_apply: Optional[str] = None,
+    tags: Optional[list[str]] = None,
 ) -> dict[str, Any]:
     """Approve a pending review and apply its effect to the store.
 
     `title` / `body` / `when_to_apply` let the reviewer write the lesson the signals could not
     supply (defect AG): a draft can state what happened and what is provable, but no signal carries
-    a cause, and the promise this layer makes is `不要…因为…`. They are accepted **only** for a
-    `create` effect — the row does not exist yet, so nothing that an author owns is overwritten. On
-    an existing memory the same flags would put a second writer on content columns, which is the
-    split defect AC pinned shut, so they are refused before anything is written.
+    a cause, and the promise this layer makes is `不要…因为…`. `tags` is the same lever for the
+    other half of the problem (defect AH): once the router's `fallback` bucket stops counting as a
+    subject, a lesson that was only ever reachable through it stops being recalled at all, so the
+    person who decides it is worth keeping is also the only one who can say what it is about, in
+    the words a future task would use. They are accepted **only** for a `create` effect — the row
+    does not exist yet, so nothing that an author owns is overwritten. On an existing memory the
+    same flags would put a second writer on content columns, which is the split defect AC pinned
+    shut, so they are refused before anything is written.
     """
     owns_store = store is None
     store = store or MemoryStore()
     try:
-        supplied = {"title": title, "body": body, "when_to_apply": when_to_apply}
-        given = {key: value for key, value in supplied.items() if value is not None}
+        supplied = {"title": title, "body": body, "when_to_apply": when_to_apply, "tags": tags}
+        # Normalised here rather than downstream, so `--tags ""` and `--tags " a "` are judged by
+        # what they would write (nothing) rather than by what they were handed.
+        given = {}
+        for key, value in supplied.items():
+            if value is None:
+                continue
+            if isinstance(value, (list, tuple)):
+                given[key] = sorted({str(item).strip() for item in value if str(item).strip()})
+            else:
+                given[key] = str(value).strip()
         review = store.get_review(review_id)
         if review is None:
             return {"review_id": review_id, "status": "not_found"}
@@ -1087,7 +1101,7 @@ def approve_review(
                     "error": f"content can only be authored when the row is created (effect kind=create), "
                              f"not for kind={effect.get('kind')!r}",
                 }
-            blank = [key for key, value in given.items() if not str(value).strip()]
+            blank = [key for key, value in given.items() if not value]
             if blank:
                 return {
                     "review_id": review_id,
@@ -1095,7 +1109,7 @@ def approve_review(
                     "error": f"{', '.join(blank)} given as empty text: write the lesson or leave the draft alone",
                 }
             proposal = dict(effect.get("proposal") or {})
-            proposal.update({key: str(value).strip() for key, value in given.items()})
+            proposal.update(given)
             effect["proposal"] = proposal
             authored_by = "human"
 

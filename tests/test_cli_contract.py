@@ -613,6 +613,47 @@ def test_review_approve_lets_the_human_write_the_lesson(capsys, store):
     assert main(["review", "approve", str(review_id), "--body", "再来一次"]) == 1
 
 
+def test_review_approve_takes_the_subject_the_human_names(capsys, store):
+    """`--tags` at the gate has to reach the side table the ranker reads, or AH's fix is a disappearance.
+
+    The ranking half of AH stops the router's `fallback` bucket from counting as a subject; that
+    leaves an approved lesson with nothing to be found by. This flag is the replacement, so the
+    plumbing is the feature: comma-split words must land in `memory_tags`, and an empty value must
+    be refused before the row exists rather than silently approving it subject-less.
+    """
+    from aos.core.memory import evolve
+    from aos.core.memory.record import proposal_for_loop, record_outcome
+
+    proposal = proposal_for_loop(
+        loop_id="L12", task_text="配置目录解析成了两个不同的路径", outcome="failure",
+        cwd="/home/dev/repos/tracker", category="bugfix", skills=["bugfix"],
+    )
+    record_outcome(
+        loop_id="L12", outcome="failure", quality_score=0.0, memories_used=[],
+        needs_review=False, source_hash="h12", proposal=proposal, store=store,
+    )
+    evolve.run_learning(store=store)
+    review_id = [r["review_id"] for r in store.list_reviews(status="pending")][0]
+
+    # The lever has to be visible at the moment the person is reading the queue, not only in a
+    # help screen they would have to already know to open.
+    main(["review", "list"])
+    assert "--tags" in capsys.readouterr().out, "the queue must name the subject flag it now needs"
+
+    assert main(["review", "approve", str(review_id), "--tags", " , "]) == 1
+    refused = capsys.readouterr()
+    assert "tags" in refused.err, refused.err
+    assert store.get_memory(proposal["memory_id"]) is None, "an empty subject must not create the row"
+
+    code = main(["review", "approve", str(review_id), "--tags", "配置文件, 目录, glob"])
+    assert code == 0
+    assert json.loads(capsys.readouterr().out)["promotion"]["status"] == "created"
+
+    memory = next(m for m in store.memories_for_scoring() if m["memory_id"] == proposal["memory_id"])
+    assert sorted(memory["tags"]) == sorted(["配置文件", "目录", "glob"]), memory["tags"]
+    assert "bugfix" not in memory["tags"], "the subject the human wrote replaces the router's guess"
+
+
 def test_degraded_preflight_says_why(capsys):
     """A document that degrades in silence sends the human to the database."""
     code, doc = _call(

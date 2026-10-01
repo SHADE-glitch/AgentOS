@@ -511,6 +511,55 @@ def test_approving_a_proposal_writes_what_the_review_showed(store):
     assert memory["source_loop_id"] == "L1"
 
 
+def test_approving_can_give_a_lesson_a_subject_the_gate_can_actually_find(store):
+    """The AH half that has to ship with the ranking fix, or a fix becomes a disappearance.
+
+    Once `fallback` stops counting as a subject, a human-approved lesson whose only overlap was the
+    router's failure bucket stops being recalled *entirely* — correct, and useless. So the gate needs
+    a way to say what the lesson is about, in the words a future task would use, in both languages.
+    `approve --tags` is that lever: the subject becomes content, matched literally.
+    """
+    from aos.core.memory.retrieve import retrieve
+
+    payload = _proposal_candidate(store)
+    run_learning(store=store)
+    review = list_reviews(store=store, status="pending")[0]
+
+    result = approve_review(
+        review["review_id"], store=store,
+        tags=["配置文件", "目录", "glob", "config-file"],
+    )
+    assert result["status"] == "approved", result
+    # get_memory returns the row, and the subject lives in a side table: read it
+    # where the ranker reads it, or the assertion proves nothing about recall.
+    memory = next(m for m in store.memories_for_scoring() if m["memory_id"] == payload["memory_id"])
+    assert sorted(t.lower() for t in memory["tags"]) == sorted(
+        ["配置文件", "目录", "glob", "config-file"]
+    ), memory["tags"]
+
+    about = {"task_text": "这个目录下有哪些配置文件？", "category": "fallback", "domains": [],
+             "roles": ["code-reviewer"], "keywords": [], "scope_project": "tracker"}
+    ids = [m["memory_id"] for m in retrieve(about, store=store, log=False)["results"]]
+    assert payload["memory_id"] in ids, "found by its subject, in Chinese, with the router still clueless"
+
+    poem = {"task_text": "帮我写一首关于秋天的短诗", "category": "fallback", "domains": [],
+            "roles": ["code-reviewer"], "keywords": [], "scope_project": "tracker"}
+    assert payload["memory_id"] not in [m["memory_id"] for m in retrieve(poem, store=store, log=False)["results"]], (
+        "and it no longer rides along on the failure bucket"
+    )
+
+
+def test_tags_must_be_real_words_when_they_are_given(store):
+    """`--tags ""` is how a subject lever becomes a way to erase one."""
+    payload = _proposal_candidate(store)
+    run_learning(store=store)
+    review = list_reviews(store=store, status="pending")[0]
+
+    refused = approve_review(review["review_id"], store=store, tags=["  ", ""])
+    assert refused["status"] == "rejected" and "tags" in refused["error"], refused
+    assert store.get_memory(payload["memory_id"]) is None, "a refused approve writes nothing"
+
+
 def test_a_reviewer_can_write_the_lesson_the_signals_could_not(store):
     """The hole AG-B leaves is fillable at the only moment it should be: the human's approval.
 
@@ -562,15 +611,19 @@ def test_human_words_are_refused_when_the_row_already_exists(store):
 
     Author columns and gate columns are deliberately disjoint (defect AC): letting `approve
     --body` rewrite an existing memory would put a second writer on content the gate may not own
-    — and the reviewer was shown a promise about standing, not about prose.
+    — and the reviewer was shown a promise about standing, not about prose. `--tags` is content for
+    the same reason, so it is refused by the same guard rather than being a back door into the
+    subject columns of a row somebody else authored.
     """
     review = _weakened(store)
 
-    refused = approve_review(review["review_id"], store=store, body="顺手改一下正文")
+    refused = approve_review(review["review_id"], store=store, body="顺手改一下正文", tags=["glob"])
 
     assert refused["status"] == "rejected", refused
     assert "create" in refused["error"], refused["error"]
     assert store.get_memory("M1")["body"] != "顺手改一下正文", "nothing was written"
+    row = next(m for m in store.memories_for_scoring() if m["memory_id"] == "M1")
+    assert "glob" not in row["tags"], "the subject columns are not a spare room either"
 
 
 def test_blank_human_words_are_refused_rather_than_erasing_the_lesson(store):

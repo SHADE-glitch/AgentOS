@@ -784,6 +784,13 @@ def _describe_review(review: dict[str, Any]) -> str:
     if change.get("kind") == "create":
         lines.append(f"      新建: [{proposal.get('type')}] {proposal.get('title', '')}")
         lines.append(f"      内容: {proposal.get('body', '')}")
+        # AH: once the router's `fallback` bucket stopped counting as a subject, the only thing
+        # that makes a fresh lesson findable again is words supplied at the gate. A lever nobody
+        # is told about is a lever nobody pulls.
+        lines.append(
+            "      可代写: approve --title/--body/--when/--tags A,B"
+            "（--tags = 这条讲的是什么，决定它下次能不能被召回；不写则沿用路由猜的）"
+        )
     lines.append(f"      批准后: {moved}")
     lines.append(f"      原因: {evidence.get('reason') or change.get('reason') or ''}")
     return "\n".join(lines)
@@ -834,11 +841,15 @@ def cmd_review(args: argparse.Namespace) -> int:
 
     if command in ("approve", "reject"):
         if command == "approve":
+            tags_arg = getattr(args, "tags", None)
             result = evolve.approve_review(
                 args.review_id,
                 title=getattr(args, "title", None),
                 body=getattr(args, "body", None),
                 when_to_apply=getattr(args, "when", None),
+                # An absent flag must stay None: the call refuses a subject that was given but
+                # says nothing, and it cannot tell those apart from one nobody passed.
+                tags=None if tags_arg is None else _split_list(tags_arg),
             )
             expected = "approved"
             if result["status"] == "rejected" and result.get("error"):
@@ -860,7 +871,7 @@ def cmd_review(args: argparse.Namespace) -> int:
     print(
         "usage: aos review list [--status STATUS] [--json] | sync"
         " | label <id...> --outcome X [--skill S]"
-        " | approve <id> [--title T --body B --when W] | reject <id> [--as X [--skill S]]",
+        " | approve <id> [--title T --body B --when W --tags A,B] | reject <id> [--as X [--skill S]]",
         file=sys.stderr,
     )
     return 1
@@ -1058,6 +1069,12 @@ def build_parser() -> argparse.ArgumentParser:
                 "--when",
                 default=None,
                 help="the trigger clause: when this applies (create reviews only)",
+            )
+            p_action.add_argument(
+                "--tags",
+                default=None,
+                help="what the lesson is about, in the words a future task would use "
+                     "(comma-separated, create reviews only)",
             )
         if action == "reject":
             p_action.add_argument(
