@@ -333,7 +333,11 @@ test("the tool hook names the shape it was given, never its contents", async () 
         { title: "t", output: "客户的手机号是 13800000000", metadata: { truncated: false } },
       );
     });
-    assert.match(out, /tool seen tool=bash keys=[a-z,]+ metadata_keys=[a-z,]+/, "the shape is recorded");
+    assert.match(
+      out,
+      /tool seen tool=bash keys=\[[a-z,]+\] metadata_keys=\[[a-z,]+\]/,
+      "the shape is recorded",
+    );
     assert.doesNotMatch(out, /13800000000|手机号/, "and the record carries no tool output");
   } finally {
     delete process.env.AOS_PLUGIN_DEBUG;
