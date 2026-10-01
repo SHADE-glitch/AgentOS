@@ -421,7 +421,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–AC 已闭；第十二轮闭 AD，AE 未闭、AF 是 rig 自身、AG 是设计缺口）
+## 12. 缺陷登记（A–AE 已闭；AF 是 rig 自身，AG 是设计缺口，两者未闭）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -458,7 +458,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | AB | 未归因提示给出的命令**已经跑不了**：它让用户对刚被批准的评审再执行一次 `review label <同 id>` ⇒ `already_decided` | 走 `review reject --as` 这条没人走过的路时撞上的；两条路径都印同一个坏提示。具名测试先红：`assert 'label 1 --outcome' not in err` | **已闭**（改成"这条已经定了，归因补不回来；下次写 `--skill`"）|
 | Z | 记账，非缺陷："削弱到底即退休"实际需要 **5 次** 独立否定，因为每一秩只降一档 | 屏幕：从 `real_project_validated` 起，第 2/3/4 次批准让 rank 1 → 3（0.387→0.309→0.262），第 5 次才 `active → deprecated` 并**从注入块里消失** | 行为正确。这条只是把 final-plan §3 第 8 步的真实成本写清楚：让一条记忆退出召回 = 五次可归因的失败，不是点一下按钮 |
 | AD | 同一个概念两套谓词：decay 的假设保护窗读 `type == 'hypothesis'`，而"这是假设"由 `lane`/`evidence_level` 陈述（`store.hypothesis_lane`、注入器 `inject._is_hint` 都读后者） | 红证据：`type='failure', lane='hypothesis'` 超窗行的 reasons 是 `['unused_severe: …', 'low_confidence: 1 observation']` —— Trigger 4 根本不出现。更硬的一条：`hypothesis` **不在 `MEMORY_TYPE` 词表里**（`contract/schema.py`：constraint/episodic/failure/preference/procedural/semantic），所以那个条件对本引擎能写出的任何行都永不成立 —— 伪装成规则的废码。真库现场：`M-7B113D99` 是 `('failure','hypothesis','hypothesis')`，批准之后没有任何东西会让它退场 | **已闭于第十二轮**（Trigger 4 改读 `hypothesis_lane()`，`mem_type` 那行随之删掉——它没有别的读者。屏幕：真库那条（副本上把 created_at 挪到 8 天前）reasons 含 `hypothesis: past protection window`，factor 0.7/degraded）|
-| AE | **重复的负面提案被质量门槛拦死并当场销毁证据**：`decide_promotion` 的提案豁免只在 `memory is None` 时进入，判重把它 merge 到已存在的记忆之后就撞上 `quality_above_threshold` | 真库事件屏幕：`learning.rejected {"memory_id":"M-7B113D99","reason":"best quality 0.0 below threshold 3.0"}` 连着两次，候选 68/69 均 `consumed_by='rejected'`。而 `evolve.py:176-180` 自己的注释写着质量门槛"问的不是第一次 episode —— 尤其不是失败的那次"，豁免条件却没覆盖"记忆已存在但 candidate 仍是 create"这一路 | **未闭**（豁免 `PROPOSAL_TYPES` 是一行，但它会让队列变大 ⇒ 直接触及判据 2 ⇒ owner 拍板）|
+| AE | 分支按"记忆是否存在"路由，而不是按**分类**路由：被判重合并到已存在记忆的负面首现提案撞上 `quality_threshold` 被拒，候选当场消耗 | 真库事件屏幕：`learning.rejected {"memory_id":"M-7B113D99","reason":"best quality 0.0 below threshold 3.0"}` 连着两次，候选 68/69 均 `consumed_by='rejected'`。而 `evolve.py:176-180` 自己的注释写着质量门槛"问的不是第一次 episode —— 尤其不是失败的那次"，豁免条件却没覆盖"记忆已存在但 candidate 仍是 create"这一路。红测试还把**第二个洞**逼了出来：只改路由之后 review 的 `proposed_change.kind` 变成 `reinforce`（"它出现的运行都成功了"），重复的失败会被写成晋升证据 —— 红屏幕 `assert 'reinforce' != 'reinforce'` | **已闭于第十二轮**（`proposal` 无条件求出、分支按 `proposal is not None` 路由；`decide_promotion` 对 `creates ∧ 记忆存在 ∧ 无 weaken/reinforce` 返回 `kind='duplicate'` + `changes={}`，批准走既有 "recorded" 分支，地位不动。**队列增量实测**：真库副本重放一次重复提案 ⇒ pending 2→3，即每次重复负面 episode 多一条人门评审 —— 这是信息，不是否决理由）|
 | AF | rig 自身：`run.sh:47` 在 `:55` 的 `mkdir -p "$RIG/logs"` **之前**就向 `$RIG/logs/<label>.txt` tee ⇒ 换一个全新的 `AOS_RIG` 目录时第一次运行在 `set -e` 下当场死（真库分支 `:46-48` 更早） | 本轮换新 scratch 目录时靠预先 `mkdir -p` 绕开；没写成红测试，所以只登记不宣称已修 | **未闭**（工具面，不影响引擎结论；修法是把 mkdir 提到第一次 tee 之前）|
 
 四条共性 `[Judgment]`：A–S 里大部分属于"声明了但没人写"或"读了但不生效"，

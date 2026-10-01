@@ -292,6 +292,105 @@ def test_a_duplicate_proposal_becomes_evidence_for_the_row_that_exists(store):
     assert len(store.list_memories()) == 1, "no second row for one fact"
 
 
+def test_a_repeated_failure_proposal_reaches_the_human_instead_of_the_quality_bar(store):
+    """A merged duplicate is still a first episode of *this* evidence, so a threshold may not eat it.
+
+    Measured on the real store: two runs of the same failed task each minted a negative proposal,
+    dedupe merged both onto the memory the first approval had created, and `quality_threshold`
+    then rejected them — `learning.rejected {"reason":"best quality 0.0 below threshold 3.0"}`,
+    candidates 68/69 `consumed_by='rejected'`. That is the exact category error `evolve.py` names
+    in its own comment: the bar asks "was this good enough to trust again", and a failure is being
+    asked nothing of the sort. Burning the candidate also destroys the evidence silently, so the
+    second failure of a task teaches less than the first.
+
+    The consequence shown to the human matters as much as the routing: approving a duplicate
+    negative episode must not read as "the runs it appeared in succeeded".
+    """
+    task = "opencode plugin 的 export 应该怎么写，loader 会不会把每个 export 当工厂"
+    first = _proposal_row(title=task, task_text=task, cwd="/home/dev/repos/x")
+    # The row the *first* approval wrote: a duplicate is only recognised against content this
+    # pipeline actually produces, so the existing memory is seeded from the proposal itself.
+    _seed(
+        store,
+        memory_id="M-A",
+        title=first["title"],
+        body=first["body"],
+        category=first["category"],
+        scope=first["scope"],
+        tags=first.get("tags") or [],
+    )
+    record_outcome(
+        loop_id="L1",
+        outcome="failure",
+        quality_score=0.0,
+        memories_used=[],
+        needs_review=False,
+        source_hash="hash-L1",
+        proposal=_proposal_row(title=task, task_text=task, loop_id="L2", cwd="/home/dev/repos/x"),
+        store=store,
+    )
+
+    report = evolve.run_learning(store=store)
+    group = report["results"][0]
+    assert group["duplicate_of"], "the setup must reach the merge branch, where the real store did"
+
+    assert group["status"] == "review", (
+        f"a negative proposal must be a human decision, got {group['status']}: {group['rejection_reason']}"
+    )
+    assert not (group.get("rejection_reason") or "").startswith("best quality"), (
+        "quality_threshold must not be the reason a first negative episode dies"
+    )
+    assert group["gate"] == "review" and group["review_id"], "the queue, not the shredder"
+
+    pending = [r for r in evolve.list_reviews(store=store, status="pending") if r["review_id"] == group["review_id"]]
+    assert len(pending) == 1
+    assert pending[0]["proposed_change"]["kind"] != "reinforce", (
+        "approving a duplicate failure episode must not silently raise the memory's standing"
+    )
+
+
+def test_approving_a_merged_duplicate_records_and_moves_nothing(store):
+    """What the reviewer is told approving will do, and what it actually does, are one value.
+
+    The route fixed in AE exposes a second hazard: a merged duplicate reaching `decide_promotion`
+    with an existing memory falls into the reinforce branch and gets described as "the runs it
+    appeared in succeeded" — a repeated failure presented as proof. The consequence for a group
+    that carries neither weakening nor reinforcing evidence of its own can only be *recorded*.
+    """
+    task = "重复出现的构建超时，先查缓存再看并发"
+    first = _proposal_row(title=task, task_text=task, cwd="/home/dev/repos/x")
+    _seed(
+        store,
+        memory_id="M-A",
+        title=first["title"],
+        body=first["body"],
+        category=first["category"],
+        scope=first["scope"],
+        tags=first.get("tags") or [],
+    )
+    before = store.get_memory("M-A")
+    record_outcome(
+        loop_id="L1",
+        outcome="failure",
+        quality_score=0.0,
+        memories_used=[],
+        needs_review=False,
+        source_hash="hash-L1",
+        proposal=_proposal_row(title=task, task_text=task, loop_id="L2", cwd="/home/dev/repos/x"),
+        store=store,
+    )
+    review_id = evolve.run_learning(store=store)["results"][0]["review_id"]
+    effect = [r for r in store.list_reviews() if r["review_id"] == review_id][0]["proposed_change"]
+    assert effect["kind"] == "duplicate", "the promise must not be 'the runs it appeared in succeeded'"
+
+    result = evolve.approve_review(review_id, store=store)
+
+    assert result["promotion"]["status"] == "recorded", result
+    after = store.get_memory("M-A")
+    for field in ("evidence_level", "confidence", "status", "decay_factor", "lane"):
+        assert after[field] == before[field], f"approving a duplicate must not touch {field}"
+
+
 def test_grey_band_opens_a_conflict_review_and_approving_supersedes(store):
     _seed(
         store,

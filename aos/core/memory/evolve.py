@@ -143,7 +143,7 @@ def validate_group(
     memory_id = group["memory_id"]
     is_hypothesis = hypothesis_lane(memory, memory_id)
     candidate_types = {c.get("candidate_type", "") for c in group["candidates"]}
-    proposal = _proposal_of(group) if memory is None else None
+    proposal = _proposal_of(group)
     runs = len(group["executions"])
     best_quality = group["best_quality"]
     quality_threshold = float(promotion["quality_threshold"])
@@ -177,19 +177,27 @@ def validate_group(
         }
 
     # A proposal is a different question from a promotion. Nothing about it can be
-    # settled by counting observations, because the memory does not exist yet: the
-    # evidence requirement is that a real run happened, and the decision is a
-    # human's. This branch comes before the thresholds because `quality_threshold`
-    # measures "was this good enough to trust again", which is not what a first
-    # episode — least of all a failed one — is being asked.
-    if memory is None and proposal is not None:
+    # settled by counting observations, because a proposal is a *first* episode — least
+    # of all a failed one — and `quality_threshold` asks "was this good enough to trust
+    # again", which is not what an episode that has never been trusted is being asked.
+    #
+    # The route is keyed on the classification, not on whether a row exists: when dedupe
+    # merges a repeat proposal onto the memory that already states the fact, that group is
+    # still a first episode of *this* evidence. Routing it by `memory is None` sent it into
+    # the threshold branch, where the quality bar rejected it and the candidate was consumed
+    # — measured on the real store as two `learning.rejected {"best quality 0.0 below
+    # threshold 3.0"}` events and candidates 68/69 shredded, so a task's second failure
+    # taught strictly less than its first.
+    if proposal is not None:
         if not checks["is_real_execution"]:
             return result("rejected", "the proposal has no execution behind it")
         if not checks["has_execution_evidence"]:
             return result("rejected", "proposal has no execution evidence (source_hash)")
         if not rejection.get("hypothesis_requires_review", True):
             return result("validated")
-        return result("review", "a new memory is written only by a human decision")
+        if memory is None:
+            return result("review", "a new memory is written only by a human decision")
+        return result("review", "a duplicate's episodes do not approve themselves; a human decides")
 
     # Fail-closed type confusion: a hypothesis lane and a normal lane must not mix.
     if is_hypothesis and (candidate_types & {"reinforce", "success"}):
@@ -346,6 +354,23 @@ def decide_promotion(
     old_confidence = current.get("confidence", "low")
     old_status = current.get("status", "active")
     old_decay = float(current.get("decay_factor", 1.0) or 1.0)
+
+    if creates and memory is not None and not (weakens or reinforces):
+        # The same fact, filed again: the row already states it and this group carries
+        # neither reinforcing nor weakening evidence. The only honest consequence of
+        # approving is that the repeat is *recorded* — standing does not move. Letting it
+        # fall through would render a repeated failure as "the runs it appeared in
+        # succeeded" and raise the memory it duplicates, which is the opposite of what the
+        # reviewer was shown.
+        return {
+            "kind": "duplicate",
+            "memory_id": result["memory_id"],
+            "reason": "the same fact, filed again: approving records the repeat and leaves "
+                      "the memory's standing where it is",
+            "changes": {},
+            "before": {"evidence_level": old_level, "confidence": old_confidence,
+                       "status": old_status},
+        }
 
     if weakens and reinforces:
         # Contradictory evidence. A human is asked to adjudicate, and approving
