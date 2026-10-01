@@ -35,7 +35,7 @@ P7 只读回读：`aos/backfill.py` + v5 水位，默认关，源库只读且永
 | 性质 | 内容 | 现状态 |
 |---|---|---|
 | **disable-clean** | 拔掉 Agent OS 插件后，其他插件的 `output.system` 元素、MCP 调用、skill 加载逐字节不变；Agent OS 不产生任何别人依赖的共享状态 | `[Verified]` 当前零写入 `~/.config/opencode/**`，插件尚不存在 ⇒ 性质自动成立；插件落地后必须由 fixture 证明 |
-| **additive-only** | 启用时只**新增**一个自标识元素，永不编辑/删除他人元素，永不占 `output.system[0]` | `[Verified]` DCP 用 `systemPrompts[0]` 判内部调用而整轮跳过裁剪：`~/.cache/opencode/packages/@tarquinen/opencode-dcp@3.2.0/node_modules/@tarquinen/opencode-dcp/lib/hooks.ts:49-56,101-105`，且它 `append` 到 `[-1]` |
+| **additive-only** | 启用时只**新增**一个自标识元素，永不编辑/删除他人元素，永不占 `output.system[0]`，且**他人写进我们元素尾部的文本必须原样保留** | `[Verified]` DCP 用 `systemPrompts[0]` 判内部调用而整轮跳过裁剪：`~/.cache/opencode/packages/@tarquinen/opencode-dcp@3.2.0/node_modules/@tarquinen/opencode-dcp/lib/hooks.ts:49-56,101-105`，且它 `append` 到 `[-1]` —— 后一半是本仓库缺陷 R 的来源：我们的原地替换曾会把 DCP 写进最后一个元素的文本抹掉，现已按"保留 CLOSE 之后后缀"修掉并由具名测试钉住 |
 | **reuse-not-rebuild** | 已有能力一律复用：会话检索交 opencode、skill 遥测交 skill-tracker、通用知识交 basic-memory、skill 生命周期交 UniM0cha/Hermes 家族 | `[Judgment]` 本文 §11 的"刻意不存在清单"就是这条的账目 |
 
 用户定位句保留在项目记忆里，但架构上生效的是上面三行 —— 定位句是方向，三性是门槛。
@@ -392,7 +392,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–Q 已全部关闭；此节留作形状记录）
+## 12. 缺陷登记（A–S 已全部关闭；此节留作形状记录）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -417,8 +417,10 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | O | `store/pending-postflight/` 由 `config.py` 声明、`ensure_store` 创建，但全仓零写入零读取 | 审计登记；P6 之后有写有读 | **已闭于 P6** |
 | P | `doctor` 与判据 1 的 observations 计数不区分来源 ⇒ 一次回读（174 条）就会把"通电后收到 ≥30 条真实运行"这条判据伪满足 | 屏幕：回读后 `{"backfill": 174}`，其中 `hot` 为 0；按 total 读就是 174 | **已闭于 P7**（`observation_counts_by_source()` + `doctor --json` 只给分项不给 total + 判据改数 `source='hot'`）|
 | Q | `decay_factor` 有两个写入者，衰减 pass **赋值**而非取较低 ⇒ `aos memory refresh` 把人门挣来的降级静默撤销 | 真实屏幕（开发库）：`M-SEED-EXPORT8` 三次 weaken 后 `0.512`，一次 refresh 后变 `0.85`；`evolve.py` 里早就写着这条规则却没有人执行它 | **已闭**（`compute_all_decay` 取 `min(重算, 库里)`，只在变化时写入，报告值=持久值；两条具名测试钉住"不得抬升""仍可压低"）|
+| R | 插件的原地替换会**抹掉邻居写进同一个元素的文本**：`findIndex` 用 `includes(OPEN)&&includes(CLOSE)` 认块，然后整块换成自己的正文 | 读码定位（`agent-os.js:178-186` vs DCP `hooks.ts:101-105` 的 `output.system[len-1] += …`）；具名测试先红：`another plugin's text appended to our element survives us` 断言第二轮之后后缀仍在 | **已闭**（改为"保留 `</agent_os>` 之后后缀"的原地替换 ⇒ 元素数恒为基线+1，且邻居文本留在我们块外，不再被 preamble 框成"不是指令"）|
+| S | 引擎侧的注入规模只活在 `pending-<session>.json` 里，而 postflight 会删掉它 ⇒ 事后无法证明"引擎产出的块"与"host 拿到的块"是同一块 | 第一次真实运行的屏幕：插件报 `len=1122`，盘上没有任何对应数字可比 | **已闭**（recall stage 持久化 `injection_chars` / `injected_memory_ids`，loop 文件是运行后要留下的那份记录）|
 
-四条共性 `[Judgment]`：A–P 大部分属于"声明了但没人写"或"读了但不生效"，
+四条共性 `[Judgment]`：A–S 里大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
 Q 是第四种形状，也是唯一一种只有**跑在真实数据上**才会露出来的：**一列两个写入者，其中一个从头赋值**。
 它旁边就写着正确规则（`evolve.py` 的注释），规则没有变成代码，于是每一次 `memory refresh` 都在撤销人门的决定 ——

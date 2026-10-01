@@ -7,7 +7,8 @@
 //
 // What it deliberately never does: it does not edit another plugin's system
 // element, never writes to index 0 (DCP reads that slot to decide whether a call
-// is internal and skips its whole pruning pass if it is), does not touch
+// is internal and skips its whole pruning pass if it is), never drops text that
+// another plugin appended after our close tag, does not touch
 // ~/.config/opencode/**, does not read the skill tracker's database, and does not
 // block the prompt. Anything it cannot answer in time says nothing instead.
 //
@@ -187,16 +188,25 @@ export default {
         // read, reordered, joined or removed. If a block is already in place
         // (retry, or a re-run of the same turn) it is replaced in place rather
         // than duplicated.
+        //
+        // "In place" has to mean *our part of it*. Another plugin may have appended
+        // into the same element — `@tarquinen/opencode-dcp` writes into
+        // `system[len - 1]` rather than pushing its own — so the replacement keeps
+        // whatever sits after our close tag. Dropping that suffix would make us the
+        // plugin that silently deletes a neighbour's prompt.
         const ours = output.system.findIndex(
-          (block) => typeof block === "string" && block.includes(OPEN) && block.includes(CLOSE),
+          (block) => typeof block === "string" && block.startsWith(OPEN),
         );
-        if (ours >= 0) {
-          if (output.system[ours] === entry.text) {
-            note(`system already in place index=${ours} len=${entry.text.length}`);
+        if (ours >= 0 && output.system[ours].includes(CLOSE)) {
+          const block = output.system[ours];
+          const suffix = block.slice(block.indexOf(CLOSE) + CLOSE.length);
+          const next = entry.text + suffix;
+          if (block === next) {
+            note(`system already in place index=${ours} len=${entry.text.length} suffix=${suffix.length}`);
             return;
           }
-          output.system[ours] = entry.text;
-          note(`system replaced index=${ours} len=${entry.text.length}`);
+          output.system[ours] = next;
+          note(`system replaced index=${ours} len=${entry.text.length} suffix=${suffix.length}`);
           return;
         }
         output.system.push(entry.text);

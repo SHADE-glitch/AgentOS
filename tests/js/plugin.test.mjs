@@ -237,6 +237,30 @@ test("the plugin has no way to write to the filesystem", () => {
   );
 });
 
+test("another plugin's text appended to our element survives us", async () => {
+  // `@tarquinen/opencode-dcp` does not push its own element: it writes into the last
+  // one (`output.system[len - 1] += "\n\n" + newPrompt`). A replace-in-place that
+  // assumed the last element is entirely ours would delete its prompt on the second
+  // LLM call of the same session — and we would be the plugin that broke a neighbour.
+  const { server } = await hooks();
+  const base = ["你是一个编码助手。"];
+  await openTurn(server);
+
+  const first = await systemFor(server, base);
+  const foreignSuffix = "\n\n[DCP] 压缩后的历史上下文";
+  first[first.length - 1] += foreignSuffix;
+
+  const second = await systemFor(server, first);
+
+  assert.equal(second.length, base.length + 1, "one element for us, always one, no matter how many calls");
+  assert.ok(second.at(-1).startsWith("<agent_os>"), "our block is still the head of that element");
+  assert.ok(
+    second.at(-1).endsWith(foreignSuffix),
+    "the neighbour's text is still there, byte for byte, after our close tag",
+  );
+  assert.equal(second[0], base[0], "and we still never touch anyone else's element");
+});
+
 test("a hook that works says so, when debugging is on", async () => {
   // The plugin fails open everywhere, which is right for a prompt and fatal for a
   // diagnosis: "the engine had nothing to say" and "the hook threw" and "the plugin
