@@ -116,6 +116,15 @@ function safe(name, cfg, state, fn) {
   };
 }
 
+// Failure is only half of what an operator needs. With every path failing open,
+// "the engine had nothing", "the hook threw" and "the plugin was inert" are all
+// the same silence — so success is recorded too, in the same place, under the same
+// switch. Keys, indices and counts only: a task or a memory body has no business in
+// a log line, and the plugin is not permitted to write one anywhere else.
+function note(text) {
+  if (process.env.AOS_PLUGIN_DEBUG) process.stderr.write(`${ID}: ${text}\n`);
+}
+
 export default {
   id: ID,
   server: async (input) => {
@@ -123,6 +132,7 @@ export default {
     const state = { sessions: new Map(), failures: 0 };
     const directory =
       (input && (input.directory || (input.project && input.project.directory))) || "";
+    if (!cfg.enabled) note("disabled: AGENT_OS_ROOT unset, every hook will no-op");
 
     const remember = (sessionID, patch) => {
       const current = state.sessions.get(sessionID) || {};
@@ -148,13 +158,14 @@ export default {
         });
         if (!doc || !doc.loop_id) return;
 
+        const text = (doc.memory && doc.memory.injection && doc.memory.injection.text) || "";
         remember(sessionID, {
           loopId: doc.loop_id,
           taskId: doc.task_id,
           sessionKey: doc.session_id || sessionID,
           task,
           cwd: directory,
-          text: (doc.memory && doc.memory.injection && doc.memory.injection.text) || "",
+          text,
           // Counts stay unknown until something actually reports them. A zero
           // here would be a claim that nothing went wrong, and the engine would
           // read that as evidence.
@@ -163,6 +174,7 @@ export default {
           interrupted: null,
           reported: false,
         });
+        note(`preflight ok loop=${doc.loop_id} chars=${text.length}`);
       }),
 
       "experimental.chat.system.transform": safe("system.transform", cfg, state, async (hookInput, output) => {
@@ -179,11 +191,16 @@ export default {
           (block) => typeof block === "string" && block.includes(OPEN) && block.includes(CLOSE),
         );
         if (ours >= 0) {
-          if (output.system[ours] === entry.text) return;
+          if (output.system[ours] === entry.text) {
+            note(`system already in place index=${ours} len=${entry.text.length}`);
+            return;
+          }
           output.system[ours] = entry.text;
+          note(`system replaced index=${ours} len=${entry.text.length}`);
           return;
         }
         output.system.push(entry.text);
+        note(`system appended index=${output.system.length - 1} len=${entry.text.length}`);
       }),
 
       "tool.execute.after": safe("tool.execute.after", cfg, state, async (hookInput, output) => {
@@ -254,7 +271,7 @@ export default {
       if (entry.sessionError) signals.session_error = entry.sessionError;
       if (entry.interrupted !== null && entry.interrupted !== undefined) signals.user_interrupted = entry.interrupted;
 
-      await ask(cfg, "postflight", {
+      const answered = await ask(cfg, "postflight", {
         schema_version: "1.2",
         phase: "postflight",
         task_id: entry.taskId,
@@ -264,6 +281,10 @@ export default {
         provider: "host_delegate",
         signals,
       });
+      note(
+        `postflight sent loop=${entry.loopId} signals=${Object.keys(signals).length}` +
+          ` answered=${Boolean(answered)}`,
+      );
       state.sessions.delete(sessionID);
     }
   },

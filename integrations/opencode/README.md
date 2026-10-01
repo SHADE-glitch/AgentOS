@@ -37,7 +37,7 @@ exists in the API and is deliberately unused, so there is exactly one place to a
 |---|---|---|
 | disable-clean | with `AGENT_OS_ROOT` unset the plugin loads, does nothing, and `output.system` is byte-identical to the no-plugin case | `tests/js/plugin.test.mjs` — the array is compared to the fixture's own baseline and the fake engine records zero calls |
 | additive-only | our element is appended; nobody else's is edited, reordered, or dropped; index 0 is never taken | same file — `system.slice(0, n) == base`, length `n+1`, and a named comment on why `[0]` matters (`@tarquinen/opencode-dcp` reads it to decide whether a call is internal and skips its pruning pass entirely) |
-| reuse-not-rebuild | reads nothing of another component's; writes nothing outside `store/`; the session→loop lookup goes through `aos pending`, not through someone's file format | the last case in the JS suite plus `tests/test_pending.py` on the Python side |
+| reuse-not-rebuild | reads nothing of another component's; writes nothing outside `store/`; the session→loop lookup goes through `aos pending`, not through someone's file format | the last case in the JS suite plus `tests/test_pending.py` on the Python side. The zero-write half is stronger than a test: the plugin imports no write API at all (`existsSync` is its only `node:fs` use), and `the plugin has no way to write to the filesystem` asserts exactly that against the source |
 
 Run them:
 
@@ -61,7 +61,7 @@ holds the engine to that rule.
 | `AGENT_OS_ROOT` | *unset* | the checkout that owns `bin/aos`. Unset ⇒ the plugin is inert (that is the disable-clean case, not a misconfiguration) |
 | `AOS_BIN` | `$AGENT_OS_ROOT/bin/aos` | the engine executable |
 | `AOS_TIMEOUT_MS` | `1200` | per call. A slow engine means no injection this turn, never a blocked prompt |
-| `AOS_PLUGIN_DEBUG` | *unset* | writes swallowed hook errors to stderr; off by default so a quiet failure never becomes a log line nobody reads |
+| `AOS_PLUGIN_DEBUG` | *unset* | records every hook to stderr — successes (`preflight ok loop=…`, `system appended index=… len=…`, `postflight sent …`) as well as swallowed errors. Every path fails open, so without it "the engine had nothing", "the hook threw" and "the plugin was inert" are the same silence. Records carry keys, indices and counts only — never a task or a memory body. |
 
 ## How it was installed (and how to undo it)
 

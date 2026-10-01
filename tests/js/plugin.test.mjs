@@ -221,6 +221,74 @@ test("an unknown session is left alone", async () => {
   assert.equal(calls().find((call) => call.argv[0] === "postflight"), undefined);
 });
 
+test("the plugin has no way to write to the filesystem", () => {
+  // Zero writes is a property of the code, so it is checked against the code: an
+  // earlier version of this test only proved the *fixture* stayed in its own
+  // directory, which said nothing about the plugin.
+  const source = readFileSync(PLUGIN, "utf8");
+  const writers =
+    /\b(writeFileSync|writeFile|appendFileSync|appendFile|mkdirSync|mkdir|rmSync|rm|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|createWriteStream|trunc)\b/;
+
+  assert.doesNotMatch(source, writers, "no write API is even imported, let alone called");
+  assert.match(
+    source,
+    /import \{ existsSync \} from "node:fs"/,
+    "the only filesystem use is the one that decides whether the engine is there",
+  );
+});
+
+test("a hook that works says so, when debugging is on", async () => {
+  // The plugin fails open everywhere, which is right for a prompt and fatal for a
+  // diagnosis: "the engine had nothing to say" and "the hook threw" and "the plugin
+  // was inert" all leave the same silence. Success has to be as visible as failure,
+  // or the first live run teaches us nothing.
+  process.env.AOS_PLUGIN_DEBUG = "1";
+  const written = [];
+  const original = process.stderr.write.bind(process.stderr);
+  process.stderr.write = (chunk) => {
+    written.push(String(chunk));
+    return true;
+  };
+  try {
+    const { server } = await hooks();
+    await openTurn(server);
+    await systemFor(server);
+    await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+  } finally {
+    process.stderr.write = original;
+    delete process.env.AOS_PLUGIN_DEBUG;
+  }
+
+  const out = written.join("");
+  assert.match(out, /preflight ok loop=LOOP-FAKE/, "the preflight reached the engine");
+  assert.match(out, /system (appended|replaced) index=\d+ len=\d+/, "the block was placed");
+  assert.match(out, /postflight sent loop=LOOP-FAKE signals=\d+ answered=true/, "the run was reported back");
+  // Records name keys, indices and counts. Never a task, never a memory body.
+  assert.doesNotMatch(out, /修复 cache key/, "the record carries no conversation text");
+});
+
+test("an inert plugin says it is inert", async () => {
+  process.env.AOS_PLUGIN_DEBUG = "1";
+  delete process.env.AGENT_OS_ROOT;
+  const written = [];
+  const original = process.stderr.write.bind(process.stderr);
+  process.stderr.write = (chunk) => {
+    written.push(String(chunk));
+    return true;
+  };
+  try {
+    const { server } = await hooks();
+    await openTurn(server);
+    await systemFor(server);
+  } finally {
+    process.stderr.write = original;
+    delete process.env.AOS_PLUGIN_DEBUG;
+    process.env.AGENT_OS_ROOT = root;
+  }
+
+  assert.match(written.join(""), /disabled: AGENT_OS_ROOT unset/, "inert is not silent");
+});
+
 test("the fixture never writes outside its own directory", async () => {
   const config = path.join(root, "should-not-exist");
   process.env.AOS_FAKE_HOME = config;
