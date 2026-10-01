@@ -243,18 +243,20 @@ def evidence_stage(
         session=state.session_id,
     )
     path = evidence_collector.save_evidence(state.task_id, before, after, session=state.session_id)
-    # Files that were already dirty before the run are not this run's work, and a
-    # reviewer comparing `files_changed` against the diff needs to know which is
-    # which rather than discovering it by reading git status themselves.
+    # Files that were already dirty before the run are not this run's work. Naming
+    # them beside the list is not enough: the verdict reads `files_changed`, so a
+    # leftover edit would otherwise be credited to the run and raise its mass — the
+    # first real host run synthesised `success` on a file nobody touched.
     changed = after.get("files_changed", [])
     # `git status --porcelain` puts the path last (` M src/a.py`, `?? new.py`).
     already = {line.split()[-1] for line in preexisting.splitlines() if line.strip()}
     preexisted = [f for f in changed if f in already]
+    attributable = [f for f in changed if f not in already]
     state.complete(
         "evidence",
         path=str(path),
         repo_resolved=after.get("repo_resolved", False),
-        files_changed=changed,
+        files_changed=attributable,
         preexisting_files=preexisted,
         test_passed=after.get("test_passed"),
         before_source=source,
@@ -264,6 +266,7 @@ def evidence_stage(
         "after": after,
         "path": str(path),
         "before_source": source,
+        "files_changed": attributable,
         "preexisting_files": preexisted,
     }
 

@@ -202,6 +202,32 @@ def test_files_changed_separates_the_run_from_pre_existing_dirt(tmp_path):
     assert doc["final_status"] in ("completed", "partial")
 
 
+def test_a_dirty_file_that_the_run_never_touched_is_not_evidence_of_success(tmp_path):
+    """Naming the pre-existing dirt is not the same as refusing to credit it.
+
+    Measured on the first real host run: the operator had left one file modified
+    before launching, the model changed nothing, and the engine still synthesised
+    `outcome=success` with mass 0.45 — because the signal it read was
+    `git diff --name-only` of the whole tree, and the pre-existing list was computed
+    beside it for a human to notice rather than subtracted from what the verdict
+    consumes. A verdict built on somebody else's dirt is not evidence about this run.
+    """
+    repo = _init_repo(tmp_path / "repo")
+    (repo / "app.py").write_text("def main():\n    return 2\n", encoding="utf-8")  # dirty before us
+
+    from aos.core.loop import lifecycle
+
+    pre = lifecycle.preflight(task="只是问一句，什么都不改", cwd=str(repo))
+    doc = lifecycle.postflight(
+        task_id=pre["task_id"], loop_id=pre["loop_id"], session_id=pre.get("session_id", ""), cwd=str(repo)
+    )
+
+    evidence = doc["evidence"]
+    assert evidence["files_changed"] == [], "the run touched nothing, so it claims nothing"
+    assert evidence["preexisting_files"] == ["app.py"], "and the leftover dirt is named for the reviewer"
+    assert not (doc.get("signals") or {}).get("files_changed"), "the verdict's own signals must not carry it"
+
+
 def test_evidence_reports_where_the_before_snapshot_came_from(tmp_path):
     repo = _init_repo(tmp_path / "repo")
 

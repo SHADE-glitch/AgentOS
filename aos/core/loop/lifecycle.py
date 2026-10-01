@@ -374,7 +374,10 @@ def _run_postflight(
             evidence={
                 "path": evidence["path"],
                 "repo_resolved": evidence["after"].get("repo_resolved", False),
-                "files_changed": evidence["after"].get("files_changed", []),
+                # Attributable to this run, not the whole dirty tree: `after` is the
+                # raw bundle, and a file somebody else left modified is not evidence
+                # that this run succeeded.
+                "files_changed": evidence.get("files_changed", []),
                 "preexisting_files": evidence.get("preexisting_files", []),
                 "test_passed": evidence["after"].get("test_passed"),
                 "before_source": evidence.get("before_source", ""),
