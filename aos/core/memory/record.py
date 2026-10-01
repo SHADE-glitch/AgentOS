@@ -52,19 +52,27 @@ def candidate_type_for(outcome: str, quality_score: float, *, promotion: dict[st
     return None
 
 
-def should_propose(*, outcome: str, memories_used: list[str], needs_review: bool) -> bool:
+def should_propose(
+    *,
+    outcome: str,
+    memories_used: list[str],
+    needs_review: bool,
+    changed_method: bool = False,
+) -> bool:
     """Whether a run is worth remembering as an episode of its own.
 
-    Two cases, and they are the two the store was blind to before: nothing was
-    recalled (so a run that plainly happened could teach it nothing), or the run
-    failed (a failure deserves a negative memory even when memories were in play).
-    An unlabelled run proposes nothing at all, because its outcome is not yet a
-    fact — the label gate is what turns it into one, and it proposes on the way
-    through.
+    Three cases now. Nothing was recalled (a run that plainly happened could teach the store
+    nothing); the run failed (a failure deserves a negative memory even when memories were in
+    play); or the run *changed method on the way to a success* — the account of that is the
+    reusable part, and the terminal outcome being `success` used to suppress exactly the one
+    episode worth keeping.
+
+    An unlabelled run proposes nothing at all, because its outcome is not yet a fact — the label
+    gate is what turns it into one, and it proposes on the way through.
     """
     if needs_review:
         return False
-    return not memories_used or outcome == "failure"
+    return not memories_used or outcome == "failure" or changed_method
 
 
 def _clip(text: Any, limit: int) -> str:
@@ -107,6 +115,67 @@ _HOLE = {
     "partial": "未归因：哪一半没做到 —— 信号里没有，这一句要人补。",
     "success": "未归因：为什么这次成了 —— 信号里没有原因，这一句要人补。",
 }
+
+
+_TRACE_LABEL = {True: "通过", False: "失败"}
+_TRACE_PREFIX = "过程："
+
+
+def _attempts(signals: Optional[dict[str, Any]]) -> tuple[list[str], bool]:
+    """The account worth writing, and whether it shows a change of method.
+
+    Each step reads `#n <method or tool>` plus `通过`/`失败` only when the host actually gave an
+    exit number — an unknown step says nothing rather than looking like it went well. A changed
+    method is a failure with a later success in the same run; that adjacency is all the signals can
+    prove, and no causal claim is made beyond it.
+
+    One successful call is not an account — it restates the verdict — so a run whose steps are all
+    successes and fewer than two in number returns nothing to write.
+    """
+    steps = [step for step in ((signals or {}).get("tool_trace") or []) if isinstance(step, dict)]
+    failed_seen = False
+    changed = False
+    for step in steps:
+        if step.get("ok") is False:
+            failed_seen = True
+        elif step.get("ok") is True and failed_seen:
+            changed = True
+    rendered = []
+    for index, step in enumerate(steps, start=1):
+        name = str(step.get("method") or step.get("tool") or "-")
+        verdict = _TRACE_LABEL.get(step.get("ok")) if step.get("ok") is not None else ""
+        rendered.append(f"#{step.get('n', index)} {name}{(' ' + verdict) if verdict else ''}")
+    if len(steps) < 2 and not any(step.get("ok") is False for step in steps):
+        return [], changed
+    return rendered, changed
+
+
+def shows_method_change(signals: Optional[dict[str, Any]]) -> bool:
+    """Whether a run's own account says it had to switch approach to get through."""
+    return _attempts(signals)[1]
+
+
+def _trace_clause(steps: list[str], room: int) -> str:
+    """Fit the account into `room`, thinning the middle and never either end.
+
+    The first steps show what was tried and the last one shows what it came to; a clause cut at
+    the tail would delete exactly the successful method, which is the reason the clause exists.
+    So middle steps go first, and the count of them is written into the text — a reader sees the
+    gap instead of being shown a sequence that looks complete.
+    """
+    if not steps or room <= 0:
+        return ""
+
+    def join(kept: list[str], dropped: int) -> str:
+        return _TRACE_PREFIX + " → ".join(kept) + (f"（省略 {dropped} 步）" if dropped else "")
+
+    kept = list(steps)
+    dropped = 0
+    while len(join(kept, dropped)) > room and len(kept) > 2:
+        del kept[len(kept) // 2]
+        dropped += 1
+    clause = join(kept, dropped)
+    return clause if len(clause) <= room else ""
 
 
 def _distil(signals: Optional[dict[str, Any]]) -> tuple[list[str], list[str]]:
@@ -158,20 +227,28 @@ def proposal_for_loop(
     task = " ".join((task_text or "").split())
     changed = [str(path) for path in (files_changed or [])][:8]
     facts, not_reported = _distil(signals)
+    steps, switched = _attempts(signals)
 
-    parts = [f'{_OUTCOME_LEAD.get(outcome, "结束于")}「{_clip(task, 80)}」']
+    lead = f'{_OUTCOME_LEAD.get(outcome, "结束于")}「{_clip(task, 80)}」'
+    tail = []
     if category:
-        parts.append(f"路由 {category}" + (f"（技能 {'、'.join(s for s in skills if s)}）" if skills else ""))
+        tail.append(f"路由 {category}" + (f"（技能 {'、'.join(s for s in skills if s)}）" if skills else ""))
     if changed:
-        parts.append(f"改动 {len(changed)} 个文件（{'、'.join(changed)}）")
+        tail.append(f"改动 {len(changed)} 个文件（{'、'.join(changed)}）")
     if facts:
-        parts.append("可证：" + "、".join(facts))
+        tail.append("可证：" + "、".join(facts))
 
     # The hole is reserved, not appended and hoped-for: the body is capped, and a long file list
     # with every signal reported used to slice the sentence off the end — leaving a draft that
     # asserted an incident and named nothing missing, which is the same silence as the old echo.
     hole = _HOLE.get(outcome, "未归因：原因不在信号里，要人补一句。")
-    core = " ".join(parts)
+    budget = 500 - len(hole) - 1
+
+    # `_attempts` already decided whether there is an account worth writing — one successful call
+    # restates the verdict, so it returns nothing. What is left here is only how much of it fits.
+    plain = " ".join([lead] + tail)
+    narrated = _trace_clause(steps, budget - len(plain) - 1)
+    core = " ".join([lead] + ([narrated] if narrated else []) + tail)
 
     # What the run answered is material for the person deciding, not evidence: it is attributed,
     # capped, and it never joins `可证` — the verdict weight for this field is 0.00 for exactly the
@@ -185,7 +262,6 @@ def proposal_for_loop(
     if not_reported:
         optional.append(f"缺证：{'、'.join(not_reported)} 未上报")
 
-    budget = 500 - len(hole) - 1
     keep: list[str] = []
     room = budget - len(core) - 1
     for clause in optional:
@@ -194,24 +270,37 @@ def proposal_for_loop(
             room -= len(clause) + 1
     if optional and not keep:
         core = _clip(core, max(24, budget - len(optional[0]) - 1))
+        plain = _clip(plain, max(24, budget - len(optional[0]) - 1))
         keep.append(optional[0])
 
     head = " ".join([core] + keep)
     if len(head) > budget:
         head = _clip(head, budget)
     body = f"{head} {hole}"
-    mtype = "failure" if outcome == "failure" else "episodic"
+    # The same text with the process left out is what the memory is *identified* by. An id that
+    # hashed the trajectory would make one lesson one row per retelling: the task attempted again
+    # in a different order would open a second review, and after approval a second row stating one
+    # fact. The account belongs to the body a human reads, not to the key that groups them.
+    identity_body = f"{' '.join([plain] + keep)} {hole}"
+    mtype = "failure" if outcome == "failure" else ("procedural" if switched else "episodic")
     scope = f"project:{Path(cwd).name}" if cwd else "global"
     title = _clip(task, 110) or loop_id
     where = f"在 {Path(cwd).name} 里" if cwd else ""
+    fact = identity.fact_key(
+        title=title, body=identity_body, category=category, mtype=mtype, scope=scope
+    )
     return {
         # Derived from what the episode says, not handed out randomly: the same
         # task failing three times is one thing worth remembering once, and a
         # stable id is what lets the review queue recognise the second arrival
         # instead of opening a third decision for a human to make again.
-        "memory_id": identity.proposal_id(
-            scope=scope, category=category, mtype=mtype, title=title, body=body
-        ),
+        # `identity_body` is that text without its trajectory, so retelling the same lesson in a
+        # different order is one decision, not one per retelling.
+        "memory_id": identity.stable_id(fact),
+        # Declared rather than re-derived when the row is written: `upsert_memory` would otherwise
+        # compute it from the stored body — which now carries the trajectory — and one fact would
+        # land as two rows keyed two ways.
+        "dedupe_key": fact,
         "type": mtype,
         "title": title,
         "body": body,

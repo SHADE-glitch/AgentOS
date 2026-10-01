@@ -453,6 +453,7 @@ def record_stage(
         outcome=synthesis["outcome"],
         memories_used=memories_used,
         needs_review=synthesis["needs_review"],
+        changed_method=record_mod.shows_method_change(synthesis.get("signals")),
     ):
         proposal = record_mod.proposal_for_loop(
             loop_id=state.loop_id,

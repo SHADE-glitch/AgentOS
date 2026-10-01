@@ -811,3 +811,88 @@ def test_a_crowded_draft_keeps_the_hole_and_drops_the_least_that_matters():
     assert len(draft["body"]) <= 500, len(draft["body"])
     assert draft["body"].rstrip().endswith("。"), draft["body"][-80:]
     assert "未归因" in draft["body"], "the hole must survive the cap"
+
+
+# ── the trajectory of a run (defect AJ) ────────────────────────────────
+_SWITCH = [
+    {"n": 1, "tool": "bash", "method": "pytest", "exit": 1, "ok": False},
+    {"n": 2, "tool": "bash", "method": "python -m pytest", "exit": 0, "ok": True},
+]
+_PLAIN = [
+    {"n": 1, "tool": "bash", "method": "pytest", "exit": 0, "ok": True},
+]
+
+
+def test_a_trajectory_is_written_as_a_process_and_not_as_a_provable_fact():
+    """「试了 A，A 不行，改用 B，成了」is the lesson — and it is a *process*, not evidence.
+
+    Listing the attempts under 可证 would let the draft assert that the run went well because the
+    steps are numbered, when a numbered list of failures says nothing about the verdict. So the
+    trajectory gets its own clause, and the type follows it: a run that ended well *after* failing
+    is a practice to reuse (`做法`), not an incident to avoid and not a bare episode.
+    """
+    draft = _draft(outcome="success", quality_score=3.5, signals={"tool_trace": _SWITCH, "tool_calls": 2})
+
+    assert "过程：#1 pytest 失败 → #2 python -m pytest 通过" in draft["body"], draft["body"]
+    assert "可证" not in draft["body"].split("过程")[0], "the attempts must not join the provable facts"
+    assert draft["type"] == "procedural", draft["type"]
+    assert draft["outcome"] == "success"
+
+
+def test_a_run_with_no_trajectory_says_nothing_about_a_process():
+    """Nothing observed is not a process of one step, and a clean run is not a practice."""
+    empty = _draft(outcome="success", quality_score=3.5, signals={"tool_trace": [], "tool_calls": 0})
+    assert "过程" not in empty["body"], empty["body"]
+    assert empty["type"] == "episodic"
+
+    clean = _draft(outcome="success", quality_score=3.5, signals={"tool_trace": _PLAIN, "tool_calls": 1})
+    assert "过程" not in clean["body"], "one successful attempt is not a change of method"
+    assert clean["type"] == "episodic"
+
+
+def test_the_identity_of_a_lesson_ignores_the_trajectory_that_proved_it():
+    """The account of *how* it went is not part of *what* was learned.
+
+    The memory id is derived from the fact key, and the fact key hashes the body. A trajectory in
+    the body therefore splits one lesson into one row per retelling — the same task failing in a
+    different order would open a second review and, after approval, a second row stating one fact.
+    So the identity is computed from the draft without its 过程 clause, while the body the human
+    reads keeps it.
+    """
+    first = _draft(outcome="success", quality_score=3.5, signals={"tool_trace": _SWITCH, "tool_calls": 2})
+    second = _draft(
+        outcome="success", quality_score=3.5,
+        signals={"tool_trace": [
+            {"n": 1, "tool": "bash", "method": "pytest", "exit": 1, "ok": False},
+            {"n": 2, "tool": "bash", "method": "pytest", "exit": 1, "ok": False},
+            {"n": 3, "tool": "bash", "method": "python -m pytest", "exit": 0, "ok": True},
+        ], "tool_calls": 3},
+    )
+
+    assert first["body"] != second["body"], "the two accounts do differ"
+    assert first["memory_id"] == second["memory_id"], (
+        "and one lesson must still be one memory, not one per retelling"
+    )
+    assert first.get("dedupe_key"), "the row needs an explicit key, or upsert re-derives it from the body"
+
+
+def test_the_last_step_is_the_one_the_budget_cannot_drop():
+    """A truncated trajectory that loses its ending is worse than no trajectory.
+
+    The body is capped at 500 and the injected line at 280 characters; the clause that says what
+    finally worked sits at the end of the list, which is exactly where a cap bites first. So the
+    attempts are thinned from the middle and the last step is kept whole — the same rule the
+    plugin applies to the list it sends.
+    """
+    long_trace = [{"n": i, "tool": "bash", "method": f"tool{i}", "exit": 1, "ok": False} for i in range(1, 15)]
+    long_trace.append({"n": 15, "tool": "bash", "method": "python -m pytest", "exit": 0, "ok": True})
+    draft = _draft(
+        outcome="success", quality_score=3.5,
+        files_changed=[f"src/module_{i}/deeply/nested/path_{i}.py" for i in range(8)],
+        signals={"tool_trace": long_trace, "tool_calls": 15, "response_summary": "改用 python -m pytest 就好了。"},
+    )
+
+    assert len(draft["body"]) <= 500, len(draft["body"])
+    assert "#15 python -m pytest 通过" in draft["body"], draft["body"]
+    assert "#1 tool1 失败" in draft["body"], "and the beginning of the account survives too"
+    assert "未归因" in draft["body"], "the hole is still the last thing standing"

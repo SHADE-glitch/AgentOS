@@ -29,6 +29,7 @@ from aos.core.memory.record import (
     memories_of_loop,
     proposal_for_loop,
     should_propose,
+    shows_method_change,
 )
 from aos.core.memory.store import (
     MemoryStore,
@@ -467,6 +468,10 @@ def apply_effect(store: MemoryStore, *, memory_id: str, effect: dict[str, Any]) 
                 "source_session": proposal.get("session_id") or "",
                 "source_project": proposal.get("cwd") or "",
                 "source_loop_id": proposal.get("loop_id") or "",
+                # Declared by the proposal, not re-derived here: `upsert_memory` would otherwise
+                # compute it from the body it is about to write, and a body carrying a trajectory
+                # would key one fact two ways.
+                "dedupe_key": proposal.get("dedupe_key") or "",
                 **changes,
             },
             tags=proposal.get("tags") or [],
@@ -1423,7 +1428,12 @@ def apply_verdict(
         )
 
     proposed = 0
-    if should_propose(outcome=outcome, memories_used=memories, needs_review=False):
+    if should_propose(
+        outcome=outcome,
+        memories_used=memories,
+        needs_review=False,
+        changed_method=shows_method_change(signals),
+    ):
         proposal = proposal_for_loop(
             loop_id=loop_id,
             task_text=signals.get("task", ""),

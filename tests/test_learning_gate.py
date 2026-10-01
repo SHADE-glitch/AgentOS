@@ -963,3 +963,137 @@ def test_retire_refuses_to_act_without_a_target_or_a_reason(store):
     again = retire_memory("M-OK", reason="rig artifact", store=store)
     assert again["status"] == "already_retired", again
     assert len(store.list_events(event_type="memory.retired")) == 1
+
+
+# ── the trajectory of one run (defect AJ) ──────────────────────────────
+_SWITCH = [
+    {"n": 1, "tool": "bash", "method": "npm test", "exit": 1, "ok": False},
+    {"n": 2, "tool": "bash", "method": "python -m pytest", "exit": 0, "ok": True},
+]
+_SWITCH_LONGER = [
+    {"n": 1, "tool": "bash", "method": "npm test", "exit": 1, "ok": False},
+    {"n": 2, "tool": "bash", "method": "npx jest", "exit": 1, "ok": False},
+    {"n": 3, "tool": "bash", "method": "python -m pytest", "exit": 0, "ok": True},
+]
+
+
+def _trajectory_proposal(store, *, loop_id, trace):
+    from aos.core.memory.record import proposal_for_loop
+
+    payload = proposal_for_loop(
+        loop_id=loop_id,
+        task_text="CI 构建超时，glob 把依赖目录也吞进去了",
+        outcome="success",
+        cwd="/home/dev/repos/tracker",
+        category="infra",
+        skills=["infra"],
+        quality_score=3.5,
+        signals={"tool_trace": trace, "tool_calls": len(trace)},
+    )
+    store.add_candidate(
+        candidate_type="create",
+        target_memory=payload["memory_id"],
+        loop_id=loop_id,
+        payload={**payload, "proposed": True, "source_hash": f"hash-{loop_id}", "task_id": "T1"},
+    )
+    return payload
+
+
+def test_two_traces_of_one_task_leave_one_review_not_two(store):
+    """The queue must ask once about a lesson, however many times it was retold.
+
+    A trajectory in the body is a second author of the memory id unless the identity is computed
+    without it: the same task attempted in a different order would group under a different
+    `target_memory`, and a human who already decided this fact would be asked again — the exact
+    pile-up the deterministic proposal id was introduced to stop.
+    """
+    first = _trajectory_proposal(store, loop_id="L1", trace=_SWITCH)
+    second = _trajectory_proposal(store, loop_id="L2", trace=_SWITCH_LONGER)
+    assert first["memory_id"] == second["memory_id"], "the two accounts describe one lesson"
+
+    report = run_learning(store=store)
+
+    pending = list_reviews(store=store, status="pending")
+    assert len(pending) == 1, [review["review_id"] for review in pending]
+    assert report["summary"]["reviews_created"] == 1
+    review = pending[0]
+    assert review["runs_now"] == 2, "both episodes belong to the one decision being asked for"
+    proposal = review["evidence"]["proposal"]
+    # `_proposal_of` takes the group's first candidate, so the account a human reads is the
+    # *earliest* episode's, deterministically — the later retelling is what made this one review
+    # instead of a re-ask. Stated here because it is a real property of the gate, not an accident
+    # of this test: reordering it would silently change which lesson gets approved.
+    assert proposal["body"] == first["body"], proposal["body"]
+    assert "#2 python -m pytest 通过" in proposal["body"], proposal["body"]
+
+    approve_review(review["review_id"], store=store)
+    rows = [
+        row for row in store.memories_for_scoring()
+        if "glob 把依赖目录也吞进去了" in (row["body"] or "")
+    ]
+    assert len(rows) == 1, [row["memory_id"] for row in rows]
+    assert "过程：" in rows[0]["body"], "the row keeps the account, even though it was not keyed by it"
+    assert rows[0]["dedupe_key"] == first["dedupe_key"]
+    assert rows[0]["type"] == "procedural"
+
+
+def test_a_run_that_changed_method_proposes_even_when_it_ended_well():
+    """The most valuable episode used to be the one the gate refused to draft.
+
+    `should_propose` asked for either nothing recalled or a failure, so a run that failed,
+    rethought and succeeded — with memories already in play — ended with a verdict of `success`
+    and no experience. That is precisely the lesson worth keeping, so a run whose own account
+    shows a switch gets a proposal.
+    """
+    from aos.core.memory.record import should_propose
+
+    assert should_propose(outcome="success", memories_used=["M1"], needs_review=False) is False
+    assert should_propose(
+        outcome="success", memories_used=["M1"], needs_review=False, changed_method=True
+    ) is True
+    assert should_propose(
+        outcome="success", memories_used=[], needs_review=True, changed_method=True
+    ) is False, "an unlabelled run is still not a fact, however interesting its trajectory was"
+
+
+def test_one_run_produces_one_experience_proposal_not_two_asks(store):
+    """One run, one experience, one decision — the outcome and the process in the same proposal.
+
+    Widening what may be proposed must not double the queue: the human would be asked to label the
+    run and then separately to approve what that very labelling implies. So the drafted proposal
+    carries the verdict, the account of how it was reached, and the hole a person still has to
+    fill, and the gate gets one row to decide.
+    """
+    from aos.core.memory.record import record_outcome
+
+    _add(store, "M-KNOWN", category="infra", tags=["infra"], evidence_level="runtime_validated")
+    record_outcome(
+        store=store,
+        loop_id="LT-1",
+        outcome="partial",
+        quality_score=0.0,
+        task_id="T-LT-1",
+        source_hash="h-LT-1",
+        memories_used=["M-KNOWN"],
+        needs_review=True,
+        signals={
+            "task": "CI 构建超时，glob 把依赖目录也吞进去了",
+            "cwd": "/home/dev/repos/tracker",
+            "category": "infra",
+            "skills": ["infra"],
+            "files_changed": ["ci/glob.yml"],
+            "memories_used": ["M-KNOWN"],
+            "tool_trace": _SWITCH,
+            "tool_calls": 2,
+        },
+    )
+    from aos.core.memory.evolve import apply_verdict
+
+    apply_verdict(store, loop_id="LT-1", outcome="success", source="owner")
+    run_learning(store=store)
+
+    pending = list_reviews(store=store, status="pending")
+    assert len(pending) == 1, f"a labelled run must not arrive as two questions: {[(r['kind'], r['memory_id']) for r in pending]}"
+    proposal = pending[0]["evidence"]["proposal"]
+    assert "完成于" in proposal["body"] and "过程：" in proposal["body"], proposal["body"]
+    assert proposal["type"] == "procedural", "a switched-and-worked run is a practice, not an incident"

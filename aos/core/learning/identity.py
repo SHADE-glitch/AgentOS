@@ -69,8 +69,3 @@ def stable_id(key: str, *, prefix: str = "M") -> str:
     """`M-XXXXXXXX` from a fact key, uppercase to match the rest of the ids."""
     digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
     return f"{prefix}-{digest.upper()}"
-
-
-def proposal_id(*, scope: str, category: str, mtype: str, title: str, body: str) -> str:
-    """The id a run's episode memory would keep, so retries do not pile up."""
-    return stable_id(fact_key(title=title, body=body, category=category, mtype=mtype, scope=scope))

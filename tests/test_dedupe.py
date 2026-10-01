@@ -207,9 +207,12 @@ def test_the_same_episode_gets_the_same_id_whatever_the_loop_is():
     second = _proposal_row(loop_id="L2")
 
     assert first["memory_id"] == second["memory_id"]
-    # The key itself is filled by the store on write, so every writer gets it
-    # whether or not it remembered to ask for one.
-    assert "dedupe_key" not in first
+    # The proposal now declares its fact key instead of leaving it to the store, because the stored
+    # body may carry a trajectory the key must not see. This asserts the declared key is still the
+    # *same function's* output — one writer of keys, not a second normalisation beside the store's.
+    assert first["dedupe_key"] == dedupe_mod.key_for(first), (
+        "a trajectory-free draft must key exactly as the store would have derived it"
+    )
 
 
 def test_three_failures_of_one_task_leave_one_review_not_three(store):
