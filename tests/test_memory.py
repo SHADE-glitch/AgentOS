@@ -239,6 +239,37 @@ def test_compute_all_decay_penalises_unobserved_memory(store):
     assert store.get_memory("M1")["decay_factor"] <= 0.85
 
 
+def test_decay_pass_never_raises_a_penalty_the_gate_earned(store):
+    """A weaken penalty is earned, and a recompute pass may not restore it.
+
+    Measured on the development store: `aos memory refresh` moved a memory from
+    0.512 (three approved weakens) back to 0.85, because the recency/usage writer
+    assigned the column instead of combining with what was already in it. The
+    column has two writers and only one of them is allowed to make a memory
+    look better — the gate.
+    """
+    _add(store, "M1", tags=["mysql"], observation_count=0)
+    store.set_decay_factor("M1", 0.512)
+
+    compute_all_decay(store)
+
+    assert store.get_memory("M1")["decay_factor"] == 0.512
+
+
+def test_decay_pass_still_lowers_and_reports_what_it_persisted(store):
+    """Taking the lower of the two must not turn into "keep whatever was there"."""
+    _add(store, "M1", tags=["mysql"], observation_count=0, confidence="low")
+    store.set_decay_factor("M1", 1.0)
+
+    report = compute_all_decay(store)
+
+    persisted = store.get_memory("M1")["decay_factor"]
+    assert persisted < 1.0
+    assert report["memories"][0]["decay_factor"] == persisted, (
+        "the reported factor must be the one a reader will find in the store"
+    )
+
+
 # ── recording ──────────────────────────────────────────────────────────
 def _link(store, loop_id, memory_id, rank=1):
     """Record that a memory was in a run's context (linkage, nothing more)."""

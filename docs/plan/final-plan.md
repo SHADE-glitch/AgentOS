@@ -580,3 +580,24 @@ P7 只给它读到**历史**，判据 1 仍然要等 `source='hot'` 的运行长
      `part.state.status` 换层级（okdk 犯过的错）。这里的对策是 probe + 降解，**不是**跟进适配。
 - 回滚：单提交 revert。v5 纯追加 ⇒ 旧代码在同库上照跑；唯一残留是 `source='backfill'` 的行会被旧版当成
   待标注运行灌进人门，所以回滚顺序是先删这些行（或保持默认：不设 `AOS_BACKFILL_DB`）。
+
+### 计划后 · 第一次把命令跑在真实库上（2026-10-01，用户批准执行 `memory refresh`）
+
+P1–P7 的验收屏幕全部写在临时库里，所以"跑在开发库上"是这套层第一次接触**已有数据的真实状态**。
+两个只有这时才暴露的东西：
+
+1. **缺陷 Q**：`aos memory refresh` 把人门的降级撤销了。`M-SEED-EXPORT8` 三次 weaken 后
+   `decay_factor=0.512`，一次 refresh 变回 `0.85` —— `decay_factor` 有两个写入者，衰减 pass 是**赋值**。
+   正确规则当时就写在 `evolve.py` 的注释里，只是没变成代码。修法见架构文档 §12 Q 行
+   （`min(重算, 库里)` + 只在变化时写入 + 报告值等于持久值 + 两条具名测试）。
+   教训进本计划：**"屏幕跑过了"不等于"跑过了"**，跑的是 fixture 时，凡依赖既有数据状态的路径都还没被验证。
+2. **本文 §3 第 1 步屏幕已经过期**：它写 `cwd=/tmp/demo-project`，而 P2 之后 scope 过滤会拒绝把
+   `project:AgentOS` 的经验拿到别的项目去 ⇒ 从别处敲是 `retrieved: 0`，**这是设计而不是回归**。
+   在项目目录里原样复现：`retrieved: 3 | injection chars: 1274`。
+   另记一次自己的误判：中途我用结果里并不存在的 `score` 键读召回，读到 0 便怀疑召回被打断 ——
+   那是探针错，引擎侧的 `final_score` 是 0.393/0.274。
+
+refresh 本身在开发库上的净效果（改动前已备份 `store/aos.db.pre-refresh.bak`）：
+schema v4→v5、13 条 `dedupe_key` 补齐、5 条 `observation_count` 从演示遗留（11/9）清账为 0
+（开发库 `observations` 表是空的 ⇒ 计数必须为 0）、过期降级 0 条（`revalidate_after` 是 2027-03-31）、
+第二次跑幂等。诊断过程中我自己产生的 3 条 pending + 4 个 loop 文件已删除，`doctor` 报 `outstanding: 0`。

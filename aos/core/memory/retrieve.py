@@ -253,21 +253,24 @@ def compute_decay_factor(
             reasons.append(f"low_performance_mild: avg_quality={avg_quality:.2f} vs global={global_avg_quality:.2f}")
 
     decay_factor = min(factors) if factors else 1.0
-    if decay_factor >= 0.9:
-        state = "active"
-    elif decay_factor >= 0.5:
-        state = "degraded"
-    else:
-        state = "archived_candidate"
     return {
         "memory_id": memory_id,
         "decay_factor": round(decay_factor, 3),
-        "state": state,
+        "state": _decay_state(decay_factor),
         "reasons": reasons,
         "usage_count": uc,
         "success_rate": round(success_rate, 3),
         "observation_count": observation_count,
     }
+
+
+def _decay_state(factor: float) -> str:
+    """The lifecycle band a decay factor sits in."""
+    if factor >= 0.9:
+        return "active"
+    if factor >= 0.5:
+        return "degraded"
+    return "archived_candidate"
 
 
 def _unused_factor(days: int, policy: dict[str, Any], reasons: list[str], label: str) -> float:
@@ -284,7 +287,16 @@ def _unused_factor(days: int, policy: dict[str, Any], reasons: list[str], label:
 
 
 def compute_all_decay(store: MemoryStore) -> dict[str, Any]:
-    """Recompute and persist decay factors for every memory."""
+    """Lower every memory's decay for age and poor usage — never raise it.
+
+    ``decay_factor`` has two writers: the promotion gate lowers it when a human
+    approves a weaken, this pass lowers it for staleness and poor usage. Neither
+    may lift what the other wrote, so the persisted value is the **lower** of the
+    stored factor and the recomputed one. Assigning here is what once made
+    ``aos memory refresh`` turn a three-times-weakened 0.512 back into the 0.85
+    that its *current* statistics implied — a human decision evaporating in a
+    recompute that had no idea it had ever happened.
+    """
     policy = load_policy("decay")
     usage_stats = store.usage_stats()
     global_avg = store.global_avg_quality()
@@ -293,7 +305,14 @@ def compute_all_decay(store: MemoryStore) -> dict[str, Any]:
     for memory in store.memories_for_scoring():
         usage = usage_stats.get(memory["memory_id"], {})
         result = compute_decay_factor(memory, usage, global_avg, policy)
-        store.set_decay_factor(memory["memory_id"], result["decay_factor"])
+        stored = float(memory.get("decay_factor", 1.0) or 1.0)
+        combined = round(min(result["decay_factor"], stored), 3)
+        if combined != stored:
+            store.set_decay_factor(memory["memory_id"], combined)
+        # Report what a reader will now find in the store, not what this pass
+        # alone thought the memory deserved.
+        result["decay_factor"] = combined
+        result["state"] = _decay_state(combined)
         results.append(result)
 
     summary = {

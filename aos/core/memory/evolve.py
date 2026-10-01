@@ -269,10 +269,12 @@ _CONFIDENCE_ORDER = ("low", "medium", "high")
 # The floor exists because `deprecated` is the state that retires a memory; decay
 # is only supposed to make it quieter, not to kill it by arithmetic.
 #
-# NOTE for the usage-feedback phase: `decay_factor` has a second writer (the
-# recency/usage decay), and it must combine with this penalty by taking the lower
-# of the two, not recompute from scratch — otherwise every decay pass silently
-# undoes every recorded failure.
+# `decay_factor` has a second writer (the recency/usage pass in `retrieve.py`), and
+# the two combine by taking the lower value, never by recomputing from scratch —
+# otherwise every decay pass silently undoes every recorded failure. That rule is
+# pinned by `test_decay_pass_never_raises_a_penalty_the_gate_earned`, which was
+# written after one `aos memory refresh` on the development store raised a
+# three-times-weakened memory from 0.512 back to 0.85.
 _WEAKEN_DECAY_FACTOR = 0.8
 _MIN_DECAY_AFTER_WEAKEN = 0.5
 

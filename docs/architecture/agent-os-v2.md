@@ -235,6 +235,8 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 存在的：
 - **记忆侧**：weaken 降一档证据 + 降置信 + `decay_factor *= 0.8`（下限 0.5），到底或已 deprecated ⇒ `status` 改 `deprecated`；
   reinforce 升档受 `STRONG_EVIDENCE` 阈与人门约束。
+  `decay_factor` 有**两个写入者**（人门的失败惩罚、`retrieve.compute_all_decay` 的时长/用量衰减），二者**取较低值**：
+  衰减 pass 可以使人沉默，不可以撤销一个人已经做过的降级（缺陷 Q）。
 - **可解释迁移**：`migrations.py` 的 `PRAGMA user_version` 为权威、`schema_meta` 镜像交叉校验、
   `MIGRATIONS` **append-only**（v2 破坏性步骤先 `Connection.backup()`）。现有 v2/v3/v4/v5 四步，v5 是纯追加
   （`observations.source` 列 + `backfill_state` 表），不碰任何既有行。
@@ -383,7 +385,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–P 已全部关闭；此节留作形状记录）
+## 12. 缺陷登记（A–Q 已全部关闭；此节留作形状记录）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -407,9 +409,13 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | N | `preflight` 可以返回 `aos_status=degraded` 而 `warnings` 为空 ⇒ 降级没有解释 | 实测：`degraded \| warnings: []` | **已修于 P4**：`routing fell back: domain_unrecognized` 等解释随行 |
 | O | `store/pending-postflight/` 由 `config.py` 声明、`ensure_store` 创建，但全仓零写入零读取 | 审计登记；P6 之后有写有读 | **已闭于 P6** |
 | P | `doctor` 与判据 1 的 observations 计数不区分来源 ⇒ 一次回读（174 条）就会把"通电后收到 ≥30 条真实运行"这条判据伪满足 | 屏幕：回读后 `{"backfill": 174}`，其中 `hot` 为 0；按 total 读就是 174 | **已闭于 P7**（`observation_counts_by_source()` + `doctor --json` 只给分项不给 total + 判据改数 `source='hot'`）|
+| Q | `decay_factor` 有两个写入者，衰减 pass **赋值**而非取较低 ⇒ `aos memory refresh` 把人门挣来的降级静默撤销 | 真实屏幕（开发库）：`M-SEED-EXPORT8` 三次 weaken 后 `0.512`，一次 refresh 后变 `0.85`；`evolve.py` 里早就写着这条规则却没有人执行它 | **已闭**（`compute_all_decay` 取 `min(重算, 库里)`，只在变化时写入，报告值=持久值；两条具名测试钉住"不得抬升""仍可压低"）|
 
-三条共性 `[Judgment]`：A–P 大部分属于"声明了但没人写"或"读了但不生效"，
+四条共性 `[Judgment]`：A–P 大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
+Q 是第四种形状，也是唯一一种只有**跑在真实数据上**才会露出来的：**一列两个写入者，其中一个从头赋值**。
+它旁边就写着正确规则（`evolve.py` 的注释），规则没有变成代码，于是每一次 `memory refresh` 都在撤销人门的决定 ——
+"注释里已经写了"不等于"行为已经对了"。
 所以 final-plan P5 的三个仓库级守卫测试优先级高于新功能 —— 它们是这类失效的自动拦截网。
 排期编号 P1–P7 的定义在 `docs/plan/final-plan.md §4`；每个 Phase 的结果与偏离在 §11 的执行日志。
 
