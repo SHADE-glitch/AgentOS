@@ -641,13 +641,20 @@ def test_the_routers_confession_of_ignorance_is_not_a_subject(store):
 
 
 def test_a_single_tag_hit_reveals_how_high_the_gate_actually_is(store):
-    """The arithmetic behind defect V, stated where it cannot be missed.
+    """The arithmetic behind defect V, stated where it cannot be missed — both entrances to the gate.
 
-    One tag hit is `0.20 * 0.40 = 0.08` of static relevance; with the best quality bonus a fresh
-    memory can hold it lands near 0.086 — under `min_score = 0.15`. Two hits (0.16 → ~0.172) clear it.
-    So a memory is findable only when the task text literally contains at least two of its tags: not
-    one, and the language does not matter to the engine, only the overlap does. This pins the numbers;
-    moving the threshold is the owner's call (defect V).
+    There are two independent ways to reach `min_score = 0.15`, and they behave differently:
+
+    - **The route names the subject.** `category_match` alone is worth 0.15, so a correctly routed
+      task recalls the memory with *zero* content overlap — measured on the real store, a Chinese
+      sentence sharing no tag with `M-SEED-PHASE010` scored exactly 0.15 and arrived.
+    - **The task text contains the tags.** One literal hit is `0.20 * 0.40 = 0.08` (~0.086 with the
+      best quality bonus a fresh memory can hold); two are 0.16 (~0.172). So one tag is not enough.
+
+    AH removed the bucket that used to fake the first entrance, which leaves content as the only
+    route for unclassifiable tasks — and there the bar is two literal tag hits, in either language.
+    Language never mattered to the engine; overlap did. Moving the threshold is the owner's call
+    (defect V); this pins the numbers so nobody has to infer them from a failure.
     """
     _add(store, "M-ONE", tags=["zephyr"], status="active", lane="standard", observation_count=0)
     _add(store, "M-TWO", tags=["zephyr", "quux"], status="active", lane="standard", observation_count=0)
@@ -660,6 +667,21 @@ def test_a_single_tag_hit_reveals_how_high_the_gate_actually_is(store):
     two = compute_static_relevance(rows["M-TWO"], q)
     assert one == pytest.approx(0.08) and two == pytest.approx(0.16)
     assert one * 1.075 < 0.15 <= two * 1.075, "one tag is not findable; two are"
+
+    # The other entrance, pinned so the sentence above cannot be read as "tags are always required":
+    # a route that names the category carries the memory with no overlap in the task text at all.
+    routed = compute_static_relevance(
+        rows["M-ONE"], {"task_text": "完全无关的一句话", "category": "", "domains": [],
+                        "roles": [], "keywords": [], "scope_project": ""}
+    )
+    assert routed == 0.0, "no route and no overlap is no match — that is what AH closed"
+    named = _add(store, "M-ROUTE", category="performance", status="active", lane="standard",
+                 observation_count=0)
+    rows = {m["memory_id"]: m for m in store.memories_for_scoring()}
+    assert compute_static_relevance(rows["M-ROUTE"], {
+        "task_text": "完全无关的一句话", "category": "performance", "domains": [],
+        "roles": [], "keywords": [], "scope_project": ""}
+    ) == pytest.approx(0.15), "a named category alone reaches the gate, with zero content overlap"
 
 
 # ── proposal drafting (defect AG) ──────────────────────────────────────

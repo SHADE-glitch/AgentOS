@@ -1027,7 +1027,11 @@ owner 否掉我一条判断：我说"蒸馏需要新采集面 ⇒ 撞判据 4"�
    `review list` 对 create 评审多印一行"可代写"，否则这个口等于不存在。
 3. 钉死 defect V 的算术（新测试 `test_a_single_tag_hit_reveals_how_high_the_gate_actually_is`）：
    一个 tag 字面命中 = `0.20 × 0.40 = 0.08`，两个 = `0.16`，门槛 `0.15` ⇒ **一条记忆下次能不能被找回，
-   取决于题面里是否字面出现它至少两个 tag**。这是这套层目前对"召回精度"最硬的一句陈述，之前只在缺陷 V 里
+   取决于题面里是否字面出现它至少两个 tag**。**写下这句之后当场订正（真库只读实测）**：过门有两条独立入口 ——
+   路由说中 `category` 单独就正好 0.15（一句与任何 tag 都不重叠的中文照样召回 `M-SEED-PHASE010`），
+   tag 那条才需要两个命中（0.08 不够 / 0.16 过）。所以"至少两个 tag"是**消毒兜底桶之后、路由放弃那半壁任务**的前提，
+   不是普遍前提 —— 这正是本仓库反复犯的那一类错：把手上第一次量到的数字直接写成普适规则。测试
+   `test_a_single_tag_hit_reveals_how_high_the_gate_actually_is` 现在两条入口都钉。之前只在缺陷 V 里
    被绕着说。
 
 零调用验收屏（scratch 库 `/tmp/aos-rig-p15`，preflight→postflight→review list→approve，全走 CLI）：
