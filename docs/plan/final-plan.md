@@ -789,3 +789,21 @@ review **#24 故意留着不标**：一条真实运行的成败是人的判断�
 **还留在你手上的两件**：① 真库那 13 条种子的 tag 仍全是英文 —— 本轮机制修好了，但"纯中文任务能召回"
 在这份语料上仍要靠中文 tag（副本里那份 39 个 tag 的补丁要不要进 `content/memory/seed/agentos.json`，是你的决定）；
 ② 真库 `review #24` 还没人标注（判据 1 的第一个判决）。
+
+### 计划后 · 第七轮：中文任务在真库里也能召回（2026-10-01，用户"继续"）
+
+三件事，一次模型调用：
+
+1. **AC 关闭**（`15e8458`）：`upsert_memory` 从不覆盖 standing ⇒ 作者路径与门路径按构造分离
+   （不得写的列正好等于 `update_memory_fields` 可写的列）。红证据：`--force` 会把
+   `M-SEED-EXPORT8` 从 `benchmark_evaluated/low` 抬回 `real_project_validated/high`。
+2. **语料补齐**：`content/memory/seed/agentos.json` 每条加 3 个中文 tag（共 39 个），并把三条书写规矩写进
+   note（含"tag 必须双语"这条，理由就是 V 的机制）。`aos memory seed --force` 应用后：tag 70 → 109、
+   全部 standing 不动、热观测与队列不动 ⇒ 顺带在真实数据上验了 AC。
+3. **真库第一次纯中文任务**（`LOOP-20261001030411-1D4E`，中文提示词里没有任何拉丁词）：
+   `retrieved=2`、注入 755 字符（`M-SEED-PHASE010` + `M-SEED-CACHEKEY02`）、`observations {"hot":2}`、
+   两条 `outcome_label` 待标注、`pending_postflight 0`。
+   同时 T 在真库上再验一次：当时工作树是脏的（正在改种子），
+   `files_changed=[]`、`preexisting_files=['content/memory/seed/agentos.json']` —— 引擎没把我的编辑算成运行的产物。
+
+判据 1 的窗口里现在有 2 条 hot，其中 1 条是修好证据归因之后的第一条干净运行。
