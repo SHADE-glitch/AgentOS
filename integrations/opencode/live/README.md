@@ -43,8 +43,30 @@ the final acceptance run, which sets `AOS_RIG_ALLOW_REAL_STORE=1` and says so ou
    without witness 1 or 2 beside it.
 
 `snapshot.sh` prints hot runs **grouped by session** for the same reason as the store guard: `source='hot'`
-is a global counter and ordinary TUI use writes it, so a bare total would let daily
+is a global counter and the owner's ordinary use writes it, so a bare total would let daily
 activity hide whether the rig closed anything.
+
+The clause "the owner's ordinary use writes it" was asserted before it was measured. It is sourced now,
+and one link in the chain is still missing — which is worth stating precisely, because stop-criterion 1
+counts `source='hot'` and nothing else:
+
+- **Resident hooks do fire in interactive sessions** `[Verified]`. The *other* plugin in
+  `~/.config/opencode/plugin/` is `skill-tracker.js`, and its `tool.execute.after` / `event` handlers
+  left production rows in `~/.local/share/opencode/skill-usage.db` (read `mode=ro`): 21 `tool_call` in
+  `skill_usage`, 39 `tool_call` + 9 `event_detected` in `plugin_usage`, dated 2026-09-23 … 09-30 —
+  days on which this rig ran nothing.
+- **`session.idle`, the event our postflight waits for, reaches plugins in real sessions** `[Verified]`.
+  `@mohak34/opencode-notifier@0.4.0` handles `type === "session.idle"` and calls
+  `idle(sessionID, isCLI)` (`dist/index.js:2319`); `isCLI` is computed at `:2293` and exists only because
+  both a CLI client and the TUI arrive there. Its delivered-notification counter
+  (`~/.config/opencode/opencode-notifier-state.json`, currently `turn: 21277`, incremented at `:1846`) is
+  a live record that this path has run thousands of times — far more than this rig's 8 runs, so it is the
+  owner's usage. Note what it does *not* say: the counter never records which client was attached, which
+  is precisely the link the next bullet is missing.
+- **⇒ therefore a TUI turn lands a `source='hot'` observation** `[Inferred]`, not observed. Every hook our
+  seam needs is proven live in interactive use except `chat.message`, which is the one that *opens* the
+  loop — and skill-tracker's `chat.message` handler writes no rows, so there is no trace to borrow.
+  One real session settles it: `./bin/aos doctor` before and after, and `observations: hot` must tick.
 
 ## Running the arms
 

@@ -823,3 +823,28 @@ recall:          2 runs · 2 拿到记忆 · 0 空手
 三个分支都过屏幕：没有运行 ⇒ "还没有一次 loop 自己的运行"；有运行但空手 ⇒ 计数出来；真库 ⇒ 2/2/0。
 
 测试 Python **407 → 408**（`test_doctor_reports_whether_recall_found_anything`，先红：`KeyError: 'recall'`）。
+
+### 计划后 · 第九轮：判据 1 的计数前提被查出是半证的（2026-10-01，用户"继续"）
+
+排三件待办时冒出来的问题：四周窗口数 `source='hot'`，而我们 8 次通电验证**全部是 `command opencode run`
+无头形态**（`live/run.sh:70`），可 `live/README.md` 早就把"普通 TUI 使用也会写这个计数"当事实写了一句 ——
+`[Judgment]` 混进了陈述句。若它不成立，窗口会收 0 条并因错误的理由触发降级，所以先不烧用户的会话，
+改用机器上已有的东西查证（全部只读，`mode=ro`）：
+
+1. **常驻插件的钩子在交互会话里真的被调用** `[Verified]`：`~/.config/opencode/plugin/skill-tracker.js`
+   注册 `tool.execute.before/after`、`event`、`chat.message`、`dispose`（`:1401,1422,1561,1745,1768`），
+   其库里由钩子路径写入的行是 `skill_usage` 21 条 `tool_call` + `plugin_usage` 39 条 `tool_call`
+   + 9 条 `event_detected`，日期 2026-09-23…09-30 —— rig 那几天一次都没跑。
+2. **`session.idle` 会送到插件，且 host 区分 CLI 与 TUI** `[Verified]`：`@mohak34/opencode-notifier@0.4.0`
+   `dist/index.js:2319` 处理 `type === "session.idle"` 并调 `idle(sessionID, isCLI)`，`isCLI` 在 `:2293`
+   算出 —— 这个判别式存在的唯一理由就是两种客户端都会走到这里。它的通知计数器
+   （`opencode-notifier-state.json`，现值 `turn: 21277`，在 `:1846` 每次投递 +1）是这条路径跑过几千次的活记录。
+3. **缺的那一环**：我们**开环用的 `chat.message`** 没有可借的旁证 —— skill-tracker 的同名处理器只写内存
+   (`:1745-1757`，不落库)。所以"一次真机会话 ⇒ `observations: hot` +1"停在 `[Inferred]`。
+
+处理：把 `live/README.md` 那句改写成分三条、各自带标签与出处的证据链；`agent-os-v2.md §9` 的
+已确认/未确认清单加第三条（含结算方式：真会话前后各跑一次 `./bin/aos doctor`，`hot` 必须 +1）。
+顺带排掉一条摘要里的旧尾巴 —— "V-2 那个 skill 文件待批准"不成立（`~/.config/opencode/skills/` 下只有
+`open-source-skills`、`personal-skills`，仓库对 `ai-research-investment` 零引用）。
+
+零代码改动，测试数 **410 不变**；本轮只做只读取证与文档校正，未向 `~/.config/opencode/**` 写任何东西。

@@ -327,6 +327,14 @@ mtime 与装载前一致）。
   一次都没有写过 `system`（日志里 0 行 dcp 活动），所以"我们排在别人之后/之前"这件事仍然只能靠
   "无论如何都只追加"来保证；缺陷 R 的修法（保留 `</agent_os>` 之后的后缀）正是为最坏情况准备的，
   它由 fixture 复现 DCP 的真实写入方式钉住，而不是由现场观察钉住。
+- **一次真实交互会话（TUI）会不会产出 `source='hot'`** 仍然是 `[Inferred]`，而判据 1 数的正是这个计数。
+  旁证查到了两条，都够硬但都不覆盖我们缺的那一环 `[Verified]`：同机常驻的 `skill-tracker.js` 用
+  `tool.execute.after`/`event` 在 2026-09-23…09-30（rig 那几天什么都没跑）留下了 21+39+9 行生产数据，
+  ⇒ 插件钩子在交互会话里确实被调用；`@mohak34/opencode-notifier` 在 `dist/index.js:2319` 处理
+  `session.idle` 并按 `isCLI`（`:2293`）区分 CLI 与 TUI ⇒ 我们 postflight 等的那个事件也会到。
+  缺的是**开环的 `chat.message`** —— skill-tracker 的同名处理器不落库，没有可借的证据。
+  结算方式一次会话即可：真会话前后各跑 `./bin/aos doctor`，`observations: hot` 必须 +1。
+  详见 `integrations/opencode/live/README.md`。
 
 通电的另一半在引擎侧 `[Verified]`：`aos/core/loop/pending.py` 让
 `store/pending-postflight/` 第一次有了写入者与读取者 —— preflight 落一条
