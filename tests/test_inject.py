@@ -310,3 +310,66 @@ def test_the_structured_view_is_sanitised_too():
     structured = inject.render(rows, hypotheses=[], route=None, today="2026-09-30")["structured"]
 
     assert "</agent_os>" not in structured[0]["body"]
+
+
+# ── the trajectory inside the injected line (defect AJ) ────────────────
+def _trajectorial_draft(**overrides):
+    from aos.core.memory.record import proposal_for_loop
+
+    trace = [
+        {"n": index, "tool": "bash", "method": f"tool{index}", "exit": 1, "ok": False}
+        for index in range(1, 13)
+    ] + [{"n": 13, "tool": "bash", "method": "python -m pytest", "exit": 0, "ok": True}]
+    kwargs = {
+        "loop_id": "LOOP-INJ-1",
+        "task_text": "CI 构建超时，glob 把依赖目录也吞进去了，先试了几个办法都不行，后来换了个办法才过" * 3,
+        "outcome": "success",
+        "cwd": "/home/dev/repos/tracker",
+        "category": "infra",
+        "skills": ["infra", "bugfix", "performance"],
+        "files_changed": [f"src/module_{i}/deeply/nested/path_{i}.py" for i in range(8)],
+        "quality_score": 3.5,
+        "signals": {
+            "tool_trace": trace, "tool_calls": 13,
+            "response_summary": "换成 python -m pytest 之后超时消失了。",
+        },
+    }
+    kwargs.update(overrides)
+    return proposal_for_loop(**kwargs)
+
+
+def test_the_step_that_worked_survives_the_injection_budget():
+    """A lesson whose ending is cut off teaches nothing, and the cap bites at the end.
+
+    The injected line is clipped at 280 characters (`max_body_chars`), so a trajectory written
+    last would lose exactly the step that worked — the one the next run needs. The account is
+    therefore placed early and thinned from the middle, and this asserts the surviving line still
+    names the successful method rather than ending on an ellipsis.
+    """
+    draft = _trajectorial_draft()
+    rendered = inject.render([_memory(type="procedural", body=draft["body"], title=draft["title"])])
+
+    assert "python -m pytest" in rendered["text"], rendered["text"]
+    assert "#1 tool1 失败" in rendered["text"], "and the account still opens on the failures"
+    assert len(rendered["text"]) < 1400, "the whole block stays inside its character ceiling"
+
+
+def test_a_changed_method_lesson_is_injected_as_a_practice_not_an_incident():
+    """Shape follows type, and the type now follows the run's own account.
+
+    `做法` is what a run that switched approach and worked should read as. Rendered as `不要`, the
+    next prompt would be told to avoid the thing that finally worked; rendered as `经过`, it reads as
+    a story about somebody else's run.
+    """
+    draft = _trajectorial_draft()
+    assert draft["type"] == "procedural"
+
+    rendered = inject.render([
+        _memory(type="procedural", body=draft["body"], title=draft["title"]),
+        _memory(mid="M-OTHER", type="failure", body="不要用配置名做缓存键", title="another"),
+    ])
+
+    practice = [line for line in rendered["text"].split("\n") if "python -m pytest" in line]
+    assert practice, rendered["text"]
+    assert practice[0].lstrip().startswith("- 做法：") or "做法：" in practice[0], practice[0]
+    assert "不要：" not in practice[0], practice[0]

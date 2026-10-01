@@ -727,9 +727,13 @@ def _describe_review(review: dict[str, Any]) -> str:
     kind = review.get("kind", "promotion")
 
     if kind == "outcome_label":
+        from aos.core.memory.record import describe_trace
+
         signals = evidence.get("signals") or {}
+        trace = describe_trace(signals)
         shown = ", ".join(
-            f"{key}={signals[key]}" for key in sorted(signals) if signals[key] not in (None, "", [], {})
+            f"{key}={signals[key]}" for key in sorted(signals)
+            if key != "tool_trace" and signals[key] not in (None, "", [], {})
         ) or "nothing"
         memories = evidence.get("memories_used") or []
         decided = review.get("status") != "pending"
@@ -743,7 +747,8 @@ def _describe_review(review: dict[str, Any]) -> str:
             f"engine said={evidence.get('outcome')} confidence={evidence.get('confidence')} "
             f"mass={evidence.get('mass')}\n"
             f"      任务: {evidence.get('task') or '(unknown)'}\n"
-            f"      信号: {shown}\n"
+            + (f"      {trace}\n" if trace else "")
+            + f"      信号: {shown}\n"
             f"      缺席: {', '.join(evidence.get('absent') or []) or '-'}\n"
             f"      涉及记忆: {', '.join(memories) or '(none recalled)'}\n" + action
         )

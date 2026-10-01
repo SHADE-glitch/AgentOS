@@ -654,6 +654,32 @@ def test_review_approve_takes_the_subject_the_human_names(capsys, store):
     assert "bugfix" not in memory["tags"], "the subject the human wrote replaces the router's guess"
 
 
+def test_a_tool_trace_reaches_the_reviewer_who_decides(capsys, store):
+    """A run's account is only worth collecting if the person judging the run can read it.
+
+    The label review already carries every reported signal in its evidence, so the failure mode here
+    is not missing data but unreadable data: printing `tool_trace=[{'n': 1, ...}]` into the 信号 line
+    would bury both the account and the rest of the signals in a Python repr. So the trajectory gets
+    its own line, and the raw list is kept out of the summary.
+    """
+    pre = _preflight(capsys, task="CI 构建超时，glob 把依赖目录也吞进去了", cwd="/home/dev/repos/warehouse")
+    _postflight(
+        capsys, pre, cwd="/home/dev/repos/warehouse",
+        tool_trace=[
+            {"n": 1, "tool": "bash", "method": "npm test", "exit": 1, "ok": False},
+            {"n": 2, "tool": "bash", "method": "python -m pytest", "exit": 0, "ok": True},
+        ],
+        tool_calls=2,
+    )
+    capsys.readouterr()
+    main(["review", "list"])
+    shown = capsys.readouterr().out
+
+    assert "过程：#1 npm test 失败 → #2 python -m pytest 通过" in shown, shown
+    assert "[{'n'" not in shown, "a Python repr is not how a human reads a trajectory"
+    assert "tool_trace=" not in shown, "and the raw key must not double-print it"
+
+
 def test_degraded_preflight_says_why(capsys):
     """A document that degrades in silence sends the human to the database."""
     code, doc = _call(

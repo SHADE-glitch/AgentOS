@@ -119,6 +119,10 @@ _HOLE = {
 
 _TRACE_LABEL = {True: "通过", False: "失败"}
 _TRACE_PREFIX = "过程："
+# The account gets a standing allowance rather than whatever the rest of the draft left over: the
+# file list is the longest and least load-bearing clause in a draft, and letting it decide the
+# room silenced the trajectory on exactly the runs that had the most to say.
+_TRACE_ALLOWANCE = 170
 
 
 def _attempts(signals: Optional[dict[str, Any]]) -> tuple[list[str], bool]:
@@ -153,6 +157,16 @@ def _attempts(signals: Optional[dict[str, Any]]) -> tuple[list[str], bool]:
 def shows_method_change(signals: Optional[dict[str, Any]]) -> bool:
     """Whether a run's own account says it had to switch approach to get through."""
     return _attempts(signals)[1]
+
+
+def describe_trace(signals: Optional[dict[str, Any]], *, room: int = 4000) -> str:
+    """The account as one line, or "" when there is nothing worth saying.
+
+    One renderer for the drafted lesson and for the queue a human reads. Two formats for one
+    concept is the shape this repository has been caught in before — honoured in one file and
+    missed in another — and here the second copy would also be the one that prints a Python repr.
+    """
+    return _trace_clause(_attempts(signals)[0], room)
 
 
 def _trace_clause(steps: list[str], room: int) -> str:
@@ -245,9 +259,15 @@ def proposal_for_loop(
     budget = 500 - len(hole) - 1
 
     # `_attempts` already decided whether there is an account worth writing — one successful call
-    # restates the verdict, so it returns nothing. What is left here is only how much of it fits.
+    # restates the verdict, so it returns nothing. What is left here is how much of it fits.
+    #
+    # The account gets a reserved allowance rather than whatever space the rest of the draft left,
+    # for the same reason the hole does: the file list is the longest and least load-bearing clause
+    # in the draft, and computing "what is left" after it let eight long paths silence the
+    # trajectory entirely — the draft then reported a successful run with no account of how it got
+    # there, which is the gap this whole change exists to close.
     plain = " ".join([lead] + tail)
-    narrated = _trace_clause(steps, budget - len(plain) - 1)
+    narrated = _trace_clause(steps, _TRACE_ALLOWANCE)
     core = " ".join([lead] + ([narrated] if narrated else []) + tail)
 
     # What the run answered is material for the person deciding, not evidence: it is attributed,
