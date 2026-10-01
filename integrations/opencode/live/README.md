@@ -188,6 +188,10 @@ and is never shown to the model; and nothing in `aos/` reads it. Command text an
 read in-process and discarded — the artifact carries name-shapes, integers and a digest of the
 project's git state, not content.
 
+The git probe runs with `GIT_OPTIONAL_LOCKS=0`, because plain `git status` would otherwise refresh
+the *measured project's* index: an instrument that touches what it measures is not measuring
+anything. `test_the_git_probe_does_not_take_optional_locks` pins it.
+
 ## Privacy line
 
 Prompts are synthetic and contain no conversation text from anyone. The plugin's own

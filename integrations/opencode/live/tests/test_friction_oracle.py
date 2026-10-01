@@ -16,7 +16,14 @@ from pathlib import Path
 
 import pytest
 
-from friction_oracle import VERDICT_FAILURE, VERDICT_SUCCESS, VERDICT_UNKNOWN, build_report, connect_host_readonly
+from friction_oracle import (
+    VERDICT_FAILURE,
+    VERDICT_SUCCESS,
+    VERDICT_UNKNOWN,
+    build_report,
+    connect_host_readonly,
+    project_state,
+)
 
 
 def make_host_db(path: Path, steps: list[dict]) -> None:
@@ -161,6 +168,22 @@ def test_a_run_with_no_tool_calls_reports_zero_steps_instead_of_nothing(tmp_path
     assert report["host_session"]["counts"] == {"tool_parts": 0, VERDICT_SUCCESS: 0, VERDICT_FAILURE: 0,
                                                 VERDICT_UNKNOWN: 0}
     assert report["host_session"]["masked_test_failures"] == []
+
+
+def test_the_git_probe_does_not_take_optional_locks(monkeypatch):
+    """`git status` would otherwise refresh the project's index while we measure it."""
+    seen: list[dict] = []
+
+    def fake_run(cmd, *args, **kwargs):
+        seen.append({"cmd": cmd, "env": kwargs.get("env") or {}})
+        completed = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        return completed
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    project_state(Path("/nonexistent-repo"))
+    assert seen, "the probe must go through subprocess.run"
+    assert all(call["env"].get("GIT_OPTIONAL_LOCKS") == "0" for call in seen), (
+        f"optional locks left on: {seen[0]['env'].get('GIT_OPTIONAL_LOCKS')!r}")
 
 
 def _host_with_one_step(tmp_path) -> Path:

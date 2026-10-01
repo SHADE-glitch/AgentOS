@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sqlite3
 import subprocess
@@ -195,7 +196,13 @@ def project_state(root: Path | str) -> dict:
     """An independent account of where the project stood: numbers and a digest, no paths."""
 
     def git(*args: str) -> str:
-        done = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+        # GIT_OPTIONAL_LOCKS=0: `git status` would otherwise refresh the project's index,
+        # and an instrument that touches what it measures is not measuring anything.
+        done = subprocess.run(
+            ["git", "-C", str(root), *args],
+            capture_output=True, text=True,
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
+        )
         return done.stdout.strip() if done.returncode == 0 else ""
 
     if not git("rev-parse", "--git-dir"):

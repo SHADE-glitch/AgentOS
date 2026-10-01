@@ -64,7 +64,9 @@ Stage 0 的第一条出口判据原来写成一句话："项目是否产生可�
 2. 不修改宿主库、不修改 Agent OS；
 3. 不参与 memory / outcome / proposal / review 的任何一条路径；
 4. 输出不进 prompt、不给模型、不进引擎环境；
-5. 只作为实验清单与 Stage 0 ①-A 的证据。
+5. 只作为实验清单与 Stage 0 ①-A 的证据；
+6. 探项目 git 状态时带 `GIT_OPTIONAL_LOCKS=0` —— 否则 `git status` 会刷新**被测量项目**的 index，
+   仪器碰到被测量对象就等于没测（`test_the_git_probe_does_not_take_optional_locks` 钉住）。
 
 用法（`run.sh` 每次运行结束后自动调用，输出到 `$RIG/oracle/<label>.json`）：
 
