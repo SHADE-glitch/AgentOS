@@ -601,3 +601,18 @@ refresh 本身在开发库上的净效果（改动前已备份 `store/aos.db.pre
 schema v4→v5、13 条 `dedupe_key` 补齐、5 条 `observation_count` 从演示遗留（11/9）清账为 0
 （开发库 `observations` 表是空的 ⇒ 计数必须为 0）、过期降级 0 条（`revalidate_after` 是 2027-03-31）、
 第二次跑幂等。诊断过程中我自己产生的 3 条 pending + 4 个 loop 文件已删除，`doctor` 报 `outstanding: 0`。
+
+**插件装载（同日，用户批准）**：判据 1 只有 `source='hot'` 能检验，而 hot 的唯一来源是 host 在场的运行
+⇒ 装。产物严格两件，都可单独撤销：
+
+```
+~/.config/opencode/plugin/agent-os.js -> <checkout>/integrations/opencode/plugin/agent-os.js
+~/.zshrc:87  alias opencode='AGENT_OS_ROOT=/home/shade/Public/AgentOS opencode --auto'
+```
+
+**没有用 `opencode plugin <module>`** —— 它顺手改写 `opencode.json`，而那个文件不是这个仓库该动的；
+装载后 `~/.config/opencode/**` 其余文件的 mtime 与装载前一致，唯一的例外是 `plugin/` 目录本身。
+装载之后实测 `opencode serve --print-logs --log-level DEBUG` 的启动日志**没有任何 plugin 行**
+⇒ 插件是按实例懒加载的，启动日志证明不了它被读到；于是 final-plan §5 里"真实装载验证"要确认的两项
+（钩子顺序、`tool.execute.after` 真实形状）**仍未确认**，要等一次真实会话。
+判据 1 的时钟从那一刻才开始走，今天 `observations.hot` 仍是 0。

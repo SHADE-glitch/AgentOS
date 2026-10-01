@@ -37,7 +37,7 @@ AgentOS/
 │   │   └── evidence/           # collection, recovery planning, provenance
 │   ├── adapters/               # Provider protocol: host_delegate / test_provider
 │   └── cli/main.py             # run | doctor | preflight | postflight | review | route | memory
-├── integrations/opencode/      # the plugin (written, not installed) + its fixture tests
+├── integrations/opencode/      # the plugin (loaded on this machine 2026-10-01) + its fixture tests
 ├── content/                    # overridable JSON layer (see content/README.md)
 │   └── memory/seed/            # cold-start memories (loaded by `aos memory seed`)
 ├── store/                      # runtime state (gitignored; see store/.gitignore)
@@ -282,11 +282,13 @@ OpenCode plugin that speaks it exists at
 `integrations/opencode/plugin/agent-os.js` (three hooks: `chat.message` →
 preflight, `experimental.chat.system.transform` → append one element,
 `event`/`session.idle` → postflight, resolving a session back to a loop through
-`aos pending` rather than by reading the store's files). **It is not installed:**
-nothing in this repository writes to `~/.config/opencode/`, and loading it is a
-separate decision — see `integrations/opencode/README.md` for the fixture proof of
-disable-clean / additive-only / reuse-not-rebuild and for what remains
-`[Unconfirmed]` until a real load.
+`aos pending` rather than by reading the store's files). **This repository never
+installs it** — nothing in it writes to `~/.config/opencode/` on its own. It was
+loaded on the owner's machine on 2026-10-01 by hand, as exactly two reversible
+artifacts (a symlink in `plugin/` and one env prefix on the `opencode` alias); see
+`integrations/opencode/README.md` for those artifacts, for the fixture proof of
+disable-clean / additive-only / reuse-not-rebuild, and for what remains
+`[Unconfirmed]` until a real session runs.
 
 The previous `hosts/opencode/` tree is deleted. It pointed at a retired
 `~/.agents` layout that no longer exists, neither `aos/` nor `tests/` imported

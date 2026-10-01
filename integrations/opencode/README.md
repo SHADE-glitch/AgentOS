@@ -1,12 +1,21 @@
 # OpenCode integration — advisory plugin
 
-**Status: written, tested against fixtures, and not installed.** Nothing in this
-directory is loaded by opencode until the file is placed under
-`~/.config/opencode/plugin/`, and this repository never does that. Installing it
-is a separate decision with its own gate (`docs/plan/final-plan.md` §5, §6): the
-fixture suite proves non-interference, but hook ordering and the shape of a real
-`tool.execute.after` payload can only be confirmed by loading it, and that is not
-done here.
+**Status: installed on this machine (2026-10-01), with the owner's approval.**
+This repository still never installs it — the install was one deliberate act by a
+human, and it is two files, both reversible:
+
+```
+~/.config/opencode/plugin/agent-os.js -> <this checkout>/integrations/opencode/plugin/agent-os.js
+~/.zshrc:87  alias opencode='AGENT_OS_ROOT=/home/shade/Public/AgentOS opencode --auto'
+```
+
+Nothing else under `~/.config/opencode/**` was touched: `opencode.json`,
+`package.json`, the other plugin and every config file keep their pre-install
+mtime and contents. Removing `AGENT_OS_ROOT` from that alias makes the plugin
+inert again without deleting anything; removing the symlink uninstalls it. The
+two facts that a fixture cannot prove — hook ordering against other plugins, and
+the real shape of a `tool.execute.after` payload — are still `[Unconfirmed]`
+until a real session runs; that is what loading it was for.
 
 ## What it does
 
@@ -49,14 +58,24 @@ skipping: a guard that skips is a guard that passed.
 | `AOS_TIMEOUT_MS` | `1200` | per call. A slow engine means no injection this turn, never a blocked prompt |
 | `AOS_PLUGIN_DEBUG` | *unset* | writes swallowed hook errors to stderr; off by default so a quiet failure never becomes a log line nobody reads |
 
-## To install it, when that decision is made
+## How it was installed (and how to undo it)
 
 ```bash
 ln -s "$PWD/integrations/opencode/plugin/agent-os.js" ~/.config/opencode/plugin/agent-os.js
+# and in the environment opencode runs in:
+export AGENT_OS_ROOT=/home/shade/Public/AgentOS     # this machine: inlined into the opencode alias
 ```
 
-with `AGENT_OS_ROOT` pointing at this checkout in the environment opencode runs in.
-The load rule that this file respects: a plugin module must be
+Note the install did **not** use `opencode plugin <module>` — that subcommand also
+rewrites `~/.config/opencode/opencode.json`, and the config file is not this
+repository's to edit. The symlink plus one environment variable is the whole
+installation, and the whole undo:
+
+```bash
+rm ~/.config/opencode/plugin/agent-os.js     # and drop the env prefix from the alias
+```
+
+The load rule this file respects: a plugin module must be
 `export default { id, server }` — a bare function export makes opencode call every
 export as a factory and abandon the load in silence.
 

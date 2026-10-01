@@ -9,7 +9,7 @@ P3 判重：提案身份确定、`dedupe_key` 有生成者、灰区走冲突评�
 P4 人门可用：标注即刻结算、`doctor --json`、`memory refresh`、阈值从文件可调。
 P5 时序与守卫：before 快照上移到 preflight、失败的 stage 保持失败、注入边界被清洗、
 三个仓库级守卫测试上线（零依赖、可达性、Skill 边界）。
-P6 通电：`pending` 反查有了写入者与读取者，插件骨架在仓库里（**未安装**）。
+P6 通电：`pending` 反查有了写入者与读取者，插件骨架在仓库里（仓库自身从不安装它；本机 2026-10-01 经批准手工装载）。
 P7 只读回读：`aos/backfill.py` + v5 水位，默认关，源库只读且永不落正文（§10）。
 下文是这些之后的事实状态。
 标签：`[Verified]` 带 `path:line` 或可复现命令；`[Inferred]`；`[Judgment]`；`[Unconfirmed]`。
@@ -137,9 +137,11 @@ CLI/host 输入
 memories=13、observations=candidates=learning_reviews=retrieval_log=telemetry_events=**0** ——
 13 条是我手写的种子，也就是说这条链从未吃过一次真实运行。
 本机 opencode 侧则有 199 个会话、61,790 个 part、16,374 次工具调用（其中 `state.status='error'` 235 条）。
-⇒ 通电的两个入口都已落地：P6 插件（在仓库里、**未安装**）与 P7 只读回读（默认关）。
-两者都需要一次人的一侧动作才生效 —— 装载需要单独批准，回读需要有人设置 `AOS_BACKFILL_DB`。
-**所以"断点在入口"这一条今天仍然成立**，只是它现在是一个决定而不是一个缺陷。
+⇒ 通电的两个入口都已落地：P6 插件（本机已装载，见 §9）与 P7 只读回读（默认关，本机未开）。
+插件需要 `AGENT_OS_ROOT` 才不是 inert，回读需要有人设置 `AOS_BACKFILL_DB` ——
+两者的开关都在人的一侧，仓库自己不会把它们打开。
+**"断点在入口"这一条到 2026-10-01 仍然成立**：装载之后 `source='hot'` 的观测仍是 0，
+要等第一次真实会话跑完才变。
 
 ---
 
@@ -298,12 +300,17 @@ ratio 最高只到 0.24，纯 title 能拉开 0.34/0.60/1.00）；`ratio ≥ 0.8
 
 ---
 
-## 9. Plugin 生命周期（代码在仓库里，**未安装**）
+## 9. Plugin 生命周期（代码在仓库里；本机已装载，仓库自身从不安装）
 
 `integrations/opencode/plugin/agent-os.js` 与 `integrations/opencode/README.md` 已落地并通过
 fixture 证明（`tests/js/plugin.test.mjs` 13 例，由 `tests/test_cli_contract.py` 调 `node --test` 一起跑，
-node 不在场即失败而非跳过）。**它没有被链接进 `~/.config/opencode/plugin/`** —— 真实装载需要单独批准，
-因为钩子执行顺序与 `tool.execute.after` 的真实形状只能靠装载确认（`[Unconfirmed]`）。
+node 不在场即失败而非跳过）。**2026-10-01 经用户批准在本机装载**，装的东西只有两件可分别撤销的产物：
+`~/.config/opencode/plugin/agent-os.js` 一个符号链接，和 `~/.zshrc:87` 的 alias 前缀
+`AGENT_OS_ROOT=/home/shade/Public/AgentOS`。**没有用 `opencode plugin <module>`**，因为它会顺手改写
+`opencode.json` —— 那个文件不归这个仓库；除上述两处之外 `~/.config/opencode/**` 零写入（其余文件的
+mtime 与装载前一致）。钩子执行顺序与 `tool.execute.after` 的真实形状**仍未确认** `[Unconfirmed]`：
+`opencode serve --print-logs --log-level DEBUG` 的启动日志里没有任何 plugin 行，说明插件是按实例懒加载的，
+所以这两项只能等一次真实会话。
 
 通电的另一半在引擎侧 `[Verified]`：`aos/core/loop/pending.py` 让
 `store/pending-postflight/` 第一次有了写入者与读取者 —— preflight 落一条
