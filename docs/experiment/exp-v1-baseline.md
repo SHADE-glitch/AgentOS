@@ -157,15 +157,24 @@ content/policies/*.json             # 六个阈值文件：decay/injection/outco
 
 ## 5. 冻结与复核输出
 
-冻结动作：`git add docs/ && git commit -m "docs: freeze exp-v1 experiment baseline" && git tag exp-v1`。
+冻结动作：文档提交进仓库后 `git tag exp-v1`。**tag 哈希故意不写进本文** —— 文档会在 tag 之后继续被订正，
+每次重指都会让上一版记录过期；被冻结的东西只有一个：**代码点**。读法一律用命令，不用记忆：
 
-复核输出（`git show exp-v1` 的主题、`git diff --name-only 53de1ad..exp-v1`、测试计数、真库未变的 sha256）
-在提交后写进本节，见本文件末尾的"冻结复核"。
+```bash
+git rev-parse exp-v1                          # tag 当前指向（文档提交，可随订正移动）
+git rev-parse exp-v1^{commit}                 # 同上，解引用
+git merge-base --is-ancestor 53de1ad exp-v1 && echo "代码基线在 tag 的祖先链里 ✓"
+git diff --name-only 53de1ad..exp-v1 -- \
+    aos/ content/ tests/ integrations/opencode/plugin/   # 必须为空：冻结面零差异
+```
+
+**"基线"= `53de1ad`（代码点）；tag 只是指向一份描述它的文档。** 复核输出见下。
 
 ### 冻结复核（实测输出，不是承诺）
 
 ```
-git rev-parse HEAD（提交后）      = e501a2b 及其后的修正提交；被冻结代码点 = 53de1adc5fb5ff92877ae11e37606e2f9e8f6dbc
+被冻结代码点 (53de1ad)      = 53de1adc5fb5ff92877ae11e37606e2f9e8f6dbc
+tag exp-v1 当时指向          = 见上面那条 git rev-parse（文档提交会移动，不写死）
 git diff --name-only 53de1ad..exp-v1 -- aos/ content/ tests/ integrations/opencode/plugin/   = （空）
 python3 -m pytest                 = 447 passed
 node --test tests/js/plugin.test.mjs = # tests 27 / # pass 27 / # fail 0
@@ -176,3 +185,7 @@ git status --short                = （空）
 
 一处本轮自我修正：本节最初写的是"`git diff --name-only 53de1ad..exp-v1` 只应出现 `docs/` 下的路径"，
 实跑发现该提交还含 `integrations/opencode/README.md` ⇒ 断言按范围重写，tag 随之重指到修正提交。
+
+第二处同类自我修正：本节原先把 tag 的提交哈希写成了文字。Model 一节（模型 id 冻结）落在 tag 之后的
+一笔文档提交里，于是"基线文档不含模型决定"与"模型属于冻结不变量"互相矛盾 ⇒ 重指 tag 之后哈希又过期。
+结论写在这里而不是留在提交说明里：**能随提交移动的引用，不要抄进文档；写命令和它应有的输出。**
