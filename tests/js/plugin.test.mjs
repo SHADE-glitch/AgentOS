@@ -204,6 +204,84 @@ test("an unobserved tool count stays absent instead of becoming a zero", async (
   assert.deepEqual(post.payload.signals, {}, "no evidence, so no claim that nothing went wrong");
 });
 
+const textPart = (messageID, text) => ({
+  event: { type: "message.part.updated", properties: { sessionID: "ses-1", part: { type: "text", messageID, text } } },
+});
+const messageInfo = (messageID, role) => ({
+  event: { type: "message.updated", properties: { sessionID: "ses-1", info: { id: messageID, role } } },
+});
+
+test("the answer the run gave is reported as material", async () => {
+  // Defect AG: no signal carried a cause, so a proposal could only echo the question. The answer is
+  // the one text a run produces — it goes up for the reviewer to read, and it is weighted 0.00 in the
+  // verdict (pinned engine-side), so reporting it cannot make a run look more confident than it is.
+  const { server } = await hooks();
+  await openTurn(server);
+  await server["event"](messageInfo("msg_a", "assistant"));
+  await server["event"](textPart("msg_a", "我会改用 p95 作为首指标，均值放附注。"));
+
+  await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+
+  const post = calls().find((call) => call.argv[0] === "postflight");
+  assert.equal(post.payload.signals.response_summary, "我会改用 p95 作为首指标，均值放附注。");
+});
+
+test("text nobody has identified as the assistant's is not sent as an answer", async () => {
+  // A text part with no `message.updated` telling us whose it is could be the user's own prompt.
+  // Sending that back as `response_summary` would file the question as the answer — the exact shape
+  // AG is about. Absence is the correct report; a guess is not.
+  const { server } = await hooks();
+  await openTurn(server);
+  await server["event"](textPart("msg_unknown", "这可能是用户的话"));
+
+  await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+
+  const post = calls().find((call) => call.argv[0] === "postflight");
+  assert.equal(post.payload.signals.response_summary, undefined);
+  assert.deepEqual(post.payload.signals, {}, "and nothing else is invented alongside it");
+});
+
+test("the user's message is never reported as the run's answer", async () => {
+  const { server } = await hooks();
+  await openTurn(server);
+  await server["event"](messageInfo("msg_u", "user"));
+  await server["event"](messageInfo("msg_a", "assistant"));
+  await server["event"](textPart("msg_u", "修复缓存键碰撞导致的命中率下降"));
+  await server["event"](textPart("msg_a", "按解析后的真实路径取键。"));
+
+  await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+
+  const post = calls().find((call) => call.argv[0] === "postflight");
+  assert.equal(post.payload.signals.response_summary, "按解析后的真实路径取键。");
+});
+
+test("the reported answer is capped and never appears in a debug record", async () => {
+  process.env.AOS_PLUGIN_DEBUG = "1";
+  const written = [];
+  const original = process.stderr.write.bind(process.stderr);
+  process.stderr.write = (chunk) => {
+    written.push(String(chunk));
+    return true;
+  };
+  const long = "长".repeat(1200);
+  try {
+    const { server } = await hooks();
+    await openTurn(server);
+    await server["event"](messageInfo("msg_a", "assistant"));
+    await server["event"](textPart("msg_a", long));
+    await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+  } finally {
+    process.stderr.write = original;
+    delete process.env.AOS_PLUGIN_DEBUG;
+  }
+
+  const post = calls().find((call) => call.argv[0] === "postflight");
+  assert.ok(post.payload.signals.response_summary.length <= 500, "a cap, not the whole transcript");
+  const out = written.join("");
+  assert.match(out, /response_summary chars=\d+/, "the record says a size, which is the useful part");
+  assert.doesNotMatch(out, /长长长/, "no payload value is ever logged");
+});
+
 test("after a restart the loop is recovered through the engine, not its files", async () => {
   const { server } = await hooks();
   // No chat.message this session: the plugin came up after the loop opened.

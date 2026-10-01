@@ -101,6 +101,25 @@ function userText(output) {
     .trim();
 }
 
+// The run's own answer, if the host told us whose text it was. Role resolution comes
+// from `message.updated`; without it a text part could be the user's prompt, and filing
+// the question as the answer is the exact failure defect AG describes. So: unknown owner
+// means nothing is reported, rather than a guess dressed up as evidence.
+//
+// This is material for the human reading the proposal, never a verdict input — the engine
+// weights `response_summary` at 0.00 (pinned by tests/test_outcome.py), and the value is
+// capped here so a long answer cannot ride into the store whole.
+function assistantText(entry) {
+  const roles = entry && entry.msgRoles;
+  const texts = entry && entry.texts;
+  if (!(roles instanceof Map) || !(texts instanceof Map)) return "";
+  const said = [];
+  for (const [messageID, role] of roles) {
+    if (role === "assistant" && texts.get(messageID)) said.push(texts.get(messageID));
+  }
+  return said.join("\n").trim().slice(0, 500);
+}
+
 // One hook that throws takes the turn down with it. Fail-open is the whole point
 // of an advisor: the host's own work must never depend on us agreeing.
 function safe(name, cfg, state, fn) {
@@ -270,6 +289,31 @@ export default {
           remember(sessionID, { sessionError: String(message).slice(0, 500) });
           return;
         }
+        if (event.type === "message.updated") {
+          // Whose text is this? Without the answer, a text part is indistinguishable from the
+          // user's own prompt, and the prompt must never be filed as the run's response.
+          const info = event.properties && event.properties.info;
+          if (!info || !info.id) return;
+          const current = state.sessions.get(sessionID) || {};
+          const roles = current.msgRoles instanceof Map ? current.msgRoles : new Map();
+          roles.set(String(info.id), String(info.role || ""));
+          while (roles.size > 32) roles.delete(roles.keys().next().value);
+          remember(sessionID, { msgRoles: roles });
+          return;
+        }
+        if (event.type === "message.part.updated") {
+          const part = event.properties && event.properties.part;
+          if (!part || part.type !== "text" || !part.messageID) return;
+          const text = typeof part.text === "string" ? part.text : "";
+          if (!text.trim()) return;
+          const current = state.sessions.get(sessionID) || {};
+          const texts = current.texts instanceof Map ? current.texts : new Map();
+          const seen = texts.get(part.messageID) || "";
+          texts.set(part.messageID, (seen + text).slice(0, 4000));
+          while (texts.size > 16) texts.delete(texts.keys().next().value);
+          remember(sessionID, { texts });
+          return;
+        }
         if (event.type === "session.idle") await report(sessionID);
       }),
 
@@ -310,6 +354,8 @@ export default {
       if (entry.toolErrors !== null && entry.toolErrors !== undefined) signals.tool_errors = entry.toolErrors;
       if (entry.sessionError) signals.session_error = entry.sessionError;
       if (entry.interrupted !== null && entry.interrupted !== undefined) signals.user_interrupted = entry.interrupted;
+      const answer = assistantText(entry);
+      if (answer) signals.response_summary = answer;
 
       const answered = await ask(cfg, "postflight", {
         schema_version: "1.2",
@@ -340,7 +386,7 @@ export default {
       entry.reported = true;
       note(
         `postflight sent loop=${entry.loopId} signals=${Object.keys(signals).length}` +
-          ` answered=true`,
+          ` answered=true` + (answer ? ` response_summary chars=${answer.length}` : ""),
       );
       state.sessions.delete(sessionID);
     }

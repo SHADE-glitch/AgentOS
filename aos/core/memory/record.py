@@ -171,12 +171,32 @@ def proposal_for_loop(
     # with every signal reported used to slice the sentence off the end — leaving a draft that
     # asserted an incident and named nothing missing, which is the same silence as the old echo.
     hole = _HOLE.get(outcome, "未归因：原因不在信号里，要人补一句。")
-    head = " ".join(parts)
-    budget = 500 - len(hole) - 1
+    core = " ".join(parts)
+
+    # What the run answered is material for the person deciding, not evidence: it is attributed,
+    # capped, and it never joins `可证` — the verdict weight for this field is 0.00 for exactly the
+    # reason written in policy.py, and a quote gaining influence through the draft would reopen it
+    # sideways. Under budget pressure the gap list goes before the quote; the hole goes last, i.e.
+    # never.
+    answer = " ".join(str((signals or {}).get("response_summary") or "").split())
+    optional = []
+    if answer:
+        optional.append(f"模型自述（未核实）：「{_clip(answer, 200)}」")
     if not_reported:
-        gaps = f"缺证：{'、'.join(not_reported)} 未上报"
-        if len(head) + len(gaps) + 1 <= budget:
-            head = f"{head} {gaps}"
+        optional.append(f"缺证：{'、'.join(not_reported)} 未上报")
+
+    budget = 500 - len(hole) - 1
+    keep: list[str] = []
+    room = budget - len(core) - 1
+    for clause in optional:
+        if len(clause) + 1 <= room:
+            keep.append(clause)
+            room -= len(clause) + 1
+    if optional and not keep:
+        core = _clip(core, max(24, budget - len(optional[0]) - 1))
+        keep.append(optional[0])
+
+    head = " ".join([core] + keep)
     if len(head) > budget:
         head = _clip(head, budget)
     body = f"{head} {hole}"

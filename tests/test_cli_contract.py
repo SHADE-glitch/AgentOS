@@ -742,10 +742,51 @@ def test_the_plugin_own_payload_fields_are_the_ones_the_contract_reads():
     assert signals <= SIGNAL_FIELDS, sorted(signals - SIGNAL_FIELDS)
     # Everything the plugin can put in `signals` is a field the gate claims to accept.
     assert signals <= PLUGIN_POSTFLIGHT_REQUEST_FIELDS
-    assert {"tool_errors", "session_error", "user_interrupted"} == signals, (
+    assert {"tool_errors", "session_error", "user_interrupted", "response_summary"} == signals, (
         "the signal set the host can observe changed; the synthesis and this guard "
         "have to be updated together, not one at a time"
     )
+    # And the one that is new since AG must stay exactly as influential as it is today: the plugin
+    # is now allowed to report what the run answered, so the guard that keeps that out of the
+    # verdict lives here, beside the set that admits it. If someone weights it above zero, the
+    # model's own prose starts deciding whether a run succeeded — the failure `policy.py` names.
+    from aos.core.memory.policy import load_policy
+
+    weights = load_policy("outcome")["weights"]
+    assert weights["response_summary"] == 0.00, (
+        "response_summary is material for a reviewer, never evidence in a verdict"
+    )
+
+
+def test_the_models_answer_reaches_the_proposal_that_a_human_reads(capsys, store):
+    """The whole seam for defect AG's material: host signal → observation → draft, without a verdict.
+
+    A JS test can prove the plugin sends it and a Python test can prove the draft quotes it; only
+    this one proves the two ends are the same field, and that quoting the answer leaves the
+    synthesized verdict and confidence exactly where they were.
+    """
+    pre = _preflight(capsys, task="为什么按配置名取缓存键会让命中率掉下来", cwd="/home/dev/repos/warehouse")
+    capsys.readouterr()
+    code, doc = _postflight(
+        capsys, pre,
+        signals={"response_summary": "因为两个项目会各自解析同一份配置，键空间就分叉了。"},
+    )
+
+    assert code == 0, doc
+    row = store.list_observations(loop_id=pre["loop_id"])[0]
+    assert "分叉" in (row["signals"] or {}).get("response_summary", ""), row["signals"]
+    assert row["needs_review"] is True, "an answer alone is not evidence that the run went well"
+    assert row["confidence"] == 0.0, "the prose carries no mass: weight 0.00, end to end"
+
+    from aos.core.memory.record import proposal_for_loop
+
+    draft = proposal_for_loop(
+        loop_id=pre["loop_id"], task_text="为什么按配置名取缓存键会让命中率掉下来", outcome="failure",
+        cwd="/home/dev/repos/warehouse", category="bugfix", skills=["bugfix"],
+        signals=dict(row["signals"], **{"task": "为什么按配置名取缓存键会让命中率掉下来"}),
+    )
+    assert "模型自述（未核实）" in draft["body"], draft["body"]
+    assert "未归因" in draft["body"], "quoting the answer must not close the cause-hole it cannot fill"
 
 
 def test_every_field_the_plugin_sends_is_one_the_engine_reads(capsys):

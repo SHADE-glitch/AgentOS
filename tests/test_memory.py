@@ -676,6 +676,48 @@ def test_the_same_episode_drafts_the_same_thing_twice():
     assert a["memory_id"] == b["memory_id"] and a["body"] == b["body"]
 
 
+def test_a_proposal_quotes_the_model_and_keeps_it_at_a_distance():
+    """The answer a run gave is material for the reviewer, not a fact the draft asserts.
+
+    `response_summary` is weighted 0.00 in the verdict for a documented reason (`policy.py`:
+    reading the model's own prose for "done" is what made every delegated run score identically).
+    Defect AG's `因为` needs something to react to, and the answer is the only text a run produces —
+    so it is quoted, attributed, capped, and marked unverified. It never enters `可证`, and the hole
+    stays open beside it, because a quote is not a cause.
+    """
+    draft = _draft(signals={"response_summary": "我会改用 p95 作为唯一首指标，均值放在附注里。"})
+
+    assert "模型自述（未核实）" in draft["body"], draft["body"]
+    assert "p95" in draft["body"]
+    assert "可证：模型自述" not in draft["body"], "a quote is not evidence"
+    assert "未归因" in draft["body"], "quoting the answer must not close the hole"
+    assert "缺证" not in draft["body"] or "response_summary" not in draft["body"].split("缺证")[1], (
+        "a signal that arrived is not listed as unreported"
+    )
+
+
+def test_an_empty_answer_is_not_reported_as_a_missing_one():
+    """Absence has two shapes: the host sent nothing, or it sent nothing useful."""
+    assert "模型自述" not in _draft(signals={"response_summary": ""})["body"]
+    assert "模型自述" not in _draft(signals={})["body"]
+
+
+def test_a_crowded_draft_drops_the_gaps_before_the_quote():
+    """When the budget bites, the least load-bearing clause goes first — and the hole never does."""
+    draft = _draft(
+        files_changed=[f"src/module_{i}/deeply/nested/path_{i}.py" for i in range(8)],
+        signals={
+            "tool_errors": 3, "test_exit_code": 1, "build_exit_code": 0, "validation_status": "FAILED",
+            "response_summary": "把键换成解析后的绝对路径，因为两个项目会各自解析同一份配置。",
+        },
+    )
+
+    assert len(draft["body"]) <= 500
+    assert "模型自述（未核实）" in draft["body"], "the material a reviewer needs outranks the gap list"
+    assert "缺证" not in draft["body"]
+    assert "未归因" in draft["body"]
+
+
 def test_a_crowded_draft_keeps_the_hole_and_drops_the_least_that_matters():
     """The budget may not eat the one clause that tells a human something is missing.
 
