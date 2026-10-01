@@ -49,6 +49,11 @@ node --test tests/js/plugin.test.mjs       # the plugin half on its own
 `test_the_plugin_test_suite_runs_and_passes` fails when node is absent rather than
 skipping: a guard that skips is a guard that passed.
 
+For the half a fixture cannot prove — a real host session through the installed
+plugin — see [`live/README.md`](live/README.md). That directory is a test rig, not
+engine capability: nothing under `aos/` invokes opencode, and the boundary guard
+holds the engine to that rule.
+
 ## Configuration
 
 | Variable | Default | Effect |
