@@ -694,3 +694,23 @@ label 路径产，而且产得过头。
 **链条闭合**（`/tmp/aos-chain/store` 副本，真库未动）：§10 那条"今天的仓库做不到这一步"已经作废 ——
 rank 1→3、分数 0.387→0.262、第 5 次批准后 `active→deprecated` 并从注入里消失。
 副作用是一条记账（§12 Z 行）：让一条既有记忆退出召回需要 5 次可归因的失败，不是一次点击。
+
+### 计划后 · 第三轮：第一个可信的计数点（2026-10-01）
+
+真库第一次带着修好的证据归因跑完（`LOOP-20261001022025-5282`，`AOS_RIG_ALLOW_REAL_STORE=1` 明确声明）：
+
+```
+doctor → observations {"hot":1} · reviews {pending:1, outcome_label} · candidates.open 0 · pending 0
+loop   → evidence.files_changed=[] / working_tree_dirty=false / before_source=preflight   ← T 修好了的样子
+         recall.retrieved=1 injection_chars=394 injected=['M-SEED-NORESORT3']
+         record.outcome=partial needs_review=true confidence=0.4
+stderr → preflight ok … / system appended index=1 len=394 / postflight sent … answered=true
+```
+
+review **#24 故意留着不标**：一条真实运行的成败是人的判断，不是测试脚本该替我填的字段。
+`aos review label 24 --outcome X`（只记结论）或 `--outcome X --skill bugfix`（同时点名归因）由用户敲。
+判据 1 的 4 周窗口从这一刻算起，此前那条被删的不算。
+
+另记一次我自己的操作失误：这轮之前那次 `run.sh` 忘了带真库环境变量，屏幕上的 `store under test:`
+写着 `/tmp/aos-rig/store` 而我没看，于是"验收"跑到了副本里 —— rig 的默认安全方向（写副本）是对的，
+错在我没读它打印的那行。
