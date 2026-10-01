@@ -575,6 +575,44 @@ def test_review_sync_settles_candidates_without_another_run(capsys, store):
     assert summary["summary"]["reviews_created"] == 1
 
 
+def test_review_approve_lets_the_human_write_the_lesson(capsys, store):
+    """`--body` at the gate is the only place a `因为` can come from, so the wiring must be real.
+
+    Flag plumbing is where this kind of feature quietly dies: `--when` has to land in
+    `when_to_apply`, the row has to carry the person's words instead of the incident echo, and an
+    approval that was already decided must still exit non-zero rather than pretend.
+    """
+    from aos.core.memory import evolve
+    from aos.core.memory.record import proposal_for_loop, record_outcome
+
+    proposal = proposal_for_loop(
+        loop_id="L11", task_text="缓存键碰撞导致命中率下降", outcome="failure",
+        cwd="/home/dev/repos/warehouse", category="bugfix", skills=["bugfix"],
+    )
+    record_outcome(
+        loop_id="L11", outcome="failure", quality_score=0.0, memories_used=[],
+        needs_review=False, source_hash="h11", proposal=proposal, store=store,
+    )
+    evolve.run_learning(store=store)
+    review_id = [r["review_id"] for r in store.list_reviews(status="pending")][0]
+
+    code = main([
+        "review", "approve", str(review_id),
+        "--body", "不要按配置名取缓存键，因为它会被两个项目各自解析一遍；用解析后的真实路径。",
+        "--when", "新增缓存层或改配置解析顺序时",
+    ])
+    assert code == 0
+    emitted = json.loads(capsys.readouterr().out)
+    assert emitted["promotion"]["status"] == "created", emitted
+
+    memory = store.get_memory(proposal["memory_id"])
+    assert memory["body"].startswith("不要按配置名取缓存键"), memory["body"]
+    assert "未归因" not in memory["body"], "the human filled the hole, so the draft must not keep claiming it"
+    assert memory["when_to_apply"] == "新增缓存层或改配置解析顺序时", "--when must reach when_to_apply"
+
+    assert main(["review", "approve", str(review_id), "--body", "再来一次"]) == 1
+
+
 def test_degraded_preflight_says_why(capsys):
     """A document that degrades in silence sends the human to the database."""
     code, doc = _call(

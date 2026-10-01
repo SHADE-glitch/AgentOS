@@ -834,8 +834,15 @@ def cmd_review(args: argparse.Namespace) -> int:
 
     if command in ("approve", "reject"):
         if command == "approve":
-            result = evolve.approve_review(args.review_id)
+            result = evolve.approve_review(
+                args.review_id,
+                title=getattr(args, "title", None),
+                body=getattr(args, "body", None),
+                when_to_apply=getattr(args, "when", None),
+            )
             expected = "approved"
+            if result["status"] == "rejected" and result.get("error"):
+                print(f"#{args.review_id}: 拒绝 —— {result['error']}", file=sys.stderr)
         else:
             result = evolve.reject_review(
                 args.review_id,
@@ -852,7 +859,8 @@ def cmd_review(args: argparse.Namespace) -> int:
 
     print(
         "usage: aos review list [--status STATUS] [--json] | sync"
-        " | label <id...> --outcome X [--skill S] | approve <id> | reject <id> [--as X [--skill S]]",
+        " | label <id...> --outcome X [--skill S]"
+        " | approve <id> [--title T --body B --when W] | reject <id> [--as X [--skill S]]",
         file=sys.stderr,
     )
     return 1
@@ -1035,6 +1043,22 @@ def build_parser() -> argparse.ArgumentParser:
     for action in ("approve", "reject"):
         p_action = review_sub.add_parser(action, help=f"{action} a pending review")
         p_action.add_argument("review_id", type=int, help="review id")
+        if action == "approve":
+            p_action.add_argument(
+                "--title",
+                default=None,
+                help="write the memory's one-line claim yourself (create reviews only)",
+            )
+            p_action.add_argument(
+                "--body",
+                default=None,
+                help="the lesson including the 因为 no signal can supply (create reviews only)",
+            )
+            p_action.add_argument(
+                "--when",
+                default=None,
+                help="the trigger clause: when this applies (create reviews only)",
+            )
         if action == "reject":
             p_action.add_argument(
                 "--as",

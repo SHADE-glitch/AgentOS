@@ -1026,11 +1026,28 @@ def _resolve_conflict(store: MemoryStore, review: dict[str, Any]) -> dict[str, A
     }
 
 
-def approve_review(review_id: int, *, store: Optional[MemoryStore] = None) -> dict[str, Any]:
-    """Approve a pending review and apply its effect to the store."""
+def approve_review(
+    review_id: int,
+    *,
+    store: Optional[MemoryStore] = None,
+    title: Optional[str] = None,
+    body: Optional[str] = None,
+    when_to_apply: Optional[str] = None,
+) -> dict[str, Any]:
+    """Approve a pending review and apply its effect to the store.
+
+    `title` / `body` / `when_to_apply` let the reviewer write the lesson the signals could not
+    supply (defect AG): a draft can state what happened and what is provable, but no signal carries
+    a cause, and the promise this layer makes is `不要…因为…`. They are accepted **only** for a
+    `create` effect — the row does not exist yet, so nothing that an author owns is overwritten. On
+    an existing memory the same flags would put a second writer on content columns, which is the
+    split defect AC pinned shut, so they are refused before anything is written.
+    """
     owns_store = store is None
     store = store or MemoryStore()
     try:
+        supplied = {"title": title, "body": body, "when_to_apply": when_to_apply}
+        given = {key: value for key, value in supplied.items() if value is not None}
         review = store.get_review(review_id)
         if review is None:
             return {"review_id": review_id, "status": "not_found"}
@@ -1038,6 +1055,12 @@ def approve_review(review_id: int, *, store: Optional[MemoryStore] = None) -> di
             return {"review_id": review_id, "status": "already_decided", "review_status": review["status"]}
         kind = review.get("kind", "promotion")
         if kind == "conflict":
+            if given:
+                return {
+                    "review_id": review_id,
+                    "status": "rejected",
+                    "error": "a conflict review decides which row survives; content is not edited here (create only)",
+                }
             return _resolve_conflict(store, review)
         if kind != "promotion":
             # A label request is not answered by "yes": approving it would invent a
@@ -1054,6 +1077,28 @@ def approve_review(review_id: int, *, store: Optional[MemoryStore] = None) -> di
         # the evidence rather than the promise: the row does not exist yet, so
         # the proposal text is the only place they are written down.
         effect.setdefault("proposal", (review.get("evidence") or {}).get("proposal"))
+
+        authored_by = None
+        if given:
+            if effect.get("kind") != "create":
+                return {
+                    "review_id": review_id,
+                    "status": "rejected",
+                    "error": f"content can only be authored when the row is created (effect kind=create), "
+                             f"not for kind={effect.get('kind')!r}",
+                }
+            blank = [key for key, value in given.items() if not str(value).strip()]
+            if blank:
+                return {
+                    "review_id": review_id,
+                    "status": "rejected",
+                    "error": f"{', '.join(blank)} given as empty text: write the lesson or leave the draft alone",
+                }
+            proposal = dict(effect.get("proposal") or {})
+            proposal.update({key: str(value).strip() for key, value in given.items()})
+            effect["proposal"] = proposal
+            authored_by = "human"
+
         promotion = apply_effect(store, memory_id=review["memory_id"], effect=effect)
         if promotion["status"] == "stale":
             # The review is closed as `stale` rather than left pending: leaving it
@@ -1079,6 +1124,11 @@ def approve_review(review_id: int, *, store: Optional[MemoryStore] = None) -> di
                 "memory_id": review["memory_id"],
                 "kind": promotion.get("kind"),
                 "result": promotion.get("status"),
+                # Whose words ended up in the row: the draft's, or a person's. Without this the
+                # store could not tell a completed lesson apart from an incident echo, which is
+                # the distinction AG exists to make.
+                "authored_by": authored_by or "draft",
+                "authored_fields": sorted(given) if authored_by else [],
             },
         )
         return {"review_id": review_id, "status": "approved", "promotion": promotion}

@@ -511,6 +511,81 @@ def test_approving_a_proposal_writes_what_the_review_showed(store):
     assert memory["source_loop_id"] == "L1"
 
 
+def test_a_reviewer_can_write_the_lesson_the_signals_could_not(store):
+    """The hole AG-B leaves is fillable at the only moment it should be: the human's approval.
+
+    The draft can say what happened and what is provable, but no signal carries a cause, so the
+    promise `不要…因为…` needs a person to supply the `因为`. Approving is already that person's
+    moment of attention, and the row does not exist yet — so writing content here touches no
+    author-owned column of any existing memory.
+    """
+    payload = _proposal_candidate(store)
+    run_learning(store=store)
+    review = list_reviews(store=store, status="pending")[0]
+
+    result = approve_review(
+        review["review_id"],
+        store=store,
+        title="解析器不要用 try 兜住空指针",
+        body="空指针在解析器里意味着上游契约已破，因为它是分派前的必查项；先判空再分派，别用异常兜。",
+        when_to_apply="改动 parser.py 的分派路径时",
+    )
+
+    assert result["status"] == "approved", result
+    memory = store.get_memory(payload["memory_id"])
+    assert memory["title"] == "解析器不要用 try 兜住空指针"
+    assert "因为" in memory["body"], "the lesson now carries the half the signals cannot"
+    assert "未归因" not in memory["body"], "a completed lesson does not keep claiming a hole"
+    assert memory["when_to_apply"] == "改动 parser.py 的分派路径时"
+
+    events = store.list_events(event_type="learning.review_approved")
+    assert json.loads(events[-1]["payload_json"])["authored_by"] == "human", (
+        "history must say a person wrote the words, not the loop"
+    )
+
+
+def test_partial_completion_keeps_the_hole_the_reviewer_did_not_fill(store):
+    """Completing the title is not completing the cause, and the draft must keep saying so."""
+    payload = _proposal_candidate(store)
+    run_learning(store=store)
+    review = list_reviews(store=store, status="pending")[0]
+
+    approve_review(review["review_id"], store=store, title="解析器的空指针不是异常处理问题")
+
+    memory = store.get_memory(payload["memory_id"])
+    assert memory["title"] == "解析器的空指针不是异常处理问题"
+    assert "未归因" in memory["body"], "the unfilled half stays labelled"
+
+
+def test_human_words_are_refused_when_the_row_already_exists(store):
+    """Editing content belongs to a creation, not to an approval about a memory that exists.
+
+    Author columns and gate columns are deliberately disjoint (defect AC): letting `approve
+    --body` rewrite an existing memory would put a second writer on content the gate may not own
+    — and the reviewer was shown a promise about standing, not about prose.
+    """
+    review = _weakened(store)
+
+    refused = approve_review(review["review_id"], store=store, body="顺手改一下正文")
+
+    assert refused["status"] == "rejected", refused
+    assert "create" in refused["error"], refused["error"]
+    assert store.get_memory("M1")["body"] != "顺手改一下正文", "nothing was written"
+
+
+def test_blank_human_words_are_refused_rather_than_erasing_the_lesson(store):
+    """An empty --body is a typo, not a decision to blank a memory out."""
+    payload = _proposal_candidate(store)
+    run_learning(store=store)
+    review = list_reviews(store=store, status="pending")[0]
+
+    refused = approve_review(review["review_id"], store=store, body="   ")
+
+    assert refused["status"] == "rejected"
+    assert "empty" in refused["error"]
+    assert store.get_memory(payload["memory_id"]) is None, "the row was not created either"
+
+
 def test_a_proposal_without_evidence_is_rejected(store):
     payload = _proposal_candidate(store)
     store.add_candidate(
