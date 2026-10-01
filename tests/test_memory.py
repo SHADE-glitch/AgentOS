@@ -896,3 +896,25 @@ def test_the_last_step_is_the_one_the_budget_cannot_drop():
     assert "#15 python -m pytest 通过" in draft["body"], draft["body"]
     assert "#1 tool1 失败" in draft["body"], "and the beginning of the account survives too"
     assert "未归因" in draft["body"], "the hole is still the last thing standing"
+
+
+def test_a_malformed_trajectory_degrades_to_no_account_rather_than_an_invented_one(store):
+    """A host that sends garbage about its steps must not produce a story.
+
+    The trace crosses a contract boundary as JSON a third party assembles; entries arrive as
+    strings, nulls or dicts without the agreed keys. Skipping what is not a step is the difference
+    between a missing account and a fabricated one — and the second is what this layer is not
+    allowed to write into a memory.
+    """
+    from aos.core.memory.record import describe_trace, proposal_for_loop
+
+    for garbage in ([], ["pytest failed"], [None, {"exit": "not-a-number"}], None, {"n": 1}):
+        draft = proposal_for_loop(
+            loop_id="L-BAD", task_text="修复构建", outcome="success", quality_score=3.5,
+            category="infra", signals={"tool_trace": garbage},
+        )
+        assert "过程" not in draft["body"], repr(garbage)
+        assert draft["type"] == "episodic", repr(garbage)
+    assert describe_trace({"tool_trace": [{"n": 1, "tool": "bash", "exit": 1, "ok": False}]}) == (
+        "过程：#1 bash 失败"
+    ), "a step without a method is still a step, and stays honest about not naming one"
