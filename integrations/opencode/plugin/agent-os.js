@@ -149,6 +149,7 @@ export default {
         const task = userText(output);
         if (!task) return;
 
+        const model = hookInput && hookInput.model;
         const doc = await ask(cfg, "preflight", {
           schema_version: "1.2",
           phase: "preflight",
@@ -156,6 +157,10 @@ export default {
           session_id: sessionID,
           cwd: directory,
           provider: "host_delegate",
+          // Which model is about to do the work. The engine keeps it as provenance,
+          // and a lesson learned under one model is evidence about that run — not a
+          // fact that transfers untouched to another.
+          model: model && model.modelID ? `${model.providerID || ""}/${model.modelID}` : "",
         });
         if (!doc || !doc.loop_id) return;
 

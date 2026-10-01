@@ -167,6 +167,11 @@ test("the preflight request carries the contract's own fields", async () => {
   assert.equal(call.payload.session_id, "ses-1");
   assert.equal(call.payload.cwd, "/fixture/project");
   assert.equal(call.payload.provider, "host_delegate", "the host runs the work; we advise");
+  assert.equal(
+    call.payload.model,
+    "p/m",
+    "the model that will do the work is observable here, and the engine keeps it as provenance",
+  );
 });
 
 test("session.idle reports the run back with signals it actually saw", async () => {
