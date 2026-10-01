@@ -297,6 +297,13 @@ artifacts (a symlink in `plugin/` and one env prefix on the `opencode` alias); s
 disable-clean / additive-only / reuse-not-rebuild, and for what remains
 `[Unconfirmed]` until a real session runs.
 
+What the seam has been measured to do lives in `docs/architecture/agent-os-v2.md` §15: the block
+demonstrably reaches the model (**+583** input tokens against an inert control arm in the same cwd),
+and the gate demonstrably changes what the next run recalls — but **nothing has ever measured whether
+injected experience improves an answer**, which is the open half of "is this worth keeping". The
+test-and-fix loop is therefore closed in favour of observation: `./bin/aos doctor`'s `hot` and `recall`
+lines decide it, against criterion 1, by 2026-10-29.
+
 The previous `hosts/opencode/` tree is deleted. It pointed at a retired
 `~/.agents` layout that no longer exists, neither `aos/` nor `tests/` imported
 it, and the engine never read a byte of it — so a fresh clone could not start
