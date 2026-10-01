@@ -70,12 +70,37 @@ counts `source='hot'` and nothing else:
 
 ## Running the arms
 
+Every entry point needs `AGENT_OS_ROOT` **exported first** — `selfcheck.sh:10` hard-fails without it
+(`${AGENT_OS_ROOT:?}`), and `run.sh` only satisfies it at `:34`, so the bare lines below fail on a shell
+that has not exported it. Pin the store too, or the self-check refuses to proceed (`:25-34`):
+
 ```bash
+export AGENT_OS_ROOT=/path/to/AgentOS AOS_RIG=/tmp/aos-rig AOS_STORE_DIR=$AOS_RIG/store
+mkdir -p "$AOS_RIG/store" "$AOS_RIG/logs"        # see the tee-before-mkdir trap below (AF)
 live/run.sh plugin-arm  <cwd> '<prompt>'                # our seam active
 AOS_RIG_INERT=1 live/run.sh inert-arm <cwd> '<prompt>'  # same stack, seam off — the real control
 live/run.sh pure-arm    <cwd> --pure '<prompt>'         # every external plugin gone; not a control for us
 live/run.sh second-turn <cwd> -s <sessionID> '<prompt>' # multi-turn: where a neighbour writes into our element
+AOS_STORE_DIR=$AGENT_OS_ROOT/store AOS_RIG_ALLOW_REAL_STORE=1 live/run.sh real-1 <cwd> '<prompt>'  # counts toward criterion 1
 ```
+
+`<label>` is only a filename tag — there is no `accept`/`real` arm; the real store is reached solely
+through `AOS_STORE_DIR` + `AOS_RIG_ALLOW_REAL_STORE=1` (`run.sh:40-48`).
+
+## The headless permission trap (round 11) `[Verified]`
+
+`opencode run` has no TTY to approve tool use, and this machine's config is `permission.bash = "ask"`, so
+**any prompt that makes the model reach for a shell dies**: the host logs `auto-rejecting`, the assistant
+message ends with `tool` parts and **0 characters of text**, and the run still exits 0. Three consecutive
+real-store runs failed exactly this way while the injection itself was flawless (`len=1122` == engine
+`injection_chars=1122`). Two consequences, both load-bearing:
+
+- Judge a run's verdict by **whether an answer exists at all**, not by whether the block arrived. The honest
+  label for these runs was `failure` — and *without* `--skill`, because the cause was the harness, not any
+  recalled memory (the queue then prints `blamed_memories: []`, which is the anti-"linkage-not-outcome" rule working).
+- Prompts that are answerable from knowledge (a latency-metric question, an export-shape question asked
+  cold) survive; prompts that invite inspection do not. Never "fix" this with `--auto` — that flag is banned
+  by rule, and it would make the rig approve tools the owner has not agreed to.
 
 ## Why each piece is the way it is
 

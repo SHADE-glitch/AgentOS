@@ -317,7 +317,8 @@ node 不在场即失败而非跳过）。**2026-10-01 经用户批准在本机�
 `opencode.json` —— 那个文件不归这个仓库；除上述两处之外 `~/.config/opencode/**` 零写入（其余文件的
 mtime 与装载前一致）。
 
-**同日跑过真实 host**（`integrations/opencode/live/`，8 次 `space-bunny-free` 无成本调用）。
+**同日跑过真实 host**（`integrations/opencode/live/`，累计 **13** 次 `space-bunny-free` 无成本调用：
+通电验证 8 次 + 第十一轮 5 次，第十一轮的结果与它踩到的无头权限陷阱记在 §15 与 `live/README.md`）。
 `[Verified]` 一次真库运行留下的东西：`observations {hot:1}`、`retrieval_log` 有该 loop 的行、
 `learning_reviews` 一条 `outcome_label` pending、`pending_postflight.outstanding` 回到 0、
 引擎侧 `injection_chars=511` 与插件记录的 `len=511` 相等。
@@ -420,7 +421,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–AC 已全部关闭；V/AA 由用户在三个杠杆里点了 ②′）
+## 12. 缺陷登记（A–AC 已全部关闭；第十一轮在真实数据上新增 AD/AE 两条**未闭**，AF 是 rig 自身）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -456,6 +457,9 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | AC | `upsert_memory`（含 `aos memory seed --force`）能覆盖人门决定的 standing ⇒ 重跑种子文件会把被降级的记忆抬回种子声明的档位 | 实测：13 条种子里 `M-SEED-EXPORT8` 因 P4 演示被降到 `benchmark_evaluated/low`，`--force` 会把它抬回 `real_project_validated/high`；具名测试先红：`assert 'runtime_validated' == 'benchmark_evaluated'` | **已闭**（作者路径与门路径按构造分离：upsert 不得写的列 = `update_memory_fields` 可写的列，从一个列表导出；真库 `--force` 复跑后 EXPORT8 仍是 `benchmark_evaluated/low`，而 tag 从 70 涨到 109 ⇒ 内容照改、地位不动）|
 | AB | 未归因提示给出的命令**已经跑不了**：它让用户对刚被批准的评审再执行一次 `review label <同 id>` ⇒ `already_decided` | 走 `review reject --as` 这条没人走过的路时撞上的；两条路径都印同一个坏提示。具名测试先红：`assert 'label 1 --outcome' not in err` | **已闭**（改成"这条已经定了，归因补不回来；下次写 `--skill`"）|
 | Z | 记账，非缺陷："削弱到底即退休"实际需要 **5 次** 独立否定，因为每一秩只降一档 | 屏幕：从 `real_project_validated` 起，第 2/3/4 次批准让 rank 1 → 3（0.387→0.309→0.262），第 5 次才 `active → deprecated` 并**从注入块里消失** | 行为正确。这条只是把 final-plan §3 第 8 步的真实成本写清楚：让一条记忆退出召回 = 五次可归因的失败，不是点一下按钮 |
+| AD | 人门批准写入的失败记忆**拿不到假设保护窗的到期降权**：`hypothesis_max_days` 的触发条件只看 `type == 'hypothesis'`（`retrieve.py:252`），而提案批准后落库的行是 `type=failure, lane/evidence=hypothesis` | 真库屏幕：`review approve 28` ⇒ 行 `('M-7B113D99','failure','active','hypothesis','hypothesis','project:test')`；紧接着一次真运行的注入确实把它带上了（1122→1359 字符）⇒ 它不会在 7 天后自动退场 | **未闭**（一行可修：条件改看 lane/evidence。改的是降权语义 ⇒ owner 决定）|
+| AE | **重复的负面提案被质量门槛拦死并当场销毁证据**：`decide_promotion` 的提案豁免只在 `memory is None` 时进入，判重把它 merge 到已存在的记忆之后就撞上 `quality_above_threshold` | 真库事件屏幕：`learning.rejected {"memory_id":"M-7B113D99","reason":"best quality 0.0 below threshold 3.0"}` 连着两次，候选 68/69 均 `consumed_by='rejected'`。而 `evolve.py:176-180` 自己的注释写着质量门槛"问的不是第一次 episode —— 尤其不是失败的那次"，豁免条件却没覆盖"记忆已存在但 candidate 仍是 create"这一路 | **未闭**（豁免 `PROPOSAL_TYPES` 是一行，但它会让队列变大 ⇒ 直接触及判据 2 ⇒ owner 拍板）|
+| AF | rig 自身：`run.sh:47` 在 `:55` 的 `mkdir -p "$RIG/logs"` **之前**就向 `$RIG/logs/<label>.txt` tee ⇒ 换一个全新的 `AOS_RIG` 目录时第一次运行在 `set -e` 下当场死（真库分支 `:46-48` 更早） | 本轮换新 scratch 目录时靠预先 `mkdir -p` 绕开；没写成红测试，所以只登记不宣称已修 | **未闭**（工具面，不影响引擎结论；修法是把 mkdir 提到第一次 tee 之前）|
 
 四条共性 `[Judgment]`：A–S 里大部分属于"声明了但没人写"或"读了但不生效"，
 正是研究里四个外部项目反复犯的同一类病（`docs/research/findings.md §12`、`R-003/R-006/R-008`）。
@@ -509,14 +513,26 @@ reachability 的 allowlist **必须被测试实际执行到**，否则它就成�
 
 1. **注入到达模型** `[Verified]`：同 cwd 同提示词，只关掉我们那一环的对照臂少 **583** 个输入 token
    （一个 1,279 字符的块），且只有带环臂说出"只有某条种子记忆写了"的那条规则。到达证明，不是行为证明。
-2. **链条能改变下一次召回** `[Verified]`：一次演示里同一条记忆从 rank 1 掉到 rank 3，
-   `0.387 → 0.309 → 0.262`，第 5 次批准后 `deprecated`、从注入块消失。四家被调研项目都没做成这一段，
-   这是本仓库唯一买得到的东西。
-3. **代价可核算** `[Verified]`：8 次免费模型调用、410 测试、`~/.config/opencode/**` 零写入
-   （唯一例外是那次批准的符号链接）；反面是登记 Z 的账 —— 让一条记忆真正退休要 5 次可归因失败 + 5 次批准。
+2. **链条能改变下一次召回** `[Verified]`，且**已在真实数据上闭合**（第十一轮）：scratch 演示里同一条记忆
+   从 rank 1 掉到 rank 3、`0.387 → 0.309 → 0.262`，第 5 次批准后 `deprecated` 并从注入块消失；同日在真库上，
+   一条 `failure` 运行经人门（`原因: a new memory is written only by a human decision`）批准后写入
+   `M-7B113D99`，**紧接着的下一次真实运行注入从 1122 字符/3 条变成 1359 字符/4 条**，插件记录的 `len`
+   与引擎 `recall.injection_chars` 两处都是 1359 —— `+237` 这个数字是**跑之前**从真库副本的模拟里预测出来的。
+   四家被调研项目都没做成这一段，这是本仓库唯一买得到的东西。
+3. **代价可核算** `[Verified]`：13 次免费模型调用（前八次通电验证 + 本轮 5 次：双臂 2、真库 3）、410 测试、
+   `~/.config/opencode/**` 零写入（唯一例外是那次批准的符号链接）；反面是登记 Z 的账 ——
+   让一条记忆真正退休要 5 次可归因的失败 + 5 次批准。
 
-**没证的，恰是"有没有用"真正问的那半**：注入让答案变好了吗 —— **一次都没测过**。测它要盲评，
-而可用的免费模型弱到评不出差异。`[Unconfirmed]`，也不在收缩后的三件可独立存活件里。
+**没证的，恰是"有没有用"真正问的那半**：注入让答案变好了吗 —— 写这句的当天下午**做了第一次测量**，
+答案是"部分"，且分得很开（第十一轮，`live/README.md` 与 §12 的 AD/AE 同源）：
+
+- **形状改变了 `[Verified]`**：同一条提示词，带环臂按植入的程序性记忆输出 `METRIC: p95 / BECAUSE: the mean hides
+  tail cost / AVOID: mean 90ms` 三行脚手架（`mean` 提及 2 次、`average` 1 次），惰臂**一条该格式的都没有**
+  （METRIC 行 0、`mean/average` 各 0）。判定规则是**调用之前就固定**的，不是事后解释。
+- **结论没改变 `[Verified]`**：惰臂自己就推荐 p95/p99 —— 这条提示词的知识点模型从训练里就会，注入没有增加事实。
+  所以本轮能说的是"注入改变了表达的纪律与'拒绝哪个指标'的框架"，**不能说**"注入让答案更对"。
+- 仍未证的收窄成一句：**在模型本来不会答的那类任务上**（项目特有事实、仓库内部约定），注入是否让答案从错变对。
+  测它仍要盲评；唯一一次间接证据仍是 §12 行 U 里"只有带环臂说出了那条 export 规则"。
 
 **后续计划：不再主动测试，改为被动观察，由判据自己判定。**
 
@@ -525,6 +541,12 @@ reachability 的 allowlist **必须被测试实际执行到**，否则它就成�
 | 每次真实交互会话后 | `./bin/aos doctor` 的 `observations: hot` | +1 ⇒ §9 那条 `[Inferred]` 升 `[Verified]`，判据 1 的窗口才算真开始走；不 +1 ⇒ 立刻查 `chat.message` 在 TUI 里的形态，优先级高于任何新功能 |
 | 窗口内（2026-10-29 到期） | `hot` 是否 ≥ 30；`recall` 行里的"空手"计数 | ≥30 ⇒ 这套层有存在依据；<30 ⇒ 按裁决收缩为 `outcome.py` + 契约层 + `migrations.py` 三件 + 文档 |
 | 同一窗口 | `review` 队列待标注数（现为 #24/#25） | 周均 > 50 或连续两周标注 = 0 ⇒ 触发判据 2，主路径改"回读 + 退出码"，人门只处理 `conflict/create` |
+
+**第十一轮给判据 1 的读数加两个限定** `[Verified]`：真库 `hot` 现在是 5，但其中 3 条是本轮 rig 提示词，
+不是 owner 的日常工作 —— 计数在机械上增长，语义上要打折。更要紧的一条是：**无头 `opencode run` 只要模型
+想调用工具就必然失败**（本机 `permission.bash=ask`，没有 TTY 可批 ⇒ host 自动拒；我们按规则绝不传 `--auto`）。
+三次真运行里两次正文 0 字符、一次把问题回声了一遍，全部因此失败，而不是因为注入或召回出错。
+所以"用真实使用量决定去留"这条判据，只有**交互会话**跑出来的 hot 才算数；用 rig 凑数会把判据 1 变成自证。
 
 **明确不做的**：不加采集面（判据 4 要求先在能力矩阵指到"无人实现"那一列）；不开 `AOS_BACKFILL_DB`
 （回读不产 verdict，灌进人门的又是标不了的历史）；不做质量盲评，除非换一个评得出差异的模型。

@@ -869,3 +869,47 @@ recall:          2 runs · 2 拿到记忆 · 0 空手
 
 文档动的是三处：`agent-os-v2.md` 新增 §15 并在开头一行指向它；`README.md` 的 Host integration 补一段
 （含"未证的那半"）；本节留计划日志。零代码改动，测试数 **410 不变**。
+
+### 计划后 · 第十一轮：人门在真实数据上落下了，并第一次量到行为效果（2026-10-01，owner 令"全程由你操作，不要让我打开 TUI"）
+
+owner 给了带硬规则的 brief（`/home/shade/Public/test` 驱动真会话、4–6 次调用、不许动 `~/.config/opencode/**`、
+不传 `--auto`、模型只用 `space-bunny-free`）。brief 里四处按代码实际形状改了，都在动手前核实：
+
+1. `memory add` 不带 `--verified` 会落 `status=candidate`，而召回只取 `active|verified`（`authoring.py:143-151`
+   + `retrieve.py:374-383`）⇒ 原样执行会种一条**永远召不回**的记忆，整轮白跑。
+2. "批准后该条不再出现"按现有规则不可能：min_score 判的是 decay **之前**的 adaptive（`retrieve.py:421-426`），
+   一秩只动一档（行 Z）⇒ 验收改成"一次 approve 改变了下一次召回的字节"。
+3. `review approve` 没有 `--as`（`main.py:997-999`）；`--skill` 在 `label`/`reject` 上。
+4. `run.sh` 的 `<label>` 只是文件名 tag，没有 `accept` 臂；写真库要靠 `AOS_STORE_DIR` + `AOS_RIG_ALLOW_REAL_STORE=1`。
+
+顺序上被代码逼出来的关键一条：**第 1 次 label 必被"≥2 次独立执行"的门拒掉，且 candidate 当场被消耗**
+（`promotion.json min_observations=2`、`evolve.py:812-814`、`label_review` 每次都跑 `run_learning`）。
+屏幕：`learning.rejected {"reason":"only 1 observation(s); need >= 2 independent executions"}`，
+候选行 `consumed_by='rejected'`；第二次 label 才出 `reviews_created=1`。**先跑够两次再标注**，否则证据自己烧掉。
+
+结果，按证据强度排：
+
+- **链条闭合 `[Verified]`（本轮主目标）**：真库里一条 `failure` 运行 → 提案 review #28
+  （`原因: a new memory is written only by a human decision`）→ `review approve` → 写入 `M-7B113D99`
+  → **下一次真实运行的注入 1122 字符/3 条 → 1359 字符/4 条**，插件 `len=1359` 与引擎
+  `recall.injection_chars=1359` 一致，而 `+237` 是跑之前用真库副本模拟预测出来的。
+- **行为效果首次量到，且分两半 `[Verified]`**：带环臂出现植入记忆规定的 `METRIC:/BECAUSE:/AVOID:` 三行
+  脚手架并显式拒绝 mean；惰臂该格式 0 行、`mean/average` 0 次 —— 但惰臂自己就推荐 p95。
+  ⇒ 注入改变的是**表达纪律与"拒绝哪个指标"的框架**，不是结论。§15 里上午那句"一次都没测过"已就地改成这个。
+- **到达侧再确认**：见证 1 在真库两次成立（1122==1122、1359==1359）；见证 2 双臂差 **+153 input tokens**
+  （464 字符的块），与行 U 的 +583/1279 同向。
+- **三次真运行为什么全失败** `[Verified]`：`opencode run` 无 TTY，本机 `permission.bash=ask` ⇒ host
+  `auto-rejecting`，两条正文 0 字符、一条把问题回声一遍（host 库的 part 普查，只读）。不是注入或召回的错。
+  ⇒ 判据 1 的 `hot` 现在 5，其中 3 条是 rig 提示词；语义打折，且**绝不能用 rig 凑数去满足判据 1**。
+- **不伪造归因**：失败原因是 harness，所以三条都标 `failure` 而**不给 `--skill`** ⇒ `blamed_memories: []`。
+  #24/#25 按 owner 决定没动（它们涉及的记忆互不重叠，标完也凑不出 2 次）。
+
+新登记的三条（都在 §12，均有屏幕，未闭）：**AD** 人门写入的失败记忆是 `type=failure, lane=hypothesis`，
+而 `hypothesis_max_days` 只看 `type` ⇒ 它不会 7 天退场；**AE** 重复的负面提案被判重 merge 到已有记忆后撞上
+`quality_threshold`，屏幕 `best quality 0.0 below threshold 3.0` 连开两次、候选 68/69 被烧 —— 正是
+`evolve.py:176-180` 注释禁止的类别错误，修法一行但会把队列变大（触及判据 2），归 owner；**AF** `run.sh:47`
+在 `:55` 的 mkdir 之前 tee。另有一条我只观察到、没钉死，故不登记为缺陷：`review list` 印 `runs=1` 而同一行
+`evidence_json.validation_runs=2`。
+
+调用记账：5 次（双臂 2 + 真库 3），预算内。零写 `~/.config/opencode/**`，插件仍不落文件。
+测试数 **410 不变**（本轮没有代码改动：撞到的三条都属于"改了会动治理语义"，留给 owner）。
