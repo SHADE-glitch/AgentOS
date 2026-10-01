@@ -699,3 +699,31 @@ def test_plugin_payload_with_an_unknown_key_is_named_not_swallowed(capsys):
 
     assert code == 0
     assert any("totally_new_field" in warning for warning in doc["warnings"])
+
+
+def test_the_unattributed_hint_does_not_point_at_a_dead_command(capsys):
+    """A hint that names a command which can no longer run teaches the queue is broken.
+
+    Labelling without `--skill` records the verdict and blames nothing, and the CLI
+    says so — but the review is approved by that same call, so repeating it with
+    `--skill` returns `already_decided`. The hint has to say what is lost and when the
+    next chance is, not offer a command that cannot succeed.
+    """
+    from aos.core.loop import lifecycle
+
+    pre = lifecycle.preflight(task="修复 cache key 碰撞", cwd="/tmp", session_id="ses-hint")
+    lifecycle.postflight(task_id=pre["task_id"], loop_id=pre["loop_id"], session_id="ses-hint", cwd="/tmp")
+
+    with MemoryStore() as store:
+        pending = [r for r in store.list_reviews(status="pending") if r["kind"] == "outcome_label"]
+    review_id = pending[0]["review_id"]
+
+    sys.stdin = io.StringIO("")
+    try:
+        main(["review", "label", str(review_id), "--outcome", "failure"])
+    finally:
+        sys.stdin = sys.__stdin__
+    err = capsys.readouterr().err
+
+    assert "没有归因任何记忆" in err, "the loss has to be said out loud"
+    assert f"label {review_id} --outcome" not in err, "and no command may be suggested that is now impossible"

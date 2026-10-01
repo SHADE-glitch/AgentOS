@@ -810,8 +810,8 @@ def _report_attribution(review_id: int, outcome: str, verdict: dict) -> None:
         return
     print(
         f"#{review_id}: 结论已记为 {outcome}，但未点名 skill ⇒ 没有归因任何记忆"
-        f"（召回过 ≠ 造成了结果）。要让它生效：aos review label {review_id}"
-        f" --outcome {outcome} --skill <这次的工种，如 bugfix>",
+        f"（召回过 ≠ 造成了结果）。这条评审已经定了，归因补不回来；"
+        f"下次标注时直接写：aos review label <id> --outcome {outcome} --skill <这次的工种，如 bugfix>",
         file=sys.stderr,
     )
 
