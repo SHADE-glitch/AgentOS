@@ -318,6 +318,28 @@ test("why the plugin said nothing is itself said", async () => {
   }
 });
 
+test("the tool hook names the shape it was given, never its contents", async () => {
+  // Whether a real error is visible here is the open question behind `tool_errors`:
+  // the plugin only counts an error it can actually see, and an unconfirmable guess
+  // about the payload shape is how a probe fires on nothing forever. Keys and counts
+  // in the record, values nowhere.
+  process.env.AOS_PLUGIN_DEBUG = "1";
+  try {
+    const { server } = await hooks();
+    await openTurn(server);
+    const out = await captureStderr(async () => {
+      await server["tool.execute.after"](
+        { sessionID: "ses-1", tool: "bash", callID: "c1" },
+        { title: "t", output: "客户的手机号是 13800000000", metadata: { truncated: false } },
+      );
+    });
+    assert.match(out, /tool seen tool=bash keys=[a-z,]+ metadata_keys=[a-z,]+/, "the shape is recorded");
+    assert.doesNotMatch(out, /13800000000|手机号/, "and the record carries no tool output");
+  } finally {
+    delete process.env.AOS_PLUGIN_DEBUG;
+  }
+});
+
 test("an unanswered postflight is retried, then given up on out loud", async () => {
   // The run ended and the engine did not answer. Marking the session as reported
   // before the call meant that was the end of it: the loop stayed open in the

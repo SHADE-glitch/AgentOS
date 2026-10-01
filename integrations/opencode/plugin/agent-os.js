@@ -247,6 +247,16 @@ export default {
             (hookInput && hookInput.error),
         );
         if (failed) entry.toolErrors = (entry.toolErrors || 0) + 1;
+        // Which shape the host actually hands us here is not something a fixture can
+        // settle, and an error detector that silently never fires is worse than no
+        // detector. Record the field *names* — never the tool's output, which is
+        // somebody's work and somebody else's secrets — so a live run answers the
+        // question once, in the log, instead of in speculation.
+        note(
+          `tool seen tool=${(hookInput && hookInput.tool) || "-"} keys=[${
+            output ? Object.keys(output).sort().join(",") : ""
+          }] metadata_keys=[${output && output.metadata ? Object.keys(output.metadata).sort().join(",") : ""}] failed=${failed}`,
+        );
       }),
 
       event: safe("event", cfg, state, async (hookInput) => {
