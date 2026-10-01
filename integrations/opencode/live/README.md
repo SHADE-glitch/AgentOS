@@ -63,10 +63,18 @@ counts `source='hot'` and nothing else:
   a live record that this path has run thousands of times — far more than this rig's 8 runs, so it is the
   owner's usage. Note what it does *not* say: the counter never records which client was attached, which
   is precisely the link the next bullet is missing.
-- **⇒ therefore a TUI turn lands a `source='hot'` observation** `[Inferred]`, not observed. Every hook our
-  seam needs is proven live in interactive use except `chat.message`, which is the one that *opens* the
-  loop — and skill-tracker's `chat.message` handler writes no rows, so there is no trace to borrow.
-  One real session settles it: `./bin/aos doctor` before and after, and `observations: hot` must tick.
+- **⇒ a TUI turn lands a `source='hot'` observation** `[Verified, round 14]`. It needed no human at the
+  keyboard: drive the **full** interface in a private tmux session and type into it —
+  `/usr/bin/tmux new-session -d -s p14 … "AGENT_OS_ROOT=… AOS_STORE_DIR=/tmp/aos-rig-p14/store
+  AOS_PLUGIN_DEBUG=1 $HOST -m opencode/space-bunny-free --print-logs --log-level DEBUG /home/shade/Public/test 2>logs/armed-stderr.txt"`,
+  then `send-keys -l '<prompt>'`, `send-keys Enter`, `capture-pane`. Result: `preflight ok loop=LOOP-…-D018
+  chars=323` == `system appended index=1 len=323` == engine `stages.recall.injection_chars`, and the scratch
+  store's `observations: hot` went 0 → 2. `chat.message` — the loop-opening hook every prior arm could not
+  reach — does fire in an interactive session. The inert control says so itself on stderr
+  (`disabled: AGENT_OS_ROOT unset, every hook will no-op`) and its session holds no trace of ours.
+  Two things this does **not** license: these runs are still rig prompts (do not count them toward
+  criterion 1), and a permission prompt inside the TUI belongs to the owner — stop and ask, never
+  answer for them, and never reach for `--auto`.
 
 ## Running the arms
 

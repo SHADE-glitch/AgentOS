@@ -331,6 +331,11 @@ mtime 与装载前一致）。
   （`metadata` 里是 `truncated` / `matches` / `count`），**没有 `error` 键**；而权限被拒的那次工具调用
   **根本不会走到 after 钩子**。⇒ `tool_errors` 在这个 host 上按现有信息只能保持缺席（设计上"缺席不是 0"），
   代价是合成的 mass 变低、运行更多交到人门 —— 这是对的，不是缺陷。
+  **但这条普查在第十四轮被补了一半，且是我们自己缺的**：带工具的真会话里
+  `tool seen tool=bash keys=[attachments,metadata,output,title] metadata_keys=[exit,output,truncated] failed=false`
+  —— `metadata.exit` 对 shell 类工具是**可见的**（glob 那次只有 `count/truncated`，所以早前只见过"无 error 键"）。
+  于是"退出码拿不到"这个说法不成立：拿得到原始退出码，拿不到的是**把它当成 `build_exit_code`/`test_exit_code`
+  的正当理由** —— 一条 `ls` 的 0 不等于构建成功，硬映射就是 F3 那一类自我打分。登记为缺陷 AI，不改。
 - **多个插件之间 `system.transform` 的执行顺序仍未确认** `[Unconfirmed]`：本机 DCP 在这几轮里
   一次都没有写过 `system`（日志里 0 行 dcp 活动），所以"我们排在别人之后/之前"这件事仍然只能靠
   "无论如何都只追加"来保证；缺陷 R 的修法（保留 `</agent_os>` 之后的后缀）正是为最坏情况准备的，
@@ -341,7 +346,13 @@ mtime 与装载前一致）。
   ⇒ 插件钩子在交互会话里确实被调用；`@mohak34/opencode-notifier` 在 `dist/index.js:2319` 处理
   `session.idle` 并按 `isCLI`（`:2293`）区分 CLI 与 TUI ⇒ 我们 postflight 等的那个事件也会到。
   缺的是**开环的 `chat.message`** —— skill-tracker 的同名处理器不落库，没有可借的证据。
-  结算方式一次会话即可：真会话前后各跑 `./bin/aos doctor`，`observations: hot` 必须 +1。
+  **这一环已在第十四轮结算为 `[Verified]`**：用 `/usr/bin/tmux` 把**完整交互式 TUI** 开在
+  `/home/shade/Public/test`（`AGENT_OS_ROOT` + `AOS_STORE_DIR` 指向 scratch，`-m opencode/space-bunny-free`，
+  绝不 `--auto`），一句中文提问换回 `preflight ok loop=LOOP-…-D018 chars=323` 与
+  `system appended index=1 len=323`，引擎侧 `stages.recall.injection_chars` 同为 323，
+  scratch 库 `observations: hot` 由 0→2（第三条是重放轮）⇒ **`chat.message` 在交互会话里确实开环**，
+  钩子顺序与形状此前所有旁证一次性让位给现场。惰臂同一界面自己声明 `disabled: AGENT_OS_ROOT unset`，
+  且其会话内 0 处我们的痕迹 ⇒ 对照仍然只差一件事。
   详见 `integrations/opencode/live/README.md`。
 
 通电的另一半在引擎侧 `[Verified]`：`aos/core/loop/pending.py` 让
@@ -424,7 +435,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–AG 已闭；只剩 AF —— rig 自己的 tee 早于 mkdir）
+## 12. 缺陷登记（A–AG 已闭；未闭三条：AF 是 rig 自身，AH/AI 都是排序与归属的语义决定）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -464,6 +475,8 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | AE | 分支按"记忆是否存在"路由，而不是按**分类**路由：被判重合并到已存在记忆的负面首现提案撞上 `quality_threshold` 被拒，候选当场消耗 | 真库事件屏幕：`learning.rejected {"memory_id":"M-7B113D99","reason":"best quality 0.0 below threshold 3.0"}` 连着两次，候选 68/69 均 `consumed_by='rejected'`。而 `evolve.py:176-180` 自己的注释写着质量门槛"问的不是第一次 episode —— 尤其不是失败的那次"，豁免条件却没覆盖"记忆已存在但 candidate 仍是 create"这一路。红测试还把**第二个洞**逼了出来：只改路由之后 review 的 `proposed_change.kind` 变成 `reinforce`（"它出现的运行都成功了"），重复的失败会被写成晋升证据 —— 红屏幕 `assert 'reinforce' != 'reinforce'` | **已闭于第十二轮**（`proposal` 无条件求出、分支按 `proposal is not None` 路由；`decide_promotion` 对 `creates ∧ 记忆存在 ∧ 无 weaken/reinforce` 返回 `kind='duplicate'` + `changes={}`，批准走既有 "recorded" 分支，地位不动。**队列增量实测**：真库副本重放一次重复提案 ⇒ pending 2→3，即每次重复负面 episode 多一条人门评审 —— 这是信息，不是否决理由）|
 | AF | rig 自身：`run.sh:47` 在 `:55` 的 `mkdir -p "$RIG/logs"` **之前**就向 `$RIG/logs/<label>.txt` tee ⇒ 换一个全新的 `AOS_RIG` 目录时第一次运行在 `set -e` 下当场死（真库分支 `:46-48` 更早） | 本轮换新 scratch 目录时靠预先 `mkdir -p` 绕开；没写成红测试，所以只登记不宣称已修 | **未闭**（工具面，不影响引擎结论；修法是把 mkdir 提到第一次 tee 之前）|
 | AG | **人门批准写出来的是一条事故流水，不是经验** —— 而 `approve` 只能批准或拒绝、不能编辑，所以每一次批准都*必然*产出这种 stub | 真库那一行原文：`title` = `"opencode plugin 的 export 应该怎么写，loader 会不会把每个 export 当工厂"`（问题回声，57 字符）；`body` = `任务「…」的结果：failure。 路由：report（report）。 位置：/home/shade/Public/test`；`when_to_apply` = `下次处理「…loader 会」这类任务时` —— 被 `record.py:121` 的 `task[:40]` 切在词中间；`observation_count=0`、`revalidate_after=''`、`use/success=0/0`。渲染侧 `inject.py:31,45` 把 `type='failure'` 打成 **`不要：`** 前缀 ⇒ 模型读到的是"不要：任务「…」的结果：failure"。而 MVP 的承诺（`docs/decision/positioning.md:240`）写的是"下次 preflight 看到 **不要…因为…**" —— **这里没有"因为"** | **已闭于第十三轮**（owner 选了 A+B+C 全做；我原先"蒸馏需要新采集面 ⇒ 撞判据 4"的判断是错的 —— `response_summary` 早就在 `PLUGIN_POSTFLIGHT_REQUEST_FIELDS` 与 `SIGNAL_FIELDS` 里，插件只是从来没发过，发它不新增任何采集面）。三件事一起成立：
+| AH | **人写的教训按"路由兜底桶"命中，不按内容命中** ⇒ 会在毫不相干的任务上串场 | 第十四轮复现（0 调用）：批准 `M-EE28D437`（内容："被问目录里有没有某类文件时先查再答"，tags 只有路由给的 `bugfix/fallback/refactor`）后，用引擎自己的 router + recall 重放三条任务 ——「那这个目录里实际有没有配置文件…」召回它（对），**「帮我写一首关于秋天的短诗」也召回它（错）**，「把这段 Go 的并发死锁排查一下」不召回。三种问法分数完全相同 `0.161` ⇒ 命中项只有 `category=fallback` 与 `roles` 这两项**路由属性**，题面一个字都没参与；而 0.161 只比 `min_score=0.15` 高 0.011 | **未闭（语义决定，归 owner）**：要么让人门写入门禁必须补 tag/域（`approve --tags`），要么让 `fallback` 这一桶不产生匹配权重（兜底类别不该是相似度）。两者都改排序语义，且都动"人刚写的东西能不能被找到"这条主路径 |
+| AI | §9 的 `tool.execute.after` 普查把"没有 `error` 键"写成了"退出码拿不到"，越界了一半 | 真会话里 bash 那次：`metadata_keys=[exit,output,truncated]`（`glob` 那次是 `[count,truncated]`）⇒ **shell 类工具的退出码在 after 钩子是可见的**；`error` 键确实没有，被拒调用确实不进 after，那两条结论仍成立 | **未闭（不改）**：可采的是原始退出码；把它映射成 `build_exit_code`/`test_exit_code` 需要"这条命令是构建/测试"的判断，而插件不认识命令语义 —— 硬映射即 F3 那类自我打分。要做得先定归属规则，留给 owner |
 ① **B** 草稿不再回声模板句，改为 `失败于「…」/ 路由 / 改动 N 个文件 / 可证：… / 缺证：… 未上报 / 未归因：…要人补`，截断一律带 `…` 标记；
 ② **A** `review approve --title/--body/--when` 让批准的人写下"因为"（仅 create；对已存在的行请求改正文会被拒 —— 那正是 AC 关掉的第二个写入者），事件记 `authored_by`；
 ③ **C** 插件从 `message.updated` 解析角色后上报助手正文（≤500 字符，无角色则**宁可不报**），草稿以 `模型自述（未核实）：「…」` 引用它，且**判决权重仍为 0.00**（`tests/test_outcome.py` 与缝守卫各钉一次；缝守卫抓到集合变了并要求与合成一起改，就地把权重断言加在了它旁边）。
