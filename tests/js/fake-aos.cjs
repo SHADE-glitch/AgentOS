@@ -38,6 +38,10 @@ function emit(document) {
 }
 
 if (mode === "hang") sleep(5000);
+// A postflight that outlives the plugin's budget on purpose — the shape of a loop whose
+// validate stage is running the project's own build. Preflight still answers, so the loop
+// opens; only the report is late.
+if (mode === "posthang" && argv[0] === "postflight") sleep(5000);
 if (mode === "garbage") {
   emit("this is not a json document");
   process.exit(3);

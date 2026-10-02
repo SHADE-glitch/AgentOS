@@ -735,7 +735,8 @@ def _js_without_comments(source: str) -> str:
 
 
 def _js_payload_keys(source: str, marker: str) -> set[str]:
-    """The top-level keys of the object literal passed to `ask(cfg, "<phase>", {…})`.
+    """The top-level keys of the object literal passed to `ask(cfg, "<phase>", {…})`
+    (or, for postflight, `sendPostflight(cfg, {…})`).
 
     A scanner rather than a regex over the whole file: a key only counts when it sits
     at the payload object's own depth, so a nested literal, a call argument or a
@@ -799,7 +800,10 @@ def test_the_plugin_own_payload_fields_are_the_ones_the_contract_reads():
     )
 
     pre = _js_payload_keys(source, 'ask(cfg, "preflight"')
-    post = _js_payload_keys(source, 'ask(cfg, "postflight"')
+    # Postflight goes through its own transport: it is not on the turn's critical path and
+    # may outlive the plugin's budget, so it is released rather than killed. Same payload,
+    # different call — the marker follows the code.
+    post = _js_payload_keys(source, "sendPostflight(cfg, {")
     signals = set(re.findall(r"signals\.([a-z_]+)\s*=", _js_without_comments(source)))
 
     assert pre and post, "the payload literals were not found — the plugin's shape changed"

@@ -174,6 +174,38 @@ test("the preflight request carries the contract's own fields", async () => {
   );
 });
 
+test("a message the host marked as not the user's is not a task", async () => {
+  // `@tarquinen/opencode-dcp` sends its `▣ DCP | …` compression banner as a real user-role
+  // message whose text part carries `ignored: true` (lib/ui/notification.ts:308-347, via
+  // session.prompt with noReply), and opencode fires `chat.message` for it like any other.
+  // Filtering only on type === "text" filed that banner as the task — 39 of the 75 loops in
+  // the live store routed on DCP's own status output. `synthetic` is the host's marker for
+  // its own injections, so both are skipped; a real prompt carries neither.
+  const marked = { type: "text", text: "▣ DCP | -593.7K removed, +67.3K summary", ignored: true };
+
+  const { server } = await hooks();
+  await server["chat.message"](
+    { sessionID: "ses-1", model: { providerID: "p", modelID: "m" } },
+    { message: {}, parts: [marked] },
+  );
+  assert.deepEqual(calls(), [], "a message with nothing the user wrote opens no loop");
+
+  const { server: mixed } = await hooks();
+  await mixed["chat.message"](
+    { sessionID: "ses-1", model: { providerID: "p", modelID: "m" } },
+    { message: {}, parts: [marked, { type: "text", text: "修复 cache key 碰撞" }] },
+  );
+  const [call] = calls();
+  assert.equal(call.payload.task, "修复 cache key 碰撞", "only the marked part is dropped");
+
+  const { server: injected } = await hooks();
+  await injected["chat.message"](
+    { sessionID: "ses-1", model: { providerID: "p", modelID: "m" } },
+    { message: {}, parts: [{ type: "text", text: "host-injected context", synthetic: true }] },
+  );
+  assert.equal(calls().length, 1, "a synthetic part is not the user's task either");
+});
+
 test("session.idle reports the run back with signals it actually saw", async () => {
   const { server } = await hooks();
   await openTurn(server);
@@ -517,6 +549,26 @@ test("an unanswered postflight is retried, then given up on out loud", async () 
   const posts = calls().filter((call) => call.argv[0] === "postflight");
   assert.equal(posts.length, 3, "two retries, then it stops asking");
   assert.equal(new Set(posts.map((call) => call.payload.loop_id)).size, 1, "always the same loop");
+});
+
+test("a postflight that outlives the budget is released, not killed and not retried", async () => {
+  // The engine's validate stage may run the project's own build, budgeted up to 300 s
+  // engine-side (`aos/core/validation/code_validator.py`) while this plugin waits 600 ms.
+  // Killing it at the plugin's budget lost the whole loop — `_run_postflight` saves only at
+  // the end — so a postflight past the budget is detached and left to finish on its own.
+  // That is not silence, so it is not retried: asking again would race an engine still running.
+  process.env.AOS_FAKE_MODE = "posthang";
+  const { server } = await hooks();
+  await openTurn(server);
+
+  const started = Date.now();
+  await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+  assert.ok(Date.now() - started < 3000, "the host stopped waiting on its own budget");
+
+  // A second idle must not call the still-running engine again.
+  await server["event"]({ event: { type: "session.idle", properties: { sessionID: "ses-1" } } });
+  const posts = calls().filter((call) => call.argv[0] === "postflight");
+  assert.equal(posts.length, 1, "released once, never asked a second time");
 });
 
 test("a hook that works says so, when debugging is on", async () => {

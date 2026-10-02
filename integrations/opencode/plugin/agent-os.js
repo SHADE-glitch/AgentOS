@@ -64,6 +64,54 @@ function run(bin, args, input, timeoutMs) {
   });
 }
 
+// The engine's postflight is not on the turn's critical path, and it can legitimately run long:
+// its `validate` stage may execute the project's own build, which the engine budgets up to 300 s
+// for (`aos/core/validation/code_validator.py`). Killing it at this plugin's much smaller budget
+// loses the entire loop — `_run_postflight` saves only at the end — so a postflight that outlives
+// the budget is *released* rather than killed: it is detached into its own process group, its
+// pipes are drained so a chatty engine cannot block on a full buffer, and the host stops waiting.
+// The engine finishes and saves on its own; `aos pending` and `doctor` remain the place a genuinely
+// dead engine shows up. Preflight is the opposite case — it is on the critical path, so `run()`
+// still abandons (and kills) a slow one to unblock the turn.
+function dispatch(bin, args, input, timeoutMs) {
+  return new Promise((resolve) => {
+    const child = spawn(bin, args, { stdio: ["pipe", "pipe", "pipe"], detached: true });
+    let stdout = "";
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      // Keep draining so a chatty engine cannot block on a full pipe, but unref the pipes as
+      // well as the process: a resumed stream is itself an active handle, so without this the
+      // released engine would pin the host's event loop until it exits — the opposite of
+      // releasing it.
+      child.stdout.resume();
+      child.stderr.resume();
+      if (typeof child.stdout.unref === "function") child.stdout.unref();
+      if (typeof child.stderr.unref === "function") child.stderr.unref();
+      child.unref();
+      resolve({ released: true, stdout, code: null });
+    }, timeoutMs);
+
+    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.stderr.on("data", () => {});
+    child.on("error", (error) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve({ released: false, error, stdout, code: null });
+    });
+    child.on("close", (code) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve({ released: false, stdout, code });
+    });
+    child.stdin.write(input ?? "");
+    child.stdin.end();
+  });
+}
+
 const ID = "agent-os";
 const OPEN = "<agent_os>";
 const CLOSE = "</agent_os>";
@@ -94,10 +142,44 @@ async function ask(cfg, phase, payload) {
   }
 }
 
+// The postflight answer, if it came back within the budget. `released` means the engine is still
+// working and the host has stopped waiting for it — not a failure, and never a reason to call
+// again (a retry would race an engine that is still running).
+async function sendPostflight(cfg, payload) {
+  const outcome = await dispatch(
+    cfg.bin,
+    ["postflight", "--payload-stdin"],
+    JSON.stringify(payload),
+    cfg.timeoutMs,
+  );
+  if (outcome.released) return { released: true };
+  if (outcome.error) return { error: outcome.error };
+  const text = (outcome.stdout || "").trim();
+  if (!text) return { answered: false };
+  try {
+    return { answered: true, doc: JSON.parse(text) };
+  } catch {
+    return { answered: false };
+  }
+}
+
+// A part the host marked as not the user's own text is not a task. `@tarquinen/opencode-dcp`
+// sends its `▣ DCP | …` compression banner as a real user-role message whose text part carries
+// `ignored: true`, and opencode fires `chat.message` for it like any other message; filtering
+// only on `type === "text"` filed that banner as the task (39 of 75 loops in the live store
+// routed on DCP's own status output). `synthetic` is the host's marker for its own injections,
+// so both are skipped — a prompt the user actually typed carries neither.
 function userText(output) {
   const parts = (output && output.parts) || [];
   return parts
-    .filter((part) => part && part.type === "text" && typeof part.text === "string")
+    .filter(
+      (part) =>
+        part &&
+        part.type === "text" &&
+        typeof part.text === "string" &&
+        part.ignored !== true &&
+        part.synthetic !== true,
+    )
     .map((part) => part.text)
     .join("\n")
     .trim();
@@ -453,7 +535,7 @@ export default {
         signals.tool_calls = entry.toolCalls || entry.trace.length;
       }
 
-      const answered = await ask(cfg, "postflight", {
+      const outcome = await sendPostflight(cfg, {
         schema_version: "1.2",
         phase: "postflight",
         task_id: entry.taskId,
@@ -463,13 +545,29 @@ export default {
         provider: "host_delegate",
         signals,
       });
-      if (!answered) {
+      if (outcome.released) {
+        // The engine outlived the budget — its `validate` stage can legitimately run the
+        // project's own build — so it was detached to finish and save on its own. This is
+        // not silence and not a failure: the loop will close once the engine writes it.
+        // Calling again would race an engine that is still working, so this is the end of
+        // the account either way; `aos pending` and `doctor` remain where a genuinely dead
+        // engine shows up.
+        entry.reported = true;
+        note(
+          `postflight released loop=${entry.loopId} after ${entry.attempts} attempt(s); ` +
+            "engine still running detached and will save its own result",
+        );
+        state.sessions.delete(sessionID);
+        return;
+      }
+      if (outcome.error || !outcome.answered) {
         // Silence from the engine is not "reported". The run ends here or later, and
         // another event costs the host nothing — but a dead engine must not turn this
         // into an endless retry, so the attempts are bounded and the last one is said
         // out loud. Either way the pending record stays behind, which is the trace
         // `aos pending` and `doctor` exist to surface.
-        note(`postflight unanswered loop=${entry.loopId} attempt=${entry.attempts}`);
+        const why = outcome.error ? `error=${outcome.error.message}` : "unanswered";
+        note(`postflight ${why} loop=${entry.loopId} attempt=${entry.attempts}`);
         if (entry.attempts >= 3) {
           entry.reported = true;
           note(
