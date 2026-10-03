@@ -1088,3 +1088,39 @@ owner 先否掉了长测计划，改成开发轮：闭环缺的不是"能不能�
 
 测试 **434 → 447**，JS **24 → 27**；契约仍 1.2、schema 仍 v5（两库 `PRAGMA user_version` 实测）、无迁移；
 真库 `store/aos.db` 的 sha256 与本轮开始时**逐字节相同**（所有实验都在 scratch 库）。未闭三条：AF、AI、AK。
+
+### 计划后 · Stage 1 第二轮：basic-memory 只读召回（2026-10-02，owner 令"先评审，再做这一个改动"）
+
+owner 把 Stage 1 的目标定为"是否值得每天用"，同时下了两件一起做：按仓库自己的四条判据评审，
+然后实现**一条**改动 —— 把 basic-memory 的笔记作为**只读指针源**接进注入。评审结论（判据逐条，带标注）：
+
+- **判据 4** `[Verified]`：这条恰好落在它自己的分流上 —— "检索"在能力矩阵里属"已有更成熟实现"，
+  而 `positioning.md §6.4` 对这种情形的处置就是**转只读适配**，不是新做一套。所以它不是"再加一层"。
+- **判据 1/2** `[Verified]`：都还没到判定时刻。`./bin/aos doctor --json` 现读 `hot`、`recall`、`reviews`，
+  窗口 2026-10-29 才收口；判据 1 只数 owner 的交互会话，本轮 0 次模型调用。
+- **判据 3** `[Verified]`：不写 `~/.config/opencode/**`、不碰他人 `output.system`，注入仍是**同一个自标识元素**，
+  惰臂（`AGENT_OS_ROOT` 不设）逐字节不变那条 JS 断言没动过。
+- **张力 1 的冲突点** `[Judgment]`：`positioning.md §5` 原话含"不统一检索"。本轮把它**收窄**为
+  "不做统一索引/统一排序"，并在文档里明写收窄发生过一次（`§5`、`agent-os-v2.md §11/§16`）。
+  守住的是同一条接缝的另一半：**引用 id 而不是复制内容** —— 默认 `max_body_chars: 0`，块里只有标题 +
+  permalink + 文件路径。
+- **基线现状** `[Verified]`：exp-v1 的代码点 `53de1ad` 之后已被两次提交动过冻结面（`5d34aba` 改插件与 JS 缝守卫、
+  本轮改 `aos/`），**两个 tag 都没移动**；所以 §16 加了一段"跨这些点的读数不再是同一条基线"。
+  另发现并修掉一处文档与代码不符：§12 的 AF 行还写"未闭"，实际已在 `5ac5258` 闭（mkdir 提前）。
+
+做了什么（一次改动，一笔提交）：`aos/core/memory/external.py`（新增）+ `inject.render(external=…)` +
+`recall_stage`/`build_prompt`/`_preflight_doc` 各一处 + `policy.DEFAULT_POLICIES["external"]` +
+`content/policies/external.json` + `config.ENV_BM_DB`/`basic_memory_db()` + `tests/conftest.py` 隔离 + 文档四处。
+
+三条先红后绿：`ImportError: basic_memory_db`（模块还不存在）；`render() got an unexpected keyword 'external'`（4 条）；
+以及红屏里抓到的两处我自己写的真错 —— `external.py` 里循环变量 `_score` 遮蔽了同名函数（`UnboundLocalError`），
+和 fail-open 只包住了 SQL、没包住"打开"本身。
+
+真实屏幕（只读，未新建任何 store）：52 篇笔记、`~/.basic-memory/memory.db`，一次召回 **1.4–2.3 ms**（预算 1200ms），
+`重构 Spring Boot 项目的 profile 配置` → 1 条、`GNOME 扩展…不重载代码` → 2 条、`帮我写一首关于秋天的短诗` → 0 条；
+跑完邻居库 sha256 与跑前一致。诚实的一条限制：**52 篇里只有 5 篇有 tag**，其余靠标题 token 命中 ⇒ 指针覆盖率受
+"标题里有没有题面用词"限制，不是语义相关度。
+
+测试 **447 → 463**（+12 `tests/test_external.py`、+4 注入用例）；JS **29** 不变（那 +2 是 `5d34aba` 带来的）。
+契约仍 1.2、schema 仍 v5、无迁移；真库 `store/aos.db` sha256 逐字节不变（本轮所有引擎路径都在 scratch/fixture 上跑）；
+`~/.config/opencode/**` 零写入。未闭仍是两条：AI、AK。

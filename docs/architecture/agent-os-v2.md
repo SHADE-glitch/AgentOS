@@ -431,11 +431,13 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | 契约里的 `skill.skills_loaded` | 无生产者的字段，host 能读到的唯一值是 `[]` | **P1 删除**（契约 1.1 → 1.2，由具名测试钉住不得回来） |
 | 第二个 Skill 系统 / `skill_versions` / `sensing/skills.py` | 墙 1 + `positioning.md` 张力 2 | 从未存在 |
 | 自建遥测采集（旧计划的 `aos skill report`） | 本机 skill-tracker 五表 + 单调状态修正更强，AOS 只读（张力 4） | 从未存在（计划取消） |
-| `MemoryProvider` 抽象 / 与 basic-memory 的同步 | 张力 1；预留空壳仍属装饰物 | 从未存在 |
+| `MemoryProvider` 抽象 / 与 basic-memory 的双向同步 | 张力 1；预留空壳仍属装饰物。**2026-10-02 收窄过一次**：
+  加的是**只读、指针式**的第二召回源（`aos/core/memory/external.py`，§16 与 `positioning.md §5`）——
+  抽象层与同步仍然没有，也不打算有 | 抽象与同步从未存在；只读召回自 2026-10-02 |
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–AJ 已闭；未闭三条：AF 是 rig 自身，AI 是"退出码算不算构建结论"的归属决定，AK 是"中断事件有没有源"的普查缺口）
+## 12. 缺陷登记（A–AK 中除两条外全部闭合：AI 是"退出码算不算构建结论"的归属决定，AK 是"中断事件有没有源"的普查缺口）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -473,7 +475,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | Z | 记账，非缺陷："削弱到底即退休"实际需要 **5 次** 独立否定，因为每一秩只降一档 | 屏幕：从 `real_project_validated` 起，第 2/3/4 次批准让 rank 1 → 3（0.387→0.309→0.262），第 5 次才 `active → deprecated` 并**从注入块里消失** | 行为正确。这条只是把 final-plan §3 第 8 步的真实成本写清楚：让一条记忆退出召回 = 五次可归因的失败，不是点一下按钮 |
 | AD | 同一个概念两套谓词：decay 的假设保护窗读 `type == 'hypothesis'`，而"这是假设"由 `lane`/`evidence_level` 陈述（`store.hypothesis_lane`、注入器 `inject._is_hint` 都读后者） | 红证据：`type='failure', lane='hypothesis'` 超窗行的 reasons 是 `['unused_severe: …', 'low_confidence: 1 observation']` —— Trigger 4 根本不出现。更硬的一条：`hypothesis` **不在 `MEMORY_TYPE` 词表里**（`contract/schema.py`：constraint/episodic/failure/preference/procedural/semantic），所以那个条件对本引擎能写出的任何行都永不成立 —— 伪装成规则的废码。真库现场：`M-7B113D99` 是 `('failure','hypothesis','hypothesis')`，批准之后没有任何东西会让它退场 | **已闭于第十二轮**（Trigger 4 改读 `hypothesis_lane()`，`mem_type` 那行随之删掉——它没有别的读者。屏幕：真库那条（副本上把 created_at 挪到 8 天前）reasons 含 `hypothesis: past protection window`，factor 0.7/degraded）|
 | AE | 分支按"记忆是否存在"路由，而不是按**分类**路由：被判重合并到已存在记忆的负面首现提案撞上 `quality_threshold` 被拒，候选当场消耗 | 真库事件屏幕：`learning.rejected {"memory_id":"M-7B113D99","reason":"best quality 0.0 below threshold 3.0"}` 连着两次，候选 68/69 均 `consumed_by='rejected'`。而 `evolve.py:176-180` 自己的注释写着质量门槛"问的不是第一次 episode —— 尤其不是失败的那次"，豁免条件却没覆盖"记忆已存在但 candidate 仍是 create"这一路。红测试还把**第二个洞**逼了出来：只改路由之后 review 的 `proposed_change.kind` 变成 `reinforce`（"它出现的运行都成功了"），重复的失败会被写成晋升证据 —— 红屏幕 `assert 'reinforce' != 'reinforce'` | **已闭于第十二轮**（`proposal` 无条件求出、分支按 `proposal is not None` 路由；`decide_promotion` 对 `creates ∧ 记忆存在 ∧ 无 weaken/reinforce` 返回 `kind='duplicate'` + `changes={}`，批准走既有 "recorded" 分支，地位不动。**队列增量实测**：真库副本重放一次重复提案 ⇒ pending 2→3，即每次重复负面 episode 多一条人门评审 —— 这是信息，不是否决理由）|
-| AF | rig 自身：`run.sh:47` 在 `:55` 的 `mkdir -p "$RIG/logs"` **之前**就向 `$RIG/logs/<label>.txt` tee ⇒ 换一个全新的 `AOS_RIG` 目录时第一次运行在 `set -e` 下当场死（真库分支 `:46-48` 更早） | 本轮换新 scratch 目录时靠预先 `mkdir -p` 绕开；没写成红测试，所以只登记不宣称已修 | **未闭**（工具面，不影响引擎结论；修法是把 mkdir 提到第一次 tee 之前）|
+| AF | rig 自身：`run.sh:47` 在 `:55` 的 `mkdir -p "$RIG/logs"` **之前**就向 `$RIG/logs/<label>.txt` tee ⇒ 换一个全新的 `AOS_RIG` 目录时第一次运行在 `set -e` 下当场死（真库分支 `:46-48` 更早） | 本轮换新 scratch 目录时靠预先 `mkdir -p` 绕开；没写成红测试，所以只登记不宣称已修 | **已闭于 Stage 0 的 rig 前置**（`5ac5258`：`mkdir -p "$RIG/logs"` 提到第一次 `tee` 之前，另加 `--auto` 解析与透传）。同一提交链上换全新 `AOS_RIG` 目录跑通了第一次运行 |
 | AG | **人门批准写出来的是一条事故流水，不是经验** —— 而 `approve` 只能批准或拒绝、不能编辑，所以每一次批准都*必然*产出这种 stub | 真库那一行原文：`title` = `"opencode plugin 的 export 应该怎么写，loader 会不会把每个 export 当工厂"`（问题回声，57 字符）；`body` = `任务「…」的结果：failure。 路由：report（report）。 位置：/home/shade/Public/test`；`when_to_apply` = `下次处理「…loader 会」这类任务时` —— 被 `record.py:121` 的 `task[:40]` 切在词中间；`observation_count=0`、`revalidate_after=''`、`use/success=0/0`。渲染侧 `inject.py:31,45` 把 `type='failure'` 打成 **`不要：`** 前缀 ⇒ 模型读到的是"不要：任务「…」的结果：failure"。而 MVP 的承诺（`docs/decision/positioning.md:240`）写的是"下次 preflight 看到 **不要…因为…**" —— **这里没有"因为"** | **已闭于第十三轮**（owner 选了 A+B+C 全做；我原先"蒸馏需要新采集面 ⇒ 撞判据 4"的判断是错的 —— `response_summary` 早就在 `PLUGIN_POSTFLIGHT_REQUEST_FIELDS` 与 `SIGNAL_FIELDS` 里，插件只是从来没发过，发它不新增任何采集面）。三件事一起成立：
 | AH | **人写的教训按"路由兜底桶"命中，不按内容命中** ⇒ 会在毫不相干的任务上串场 | 第十四轮复现（0 调用）：批准 `M-EE28D437`（内容："被问目录里有没有某类文件时先查再答"，tags 只有路由给的 `bugfix/fallback/refactor`）后，用引擎自己的 router + recall 重放三条任务 ——「那这个目录里实际有没有配置文件…」召回它（对），**「帮我写一首关于秋天的短诗」也召回它（错）**，「把这段 Go 的并发死锁排查一下」不召回。三种问法分数完全相同 `0.161` ⇒ 命中项只有 `category=fallback` 与 `roles` 这两项**路由属性**，题面一个字都没参与；而 0.161 只比 `min_score=0.15` 高 0.011 | **已闭于第十五轮，两半同批提**（分开提会把"到处串场"变成"永远找不到"）：① `compute_static_relevance` 把查询侧的兜底桶当作"没有主题"——`category=fallback` 置空、桶名从 domains/keywords 里剔除、路由放弃时唯一会给的那个 role 也清掉；**只动查询侧**，真讲 fallback 的记忆仍靠自己的 tag/题面被找到。② `review approve --tags A,B`：主题由批准的人命名，逐字命中题面、中英同样有效；仅 create，对已存在的行请求写 tag 同样被拒（AC 关的是第二个写入者，tag 列也是内容），`--tags " "` 在写任何东西之前拒且不留行；队列对 create 评审多印一行"可代写"，不然这个口等于不存在。红证据：改前诗那题 `static_relevance=0.15`，正好落在门上。绿屏幕（scratch 库，0 调用）：写了 tag 的那条被「CI 里 glob…构建超时」以 static `0.39` 召回，同一轮**没写 tag** 的那条召不出来，诗两次都不召。顺带钉死的算术（真库只读实测，两条入口各自独立）：**路由说中 category 单独就 = 0.15，正好落在门上**（零 tag 重叠、纯中文也能召回），**题面字面命中 tag 则一个 = 0.08（不够）、两个 = 0.16（过门）** ⇒ 消毒兜底桶之后，"路由放弃"那一半任务只剩 tag 这一条入口，这就是人必须给 tag 的理由；不是"tag 永远是唯一入口"那种说过头的版本 |
 | AI | §9 的 `tool.execute.after` 普查把"没有 `error` 键"写成了"退出码拿不到"，越界了一半 | 真会话里 bash 那次：`metadata_keys=[exit,output,truncated]`（`glob` 那次是 `[count,truncated]`）⇒ **shell 类工具的退出码在 after 钩子是可见的**；`error` 键确实没有，被拒调用确实不进 after，那两条结论仍成立 | **未闭（不改）**：可采的是原始退出码；把它映射成 `build_exit_code`/`test_exit_code` 需要"这条命令是构建/测试"的判断，而插件不认识命令语义 —— 硬映射即 F3 那类自我打分。要做得先定归属规则，留给 owner。第十六轮的 AJ 把 `metadata.exit` 按原文记进了轨迹（不做任何"这是构建/测试"的判断），所以这一条**更难被顺手混过去**了：退出码现在可见，归属仍然没人批准 ⇒ 保持未闭 |
@@ -601,7 +603,8 @@ Agent OS = OpenCode 的长期经验层
      · retrieval（确定性排序，两条入口）· injection（单个自标识元素）· 治理与审计（事件、评审、原因）
 
 不负责：agent planning · agent execution · tool orchestration · 代码生成
-       · skill 管理与遥测（skill-tracker 拥有）· 多 agent 编排（P1 已删）· 第二个 memory 后端
+       · skill 管理与遥测（skill-tracker 拥有）· 多 agent 编排（P1 已删）
+       · 第二个 memory 后端（basic-memory 只是**只读指针源**：不镜像、不同步、不参与归因）
 ```
 
 三栏分开的意义：**左栏可以拿去复跑，中栏是实验要回答的问题，右栏是本基线的固有形状、不在实验期间修。**
@@ -609,6 +612,11 @@ Agent OS = OpenCode 的长期经验层
 | 已证明 `[Verified]` | 未证明 `[Unconfirmed]` | 已知限制 |
 |---|---|---|
 | 经验能形成（含"试 A 败→换 B 成"），能存、能被召回、能被注入；一次教训只对应一次决定；人门的一次决定改变下一次召回（1122→1359）；真宿主能产出 method trace，`session.idle→postflight` 在无头 `run` 成立；原命令不出宿主（canary 六处为 0）；轨迹买到 0 判决权重（三臂 `mass` 相同） | 经验是否减少未来试错；是否改变首次动作；是否让"模型本来不会答"的任务从错变对；相对 `AGENTS.md` 与普通 memory 的增量；旧问题复发率是否下降；跨轮粘性（第十四轮实测第二轮召回为 0） | 非 shell 工具无 exit、宿主无 `error` 键 ⇒ 编辑/读类失败不可见；被拒调用不进钩子；纯思考转向不可观察；跨 loop 方法迁移不支持；`exit=0` 只给相邻性不给因果；轨迹 16 步去中间留两端；backfill 行无轨迹；`user_interrupted` 读了没人写（AK）；exit→构建/测试的归属未获批（AI） |
+
+**跨这一行的实验读数不再是同一条基线**：exp-v1 的代码点原是 `53de1ad`；此后 `5d34aba` 改了插件与 JS 缝守卫，
+2026-10-02 这一轮又改了 `aos/`（只读召回）。**两个 tag 都没有移动、也没有新建**（`git rev-parse exp-v1` 现读），
+被冻结的东西只有一个：**代码点**，而它已经前移 —— 所以任何跨这三次的 A/B 或前后对比都不再干净，
+要重新对照就从当前 HEAD 起算，别拿旧读数当基线。
 
 **违反 `docs/experiment/exp-v1-baseline.md` §2 的冻结清单 ⇒ 实验作废**，重新打基线并从 Stage 1 重跑。判据 1 只数 owner 的交互会话，
 探针/rig/手喂产生的观测一律不计入（本轮探针写在一个 `AOS_STORE_DIR` 指向的隔离库里）。

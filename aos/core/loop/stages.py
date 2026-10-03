@@ -18,6 +18,7 @@ from aos.core.evidence import collector as evidence_collector
 from aos.core.evidence import recovery
 from aos.core.loop.state import LoopState
 from aos.core.memory import evolve as evolve_mod
+from aos.core.memory import external as external_mod
 from aos.core.memory import inject
 from aos.core.memory import record as record_mod
 from aos.core.memory.retrieve import retrieve
@@ -81,6 +82,15 @@ def _keywords(task_text: str, decision: dict[str, Any]) -> list[str]:
     return seen[:8]
 
 
+def _external_text(query: dict[str, Any]) -> str:
+    """What a neighbour's notes are matched against: the task plus the routed keywords.
+
+    The keywords are the router's own words, so a note is reached through the same
+    reading of the task that our memories are — not through a second, private query.
+    """
+    return " ".join([str(query.get("task_text") or "")] + [str(word) for word in query.get("keywords") or []])
+
+
 def recall_stage(
     state: LoopState, decision: dict[str, Any], *, store: Optional[MemoryStore] = None
 ) -> dict[str, Any]:
@@ -92,8 +102,8 @@ def recall_stage(
     still gets to proceed; the loop says what actually happened.
     """
     if state.memory_mode in ("disabled", "off"):
-        state.complete("recall", retrieved=0, memory_ids=[], hypotheses=[], skipped=True)
-        return {"memories": [], "hypotheses": [], "ranking": [], "retrieved": 0}
+        state.complete("recall", retrieved=0, memory_ids=[], hypotheses=[], external=[], skipped=True)
+        return {"memories": [], "hypotheses": [], "ranking": [], "retrieved": 0, "external": []}
 
     query = {
         "task_text": state.task_text,
@@ -119,6 +129,7 @@ def recall_stage(
             memory_ids=[],
             hypotheses=[],
             ranking=[],
+            external=[],
             query=query,
             error=str(exc),
         )
@@ -127,18 +138,28 @@ def recall_stage(
             "hypotheses": [],
             "ranking": [],
             "retrieved": 0,
+            "external": [],
             "query": query,
             "error": f"recall failed: {exc}",
         }
     memories, hypotheses = [], []
     for row in result.get("results", []):
         (hypotheses if row.get("is_hypothesis") else memories).append(row)
+    # A neighbour's notes, read after our own recall and never merged into it: they
+    # are pointers for the model to go and check, so they take no part in
+    # attribution, `memories_used`, or whether this run counted as a success.
+    external_rows = external_mod.recall(_external_text(query))
     state.complete(
         "recall",
         retrieved=len(memories) + len(hypotheses),
         memory_ids=[m["memory_id"] for m in memories],
         hypotheses=[h["memory_id"] for h in hypotheses],
         ranking=[r["memory_id"] for r in result.get("results", [])],
+        external=[
+            {"memory_id": row.get("memory_id", ""), "permalink": row.get("permalink", ""),
+             "title": row.get("title", "")}
+            for row in external_rows
+        ],
         query=query,
     )
     return {
@@ -146,6 +167,7 @@ def recall_stage(
         "hypotheses": hypotheses,
         "ranking": [r["memory_id"] for r in result.get("results", [])],
         "retrieved": len(memories) + len(hypotheses),
+        "external": external_rows,
         "query": query,
     }
 
@@ -178,6 +200,7 @@ def build_prompt(state: LoopState, *, decision: dict[str, Any], recall: dict[str
     injection = inject.render(
         recall.get("memories", []),
         hypotheses=recall.get("hypotheses", []),
+        external=recall.get("external", []),
         route={
             "lead_skill": decision.get("selected", ""),
             "lead_role": decision.get("lead_role", ""),

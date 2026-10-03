@@ -23,6 +23,7 @@ ENV_DB_PATH = "AOS_DB_PATH"
 ENV_CONTENT_DIR = "AOS_CONTENT_DIR"
 ENV_MEMORY_DIR = "AOS_MEMORY_DIR"
 ENV_POLICIES_DIR = "AOS_POLICIES_DIR"
+ENV_BM_DB = "AOS_BM_DB"
 
 
 def resolve_root() -> Path:
@@ -51,6 +52,16 @@ def _env_path(name: str, default: Path) -> Path:
     if value:
         return Path(value).expanduser().resolve()
     return default
+
+
+def basic_memory_db() -> Path:
+    """Where the neighbour's read-only index lives — never a path another module writes.
+
+    This is the only place a location outside the repository may be written down
+    (`config.py`'s own rule), and the only reason it is a path at all: the engine
+    reads that database and writes nothing anywhere but ``store/``.
+    """
+    return _env_path(ENV_BM_DB, Path.home() / ".basic-memory" / "memory.db")
 
 
 @dataclass(frozen=True)

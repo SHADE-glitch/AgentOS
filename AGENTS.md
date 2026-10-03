@@ -50,7 +50,7 @@
 
 ## 什么算绿
 
-- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 447 / 27。
+- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 463 / 29。
 - 不要写 `node --test tests/js/`：目录会把 `fake-aos.cjs` 当测试执行，输出 `# tests 1 / # fail 1`，
   是假红。
 - **信号有两张互相独立的列表**：契约的 `SIGNAL_FIELDS`（`aos/contract/schema.py`）与合成的
@@ -58,7 +58,7 @@
   加一个信号要同时改五处：两张列表、`policy.py` 的默认权重、`content/policies/outcome.json`、
   缝守卫里那句集合**等号**断言（`tests/test_cli_contract.py`）、以及 `tests/test_outcome.py` 的 `DEFAULTS`。
   少改任何一处都不会报错，只会什么都没有（缺陷 AJ 的红屏幕就是这个）。
-- 判据与阈值来自 `content/policies/*.json`（六个文件：decay/injection/outcome/promotion/rejection/retrieval），
+- 判据与阈值来自 `content/policies/*.json`（七个文件：decay/external/injection/outcome/promotion/rejection/retrieval），
   由 `policy.load_policy` 以"内置默认被文件覆盖"的方式合并 ⇒ 要改门槛就改文件，不要在调用处补一个本地数字。
 
 ## 往链路上传值的形状
@@ -78,6 +78,11 @@
 - `retrieve()` 是只读的，`compute_all_decay()` / `memory refresh` **不是**：后者写 `decay_factor`，
   而且写的是"新旧里更低的那个"（人的降级不许被重算抬回去）⇒ **降下去就再也升不回来**，没有对称的命令。
   第十五轮就是在"只读检验"的口号下调了它，把真库 3 条种子从 0.85 永久降到 0.5。
+- **basic-memory 的库也只读**：`AOS_BM_DB`（默认 `~/.basic-memory/memory.db`）用 `mode=ro` + `PRAGMA query_only=ON`
+  打开，`external.py` 里不许出现任何写语句（`test_the_reader_issues_no_write_statement_and_leaves_the_bytes_alone`
+  同时钉源码与文件字节）。`tests/conftest.py` 把它指到一个不存在的 tmp 路径 ⇒ 测试不会偶然读到真笔记；
+  要测召回就在 `tmp_path` 里造一份 fixture 库。**任何真实运行/实验也一样**：跑 AOS 时 `AOS_STORE_DIR`/`AOS_DB_PATH`/`AOS_BM_DB`
+  三个都指 scratch，别拿真笔记当测试数据。
 - `store/` 没有任何删除命令。退出召回只有两条路：`aos memory retire <id> --reason …`（人敲一次，
   无 reason 不写）与证据阶梯（5 次可归因失败 + 5 次批准，§12 行 Z）；两条都保留行与事件，
   所以"撤回一条教训"永远不是删数据，是改状态。

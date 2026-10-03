@@ -126,6 +126,17 @@ DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
         "partial_quality": 0.0,
         "failure_quality": 0.0,
     },
+    # A read-only neighbour, not a second backend: these are the rules for pointing
+    # at somebody else's notes. `max_body_chars: 0` is the load-bearing one — at 0
+    # the injection carries a title plus a permalink and never copies note text,
+    # which is what keeps this out of "unified retrieval" territory. Raising it is a
+    # deliberate decision someone makes in the content layer, not a default.
+    "external": {
+        "enabled": True,
+        "max_items": 2,
+        "max_body_chars": 0,
+        "min_tag_overlap": 1,
+    },
 }
 
 

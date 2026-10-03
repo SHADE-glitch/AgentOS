@@ -169,6 +169,7 @@ back named in `warnings` instead of being ignored in silence.
 | content dir | `AOS_CONTENT_DIR` | `<root>/content` |
 | memory dir | `AOS_MEMORY_DIR` | `<content>/memory` |
 | policies dir | `AOS_POLICIES_DIR` | `<content>/policies` |
+| basic-memory index (read-only) | `AOS_BM_DB` | `~/.basic-memory/memory.db` |
 
 Two more the engine reads directly: `AOS_SESSION_ID` (names the evidence
 directory; generated when unset) and `AOS_REGISTRY_PATH` (override the routing

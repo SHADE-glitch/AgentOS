@@ -136,6 +136,7 @@ def _preflight_doc(
     injection = inject.render(
         recall.get("memories", []),
         hypotheses=recall.get("hypotheses", []),
+        external=recall.get("external", []),
         route={
             "lead_skill": decision.get("selected", ""),
             "lead_role": lead_role,

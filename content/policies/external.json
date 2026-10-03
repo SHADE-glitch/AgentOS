@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "max_items": 2,
+  "max_body_chars": 0,
+  "min_tag_overlap": 1
+}

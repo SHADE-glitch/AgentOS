@@ -54,6 +54,11 @@ _TRUNCATED = "…"
 _BOUNDARY_TAG = re.compile(r"<\s*/?\s*agent_os\s*>", re.IGNORECASE)
 _REMOVED = "[边界标签已移除]"
 
+# The sub-header for a neighbour's notes. It exists because the block is one element
+# and the model cannot otherwise tell our verified experience from somebody's
+# markdown: the sentence has to be in the text, not only in the field names.
+_EXTERNAL_SECTION = "【以下为 basic-memory 的人工笔记，非 Agent OS 验证过的经验】"
+
 
 def _normalise(text: str) -> str:
     """Collapse whitespace and neutralise our own boundary tags.
@@ -96,6 +101,26 @@ def _is_expired(row: dict[str, Any], today: str) -> bool:
     if not revalidate_after:
         return False
     return revalidate_after[:10] < today[:10]
+
+
+def _render_external_item(row: dict[str, Any], *, limit: int) -> list[str]:
+    """One pointer line plus its target, in a voice no memory of ours can borrow.
+
+    Never `事实`/`不要`: those prefixes are what a *verdict* reads as, and a human note
+    that no gate ever examined has no standing to be one. So the label is fixed, the
+    prefix is `笔记：`, and by default the line carries a permalink and a path rather
+    than the note's text — the neighbour owns its content, we only say it exists.
+    """
+    title = _normalise(row.get("title") or row.get("memory_id") or "")
+    lines = [f"- [外部笔记 · 未验证] {title}"]
+    pointer = " · ".join(part for part in (
+        str(row.get("permalink") or ""), str(row.get("path") or ""),
+    ) if part)
+    lines.append(f"  笔记：{pointer or title}")
+    excerpt = _normalise(row.get("body") or "")
+    if limit > 0 and excerpt:
+        lines.append(f"  摘录：{_clip(excerpt, limit)[0]}")
+    return lines
 
 
 def _render_item(row: dict[str, Any], *, limit: int, today: str) -> tuple[list[str], bool]:
@@ -142,6 +167,7 @@ def render(
     memories: Iterable[dict[str, Any]] = (),
     *,
     hypotheses: Iterable[dict[str, Any]] = (),
+    external: Iterable[dict[str, Any]] = (),
     route: Optional[dict[str, Any]] = None,
     budget: Optional[dict[str, Any]] = None,
     today: Optional[str] = None,
@@ -154,6 +180,11 @@ def render(
     ``text`` is ``""`` when nothing qualifies, which the host must treat as
     "push nothing" rather than an empty section.
 
+    ``external`` is a third, separate kind of input: pointers into a neighbour's
+    notes, drawn **after** every memory and hint and sharing the same ceiling. They
+    never enter ``memory_ids`` — that list is what a run attributed its result to, and
+    nothing here was verified by our gate.
+
     ``today`` exists so an expiry label can be asserted without waiting for one
     to pass; it is an ISO date string, not a datetime.
     """
@@ -162,6 +193,7 @@ def render(
     max_items = int(limits["max_items"])
     body_limit = int(limits["max_body_chars"])
     hint_limit = int(limits["hypothesis_max_items"])
+    external_limit = int(load_policy("external").get("max_body_chars", 0))
     stamp = today or datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     # Hints are appended after every ranked memory, so an unverified note can
@@ -223,7 +255,28 @@ def render(
             }
         )
 
-    if not structured:
+    external_rows = [row for row in external if isinstance(row, dict)]
+    # A blank line only separates two things that exist: with no memories above, the
+    # preamble's own trailing blank is enough, so this would otherwise double it.
+    section_prefix = ([""] if structured else []) + [_EXTERNAL_SECTION]
+    external_kept: list[dict[str, Any]] = []
+    header_added = False
+    for row in external_rows:
+        item_lines = _render_external_item(row, limit=external_limit)
+        candidate = (section_prefix if not header_added else []) + item_lines
+        cost = sum(len(line) + 1 for line in candidate)
+        if used + cost > max_chars:
+            # The section gives space up first, in rank order: an unverified pointer
+            # may not displace a lesson a human approved.
+            dropped.extend(str(other.get("memory_id") or "") for other in external_rows[len(external_kept):])
+            truncated = True
+            break
+        lines.extend(candidate)
+        used += cost
+        header_added = True
+        external_kept.append(row)
+
+    if not structured and not external_kept:
         return {
             "structured": [],
             "text": "",
@@ -236,7 +289,7 @@ def render(
     lines += ["", _footer(len(structured), len(rows), route), CLOSE_TAG]
     text = "\n".join(lines)
     return {
-        "structured": structured,
+        "structured": structured + external_kept,
         "text": text,
         "char_count": len(text),
         "truncated": truncated,

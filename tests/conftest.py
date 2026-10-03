@@ -29,6 +29,10 @@ def hermetic_env(tmp_path, monkeypatch):
     monkeypatch.setenv("AOS_STORE_DIR", str(store))
     monkeypatch.setenv("AOS_DB_PATH", str(store / "aos.db"))
     monkeypatch.setenv("AOS_CONTENT_DIR", str(content))
+    # The neighbour database is never read by accident: a test that wants it sets
+    # AOS_BM_DB to a fixture of its own. Left alone, this points at a path that
+    # does not exist, which is also the production default's failure mode.
+    monkeypatch.setenv("AOS_BM_DB", str(tmp_path / "no-basic-memory" / "memory.db"))
     reset_caches()
     yield
     reset_caches()
