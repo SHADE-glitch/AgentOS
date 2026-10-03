@@ -56,7 +56,10 @@
 
 ## 什么算绿
 
-- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 496 / 29（rig 另有 15）。
+- 两份 README（`README.md` 英文、`README.zh-CN.md` 中文）**只镜像"决定要不要继续做"的那批事实**：
+  深度参考的单一副本在英文那份。共同数字由 `tests/test_readme_bilingual.py` 钉住 —— 改了另一边就是红的，
+  所以任何"502 / 1122→1359 / 8.1–9.2s / 判据 30 条 / 2026-10-29"一类的数变动，必须两边一起改（该测试会告诉你漏了哪一边）。
+- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 502 / 29（rig 另有 15）。
   别在这两条后面再补一个 `-q`：`addopts` 已经有一个 `-q`，两个 `-q` 会把汇总行整个吃掉（实测：
   `python3 -m pytest -q | grep passed` 什么都不打印），计数只能改从 `--collect-only -q` 取。
 - 不要写 `node --test tests/js/`：目录会把 `fake-aos.cjs` 当测试执行，输出 `# tests 1 / # fail 1`，
