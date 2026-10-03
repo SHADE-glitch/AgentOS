@@ -50,9 +50,9 @@ def make_bm_db(path: Path, notes: list[dict]) -> Path:
 @pytest.fixture
 def bm_db(tmp_path, monkeypatch):
     path = make_bm_db(tmp_path / "basic-memory" / "memory.db", [
-        {"title": "会话总结-GNOME系统运维精华", "tags": ["gnome", "运维"], "permalink": "main/gnome-ops",
+        {"title": "示例笔记-GNOME 运维", "tags": ["gnome", "运维"], "permalink": "main/gnome-ops",
          "path": "90-archive/gnome-ops.md", "body": "重启 gnome-shell 用 ALT+F2 r。"},
-        {"title": "Java后端项目经验", "tags": ["java", "spring-boot"], "permalink": "main/java-notes",
+        {"title": "示例笔记-Java 后端", "tags": ["java", "spring-boot"], "permalink": "main/java-notes",
          "path": "90-archive/java-notes.md", "body": "Spring Boot 的 profile 覆盖顺序。"},
         {"title": "无标签的一篇", "tags": [], "permalink": "main/plain", "path": "plain.md",
          "body": "只有一句：permalink 才是稳定标识。"},
@@ -71,7 +71,7 @@ def test_the_configured_path_is_overridable_and_home_relative(monkeypatch, tmp_p
 
 
 def test_a_note_is_recalled_as_a_pointer_and_labelled_unverified(bm_db):
-    rows = external.recall("帮我看看 gnome 运维 的 会话总结", k=3)
+    rows = external.recall("帮我看看 gnome 运维 的 笔记摘要", k=3)
     assert rows, "a title/tag overlap must recall the note"
     row = rows[0]
     assert row["external"] is True
@@ -140,7 +140,7 @@ def test_disabled_policy_reads_nothing_at_all(bm_db, tmp_path, monkeypatch):
     (policies / "external.json").write_text(json.dumps({"enabled": False}), encoding="utf-8")
     monkeypatch.setenv("AOS_CONTENT_DIR", str(tmp_path / "content"))
     policy.reload()
-    assert external.recall("gnome 运维 会话总结") == []
+    assert external.recall("gnome 运维 笔记摘要") == []
 
 
 def test_a_note_appears_once_even_when_the_index_holds_two_rows(tmp_path, monkeypatch):
@@ -172,7 +172,7 @@ def test_a_note_this_engine_published_is_not_an_external_note(tmp_path, monkeypa
 
 
 def test_the_block_points_at_the_note_without_copying_its_body(bm_db):
-    rows = external.recall("gnome 运维 会话总结", k=3)
+    rows = external.recall("gnome 运维 笔记摘要", k=3)
     block = inject.render([], external=rows)
     assert "ALT+F2" not in block["text"], "the default budget is pointers only"
     assert "【以下为 basic-memory 的人工笔记，非 Agent OS 验证过的经验】" in block["text"]
@@ -189,7 +189,7 @@ def test_body_chars_is_a_real_knob_not_a_decoration(bm_db, tmp_path, monkeypatch
                                             encoding="utf-8")
     monkeypatch.setenv("AOS_CONTENT_DIR", str(tmp_path / "content"))
     policy.reload()
-    block = inject.render([], external=external.recall("gnome 运维 会话总结", k=3))
+    block = inject.render([], external=external.recall("gnome 运维 笔记摘要", k=3))
     assert "ALT+F2" in block["text"], "raising the budget is what lets an excerpt through"
 
 

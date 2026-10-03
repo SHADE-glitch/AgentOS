@@ -392,7 +392,7 @@ def test_external_notes_are_rendered_after_every_agent_os_memory():
     rendered = inject.render(
         [_memory(mid="M-10", type="procedural", body="先跑 python3 -m pytest", title="pytest 走模块")],
         hypotheses=[_memory(mid="M-20", body="可能是缓存", title="缓存假设")],
-        external=[_bm_row("main/gnome-ops", "会话总结-GNOME")],
+        external=[_bm_row("main/gnome-ops", "笔记摘要-GNOME")],
     )
     text = rendered["text"]
     assert text.index("先跑 python3 -m pytest") < text.index("可能是缓存") < text.index("【以下为 basic-memory")

@@ -71,7 +71,7 @@ counts `source='hot'` and nothing else:
 - **⇒ a TUI turn lands a `source='hot'` observation** `[Verified, round 14]`. It needed no human at the
   keyboard: drive the **full** interface in a private tmux session and type into it —
   `/usr/bin/tmux new-session -d -s p14 … "AGENT_OS_ROOT=… AOS_STORE_DIR=/tmp/aos-rig-p14/store
-  AOS_PLUGIN_DEBUG=1 $HOST -m opencode/space-bunny-free --print-logs --log-level DEBUG /home/shade/Public/test 2>logs/armed-stderr.txt"`,
+  AOS_PLUGIN_DEBUG=1 $HOST -m opencode/space-bunny-free --print-logs --log-level DEBUG <subject-project> 2>logs/armed-stderr.txt"`,
   then `send-keys -l '<prompt>'`, `send-keys Enter`, `capture-pane`. Result: `preflight ok loop=LOOP-…-D018
   chars=323` == `system appended index=1 len=323` == engine `stages.recall.injection_chars`, and the scratch
   store's `observations: hot` went 0 → 2. `chat.message` — the loop-opening hook every prior arm could not

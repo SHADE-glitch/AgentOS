@@ -40,7 +40,7 @@ Q1/Q2 的统计一律加 `memory_id not like 'M-SEED%'` 与 `status='active'` �
 （策略文件 `enabled: false` 或 `AOS_BM_BIN=""`）。它们对 Q1/Q2 的口径**没有**影响：写回不产生新记忆，
 也不改变哪条被召回 —— 它只改变"批准过的东西人能不能看见"。
 
-实验数据隔离：Stage 0 的臂 E 库留在 `/home/shade/stage0/E/store`（`M-F8993E1D`、`M-21AE3B79`），
+实验数据隔离：Stage 0 的臂 E 库留在 `<rig>/E/store`（`M-F8993E1D`、`M-21AE3B79`），
 **不迁进正式库**。理由：那两条是实验票面产生的，混进日常积累就等于把实验产物当使用证据。
 代价照写：日常暂时用不到那两条。要迁也得 owner 明确决定，并单独标注来源。
 
@@ -66,7 +66,7 @@ Q1/Q2 的统计一律加 `memory_id not like 'M-SEED%'` 与 `status='active'` �
 |---|---|---|---|
 | AgentOS HEAD | `bcfb703` | `82c9aa3` | 中间 4 笔（`git rev-list --count bcfb703..HEAD`）：`fad30d3`（开本账本）、`6e57548`（AGENTS）、`5d34aba`（插件：慢 postflight 不再被杀、DCP 横幅不再当任务）、`82c9aa3`（basic-memory 只读召回，owner 令）。**动代码的是后两笔** |
 | 测试计数 | 447 / 27 / 15 | **464 / 29 / 15** | +13 external、+4 inject（`82c9aa3`）；JS +2（`5d34aba`）。冻结面因此已移动：`git diff 53de1ad..HEAD -- aos content tests integrations/opencode/plugin` **不再是 0 文件**，exp-v1 的两个 tag 未动 ⇒ 跨这些点的读数不是同一条基线（`agent-os-v2.md §16`） |
-| formal DB | sha `c3907554319a0fe3…` | sha `5ce6e590733844e0…` | **由 owner 的 live 会话写入**，不是本轮：10-02 新增 72 条 loop、10-03 新增 6 条（`cwd` 只有 `/home/shade/Public/test` 与 `/home/shade/Public/AgentOS`） |
+| formal DB | sha `c3907554319a0fe3…` | sha `5ce6e590733844e0…` | **由 owner 的 live 会话写入**，不是本轮：10-02 新增 72 条 loop、10-03 新增 6 条（`cwd` 只有 `<subject-project>` 与 `<repo>`） |
 | observations · recall | hot 5 · 5 runs / 5 拿到 / 0 空手 | hot **11** · 11 runs / 6 拿到 / **5 空手** | 有 postflight 的 loop 数 = 11 = `observations.hot`（交叉核对相等）；10-02 那 72 条 `final_status=pending`、`postflight=null`，贡献 0 条 observation |
 | 人门 | 2 pending · 0 candidates | **8 pending**（`outcome_label` #24/#25 + #30–#35）· 1 promotion approved | 10-03 的 6 次宿主会话各产生 1 条待标注（"是不是真实开发会话"待 owner 标，§5）；**promotion 增量为 0** |
 | Q1 / Q2 | 0 / 0 | **0 / 0** | `retrieval_log` 从 13 次涨到 51 次，10-02 之后的 38 次**全部落在 seed 上** ⇒ 召回一直发生，日常经验从没被再次找到 |
@@ -77,8 +77,8 @@ Q1/Q2 的统计一律加 `memory_id not like 'M-SEED%'` 与 `status='active'` �
 ② "谁在用"这一半**主机根本不暴露**（缺陷 AR，见 `agent-os-v2.md §12`）：`OPENCODE_CLIENT` 只有 `"acp"` 一处赋值、
 TUI 不写它，人在 TUI 敲与我用 tmux 驱动 TUI 读出来同为 `cli` ⇒ 任何"来源"字段现在写进去都是假的。
 可计算的部分照实给：**上界 11**（真实宿主会话产生的 observation），**可证"由人敲"的下界 0**；
-差的这一段只能由 owner 在 §5 的 owner 列里标。"rig 不计"这一半目前由构造保证（rig 只写 `/home/shade/stage0/E/store`，
-正式库 83 条 loop 里 0 条 `cwd` 在 stage0 下），不需要新字段。
+差的这一段只能由 owner 在 §5 的 owner 列里标。"rig 不计"这一半目前由构造保证（rig 只写 `<rig>/E/store`，
+正式库 83 条 loop 里 0 条 `cwd` 在 <rig> 下），不需要新字段。
 
 ## 5. 会话记录表
 
@@ -102,7 +102,7 @@ owner 列一律留空：这三行是不是"真实开发会话"、有没有帮上
 ## 6. 取数命令（已实测；只读，不改任何东西）
 
 ```bash
-cd /home/shade/Public/AgentOS
+cd <repo>
 
 # 快照（聚合数一律从这里取，不沿用上一轮记忆值）
 AGENT_OS_ROOT=$PWD ./bin/aos doctor --json | python3 -c "import json,sys;d=json.load(sys.stdin);print(d['memories'],d['observations'],d['recall'],d['reviews'],d['pending_postflight'])"
@@ -120,7 +120,7 @@ PY
 # Q1 / Q2 / 人门频率（sqlite 以 mode=ro 打开）
 python3 - <<'PY'
 import sqlite3
-db = sqlite3.connect("file:/home/shade/Public/AgentOS/store/aos.db?mode=ro", uri=True)
+db = sqlite3.connect("file:<repo>/store/aos.db?mode=ro", uri=True)
 W = "2026-10-01"                      # 窗口起日
 # Q1 与 Q2 用同一套过滤：真实会话产生、仍 active、非 seed —— 少一条两问就会互相打脸
 NEW = ("ifnull(m.source_loop_id,'')<>'' and m.created_at>=? and m.status='active' "

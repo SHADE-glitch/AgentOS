@@ -94,7 +94,7 @@ $ ./bin/aos review label 1 --outcome failure
   #3 pending promotion M-E1051096   runs=1 quality=0.0
 
 # 6) 人批准提案 —— 已实现（CAS + stale 保护）
-$ ./bin/aos review approve 3 --as shade
+$ ./bin/aos review approve 3 --as <reviewer>
 
 # 7) ★ 今天也不成立：负向结论降级后，召回照旧（缺陷 A：retrieve 无 status/scope 过滤）
 $ ./bin/aos preflight --payload '{"task":"…同一类任务…"}'
@@ -316,9 +316,9 @@ P7 只给它读到**历史**，判据 1 仍然要等 `source='hot'` 的运行长
 ./bin/aos postflight --payload-stdin < run.json               # needs_review=true
 ./bin/aos review list                                         # 信号 + 缺席 + 下一步
 ./bin/aos review label N --outcome failure --skill bugfix      # 结论 + 归因；立刻看到候选与提案
-./bin/aos review approve M --as shade                          # 人批准提案
+./bin/aos review approve M --as <reviewer>                          # 人批准提案
 ./bin/aos preflight  --payload '{"task":"…同类…"}'            # 看到"不要…因为…"
-./bin/aos review approve K --as shade                          # 批准 weaken（rank 下降）
+./bin/aos review approve K --as <reviewer>                          # 批准 weaken（rank 下降）
 ./bin/aos preflight  --payload '{"task":"…"}'                 # 该条**不再出现**
 ```
 
@@ -551,7 +551,7 @@ P7 只给它读到**历史**，判据 1 仍然要等 `source='hot'` 的运行长
   1. `aos backfill plan` ⇒ `sessions_total: 199, with_evidence: 174`，且**临时库里连 db 文件都没被创建**
      （plan 零写入是屏幕证明的，不是断言声明的）。
   2. `backfill run --apply` ⇒ `written: 174, skipped_without_evidence: 25`，
-     水位 `(1790762360092, ses_f0e43306dffehgI0IQwfd3K6Q2)`。
+     水位 `(1790762360092, ses_redacted03)`。
   3. 紧接着第二次同一命令 ⇒ `sessions_seen: 0, written: 0` —— 增量走水位，不重读。
   4. `doctor --json` ⇒ `observations: {"backfill": 174}`（**没有 total**）、`reviews.pending: 0`、
      `candidates.open: 0`、`retrieval_log`/`memories` 均 0 —— 174 条历史没有灌满人门，也没有假装成记忆。
@@ -613,7 +613,7 @@ schema v4→v5、13 条 `dedupe_key` 补齐、5 条 `observation_count` 从演�
 
 ```
 ~/.config/opencode/plugin/agent-os.js -> <checkout>/integrations/opencode/plugin/agent-os.js
-~/.zshrc:87  alias opencode='AGENT_OS_ROOT=/home/shade/Public/AgentOS opencode --auto'
+~/.zshrc:87  alias opencode='AGENT_OS_ROOT=<repo> opencode --auto'
 ```
 
 **没有用 `opencode plugin <module>`** —— 它顺手改写 `opencode.json`，而那个文件不是这个仓库该动的；
@@ -872,7 +872,7 @@ recall:          2 runs · 2 拿到记忆 · 0 空手
 
 ### 计划后 · 第十一轮：人门在真实数据上落下了，并第一次量到行为效果（2026-10-01，owner 令"全程由你操作，不要让我打开 TUI"）
 
-owner 给了带硬规则的 brief（`/home/shade/Public/test` 驱动真会话、4–6 次调用、不许动 `~/.config/opencode/**`、
+owner 给了带硬规则的 brief（`<subject-project>` 驱动真会话、4–6 次调用、不许动 `~/.config/opencode/**`、
 不传 `--auto`、模型只用 `space-bunny-free`）。brief 里四处按代码实际形状改了，都在动手前核实：
 
 1. `memory add` 不带 `--verified` 会落 `status=candidate`，而召回只取 `active|verified`（`authoring.py:143-151`
@@ -985,7 +985,7 @@ owner 否掉我一条判断：我说"蒸馏需要新采集面 ⇒ 撞判据 4"�
 
 ### 计划后 · 第十四轮：把界面真的开起来（2026-10-01，owner 令"模仿使用 opencode，在界面上操作，看插件有没有用"）
 
-用 `/usr/bin/tmux` 开**完整交互式 TUI**（不是 mini、不是 `run`），cwd `/home/shade/Public/test`，
+用 `/usr/bin/tmux` 开**完整交互式 TUI**（不是 mini、不是 `run`），cwd `<subject-project>`，
 `-m opencode/space-bunny-free`，绝不 `--auto`，`AOS_STORE_DIR` 指 scratch ⇒ **本轮 4 次调用一条都不计入判据 1**。
 权限弹窗按 owner 定的协议：**每次停下来问**，两次都是他答 Allow once，我一次都没替他点。
 
@@ -1139,14 +1139,14 @@ external 13、inject 32、全量 464）。上一版这里写的是"463 / +12"，
   `client / project / directory / worktree / experimental_workspace / serverUrl / $`；
   `types.gen.d.ts` 里 `Session` 与 `UserMessage` 也仅有 `agent`、`model` —— 那是**角色**，不是驱动者，
   人敲与 agent 驱动的 `opencode run` 用的是同一套名字。
-- 二进制 `/home/shade/.opencode/bin/opencode` 中 `OPENCODE_CLIENT` 共 6 处（按字节偏移逐个取上下文）：
+- 二进制 `~/.opencode/bin/opencode` 中 `OPENCODE_CLIENT` 共 6 处（按字节偏移逐个取上下文）：
   1 处赋值 `process.env.OPENCODE_CLIENT="acp"`（ACP 处理器内）、2 处遥测属性读、1 处 config schema
   `h.string("OPENCODE_CLIENT").pipe(h.withDefault("cli"))`、2 处 accessor `?? "cli"`。
   **TUI 不写它** ⇒ 人在 TUI 敲、我用 tmux 驱动 TUI、`opencode run`，三者读出来都是 `cli`。
 - 所以把 `OPENCODE_CLIENT` 记进链路，得到的读数会是"11 条全是 owner 会话"——那正是被明令禁止的假来源字段。
 - 一条副产品是真的，而且不需要新字段：**"rig 不计"目前由构造保证**。正式库 83 条 loop 的 `cwd` 只有
-  `/home/shade/Public/test`(81) 与 `/home/shade/Public/AgentOS`(2)，0 条落在 `/home/shade/stage0`；
-  rig 写的是 `/home/shade/stage0/E/store`。于是本轮给出两个读数而不是一个：**上界 11**
+  `<subject-project>`(81) 与 `<repo>`(2)，0 条落在 `<rig>`；
+  rig 写的是 `<rig>/E/store`。于是本轮给出两个读数而不是一个：**上界 11**
   （= 有 `postflight` 的 loop 数 = `observations.hot`，全部来自真实宿主会话），
   **可证"由人敲"的下界 0**。差的这一截只能由 owner 在账本里标（`stage-1-usage-ledger.md §5` 的 owner 列）。
   AR 的三个候选方案（driver 自报 env / 构造性下界 + owner 上界 / 契约新增 `run_driver`）写在 §12 行 AR，
@@ -1170,11 +1170,11 @@ external 13、inject 32、全量 464）。上一版这里写的是"463 / +12"，
 
 **顺带抓到的一条，不属于三个任务但改变 Stage 0 的可续跑性**：被试项目 `ledgerd` 已于
 `2026-10-01T22:20:19` 进回收站（`~/.local/share/Trash/info/ledgerd.trashinfo`），原路径
-`/home/shade/Public/test` 在 22:46–23:19 被重建成 owner 的 Java 项目（当前 HEAD `bdd0043`，33 项不干净）。
+`<subject-project>` 在 22:46–23:19 被重建成 owner 的 Java 项目（当前 HEAD `bdd0043`，33 项不干净）。
 ⇒ 旧对象 `70c935f` / `d5bf777` 与**上一轮我用来"可逆封存"的两条 stash（`64a7e98d…` 等）全部不可解析**，
 `git stash list` 为空。回收站那份里有票面点名的 `ingest/sources.py`、`migrations/__init__.py`，
 但没有 `.git` 也没有任何 `test_*` ⇒ LGD-07 / LGD-11 **改得动、验不了**。
-活下来的字节捕获：`/home/shade/stage0/E/inflight/`（4 件 2509 字节）、`/home/shade/stage0-void/LGD-06-R2/`（5 件）、
+活下来的字节捕获：`<rig>/E/inflight/`（4 件 2509 字节）、`<rig>-void/LGD-06-R2/`（5 件）、
 `E/manifest.tsv`、`E/rig/{logs,oracle,snap}`、`E/store`（臂 E 库）。`stage-0-ledgerd.md` 已加 §7bis 并把 §8 检查单
 重写成"哪些还能跑 / 哪些已经失效"。教训写死：**"可逆"不能靠被试项目的 `.git` 撑** —— 那次封存当时看着是解药，
 真正的凭据是自己那份字节捕获。**我没有动回收站、也没有试图恢复历史**（那是 owner 的决定，且该路径现在是活跃工作树）。

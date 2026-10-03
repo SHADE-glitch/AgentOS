@@ -117,7 +117,7 @@ def test_engine_has_no_hardcoded_install_root():
     offenders = []
     for path in engine.rglob("*.py"):
         text = path.read_text(encoding="utf-8")
-        if "/home/shade/.agents" in text or "~/.agents" in text:
+        if "/.agents" in text:
             offenders.append(str(path.relative_to(REPO_ROOT)))
     assert offenders == [], f"hardcoded install root in: {offenders}"
 

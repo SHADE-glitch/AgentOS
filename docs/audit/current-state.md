@@ -1,6 +1,6 @@
 # Agent OS 现状审计（2026-09-30）
 
-对象 `/home/shade/Public/AgentOS`，基线提交 `bf0fa6e`。目的：把"仓库到底到哪一步、每项偏差的成因与证据"
+对象 `<repo>`，基线提交 `bf0fa6e`。目的：把"仓库到底到哪一步、每项偏差的成因与证据"
 写成可查文档，并为定位裁决（`docs/decision/positioning.md`）提供输入。
 本轮**只读代码只改文档**，所有"未落地"项在此登记而不顺手修。
 
@@ -110,7 +110,7 @@ autolearn `topics.jsonl` 无生产写入者、okdk 证据探针字段层级写�
 
 | 事实 | 证据 | 影响 |
 |---|---|---|
-| **basic-memory 启用且是活跃使用中的知识库**：`/home/shade/Documents/01-Learning/opencode-memory` 下 **52 个 md / 256K / 9 个编号目录**（00-index…90-archive），最近编辑就是今天 | `stat` 与 `find -newermt` `[Verified]` | 旧计划 §十一 的"enabled:false ⇒ 边界零成本"**双重过期**：不仅启用了，而且里面是人写的结构化知识。AOS Memory 与它的关系必须重新定义，而不是沿用"邻居"结论 |
+| **basic-memory 启用且是活跃使用中的知识库**：`<bm-vault>` 下 **52 个 md / 256K / 9 个编号目录**（00-index…90-archive），最近编辑就是今天 | `stat` 与 `find -newermt` `[Verified]` | 旧计划 §十一 的"enabled:false ⇒ 边界零成本"**双重过期**：不仅启用了，而且里面是人写的结构化知识。AOS Memory 与它的关系必须重新定义，而不是沿用"邻居"结论 |
 | **`permission.edit` 是 `allow`** | `opencode.json` `[Verified]` | "personal-skills 写入需人门"**不能靠 opencode 权限兜底** —— 计划 §4.6 的白名单+`AOS_ALLOW_SKILL_EVOLUTION=1` 是唯一防线，必须在 AOS 侧实现 |
 | **本机还有 supermemory，但不是常驻插件**：`command/supermemory-{init,login,logout,status}.md` 四条自定义命令，运行时 `bunx opencode-supermemory@latest` | `[Verified]` | 第四个记忆系统以"按需命令"形式存在。裁决 §2.3「Basic Memory 应成为什么」必须把它一起算进去 |
 | `~/.config/opencode/memory.jsonl` 是**孤儿**：最后写入 2026-09-05，313 字节 1 条 entity 记录；已安装的所有包与 command/agents 里都 grep 不到 `memory.jsonl` | `[Verified]`（否定性 grep，覆盖面=cache/packages、config/node_modules、opencode-skill-tracker） | 不能当"第四套活跃记忆面"计入；记为 `[Unconfirmed] 归属`（写入者当前不在机器上） |

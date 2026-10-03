@@ -35,7 +35,7 @@ from aos.config import basic_memory_db
 from aos.core.memory.policy import load_policy
 
 # A title or tag token is a name of something: latin words, digits, and CJK runs.
-# Splitting on everything else keeps `会话总结-GNOME系统运维精华` into two tokens
+# Splitting on everything else keeps `示例笔记-GNOME 运维` into two tokens
 # instead of losing the whole title to one unmatchable blob.
 _TOKEN = re.compile(r"[0-9A-Za-z\u4e00-\u9fff]+")
 

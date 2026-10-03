@@ -9,7 +9,7 @@ set -euo pipefail
 RIG="${AOS_RIG:-/tmp/aos-rig}"
 STORE="${AOS_STORE_DIR:-$RIG/store}"
 DB="${AOS_DB_PATH:-$STORE/aos.db}"
-ROOT="${AGENT_OS_ROOT:-/home/shade/Public/AgentOS}"
+ROOT="${AGENT_OS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 label="${1:?usage: snapshot.sh <label>}"
 
 mkdir -p "$RIG/snap"

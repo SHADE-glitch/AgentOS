@@ -1,6 +1,8 @@
 # AGENTS.md — 这个仓库里不可协商的检查
 
-对象 `/home/shade/Public/AgentOS`，**公开仓库**（`github.com/SHADE-glitch/AgentOS`）。
+对象 `<repo>`，**公开仓库**（`github.com/SHADE-glitch/AgentOS`）。
+文档里的 `<repo> / <subject-project> / <rig> / <bm-vault> / ses_redactedNN` 是脱敏占位符，含义表在
+`README.md` 末尾"Privacy and placeholders"；公开前必须先脱敏，脱敏后必须复跑两条测试命令。
 它是 opencode 的**外置证据与治理层**：真实运行 → 合成结论 → 人门 → 晋升/降级 → 下次召回改变行为。
 引擎是纯标准库 Python；宿主只经 `bin/aos` + stdin/stdout JSON 契约进入；引擎永不调用 opencode。
 本文件同时约束"用别的 AI agent（如 qoder cn）来开发本仓库"的情形。
@@ -53,7 +55,7 @@
 
 ## 什么算绿
 
-- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 495 / 29（rig 另有 15）。
+- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 496 / 29（rig 另有 15）。
   别在这两条后面再补一个 `-q`：`addopts` 已经有一个 `-q`，两个 `-q` 会把汇总行整个吃掉（实测：
   `python3 -m pytest -q | grep passed` 什么都不打印），计数只能改从 `--collect-only -q` 取。
 - 不要写 `node --test tests/js/`：目录会把 `fake-aos.cjs` 当测试执行，输出 `# tests 1 / # fail 1`，

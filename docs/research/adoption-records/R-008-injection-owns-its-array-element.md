@@ -22,7 +22,7 @@
   指向生成的 `memory.context.md`（`plugin/autolearn-core.mjs:418-449`、`install.sh:108-127`）`[Verified·一手]`
 - 本机 `opencode.json` 现状：`plugin` 数组含 3 个包，`plugin/skill-tracker.js` 软链在跑，
   `mcp.basic-memory.enabled = **true**`（`command: ["uvx","basic-memory","mcp"]`，
-  `BASIC_MEMORY_HOME=/home/shade/Documents/01-Learning/opencode-memory`），
+  `BASIC_MEMORY_HOME=<bm-vault>`），
   且 `instructions` 键**不存在** ⇒ 本机有 4 个注入/采集相关组件，且 autolearn 从未在此机运行。`[Verified·一手]`
 
 **观察到的设计**

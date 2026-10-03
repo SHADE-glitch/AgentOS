@@ -268,7 +268,7 @@ Agent OS 的对应物目前只有：`_can_auto_promote`（`evolve.py:504-522`：
 
 事实：`~/.config/opencode/opencode.json` 里 `plugin: ["@tarquinen/opencode-dcp@3.2.0", "@mohak34/opencode-notifier@0.4.0", "opencode-conductor-plugin"]`，
 `~/.config/opencode/plugin/skill-tracker.js`（软链，正在跑），`mcp.basic-memory.enabled: **true**`
-（`command: ["uvx","basic-memory","mcp"]`，`BASIC_MEMORY_HOME=/home/shade/Documents/01-Learning/opencode-memory`）。
+（`command: ["uvx","basic-memory","mcp"]`，`BASIC_MEMORY_HOME=<bm-vault>`）。
 `[Verified·一手]`
 
 ⇒ **与已批准的重构计划 §十一冲突**：那里记的是 `"enabled": false`（原文第 681 行），今天不是。

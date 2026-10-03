@@ -82,7 +82,7 @@ Agent OS 若要在 skill 侧做，正确动作是**移植/复用这些纪律**�
 
 ### 张力 1 —— Basic Memory 边界
 **事实**：已启用（`mcp.basic-memory.enabled=true`，`uvx basic-memory mcp`），其后端是
-`/home/shade/Documents/01-Learning/opencode-memory` 下 **52 个手写 md / 9 个编号目录 / 今天还在编辑**；
+`<bm-vault>` 下 **52 个手写 md / 9 个编号目录 / 今天还在编辑**；
 另有 `command/supermemory-*.md` 四条按需命令（`bunx opencode-supermemory`）与一个 9-05 后无人写的孤儿 `memory.jsonl`。
 旧计划 §十一"enabled:false ⇒ 边界零成本"**双重过期**（不仅启用了，而且是活跃的人工地基）。
 

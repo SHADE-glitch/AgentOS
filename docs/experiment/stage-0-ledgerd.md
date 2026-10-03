@@ -16,12 +16,12 @@ Stage 0 的第一条出口判据原来写成一句话："项目是否产生可�
 
 | 项 | 值 |
 |---|---|
-| 项目 | `ledgerd` @ `/home/shade/Public/test/ledgerd`（流水导入与月度对账，Python 3.14 标准库 + pytest）。**10-03 复核：该树已在 2026-10-01T22:20:19 进回收站，原路径现在是另一个 Java 项目 ⇒ 见 §7bis，Stage 0 剩余票面不可再跑** |
-| 当前基线 | `d5bf7773fff32feb87c82767a7ffab3be5ff59c6`（LGD-02 完成后；种子 base 为 `70c935f`）。**10-03 实测这两个对象在 `/home/shade/Public/test` 里已不可解析**（`git cat-file -t d5bf777` ⇒ `Not a valid object name`） |
+| 项目 | `ledgerd` @ `<subject-project>/ledgerd`（流水导入与月度对账，Python 3.14 标准库 + pytest）。**10-03 复核：该树已在 2026-10-01T22:20:19 进回收站，原路径现在是另一个 Java 项目 ⇒ 见 §7bis，Stage 0 剩余票面不可再跑** |
+| 当前基线 | `d5bf7773fff32feb87c82767a7ffab3be5ff59c6`（LGD-02 完成后；种子 base 为 `70c935f`）。**10-03 实测这两个对象在 `<subject-project>` 里已不可解析**（`git cat-file -t d5bf777` ⇒ `Not a valid object name`） |
 | 票与顺序 | LGD-02 → LGD-06 → LGD-07 → LGD-11，一任务一会话、一任务一 commit，项目不 reset |
 | 臂 | Stage 0 只跑臂 E（+Agent OS）；对照臂用 `AOS_RIG_INERT=1`，**不用 `--pure`** |
-| **脚手架位置** | **一律在被试项目之外**：`/home/shade/stage0/`（`tickets/`、`E/store`、`E/rig`、`E/inflight`、`E/manifest.tsv`）。原先放在 `<project>/.arms/` 导致了 AO（§5bis），已整体搬出并由 `run.sh` 的放置守卫禁止再犯 |
-| store 隔离 | `AOS_STORE_DIR=/home/shade/stage0/E/store`（真库 `store/aos.db` 一字未动，见 §7） |
+| **脚手架位置** | **一律在被试项目之外**：`<rig>/`（`tickets/`、`E/store`、`E/rig`、`E/inflight`、`E/manifest.tsv`）。原先放在 `<project>/.arms/` 导致了 AO（§5bis），已整体搬出并由 `run.sh` 的放置守卫禁止再犯 |
+| store 隔离 | `AOS_STORE_DIR=<rig>/E/store`（真库 `store/aos.db` 一字未动，见 §7） |
 | 模型 | `opencode/space-bunny-free`（exp-v1 冻结不变量，未改） |
 | 权限 | `--auto`，owner 2026-10-01 授权，批准范围逐轮记录在 `$RIG/logs/<label>.txt` 首行 |
 
@@ -96,7 +96,7 @@ exit != 0            → failure
 | `masked_test_failures` | `observed_test_results` 里有失败而 `verdict != failure` 的步 | 这就是 AL 的可测量定义 |
 
 隐私线：命令原文与工具输出在本进程里被读完即丢，落盘的只有名称形状、整数与摘要哈希。
-`--out` 落在 `$RIG/oracle/`（Stage 0 用 `/home/shade/stage0/E/rig`，在被试项目之外，且不入库）。
+`--out` 落在 `$RIG/oracle/`（Stage 0 用 `<rig>/E/rig`，在被试项目之外，且不入库）。
 
 ## 4. LGD-02 = 校准样本（不是 Stage 1 数据）
 
@@ -144,8 +144,8 @@ Independent oracle evidence:   Verified
 
 | 次 | 标签 | 会话 | 怎么作废的 | 计不计数 |
 |---|---|---|---|---|
-| 1 | `LGD-06` | `ses_f088b5508ffedHbNJtJfNrfFJF` 之后的 `…153B` loop | 我在中途掐掉（当时 `3 failed, 44 passed`、未提交） | **不计** |
-| 2 | `LGD-06-R2` | `ses_f085d3748ffeUK8ZmoD0fcqFtU` | 25 步、**零失败、唯一一次 pytest 直接 49 passed** —— 因为它先读了答案（见下） | **不计** |
+| 1 | `LGD-06` | `ses_redacted01` 之后的 `…153B` loop | 我在中途掐掉（当时 `3 failed, 44 passed`、未提交） | **不计** |
+| 2 | `LGD-06-R2` | `ses_redacted02` | 25 步、**零失败、唯一一次 pytest 直接 49 passed** —— 因为它先读了答案（见下） | **不计** |
 
 R2 的实际行为（宿主 `resolved path` + 权限评估记录，全部只读取证）：第 1–7 步正常侦察，
 其中读了 **`.gitignore`**；第 8 步 `cat .arms/tickets/LGD-06.md`；第 11 步 `tail -40 .arms/E/rig/logs/LGD-06.txt`
@@ -161,7 +161,7 @@ R2 的实际行为（宿主 `resolved path` + 权限评估记录，全部只读�
 
 处置（全在允许面内，不改 `aos/**`）：
 
-1. 脚手架整体搬出项目树 ⇒ `/home/shade/stage0/{tickets,E/store,E/rig,E/inflight,E/manifest.tsv}`；
+1. 脚手架整体搬出项目树 ⇒ `<rig>/{tickets,E/store,E/rig,E/inflight,E/manifest.tsv}`；
    项目内不再有 `.arms/`（空壳用 `rmdir` 收掉，搬移前后 md5 核对一致）。
 2. `run.sh` 加两条**放置守卫**，在任何模型调用之前拒绝开跑：被试目录内存在 `.arms/`、
    或 `$RIG`/`$STORE` 落在被试目录内 ⇒ `exit 1`。测试：`live/tests/test_run_guard.py`（4 条，先红 ——
@@ -170,7 +170,7 @@ R2 的实际行为（宿主 `resolved path` + 权限评估记录，全部只读�
 3. oracle 的 `command_classes` 顺手修掉同一类噪声：shell 控制词（`for`/`do`/`done`/`in`…）与
    单字母 flag 值不再当命令名 —— `for f in …; do cat …; done` 现在是 `cat`，`find . -maxdepth 1 -type f`
    现在是 `find`（`test_shell_control_words_and_flag_values_are_not_command_names` 先红后绿）。
-4. R2 现场：4 项改动按字节抓到 `/home/shade/stage0-void/LGD-06-R2/`，再 `git stash push -u` 封存为
+4. R2 现场：4 项改动按字节抓到 `<rig>-void/LGD-06-R2/`，再 `git stash push -u` 封存为
    `stash@{0}`（`LGD-06-R2 contaminated-run 2026-10-01 …`）；第 1 次的 stash 顺位下移为 `stash@{1}`（`64a7e98d…`）。
    两次都不 apply、不 drop、不进统计。
 
@@ -190,10 +190,10 @@ R2 的实际行为（宿主 `resolved path` + 权限评估记录，全部只读�
 
 | 事项 | 值 |
 |---|---|
-| 臂 E store | `/home/shade/stage0/E/store/aos.db`（1 条 active 记忆 `M-F8993E1D`、1 条 hot observation（LGD-02）、2 条 loop —— `LOOP-…-38B2` 已完整回报，`LOOP-…-153B` 属于作废的第 1 次 LGD-06，开着没回来） |
+| 臂 E store | `<rig>/E/store/aos.db`（1 条 active 记忆 `M-F8993E1D`、1 条 hot observation（LGD-02）、2 条 loop —— `LOOP-…-38B2` 已完整回报，`LOOP-…-153B` 属于作废的第 1 次 LGD-06，开着没回来） |
 | 开发真库 | `store/aos.db` sha256 前缀 `c3907554319a0fe3`，本轮未变 |
 | LGD-06 | **中止，不作实验数据**：中途被我掐断，未发 postflight，臂库里留下一条开着没回来的 loop（`LOOP-20261001124603-153B`） |
-| LGD-06 现场捕获 | 第 1 次：`/home/shade/stage0/E/inflight/`（搬自原 `.arms/E/inflight`，md5 与原文件一致）；第 2 次：`/home/shade/stage0-void/LGD-06-R2/`（`state-and-diff.txt` + `files/` 四件，md5 核对过） |
+| LGD-06 现场捕获 | 第 1 次：`<rig>/E/inflight/`（搬自原 `.arms/E/inflight`，md5 与原文件一致）；第 2 次：`<rig>-void/LGD-06-R2/`（`state-and-diff.txt` + `files/` 四件，md5 核对过） |
 | LGD-06 可恢复位 | `stash@{1}` = `64a7e98d0b91cdd7901170a96ef5990de4eed765`（第 1 次中止，消息 `LGD-06 aborted-run …`）；`stash@{0}`（第 2 次污染，消息 `LGD-06-R2 contaminated-run …`）。恢复一律用 `apply`，不 `pop`、不 drop，且**都不进 Stage 0 统计**。**10-03 复核：两条 stash 已不可解析（`git cat-file -t 64a7e98d` ⇒ `Not a valid object name`，`git stash list` 为空）⇒ 这一行原先是"那是可逆动作"的凭据，现在不再是；内容凭据只剩上面两行的字节捕获，见 §7bis** |
 | 中止点内容 | 第 1 次：`cli.py`（+`backfill-amount`）、`backfill.py`、`0004_amount_cents.sql`，`3 failed, 44 passed`；第 2 次：再加 `tests/test_migrations.py`，唯一一次 pytest 直接 `49 passed`（零失败，见 §5bis） |
 | 恢复后 | 当时：项目回到 `d5bf777`、工作树 0 项、`47 passed`；项目内已无 `.arms/`（`.arms/` 这一条到今天仍然成立） |
@@ -202,10 +202,10 @@ R2 的实际行为（宿主 `resolved path` + 权限评估记录，全部只读�
 
 | 事实 | 命令 | 输出 |
 |---|---|---|
-| 被试项目被搬走 | `cat ~/.local/share/Trash/info/ledgerd.trashinfo` | `Path=/home/shade/Public/test/ledgerd`、`DeletionDate=2026-10-01T22:20:19` |
+| 被试项目被搬走 | `cat ~/.local/share/Trash/info/ledgerd.trashinfo` | `Path=<subject-project>/ledgerd`、`DeletionDate=2026-10-01T22:20:19` |
 | 回收站里那份没有历史也没有 tests | `ls -a ~/.local/share/Trash/files/ledgerd` | 有 `cli.py / backfill.py / periods.py / store.py …`，**无 `.git`、无 `tests/`** ⇒ 不是 `d5bf777` 的完整工作树 |
-| 原路径换成了另一个项目 | `git -C /home/shade/Public/test log --oneline --reverse \| head -1` | `chore: import tianji project as received (baseline)`，共 24 条提交，最早一条 `2026-10-01 23:19`；当前 HEAD `bdd0043`，工作树 33 项不干净（owner 的日常开发，**不是**实验数据） |
-| 旧对象不可解析 | `git -C /home/shade/Public/test cat-file -t d5bf777` / `… 64a7e98d` | 都是 `fatal: Not a valid object name`；`git stash list` 为空 |
+| 原路径换成了另一个项目 | `git -C <subject-project> log --oneline --reverse \| head -1` | `chore: import tianji project as received (baseline)`，共 24 条提交，最早一条 `2026-10-01 23:19`；当前 HEAD `bdd0043`，工作树 33 项不干净（owner 的日常开发，**不是**实验数据） |
+| 旧对象不可解析 | `git -C <subject-project> cat-file -t d5bf777` / `… 64a7e98d` | 都是 `fatal: Not a valid object name`；`git stash list` 为空 |
 
 **后果，按对决定的影响排序**（只给事实，不替 owner 判断）：
 
@@ -215,19 +215,19 @@ R2 的实际行为（宿主 `resolved path` + 权限评估记录，全部只读�
    要续跑必须由 owner 决定"重建 ledgerd（含测试树）"还是"换项目重定义票面"。
    这两票**从未计入** Stage 0 的读数，作废它们不改变 §3/§4 的任何结论。
 2. **上一轮"用 stash 封存所以是可逆的"这句话现在只成立到"当时可逆"**：`.git` 被就地重建后两条 stash 都拿不回来了。
-   仍然在的是字节级捕获：`/home/shade/stage0/E/inflight/`（4 件，2509 字节）与
-   `/home/shade/stage0-void/LGD-06-R2/`（`state-and-diff.txt` + `files/` 4 件），以及 `E/manifest.tsv`、`E/rig/{logs,oracle,snap}`、
+   仍然在的是字节级捕获：`<rig>/E/inflight/`（4 件，2509 字节）与
+   `<rig>-void/LGD-06-R2/`（`state-and-diff.txt` + `files/` 4 件），以及 `E/manifest.tsv`、`E/rig/{logs,oracle,snap}`、
    `E/store`（臂 E 库，含 `M-F8993E1D` 与那条开着没回来的 `LOOP-…-153B`）。
    ⇒ 教训写死成一条：**"可恢复"不能靠被试项目的 `.git` 撑，只能靠自己那份字节捕获**（本轮之前它已经是唯一副本）。
 3. **§8 的检查单从此不可执行**（下面已就地改写，不再是"跑一遍看颜色"的清单）。
-4. 我没有动回收站里任何东西，也没有试图恢复历史 —— 那是 owner 的决定，且 `Public/test` 现在是活跃的日常工作树。
+4. 我没有动回收站里任何东西，也没有试图恢复历史 —— 那是 owner 的决定，且 `<subject-project>` 现在是活跃的日常工作树。
 
 ## 8. Stage 0 继续前的检查单（10-03 重写：一半已经失效，留着不装得还能跑）
 
 **仍然可执行**（本轮跑过，输出就是右边的数）：
 
 ```bash
-cd /home/shade/Public/AgentOS
+cd <repo>
 python3 -m pytest                                          # 464 passed
 node --test tests/js/plugin.test.mjs                       # 29 pass / 0 fail —— 不要写 `node --test tests/js/`，那是假红
 python3 -m pytest --collect-only -q integrations/opencode/live/tests | tail -2   # 合计 15：test_friction_oracle.py 11 + test_run_guard.py 4
@@ -237,9 +237,9 @@ git status --porcelain                                     # 续跑 Stage 0 时�
 **这三行原来都在，现在跑不出它要求的判定**（§7bis）：
 
 ```bash
-git -C /home/shade/Public/test status --porcelain          # 已失效：该路径现在是 owner 的 Java 项目，实测 33 项不干净
-git -C /home/shade/Public/test rev-parse HEAD              # 已失效：应是 d5bf777…，实测 bdd0043，且 d5bf777 不可解析
-test ! -e /home/shade/Public/test/.arms                    # 仍成立（实测不存在），但它保护的那个项目已经不在了
+git -C <subject-project> status --porcelain          # 已失效：该路径现在是 owner 的 Java 项目，实测 33 项不干净
+git -C <subject-project> rev-parse HEAD              # 已失效：应是 d5bf777…，实测 bdd0043，且 d5bf777 不可解析
+test ! -e <subject-project>/.arms                    # 仍成立（实测不存在），但它保护的那个项目已经不在了
 ```
 
 另外两条本轮踩到的命令陷阱，直接改在这里：① 上一版这两行写的是 `python3 -m pytest -q`，而 `addopts` 已经带一个
@@ -247,12 +247,12 @@ test ! -e /home/shade/Public/test/.arms                    # 仍成立（实测�
 ② rig 那份 oracle 的 `10 oracle + 1 控制词`拆分不在了，实测是 `test_friction_oracle.py: 11` + `test_run_guard.py: 4`。
 原先"计数不应变"那句也随之作废：计数从 `5d34aba`（JS）与 `82c9aa3`（Python）起就变了，两次都是 owner 下令的改动。
 
-跑票时（脚手架在项目外）——**这条命令今天会跑在一个错的项目上**（`/home/shade/Public/test` 已不是 ledgerd）：
+跑票时（脚手架在项目外）——**这条命令今天会跑在一个错的项目上**（`<subject-project>` 已不是 ledgerd）：
 
 ```bash
-export AOS_RIG=/home/shade/stage0/E/rig AOS_STORE_DIR=/home/shade/stage0/E/store
-bash integrations/opencode/live/run.sh LGD-06-R3 /home/shade/Public/test --auto \
-  "$(cat /home/shade/stage0/tickets/LGD-06.md)"
+export AOS_RIG=<rig>/E/rig AOS_STORE_DIR=<rig>/E/store
+bash integrations/opencode/live/run.sh LGD-06-R3 <subject-project> --auto \
+  "$(cat <rig>/tickets/LGD-06.md)"
 ```
 
 ## 9. 逐票记录
@@ -308,7 +308,7 @@ Result: Failed
 | AL / AM / AN | 三条全部复现，见下 |
 
 **是否进入 Stage 0 统计**：**Yes**。票面未改、脚手架在被试项目之外、放置守卫先跑过；
-宿主库只读复核 `resolved path` 与权限评估里**没有任何 `.arms` / `stage0` 命中**（对照 R2 的 6 次命中）。
+宿主库只读复核 `resolved path` 与权限评估里**没有任何 `.arms` / `<rig>` 命中**（对照 R2 的 6 次命中）。
 人门：`review label 3 --outcome success`（不带 `--skill`，因为召回为 0，无从归因）⇒ 一份提案
 ⇒ `M-21AE3B79`（`tags=migrate,backfill,fixture`，因果句由人补）。
 

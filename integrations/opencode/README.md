@@ -6,7 +6,7 @@ human, and it is two files, both reversible:
 
 ```
 ~/.config/opencode/plugin/agent-os.js -> <this checkout>/integrations/opencode/plugin/agent-os.js
-~/.zshrc:87  alias opencode='AGENT_OS_ROOT=/home/shade/Public/AgentOS opencode --auto'
+~/.zshrc:87  alias opencode='AGENT_OS_ROOT=<repo> opencode --auto'
 ```
 
 Nothing else under `~/.config/opencode/**` was touched: `opencode.json`,
@@ -68,7 +68,7 @@ holds the engine to that rule.
 ```bash
 ln -s "$PWD/integrations/opencode/plugin/agent-os.js" ~/.config/opencode/plugin/agent-os.js
 # and in the environment opencode runs in:
-export AGENT_OS_ROOT=/home/shade/Public/AgentOS     # this machine: inlined into the opencode alias
+export AGENT_OS_ROOT=<repo>     # this machine: inlined into the opencode alias
 ```
 
 Note the install did **not** use `opencode plugin <module>` — that subcommand also
@@ -108,7 +108,7 @@ A real host session ran through this seam on 2026-10-01 (rig: [`live/README.md`]
 ## The exp-v1 real-host probe: the capture chain works on the actual host `[Verified]`
 
 One run on 2026-10-01 (`opencode run --auto -m opencode/space-bunny-free`, smoke project under
-`/home/shade/Public/test`, engine store pinned to an isolated directory by a single `AOS_STORE_DIR`,
+`<subject-project>`, engine store pinned to an isolated directory by a single `AOS_STORE_DIR`,
 `AOS_TIMEOUT_MS` left at its default) settled the four things the fixtures could not settle:
 
 ```text

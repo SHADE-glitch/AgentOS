@@ -23,7 +23,7 @@ javascript tests:     27 pass / 0 fail（`node --test tests/js/plugin.test.mjs`�
 复核这三件事的命令（冻结前后各跑一次，输出必须一致）：
 
 ```bash
-cd /home/shade/Public/AgentOS
+cd <repo>
 git rev-parse HEAD; git status --short
 python3 -m pytest                                   # 期望 447 passed
 node --test tests/js/plugin.test.mjs                # 期望 # pass 27 / # fail 0
@@ -48,7 +48,7 @@ provider:   opencode
 `space-bunny-free` 在本机目录缓存 `~/.cache/opencode/models.json` 里确实存在（provider `opencode` 与
 `opencode-go` 各一份，`cost` 四项均为 0）。为什么是它，三条：
 
-1. `huoshan/ark-code-latest` 当前不可用：`~/.zshrc:29` 导出的 `HUOSHAN_API_KEY` 值是空串
+1. `huoshan/ark-code-latest` 当前不可用：shell rc 里导出的该 provider API key 环境变量值是空串
    （长度 2，即一对引号），不是"我没配上"，是"配了空的"。
 2. 采集链已经在它身上真跑通过一次：五个 bash 步骤全部落成 method trace，`session.idle → postflight`
    在无头 `run` 模式首答即中，`AOS_TIMEOUT_MS` 保持默认 1200（见 `integrations/opencode/README.md`
