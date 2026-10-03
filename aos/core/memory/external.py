@@ -14,6 +14,10 @@ model can go read. So three rules hold this apart from the memory table:
   reshaped neighbour database means "nothing external this time", never a run that
   stops because a neighbour was unavailable.
 
+A note carrying Agent OS's own `agent_os` marker is skipped: that is a lesson this
+engine published at a human's approval, already recalled from the memory table, and
+reading it back here would show it twice under two contradictory labels.
+
 The CLI is deliberately not used: `bm` answers in 8.5-9.2 s and a preflight budget is
 1200 ms, while the read-only index answers a full scan of 52 notes in well under a
 millisecond. Retrieval stays in-process and deterministic.
@@ -52,17 +56,34 @@ def _open_ro(path: Path) -> Optional[sqlite3.Connection]:
     return conn
 
 
-def _tags_of(entity_metadata: Any) -> list[str]:
-    """Frontmatter tags, or nothing. basic-memory stores them as JSON, occasionally badly."""
+def _metadata(entity_metadata: Any) -> dict[str, Any]:
+    """The note's frontmatter as a dict, or empty. basic-memory stores it as JSON, occasionally badly."""
     if isinstance(entity_metadata, (bytes, bytearray)):
         entity_metadata = entity_metadata.decode("utf-8", errors="replace")
     try:
         payload = json.loads(entity_metadata or "{}")
     except (TypeError, ValueError):
-        return []
-    if not isinstance(payload, dict):
-        return []
-    tags = payload.get("tags")
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _owned_by_agent_os(entity_metadata: Any) -> bool:
+    """Whether this note carries the marker ``external_write`` puts on its own notes.
+
+    A note with ``agent_os: true`` is not the neighbour's note: it is a lesson this
+    engine published when a human approved it, and it is already recalled from the
+    memory table. Reading it back here would show the same lesson twice under two
+    contradictory labels — governed experience, and unverified external note.
+    """
+    marker = _metadata(entity_metadata).get("agent_os")
+    if marker is True:
+        return True
+    return isinstance(marker, str) and marker.strip().lower() == "true"
+
+
+def _tags_of(entity_metadata: Any) -> list[str]:
+    """Frontmatter tags, or nothing."""
+    tags = _metadata(entity_metadata).get("tags")
     if isinstance(tags, str):
         tags = [part.strip() for part in tags.split(",")]
     if not isinstance(tags, list):
@@ -145,6 +166,10 @@ def recall(query: str, *, k: Optional[int] = None, db_path: Optional[Path] = Non
     for title, permalink, file_path, metadata, markdown in rows:
         identifier = str(permalink or title or "").strip()
         if not identifier:
+            continue
+        if _owned_by_agent_os(metadata):
+            # Our own published note, not the neighbour's: it is already recalled as a
+            # governed memory, and calling it "external · unverified" would contradict that.
             continue
         tags = _tags_of(metadata)
         score = _score(needle, squashed, str(title or ""), tags, min_tag_overlap)

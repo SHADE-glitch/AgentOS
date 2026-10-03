@@ -31,7 +31,9 @@ def make_bm_db(path: Path, notes: list[dict]) -> Path:
     )
     conn.execute("CREATE TABLE note_content (entity_id INTEGER, markdown_content TEXT)")
     for index, note in enumerate(notes, start=1):
-        metadata = json.dumps({"title": note["title"], "type": "note", "tags": note.get("tags", [])})
+        fields = {"title": note["title"], "type": "note", "tags": note.get("tags", [])}
+        fields.update(note.get("metadata") or {})
+        metadata = json.dumps(fields)
         conn.execute(
             "INSERT INTO entity (id, title, note_type, permalink, file_path, entity_metadata, project_id)"
             " VALUES (?, ?, 'note', ?, ?, ?, 1)",
@@ -147,6 +149,26 @@ def test_a_note_appears_once_even_when_the_index_holds_two_rows(tmp_path, monkey
     policy.reload()
     rows = external.recall("dup 重复的一篇", k=5)
     assert [row["memory_id"] for row in rows] == ["bm:main/dup"]
+
+
+def test_a_note_this_engine_published_is_not_an_external_note(tmp_path, monkeypatch):
+    """Agent OS's own published lesson is governed memory, not an unverified pointer.
+
+    `external_write.build_note` marks every note it writes with `agent_os: true`, so a
+    note carrying that marker is already recalled from the memory table. Counting it
+    here too would show one lesson twice, under two contradictory labels.
+    """
+    path = make_bm_db(tmp_path / "ours.db", [
+        {"title": "人写的 GNOME 笔记", "tags": ["gnome"], "permalink": "main/human"},
+        {"title": "M-AB12CD34", "tags": ["gnome"], "permalink": "main/agent-os/m-ab12cd34",
+         "metadata": {"agent_os": True, "aos_memory_id": "M-AB12CD34"}},
+        {"title": "标了 false 的笔记", "tags": ["gnome"], "permalink": "main/not-ours",
+         "metadata": {"agent_os": False}},
+    ])
+    monkeypatch.setenv("AOS_BM_DB", str(path))
+    policy.reload()
+    hits = {row["permalink"] for row in external.recall("gnome 运维", k=5)}
+    assert hits == {"main/human", "main/not-ours"}, "only our own marker is skipped, and only when true"
 
 
 def test_the_block_points_at_the_note_without_copying_its_body(bm_db):
