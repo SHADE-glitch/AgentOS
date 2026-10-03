@@ -140,6 +140,10 @@
 ### 16. Human Approval
 - 见 `findings.md Q8`。唯一值得记的强对比：**"文档里写了纪律"与"代码里有门"是两件事** —— K 写了 Never auto-commit 却没注册 `permission.ask`；A 的 HARD GATE 只在 prompt 里；只有 AOS 的门能被绕过时的后果是被 CAS 拦住。
 - AOS 的门形态（两类 kind、`label` 日常命令、`--dry-run` 式 `migrate --dry-run`）比别家完备；**待补的是 `--dry-run` 的覆盖面**（A 几乎每个破坏性命令都有）。
+- **2026-10-03 起矩阵里有一列"无人实现"**：四家（A/K/S/O）的人门批准都只写**自己**的存储（persona JSONL、`reviews/` 目录、`skills.db`、`~/.opencore/memory`），
+  没有一家把"批准的结果"发布进**人自己日常维护的那个笔记库**。AOS 现在的形状：批准时经 `basic-memory tool write-note` 单向写一篇
+  `agent-os/<memory_id>.md`，带 `agent_os` 归属标记、无标记的文件拒绝覆盖、失败不改变批准。
+  判据 4 要求新模块能指到这样一列，这一条就是它指到的那一列（`positioning.md §6.4`）。
 
 ### 17. Plugin Integration
 - 权威钩子清单与兼容性判定见 `findings.md Q9`。三条硬事实值得进设计：

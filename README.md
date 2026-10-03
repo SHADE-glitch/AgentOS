@@ -170,6 +170,13 @@ back named in `warnings` instead of being ignored in silence.
 | memory dir | `AOS_MEMORY_DIR` | `<content>/memory` |
 | policies dir | `AOS_POLICIES_DIR` | `<content>/policies` |
 | basic-memory index (read-only) | `AOS_BM_DB` | `~/.basic-memory/memory.db` |
+| basic-memory config dir (locates its vault, read-only) | `AOS_BM_CONFIG_DIR` | `~/.basic-memory` |
+| publish command prefix (argv, not a path) | `AOS_BM_BIN` | `uvx basic-memory` |
+
+`AOS_BM_BIN=""` is the off-switch for publishing an approved lesson into
+basic-memory; the other one is `"enabled": false` in
+`content/policies/external_write.json`. Neither changes what the gate decides:
+`store/` is written first and stays the only thing recall reads.
 
 Two more the engine reads directly: `AOS_SESSION_ID` (names the evidence
 directory; generated when unset) and `AOS_REGISTRY_PATH` (override the routing

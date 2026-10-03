@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "folder": "agent-os",
+  "project": "",
+  "timeout_seconds": 30,
+  "marker": "agent_os"
+}

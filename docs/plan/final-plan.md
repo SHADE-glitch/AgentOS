@@ -1183,3 +1183,58 @@ external 13、inject 32、全量 464）。上一版这里写的是"463 / +12"，
 本轮的 TUI 探针（tmux 起、不发 prompt、`AOS_STORE_DIR` 指 scratch）**在真库里留下的 loop 数 = 0**：
 最新一条 loop 是 `02:00:48Z`，探针跑在 `03:22Z` 之后；探针会话与 `/tmp/aos-env-probe` 已删除并回读
 （`tmux ls` → no server running，目录不存在，无残留 opencode 进程）。
+
+### 计划后 · Stage 1 第四轮：批准的经验单向写回 basic-memory（2026-10-03，owner 令"只做写回路径，Phase 2 不许碰"）
+
+owner 拍板了三件事：端到端只写 scratch、本轮不做 `aos memory publish` 重试命令、策略默认 `enabled: true`。
+**这是对三条治理宣言的一次重打基线**（`AGENTS.md:34-35` 唯一写处、墙 4 只读邻居、`positioning.md §5` 不镜像不同步），
+改的是宣言而不是绕开它：新增的是**一条单向出口**，只在 `review approve` 写出新行时发生，只经
+`basic-memory tool write-note`，绝不打开邻居的 SQLite、绝不以写模式打开它的文件。
+
+做了什么（一笔提交，12 个文件）：`aos/core/memory/external_write.py`（新增）+ `content/policies/external_write.json`
+（第 8 个策略文件）+ `policy.DEFAULT_POLICIES["external_write"]` + `config.ENV_BM_BIN`/`ENV_BM_CONFIG_DIR` +
+`evolve.py` **两处** wiring（`approve_review` 与 `_resolve_conflict`，都排在 `set_review_status`/`add_event` 之后）+
+`review approve --no-publish` 与一行 stderr + `tests/conftest.py` 两行隔离 + `tests/test_external_write.py` 31 例 + 文档 6 处。
+
+三条先红后绿（其余靠"故意拆掉守卫"逐条证实）：
+
+1. `ImportError: cannot import name 'external_write'`（模块还不存在）。
+2. `KeyError: 'basic_memory'` —— 7 条门级用例一起红，其中一条先是**错红了**：我的 `_pending_review()` 用
+   `r["kind"] == "create"` 过滤，而 `kind` 是评审类别（`promotion`），效果的 `create` 在 `proposed_change` 里。
+   红屏幕是 `IndexError`，不是我以为的那条断言 ⇒ 改测试不改引擎。
+3. `AssertionError: assert '' == 'main/agent-os/m-ab12cd34'` —— **这条是端到端抓出来的真 bug**：
+   真实 CLI 回的是**缩进多行 JSON**，我按"最后一行"解析只拿到 `}`，permalink 静默变成空串。
+   把 fake 改成打印 pretty JSON 复现红，再改成整体解析 + 花括号切片兜底。
+   教训与 AGENTS.md 同一形状：**照着自己的桩写解析器，等于没跑过真东西**。
+
+守卫是被证实的，不是被声明的（逐条拆掉再跑，四次都红）：去掉正文消毒 ⇒ 伪造的 `agent_os: false` 进了产物；
+去掉值白名单 ⇒ `--cloud` 当成 tag 混进 argv；从 argv 里删 `--local` ⇒ 用例红；把归属判定写死成 `ours` ⇒
+人写的笔记会被覆盖那条红；把 `DEFAULT_POLICIES["external_write"]` 改名 ⇒ `tests/test_config.py` 报
+`external_write.json: no such policy section`。**反向不成立**：只加默认段而没有策略文件是静默的，这条写进了 AGENTS.md。
+
+真机读数（scratch 的 `BASIC_MEMORY_CONFIG_DIR` + scratch vault，真 `uvx basic-memory` 0.23.2）：
+
+- 一次 spawn **8.1–9.2 s** ⇒ 策略默认超时 30 s 是约 3 倍余量（不是猜的，是这次量出来的）。
+- 门级批准 ⇒ `basic_memory.status="written"`，文件 `agent-os/M-CC5E6B4F.md`，**16 个 `aos_*` 键 + `agent_os: true`
+  全部落进 bm 自己的 `entity.entity_metadata`**，tags 也进索引。
+- 同一 id 发两次 ⇒ 仍然只有一个文件，`aos_review_id` 变成后一次（`--overwrite` + 稳定 `--title` 的作用）。
+- 预置一篇**没有标记**的人笔记 ⇒ `conflict`、字节不变、**bm 索引条数不变**（零 spawn）。
+- 恶意正文（`---` 围栏 + 伪造 `aos_memory_id`）经真 CLI 往返 ⇒ 标记仍是我们自己的、被移除的键只剩标注。
+- 坏掉的 `AOS_BM_BIN` ⇒ 退出码 **0**、stdout 仍是**一个 JSON 文档**、stderr 一行、
+  事件 `learning.bm_write_failed` 落库（payload 只带键名/flag 名/截断 error，**不带教训正文**）、行仍 `active`、评审仍 `approved`。
+- **两条邻居事实推翻了我被告知的"已核实"**：本机 **没有** `basic-memory` 这个 PATH 项，只有 `uvx basic-memory`
+  ⇒ `AOS_BM_BIN` 必须是 argv 前缀字符串；全新 bm 库里 `project` 表为空时 `tool write-note` 直接 404
+  （`project add` 只认 config.json、不补 DB 行）⇒ 这类失败是正常的 `failed`，批准不受影响。
+
+边界自证：`~/.basic-memory/memory.db` sha `a090864c…` + mtime `2026-10-01 08:27:45` 跑前跑后一致
+（要同时设 `BASIC_MEMORY_CONFIG_DIR`，**只设 `AOS_BM_CONFIG_DIR` 会写到邻居的常驻库** —— 这条已写进 AGENTS.md）；
+`~/.config/opencode/**` 本轮零写入，但**不能用 mtime 扫描自证**：同一小时里 notifier 与 skill-tracker 在写它，
+12:20:18 还多出四个 `supermemory-*.md.bak` —— 那些不是本轮产生的（本轮没有任何命令打开那个目录写），
+如实登记为"该目录不是干净的自证现场"。正式库 `store/aos.db` 本轮**未写**（mtime 10:13:20，sha `5ce6e590…` 不变）；
+最新 loop 文件仍是 10:13 那一条 ⇒ 期间没有活的宿主会话被我的测量污染。
+
+测试 **464 → 495**（+31 `tests/test_external_write.py`），JS **29** 不变（插件与契约都没动），rig **15** 不变；
+契约仍 1.2、schema 仍 v5、无迁移。未闭仍是 AI、AK、AR、AS 四条；本轮**没有新增缺陷编号**——
+写回是 owner 拍板的能力，不是缺陷。残留两条如实记下：① 发布失败的人工重试口按 owner 决定不做，
+所以今天只能重跑 `review approve`（幂等）；② 引擎不回读自己发出去的那篇笔记，因此"人在 bm 里改了这篇笔记"
+今天对召回没有任何影响 —— 那是 Phase 2 的问题，不是这轮该顺手做的。

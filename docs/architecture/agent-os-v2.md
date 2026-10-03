@@ -73,13 +73,18 @@ Self-Evolution 的对象只有 memory / policy / routing knowledge / experience 
 `tests/test_loop_lifecycle.py::test_provider_registry_lists_builtins` 现在断言注册表**恰好**是那两个 provider，
 所以"再塞一个驱动 host 的 provider"会直接失败而不是悄悄通过。
 
-**墙 4 · Basic Memory 是只读邻居。**
+**墙 4 · Basic Memory 是只读邻居，写入只有一条经人门的单向出口。**
 现实比旧计划宽：`mcp.basic-memory.enabled=true`，后端是
 `/home/shade/Documents/01-Learning/opencode-memory` 下 52 个手写 md / 9 个编号目录，今天仍在编辑 `[Verified]`；
 另有 `command/supermemory-{init,login,logout,status}.md` 四条按需命令，
 以及一个 2026-09-05 后无人写的孤儿 `~/.config/opencode/memory.jsonl`（写入者不在机器上，`[Unconfirmed]`）。
 ⇒ 边界不写成宣言，写成一段**很小的代码接缝 + 一条 fixture 断言**：
 只 push 自己的元素、不编辑他人元素、清洗正文里的边界标签（§8 的缺陷登记）。
+2026-10-03 起这条墙有两个半边，各自一段小接缝、各自一条断言：**读** = `external.py`（`mode=ro` + `query_only`，
+指针而非复制）；**写** = `external_write.py`（只在 `review approve` 且只写出新行时，经
+`basic-memory tool write-note` 单向发一篇笔记，落进自己新建的 `agent-os/` 目录，frontmatter 带 `agent_os: true`
+作为归属标记；同名但无标记的文件 = 人写的 ⇒ `conflict` 且不 spawn）。两条都不许打开邻居的 SQLite 去写，
+`sqlite3` 这个模块名在新写入者里出现就是红的。
 **不引入 `MemoryProvider` 抽象** —— 预留空壳仍属装饰物，与 `positioning.md` 张力 1 一致。
 
 ---
@@ -432,8 +437,10 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | 第二个 Skill 系统 / `skill_versions` / `sensing/skills.py` | 墙 1 + `positioning.md` 张力 2 | 从未存在 |
 | 自建遥测采集（旧计划的 `aos skill report`） | 本机 skill-tracker 五表 + 单调状态修正更强，AOS 只读（张力 4） | 从未存在（计划取消） |
 | `MemoryProvider` 抽象 / 与 basic-memory 的双向同步 | 张力 1；预留空壳仍属装饰物。**2026-10-02 收窄过一次**：
-  加的是**只读、指针式**的第二召回源（`aos/core/memory/external.py`，§16 与 `positioning.md §5`）——
-  抽象层与同步仍然没有，也不打算有 | 抽象与同步从未存在；只读召回自 2026-10-02 |
+  加的是**只读、指针式**的第二召回源（`aos/core/memory/external.py`，§16 与 `positioning.md §5`）。
+  **2026-10-03 又收窄一次**：加的是**单向、经人门**的发布（`external_write.py`：批准时才写一篇笔记，不导入、不镜像、
+  不回读自己的笔记）。抽象层与同步仍然没有，也不打算有 —— 单向写不等于同步，因为没有反向数据流 |
+  抽象与同步从未存在；只读召回自 2026-10-02；单向发布自 2026-10-03 |
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
@@ -615,7 +622,11 @@ Agent OS = OpenCode 的长期经验层
 
 不负责：agent planning · agent execution · tool orchestration · 代码生成
        · skill 管理与遥测（skill-tracker 拥有）· 多 agent 编排（P1 已删）
-       · 第二个 memory 后端（basic-memory 只是**只读指针源**：不镜像、不同步、不参与归因）
+       · 第二个 memory 后端。basic-memory 今天是**只读指针源 + 单向人门发布**：
+         召回只给指针（`max_body_chars: 0`），写出只在批准时经它自己的 CLI 发一篇，
+         **不镜像、不同步、不参与归因、不回读自己发出去的那篇**。
+         Phase 2 的目标（尚未做，owner 已定方向）：让 bm 成为唯一的记忆源、
+         AOS 退回账本与治理 —— 那一次会把"不负责第二个 memory 后端"这条边界本身改写掉。
 ```
 
 三栏分开的意义：**左栏可以拿去复跑，中栏是实验要回答的问题，右栏是本基线的固有形状、不在实验期间修。**
@@ -625,9 +636,12 @@ Agent OS = OpenCode 的长期经验层
 | 经验能形成（含"试 A 败→换 B 成"），能存、能被召回、能被注入；一次教训只对应一次决定；人门的一次决定改变下一次召回（1122→1359）；真宿主能产出 method trace，`session.idle→postflight` 在无头 `run` 成立；原命令不出宿主（canary 六处为 0）；轨迹买到 0 判决权重（三臂 `mass` 相同） | 经验是否减少未来试错；是否改变首次动作；是否让"模型本来不会答"的任务从错变对；相对 `AGENTS.md` 与普通 memory 的增量；旧问题复发率是否下降；跨轮粘性（第十四轮实测第二轮召回为 0） | 非 shell 工具无 exit、宿主无 `error` 键 ⇒ 编辑/读类失败不可见；被拒调用不进钩子；纯思考转向不可观察；跨 loop 方法迁移不支持；`exit=0` 只给相邻性不给因果；轨迹 16 步去中间留两端；backfill 行无轨迹；`user_interrupted` 读了没人写（AK）；exit→构建/测试的归属未获批（AI） |
 
 **跨这一行的实验读数不再是同一条基线**：exp-v1 的代码点原是 `53de1ad`；此后 `5d34aba` 改了插件与 JS 缝守卫，
-2026-10-02 这一轮又改了 `aos/`（只读召回）。**两个 tag 都没有移动、也没有新建**（`git rev-parse exp-v1` 现读），
-被冻结的东西只有一个：**代码点**，而它已经前移 —— 所以任何跨这三次的 A/B 或前后对比都不再干净，
-要重新对照就从当前 HEAD 起算，别拿旧读数当基线。
+2026-10-02 这一轮又改了 `aos/`（只读召回），**2026-10-03 再改一次 `aos/`（批准的经验单向写回 bm：新增
+`external_write.py` + 第 8 个策略文件 + `review approve` 多一个 `--no-publish`）**。**两个 tag 都没有移动、也没有新建**
+（`git rev-parse exp-v1` 现读），被冻结的东西只有一个：**代码点**，而它已经前移 —— 所以任何跨这四次的 A/B 或前后对比都不再干净，
+要重新对照就从当前 HEAD 起算，别拿旧读数当基线。**exp-v1 的冻结在本点后事实上失效**：判据面（①-A/①-B、oracle、
+两栏出口）仍按 `docs/experiment/` 那三份文档读，但"冻结面 = `aos/ content/ tests/ integrations/opencode/plugin/`"
+这句话已经没有意义 —— 这四路径现在每一条都被动过。
 
 **违反 `docs/experiment/exp-v1-baseline.md` §2 的冻结清单 ⇒ 实验作废**，重新打基线并从 Stage 1 重跑。判据 1 只数 owner 的交互会话，
 探针/rig/手喂产生的观测一律不计入（本轮探针写在一个 `AOS_STORE_DIR` 指向的隔离库里）。

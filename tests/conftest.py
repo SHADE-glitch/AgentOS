@@ -33,6 +33,12 @@ def hermetic_env(tmp_path, monkeypatch):
     # AOS_BM_DB to a fixture of its own. Left alone, this points at a path that
     # does not exist, which is also the production default's failure mode.
     monkeypatch.setenv("AOS_BM_DB", str(tmp_path / "no-basic-memory" / "memory.db"))
+    # Publishing an approved lesson reaches outside the repository, so both ends of
+    # it are disconnected here: the command does not exist, and the neighbour's
+    # config directory — the only way to find its vault — does not either. A test
+    # that wants to publish points one or both of them at a fixture of its own.
+    monkeypatch.setenv("AOS_BM_BIN", str(tmp_path / "no-basic-memory" / "basic-memory"))
+    monkeypatch.setenv("AOS_BM_CONFIG_DIR", str(tmp_path / "no-basic-memory"))
     reset_caches()
     yield
     reset_caches()

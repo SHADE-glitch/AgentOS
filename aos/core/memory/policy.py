@@ -137,6 +137,18 @@ DEFAULT_POLICIES: dict[str, dict[str, Any]] = {
         "max_body_chars": 0,
         "min_tag_overlap": 1,
     },
+    # The way *out*: one approved lesson published into the human's own notes.
+    # These are limits on a side effect, so the load-bearing one is `enabled` —
+    # switching it off has to leave the gate and the store exactly as they were.
+    # `project` is empty on purpose: the neighbour knows its own default project,
+    # and naming one here would be Agent OS guessing another component's state.
+    "external_write": {
+        "enabled": True,
+        "folder": "agent-os",
+        "project": "",
+        "timeout_seconds": 30,
+        "marker": "agent_os",
+    },
 }
 
 

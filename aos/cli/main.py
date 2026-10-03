@@ -855,10 +855,17 @@ def cmd_review(args: argparse.Namespace) -> int:
                 # An absent flag must stay None: the call refuses a subject that was given but
                 # says nothing, and it cannot tell those apart from one nobody passed.
                 tags=None if tags_arg is None else _split_list(tags_arg),
+                publish=not getattr(args, "no_publish", False),
             )
             expected = "approved"
             if result["status"] == "rejected" and result.get("error"):
                 print(f"#{args.review_id}: 拒绝 —— {result['error']}", file=sys.stderr)
+            if result.get("basic_memory", {}).get("status") == "failed":
+                # Said out loud, on stderr, because the approval already succeeded: a
+                # person who reads only stdout must still get one machine-readable
+                # document, and a silent missing copy is the failure this loop keeps
+                # meeting (declared, nobody reads it).
+                _report_publish(args.review_id, result["basic_memory"])
         else:
             result = evolve.reject_review(
                 args.review_id,
@@ -876,7 +883,8 @@ def cmd_review(args: argparse.Namespace) -> int:
     print(
         "usage: aos review list [--status STATUS] [--json] | sync"
         " | label <id...> --outcome X [--skill S]"
-        " | approve <id> [--title T --body B --when W --tags A,B] | reject <id> [--as X [--skill S]]",
+        " | approve <id> [--title T --body B --when W --tags A,B] [--no-publish]"
+        " | reject <id> [--as X [--skill S]]",
         file=sys.stderr,
     )
     return 1
@@ -895,6 +903,21 @@ def _report_attribution(review_id: int, outcome: str, verdict: dict) -> None:
         f"#{review_id}: 结论已记为 {outcome}，但未点名 skill ⇒ 没有归因任何记忆"
         f"（召回过 ≠ 造成了结果）。这条评审已经定了，归因补不回来；"
         f"下次标注时直接写：aos review label <id> --outcome {outcome} --skill <这次的工种，如 bugfix>",
+        file=sys.stderr,
+    )
+
+
+def _report_publish(review_id: int, published: dict) -> None:
+    """The lesson is kept; the copy in the human's notes is not. Say which one failed.
+
+    Kept off stdout on purpose: `review approve --json` output is read by machines, and
+    the approval did succeed. The retry is the same command — publishing is idempotent
+    by memory id — so no second entry point is advertised here.
+    """
+    detail = str(published.get("error") or "")[:160]
+    print(
+        f"#{review_id}: 已批准，教训在 store 里；但没能写进 basic-memory"
+        f"（{detail or '未知原因'}）⇒ 重新 approve 同一 id 即可重试，不会产生第二篇笔记。",
         file=sys.stderr,
     )
 
@@ -1080,6 +1103,12 @@ def build_parser() -> argparse.ArgumentParser:
                 default=None,
                 help="what the lesson is about, in the words a future task would use "
                      "(comma-separated, create reviews only)",
+            )
+            p_action.add_argument(
+                "--no-publish",
+                action="store_true",
+                help="approve without handing the lesson to basic-memory "
+                     "(the store is written either way; the copy is the human's notes)",
             )
         if action == "reject":
             p_action.add_argument(

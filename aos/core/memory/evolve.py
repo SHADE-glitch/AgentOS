@@ -20,6 +20,7 @@ from typing import Any, Optional
 from aos.core.learning import dedupe as dedupe_mod
 from aos.core.memory import conflict as conflict_mod
 from aos.core.memory import evaluate as evaluate_mod
+from aos.core.memory import external_write
 from aos.core.memory.policy import load_policy
 from aos.core.memory.record import (
     PROPOSAL_TYPES,
@@ -922,7 +923,68 @@ def list_reviews(*, store: Optional[MemoryStore] = None, status: Optional[str] =
             store.close()
 
 
-def _resolve_conflict(store: MemoryStore, review: dict[str, Any]) -> dict[str, Any]:
+def _publish_approved(
+    store: MemoryStore,
+    *,
+    review_id: Any,
+    promotion: dict[str, Any],
+    authored_by: str,
+    publish: bool = True,
+) -> dict[str, Any]:
+    """Hand one freshly approved lesson to the human's own notes. Decides nothing itself.
+
+    Called **after** the row, the review status and the approval event are all
+    committed, in that order: ``store/`` is the authority and basic-memory holds a
+    copy a person can read, edit and search. Whatever goes wrong here is therefore
+    reported — in the returned ``basic_memory`` field and as
+    ``learning.bm_write_failed`` — and never as an approval that failed.
+    """
+    declined = {
+        "status": "skipped",
+        "permalink": "",
+        "file_path": "",
+        "error": "",
+        "argv": [],
+    }
+    if promotion.get("status") != "created":
+        # Only an approval that wrote a lesson has a lesson to hand out: an evidence
+        # bump on an existing row, or a conflict that resolved into "same fact",
+        # would republish a note that already exists under another decision.
+        return {**declined, "error": f"approval wrote no new row ({promotion.get('status')})"}
+    memory_id = str(promotion.get("memory_id") or "")
+    row = next((m for m in store.memories_for_scoring() if m.get("memory_id") == memory_id), None)
+    if row is None:
+        # `memories_for_scoring` is the only view that carries tags, and a row we
+        # cannot read back is a row we must not describe inside somebody else's notes.
+        return {**declined, "error": "the created row could not be read back for publishing"}
+    result = external_write.publish_lesson(
+        row,
+        tags=list(row.get("tags") or []),
+        review_id=review_id,
+        authored_by=authored_by or "draft",
+        publish=publish,
+    )
+    if result["status"] == "failed":
+        store.add_event(
+            event_type="learning.bm_write_failed",
+            loop_id=str(row.get("source_loop_id") or ""),
+            payload={
+                "review_id": review_id,
+                "memory_id": memory_id,
+                "status": result["status"],
+                # Keys and counts rather than the lesson: the note text already lives
+                # in `memories`, and copying it into a failure event would widen what
+                # a broken side effect gets to say about a person's own words.
+                "argv_flags": [token for token in result["argv"] if str(token).startswith("--")],
+                "error": str(result["error"])[:200],
+            },
+        )
+    return result
+
+
+def _resolve_conflict(
+    store: MemoryStore, review: dict[str, Any], *, publish: bool = True
+) -> dict[str, Any]:
     """Approving a conflict review: the newer statement replaces the one it supersedes.
 
     Neither side is deleted. The old row keeps its history and turns
@@ -967,15 +1029,23 @@ def _resolve_conflict(store: MemoryStore, review: dict[str, Any]) -> dict[str, A
             event_type="learning.conflict_resolved",
             payload={"review_id": review_id, "memory_id": old_id, "result": "no_new_row"},
         )
+        no_new_row = {
+            "memory_id": old_id,
+            "status": "no_new_row",
+            "kind": "conflict",
+            "reason": "same fact key as the existing memory",
+        }
         return {
             "review_id": review_id,
             "status": "approved",
-            "promotion": {
-                "memory_id": old_id,
-                "status": "no_new_row",
-                "kind": "conflict",
-                "reason": "same fact key as the existing memory",
-            },
+            "promotion": no_new_row,
+            "basic_memory": _publish_approved(
+                store,
+                review_id=review_id,
+                promotion=no_new_row,
+                authored_by="human",
+                publish=publish,
+            ),
         }
 
     memory_id = str(new.get("memory_id") or "")
@@ -1018,16 +1088,22 @@ def _resolve_conflict(store: MemoryStore, review: dict[str, Any]) -> dict[str, A
         event_type="learning.conflict_resolved",
         payload={"review_id": review_id, "new": memory_id, "superseded": old_id},
     )
+    created = {
+        "memory_id": memory_id,
+        "status": "created",
+        "kind": "conflict",
+        "supersedes": old_id,
+        "title": new.get("title"),
+    }
     return {
         "review_id": review_id,
         "status": "approved",
-        "promotion": {
-            "memory_id": memory_id,
-            "status": "created",
-            "kind": "conflict",
-            "supersedes": old_id,
-            "title": new.get("title"),
-        },
+        "promotion": created,
+        # The person who resolved the conflict is the author of that decision, even
+        # though the words came from the draft: `authored_by` records who said yes.
+        "basic_memory": _publish_approved(
+            store, review_id=review_id, promotion=created, authored_by="human", publish=publish
+        ),
     }
 
 
@@ -1039,6 +1115,7 @@ def approve_review(
     body: Optional[str] = None,
     when_to_apply: Optional[str] = None,
     tags: Optional[list[str]] = None,
+    publish: bool = True,
 ) -> dict[str, Any]:
     """Approve a pending review and apply its effect to the store.
 
@@ -1052,6 +1129,11 @@ def approve_review(
     does not exist yet, so nothing that an author owns is overwritten. On an existing memory the
     same flags would put a second writer on content columns, which is the split defect AC pinned
     shut, so they are refused before anything is written.
+
+    `publish=False` declines one thing only: the copy handed to the human's own notes. The row, the
+    review status and the approval event are written either way, because the store is what the next
+    recall reads. A publish that fails after the fact is reported in `basic_memory` and recorded as
+    `learning.bm_write_failed` — it never turns an approval back into a pending review.
     """
     owns_store = store is None
     store = store or MemoryStore()
@@ -1080,7 +1162,7 @@ def approve_review(
                     "status": "rejected",
                     "error": "a conflict review decides which row survives; content is not edited here (create only)",
                 }
-            return _resolve_conflict(store, review)
+            return _resolve_conflict(store, review, publish=publish)
         if kind != "promotion":
             # A label request is not answered by "yes": approving it would invent a
             # verdict, which is the thing the gate exists to avoid.
@@ -1150,7 +1232,18 @@ def approve_review(
                 "authored_fields": sorted(given) if authored_by else [],
             },
         )
-        return {"review_id": review_id, "status": "approved", "promotion": promotion}
+        return {
+            "review_id": review_id,
+            "status": "approved",
+            "promotion": promotion,
+            "basic_memory": _publish_approved(
+                store,
+                review_id=review_id,
+                promotion=promotion,
+                authored_by=authored_by or "draft",
+                publish=publish,
+            ),
+        }
     finally:
         if owns_store:
             store.close()

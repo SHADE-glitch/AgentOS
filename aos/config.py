@@ -24,6 +24,13 @@ ENV_CONTENT_DIR = "AOS_CONTENT_DIR"
 ENV_MEMORY_DIR = "AOS_MEMORY_DIR"
 ENV_POLICIES_DIR = "AOS_POLICIES_DIR"
 ENV_BM_DB = "AOS_BM_DB"
+ENV_BM_BIN = "AOS_BM_BIN"
+ENV_BM_CONFIG_DIR = "AOS_BM_CONFIG_DIR"
+
+# The neighbour's CLI is reached as argv, not as a file: on this machine the only
+# way to run it is `uvx basic-memory`, and neither token is an executable path.
+# It is a *string* precisely so that a two-token prefix stays one setting.
+DEFAULT_BM_BIN = "uvx basic-memory"
 
 
 def resolve_root() -> Path:
@@ -55,13 +62,35 @@ def _env_path(name: str, default: Path) -> Path:
 
 
 def basic_memory_db() -> Path:
-    """Where the neighbour's read-only index lives — never a path another module writes.
+    """Where the neighbour's read-only index lives — a path this engine never opens to write.
 
-    This is the only place a location outside the repository may be written down
-    (`config.py`'s own rule), and the only reason it is a path at all: the engine
-    reads that database and writes nothing anywhere but ``store/``.
+    Every location outside the repository is written down here and nowhere else.
+    The neighbour is read through this path and never written through it:
+    publishing goes out through :func:`basic_memory_bin`, the neighbour's own
+    command line, which is the only door Agent OS is allowed to use.
     """
     return _env_path(ENV_BM_DB, Path.home() / ".basic-memory" / "memory.db")
+
+
+def basic_memory_bin() -> str:
+    """The argv prefix used to publish one approved lesson, or ``""`` to publish nothing.
+
+    Deliberately a string and not a ``Path``: ``uvx basic-memory`` is two tokens and
+    neither exists on PATH. An empty value is a supported off-switch, not an error.
+    """
+    value = os.environ.get(ENV_BM_BIN)
+    return DEFAULT_BM_BIN if value is None else value.strip()
+
+
+def basic_memory_config_dir() -> Path:
+    """Where the neighbour keeps ``config.json`` — the only way to find its vault.
+
+    Read-only by necessity: the vault path is a value inside that file
+    (``projects.<default_project>.path``), and the alternative — writing a second
+    copy of it into Agent OS — is exactly the duplication this repository keeps
+    being told not to create.
+    """
+    return _env_path(ENV_BM_CONFIG_DIR, Path.home() / ".basic-memory")
 
 
 @dataclass(frozen=True)

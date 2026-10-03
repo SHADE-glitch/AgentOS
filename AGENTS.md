@@ -30,9 +30,12 @@
   （`test_skill_boundary` 拦）。skill 属于 host。
 - **不自建遥测写入者**：遥测的唯一写入者是本机 skill-tracker。要接它的库走 `final-plan §7` 的只读规则
   （列白名单 + `PRAGMA table_info` 先探后读 + 读不到就降级）；**当前零代码**——接之前先证明它真会改变召回。
-- **不加 MCP、不加第三方依赖**（`test_no_third_party_imports` 是执行方式）。
+- **不加 MCP、不加第三方依赖**（`test_no_third_party_imports` 是执行方式）。**调用已经装在本机的 CLI 走标准库
+  `subprocess` 不算加依赖，也不算加 MCP**（2026-10-03 owner 定；该测试的 docstring 本来就把 subprocess 排除在禁令外）。
 - **不写 `~/.config/opencode/**`**（含 `opencode.json`、`plugin/`、`AGENTS.md`、`skill-stats-registry.json`）；
-  引擎唯一的写处是 `store/`。
+  引擎的状态**唯一写处仍是 `store/`**。唯一的例外是一条**单向发布**：`review approve` 把刚批准的教训经
+  basic-memory 自己的 CLI 写成一篇笔记（`aos/core/memory/external_write.py`）——它只在人门批准那一刻发生、
+  只经 CLI、**绝不打开 bm 的 SQLite 或写它的 md 文件**，失败不改变批准（先写 store 再写 bm）。
 - **不把引擎变成会改代码的东西**：recovery 永远 plan-only，`auto_modify_code=False`。
 - **不做编排、不做会话检索、不做代码索引**（与"外置大脑"定位冲突，见 `positioning.md §2/§3`）。
 
@@ -50,7 +53,7 @@
 
 ## 什么算绿
 
-- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 464 / 29。
+- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 495 / 29（rig 另有 15）。
   别在这两条后面再补一个 `-q`：`addopts` 已经有一个 `-q`，两个 `-q` 会把汇总行整个吃掉（实测：
   `python3 -m pytest -q | grep passed` 什么都不打印），计数只能改从 `--collect-only -q` 取。
 - 不要写 `node --test tests/js/`：目录会把 `fake-aos.cjs` 当测试执行，输出 `# tests 1 / # fail 1`，
@@ -60,8 +63,10 @@
   加一个信号要同时改五处：两张列表、`policy.py` 的默认权重、`content/policies/outcome.json`、
   缝守卫里那句集合**等号**断言（`tests/test_cli_contract.py`）、以及 `tests/test_outcome.py` 的 `DEFAULTS`。
   少改任何一处都不会报错，只会什么都没有（缺陷 AJ 的红屏幕就是这个）。
-- 判据与阈值来自 `content/policies/*.json`（七个文件：decay/external/injection/outcome/promotion/rejection/retrieval），
+- 判据与阈值来自 `content/policies/*.json`（八个文件：decay/external/external_write/injection/outcome/promotion/rejection/retrieval），
   由 `policy.load_policy` 以"内置默认被文件覆盖"的方式合并 ⇒ 要改门槛就改文件，不要在调用处补一个本地数字。
+  新增一个策略文件会被 `tests/test_config.py` 的"每个文件都必须有对应默认段"钉住（实测红屏幕：
+  `external_write.json: no such policy section`）；反向不成立 —— 只加默认段而没有文件是**静默的**。
 
 ## 往链路上传值的形状
 
@@ -85,6 +90,16 @@
   同时钉源码与文件字节）。`tests/conftest.py` 把它指到一个不存在的 tmp 路径 ⇒ 测试不会偶然读到真笔记；
   要测召回就在 `tmp_path` 里造一份 fixture 库。**任何真实运行/实验也一样**：跑 AOS 时 `AOS_STORE_DIR`/`AOS_DB_PATH`/`AOS_BM_DB`
   三个都指 scratch，别拿真笔记当测试数据。
+- **写 bm 只有一条路：`basic-memory tool write-note` 子进程**（`external_write.py`）。那颗"源码里没有写语句"的针
+  只钉在 `external.py` 上，所以写侧另钉一条：`external_write.py` 里不许出现 `sqlite3`，也不许对 vault 文件以写模式打开
+  （`test_the_engine_never_opens_the_vault_or_the_db_for_writing` 同时钉源码、邻居库字节与 argv）。
+  **`AOS_BM_CONFIG_DIR` 在 conftest 里是唯一的护栏**：它指到一个没有 `config.json` 的目录 ⇒ 解析不出 vault ⇒
+  `skipped`，在任何 spawn 之前停下；只把 `AOS_BM_BIN` 换成假命令是不够的（那样"命令不存在"会替我们假装安全）。
+- **真要跑带 basic-memory 的端到端，两个 env 必须一起指 scratch**：`BASIC_MEMORY_CONFIG_DIR`（bm 自己用它定位
+  config **和它的 `memory.db`**）与 `AOS_BM_CONFIG_DIR`（引擎读同一份 `config.json` 来定位 vault）。只设后者 ⇒
+  邻居的常驻库会被写。实测：2026-10-03 一轮真 CLI 跑完后 `~/.basic-memory/memory.db` 的 sha 与 mtime 一字未动
+  （`a090864c…`，10-01 08:27:45）。另记两条邻居事实：CLI 一次 spawn 约 **8–9 s**（默认超时 30s 因此是 3 倍余量）；
+  全新 bm 库里 `project` 表是空的，`tool write-note` 会 404 ⇒ 这类失败只是 `failed`，批准照旧。
 - `store/` 没有任何删除命令。退出召回只有两条路：`aos memory retire <id> --reason …`（人敲一次，
   无 reason 不写）与证据阶梯（5 次可归因失败 + 5 次批准，§12 行 Z）；两条都保留行与事件，
   所以"撤回一条教训"永远不是删数据，是改状态。
