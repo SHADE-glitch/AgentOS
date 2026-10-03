@@ -1,6 +1,7 @@
 # AGENTS.md — 这个仓库里不可协商的检查
 
-对象 `<repo>`，**公开仓库**（`github.com/SHADE-glitch/AgentOS`）。
+对象 `<repo>`，按**公开仓库**对待（`github.com/SHADE-glitch/AgentOS`）：一切隐私线按公开标准执行，
+不管此刻可见性开关在哪一边。
 文档里的 `<repo> / <subject-project> / <rig> / <bm-vault> / ses_redactedNN` 是脱敏占位符，含义表在
 `README.md` 末尾"Privacy and placeholders"；公开前必须先脱敏，脱敏后必须复跑两条测试命令。
 它是 opencode 的**外置证据与治理层**：真实运行 → 合成结论 → 人门 → 晋升/降级 → 下次召回改变行为。
