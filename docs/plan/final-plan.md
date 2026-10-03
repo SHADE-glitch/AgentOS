@@ -1121,6 +1121,65 @@ owner 把 Stage 1 的目标定为"是否值得每天用"，同时下了两件一
 跑完邻居库 sha256 与跑前一致。诚实的一条限制：**52 篇里只有 5 篇有 tag**，其余靠标题 token 命中 ⇒ 指针覆盖率受
 "标题里有没有题面用词"限制，不是语义相关度。
 
-测试 **447 → 463**（+12 `tests/test_external.py`、+4 注入用例）；JS **29** 不变（那 +2 是 `5d34aba` 带来的）。
-契约仍 1.2、schema 仍 v5、无迁移；真库 `store/aos.db` sha256 逐字节不变（本轮所有引擎路径都在 scratch/fixture 上跑）；
-`~/.config/opencode/**` 零写入。未闭仍是两条：AI、AK。
+测试 **447 → 464**（+13 `tests/test_external.py`、+4 注入用例；2026-10-03 用 `--collect-only -q` 复核：
+external 13、inject 32、全量 464）。上一版这里写的是"463 / +12"，把 external 的**用例数**少数了一条 ——
+聚合数只能从命令输出取，不能从"我记得加了几个"取（同一轮里 JS 计数 29、rig 计数 15 是现读的）。
+契约仍 1.2、schema 仍 v5、无迁移；**本轮未写正式库** `store/aos.db`（本轮所有引擎路径都在 scratch/fixture 上跑）。
+这句原先写成"sha256 逐字节不变"，那是把"我没写"写成了"它没变"：实测哈希已从 `c3907554319a0fe3…`（10-01 基线）
+变成 `5ce6e590733844e0…`（10-03 现读），写它的是 owner 的 live 会话（10-02 的 72 条 loop 与 10-03 的 6 条）。
+邻居库那条补一个不依赖记忆的形式：`~/.basic-memory/memory.db` 主文件的 mtime 停在 10-01 08:27，早于本轮，
+所以"只读"不必靠一次前后哈希对比来撑。`~/.config/opencode/**` 零写入。未闭仍是两条：AI、AK；
+本轮另登记 **AR**（谁驱动的这次运行不可判定）与 **AS**（崩溃记录按 session 存 ⇒ `outstanding` 是下界）。
+
+### 计划后 · Stage 1 第三轮：判据可判定性、闭合复核、修账本（2026-10-03，owner 令"本轮不加功能，只做三件事"）
+
+**任务 A —— "谁驱动的这次运行"：主机不暴露，故不可判定，本轮没有实现任何东西。** 证据（全部本轮现跑）：
+
+- `~/.config/opencode/node_modules/@opencode-ai/plugin/dist/index.d.ts` 的 `PluginInput` 只有
+  `client / project / directory / worktree / experimental_workspace / serverUrl / $`；
+  `types.gen.d.ts` 里 `Session` 与 `UserMessage` 也仅有 `agent`、`model` —— 那是**角色**，不是驱动者，
+  人敲与 agent 驱动的 `opencode run` 用的是同一套名字。
+- 二进制 `/home/shade/.opencode/bin/opencode` 中 `OPENCODE_CLIENT` 共 6 处（按字节偏移逐个取上下文）：
+  1 处赋值 `process.env.OPENCODE_CLIENT="acp"`（ACP 处理器内）、2 处遥测属性读、1 处 config schema
+  `h.string("OPENCODE_CLIENT").pipe(h.withDefault("cli"))`、2 处 accessor `?? "cli"`。
+  **TUI 不写它** ⇒ 人在 TUI 敲、我用 tmux 驱动 TUI、`opencode run`，三者读出来都是 `cli`。
+- 所以把 `OPENCODE_CLIENT` 记进链路，得到的读数会是"11 条全是 owner 会话"——那正是被明令禁止的假来源字段。
+- 一条副产品是真的，而且不需要新字段：**"rig 不计"目前由构造保证**。正式库 83 条 loop 的 `cwd` 只有
+  `/home/shade/Public/test`(81) 与 `/home/shade/Public/AgentOS`(2)，0 条落在 `/home/shade/stage0`；
+  rig 写的是 `/home/shade/stage0/E/store`。于是本轮给出两个读数而不是一个：**上界 11**
+  （= 有 `postflight` 的 loop 数 = `observations.hot`，全部来自真实宿主会话），
+  **可证"由人敲"的下界 0**。差的这一截只能由 owner 在账本里标（`stage-1-usage-ledger.md §5` 的 owner 列）。
+  AR 的三个候选方案（driver 自报 env / 构造性下界 + owner 上界 / 契约新增 `run_driver`）写在 §12 行 AR，
+  等 owner 拍板，都不属于"不改契约就能做"的那一类。
+
+**任务 B —— 释放修复确实闭新环，但 `outstanding` 是下界。** 实测：10-03 的 6 条 loop 全部
+`postflight != null`（5 `completed` + 1 `failed`）、0 条 pending、无新增 `pending-*.json`；
+10-02 的 72 条全部 `final_status=pending` 且 `postflight=null`。交叉核对：`observations.hot`(11)
+与"有 postflight 的 loop 数"(11) 相等 ⇒ 72 条未回报的 loop 贡献 0 条 observation。
+三条幸存记录的 `since` 最晚 `2026-10-02T15:01:48Z`，修复提交在 `23:18:01 +0800 = 15:18:01Z`，差 16 分钟
+⇒ **全部早于修复**，不是"修完还在漏"。根因按代码定位到两处，都记为 **AS**：
+`pending.record()` 一个 session 一个文件（`aos/core/loop/pending.py:39 path_for`），同会话下一次 preflight
+覆盖上一次 ⇒ 66 条未回报的 loop 只留下 1 条崩溃记录；`clear()` 只有 `lifecycle.py:406` 一个调用点
+⇒ 永不 postflight 的记录永远留着，`oldest_hours` 只会涨（现读 20.4）。**没有去清它们**：
+清掉唯一的路径是补发一次 postflight，那是伪造一次没发生过的回报；而且 `store/` 按设计没有删除路径。
+
+**任务 C —— 修账本，含一处会让下一个人直接踩到的。** 上一轮条目的两处更正见 §11 上一条（464 / +13；
+"本轮未写该库"）。另：`stage-1-usage-ledger.md §6` 的取数片段**照抄不能运行** —— Python 字符串里套了
+成对直双引号，实测 `SyntaxError: invalid syntax. Is this intended to be part of the string?`；
+那句"已实测"当时靠的显然不是文档里这份。已把内层引号改为「」，并按文档原样跑通（`Q1 = 0`、`Q2 = 0`）。
+
+**顺带抓到的一条，不属于三个任务但改变 Stage 0 的可续跑性**：被试项目 `ledgerd` 已于
+`2026-10-01T22:20:19` 进回收站（`~/.local/share/Trash/info/ledgerd.trashinfo`），原路径
+`/home/shade/Public/test` 在 22:46–23:19 被重建成 owner 的 Java 项目（当前 HEAD `bdd0043`，33 项不干净）。
+⇒ 旧对象 `70c935f` / `d5bf777` 与**上一轮我用来"可逆封存"的两条 stash（`64a7e98d…` 等）全部不可解析**，
+`git stash list` 为空。回收站那份里有票面点名的 `ingest/sources.py`、`migrations/__init__.py`，
+但没有 `.git` 也没有任何 `test_*` ⇒ LGD-07 / LGD-11 **改得动、验不了**。
+活下来的字节捕获：`/home/shade/stage0/E/inflight/`（4 件 2509 字节）、`/home/shade/stage0-void/LGD-06-R2/`（5 件）、
+`E/manifest.tsv`、`E/rig/{logs,oracle,snap}`、`E/store`（臂 E 库）。`stage-0-ledgerd.md` 已加 §7bis 并把 §8 检查单
+重写成"哪些还能跑 / 哪些已经失效"。教训写死：**"可逆"不能靠被试项目的 `.git` 撑** —— 那次封存当时看着是解药，
+真正的凭据是自己那份字节捕获。**我没有动回收站、也没有试图恢复历史**（那是 owner 的决定，且该路径现在是活跃工作树）。
+
+刻意没做：不实现 AR；不动 gate 阈值 / 召回语义 / 契约 / 冻结面；不加只读分析工具（那是"顺手加一层"）。
+本轮的 TUI 探针（tmux 起、不发 prompt、`AOS_STORE_DIR` 指 scratch）**在真库里留下的 loop 数 = 0**：
+最新一条 loop 是 `02:00:48Z`，探针跑在 `03:22Z` 之后；探针会话与 `/tmp/aos-env-probe` 已删除并回读
+（`tmux ls` → no server running，目录不存在，无残留 opencode 进程）。

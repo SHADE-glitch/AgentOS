@@ -50,7 +50,9 @@
 
 ## 什么算绿
 
-- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 463 / 29。
+- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 464 / 29。
+  别在这两条后面再补一个 `-q`：`addopts` 已经有一个 `-q`，两个 `-q` 会把汇总行整个吃掉（实测：
+  `python3 -m pytest -q | grep passed` 什么都不打印），计数只能改从 `--collect-only -q` 取。
 - 不要写 `node --test tests/js/`：目录会把 `fake-aos.cjs` 当测试执行，输出 `# tests 1 / # fail 1`，
   是假红。
 - **信号有两张互相独立的列表**：契约的 `SIGNAL_FIELDS`（`aos/contract/schema.py`）与合成的
@@ -139,6 +141,11 @@
   必须用真 TUI（tmux 驱动，方法见 `live/README.md`），或只问"知识可答"的问题；**不要用 `--auto` 去修这个**。
 - 驱动真 TUI 时遇到权限弹窗**停下来问 owner**，默认只选 Allow once。
 - 判据 1 的 `hot` 只数 owner 的交互会话，rig / agent 产生的观测不计。
+  **这条目前只靠"每次调用都带 scratch env"这一条纪律撑着**：`AGENT_OS_ROOT` 已 export 进 `~/.zshrc`，
+  忘记 `AOS_STORE_DIR` 的那一次就直接写进正式库，而写进去之后**没有任何字段能看出是谁驱动的**
+  （缺陷 AR：主机的 `OPENCODE_CLIENT` 只有 `"acp"` 一处赋值，TUI 不写它 ⇒ 人与 agent 同为 `cli`）。
+  ⇒ 不要为了补这个洞去写一个来源字段（那是假的），也不要把 `doctor` 的 `hot` 直接说成"owner 在用了几次"；
+  交出去的读数一律写成"上界 N / 可证下界 M"两个数，见 `docs/experiment/stage-1-usage-ledger.md §4bis`。
 - 提示词全合成，会话正文不进仓库与文档；插件日志只出现键名/索引/计数，不出现值。
 - 需要改 `~/.config/opencode/**` 或需要 host 没有的钩子 ⇒ 停下汇报，那是 owner 的决定。
 

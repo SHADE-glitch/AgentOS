@@ -437,7 +437,7 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | `aos/contract/legacy.py`、`hosts/`、`ENV_LEGACY_HOME` | 恒返回空串的死适配器，且指向的都是不存在的路径 | `ffb2880` / Phase 0 |
 | trust 评分体系 / 自动改写 skill / 自动执行业务代码 | 边界与判据：`positioning.md §6` | 刻意不做 |
 
-## 12. 缺陷登记（A–AK 中除两条外全部闭合：AI 是"退出码算不算构建结论"的归属决定，AK 是"中断事件有没有源"的普查缺口）
+## 12. 缺陷登记（A–AK 中除两条外全部闭合：AI 是"退出码算不算构建结论"的归属决定，AK 是"中断事件有没有源"的普查缺口。AL–AQ 是 Stage 0 的**测量面**缺陷，登记在 `docs/experiment/stage-0-ledgerd.md §5/§5bis/§10`，不在这张表里；AR、AS 是 Stage 1 的**读数口径**，登记在下面且两条都未闭）
 
 这一节最初是"发现但不顺手修"的登记簿，现在每一行都标着修于哪个 Phase。留着它不是因为还有债，
 而是因为每一条都是一个**会复发的错误形状**：声明了没人写、写了没人读、读了不生效、展示与执行不一致。
@@ -481,6 +481,8 @@ JS 测试抓到它，传输层改为显式 `spawn` + `stdin.write()` + `stdin.en
 | AI | §9 的 `tool.execute.after` 普查把"没有 `error` 键"写成了"退出码拿不到"，越界了一半 | 真会话里 bash 那次：`metadata_keys=[exit,output,truncated]`（`glob` 那次是 `[count,truncated]`）⇒ **shell 类工具的退出码在 after 钩子是可见的**；`error` 键确实没有，被拒调用确实不进 after，那两条结论仍成立 | **未闭（不改）**：可采的是原始退出码；把它映射成 `build_exit_code`/`test_exit_code` 需要"这条命令是构建/测试"的判断，而插件不认识命令语义 —— 硬映射即 F3 那类自我打分。要做得先定归属规则，留给 owner。第十六轮的 AJ 把 `metadata.exit` 按原文记进了轨迹（不做任何"这是构建/测试"的判断），所以这一条**更难被顺手混过去**了：退出码现在可见，归属仍然没人批准 ⇒ 保持未闭 |
 | AJ | **方法级经验（试 A → A 败 → 换 B → B 成）在采集第一步就被压成一个整数** ⇒ "经验形成"这一格是空的，闭环后面的检索/注入都无内容可用 | 审计（0 调用）：宿主给 `tool.execute.after` 的入参按 SDK 类型就是 `{tool, sessionID, callID, args}`（`@opencode-ai/plugin/dist/index.d.ts:249-258`），而插件里这个钩子唯一的状态变更是 `agent-os.js:268` 的 `entry.toolErrors += 1` —— 顺序、方法、退出码只进 stderr；引擎侧一次 loop 只有一个终局 outcome、一行 loop 级 observation（`record.py:312-332`，被 `test_memory.py:315-328` 钉住），observations 的 15 列里没有任何一格能装"先败后成"；outcome 合成还要求"成功就不再出提案"（`record.py:55-67`） ⇒ 最有价值的那类经历被两道独立规则各挡一次 | **已闭于第十六轮**（五笔提交，四段一起成立才成立）：① `tool_trace`/`tool_calls` 同时进契约与合成的 `_SIGNALS` —— 这两张列表是**独立**的，只加契约键的话轨迹在进库前就被回显丢掉（红屏幕：`signals` 里没有 `tool_trace`），权重在`policy.py` 与 `content/policies/outcome.json` 两处同钉 0.00；② 插件把每次调用记成**有界有序**步骤，方法名是**规范化脱敏指纹**（只留名称形状的 token、≤3 词、`-m` 仅对解释器保留、遇引号即终止该段；原命令不出宿主进程 —— 逼出引号规则的红屏幕是 `git commit -m "fix: login crash"` 被提成 `git commit login`）；③ 轨迹进 body 但**身份不含轨迹**：`dedupe_key` 显式声明，仍由同一个 `fact_key` 计算（`test_dedupe.py` 把它钉成"与 store 自己推导的结果相等"，避免出现第二个键生成器）；④ `should_propose` 放开"先败后成"的成功 run，且一个 run 只出**一份**提案（屏幕：label 之后队列里只有 1 条 promotion，不是两条 ask）；⑤ 轨迹在草稿里**预留额度**并放在开头 —— 实测原先八个长路径把剩余空间压成负数，整节 `过程` 被静默丢弃。屏幕（scratch 库，0 调用，全走 CLI）：`过程：#1 npm test 失败 → #2 docker compose up 失败 → #3 python -m pytest 通过` 出现在待标注队列与提案正文里；批准后下一次同主题提问召回 1 条、注入 325 字符、渲染成 `做法：`；同一任务第二次带**不同**轨迹跑出的是**同一个 memory_id** ⇒ 一行记忆、一次决定。**残留（不粉饰）**：`exit=0` 与"这一步才是对的方法"之间只有相邻性，没有因果；跨轮的方法对比仍不相见（`agent-os.js:202-216` 每轮重置累加器）；非 shell 工具的失败与被拒绝的调用仍然无迹（宿主 `output` 无 `error` 键、被拒调用不进钩子）；回读库的行没有轨迹 |
 | AK | `user_interrupted` 是**读了没人写**的键 ⇒ 中断这一条硬否决对 opencode 实际从不生效 | 只读审计：`interrupted` 在 `agent-os.js:214`、`:346` 被初始化为 null、在 `:356` 被读进 signals，全文**没有任何一行给它赋值**；`tests/js/plugin.test.mjs` 也没钉过它会被发出 ⇒ 契约与合成那边（`outcome.py:204-208` 的 veto）等着一个永不到来的值 | **未闭**：写它需要宿主的中断/取消事件源，而 `event` 钩子当前只处理 `session.idle` / `session.error` / `message.*`。有没有这种 event.type 是 0 调用就能普查的事实，不在本轮顺手猜 ⇒ 登记，等普查或 owner 决定 |
+| AR | **"这一次运行是谁驱动的"在主机侧根本没有出口** ⇒ 判据 1 的"只数 owner 的交互会话"没有机器可判的依据 | 只读审计（本轮现跑）：`PluginInput` 只有 `client/project/directory/worktree/experimental_workspace/serverUrl/$`（`@opencode-ai/plugin/dist/index.d.ts`），`Session`/`UserMessage` 只有 `agent`、`model` —— 那是角色不是驱动者；二进制 `/home/shade/.opencode/bin/opencode` 里 `OPENCODE_CLIENT` 共 6 处（逐字节偏移取上下文）：1 处赋值 `process.env.OPENCODE_CLIENT="acp"`、2 处遥测属性、1 处 schema `withDefault("cli")`、2 处 accessor `?? "cli"` ⇒ **TUI 从不写它**，人敲 / 我用 tmux 驱动 TUI / `opencode run` 三者读出来同为 `cli`。构造性反例就是我自己的驱动方式 | **未闭，本轮不实现**（owner 令：不许编一个假的来源字段）。三个候选，都需要 owner 拍板且都含契约或字段改动：① 驱动者自报 —— rig 与任何 agent 驱动的运行必须 `AOS_RUN_CONTEXT=agent`，引擎在 preflight 落一条 provenance，**未设置就是 `unknown` 且不计入 owner 数**（这样"忘记标"只会少数不会虚增；代价是它仍是自报，只能当上界）；② 只走上界/下界两个数 —— 现在的做法，零改动，代价是"谁在用"永远不可判；③ 契约新增 `run_driver` 信号 —— 那是 AGENTS.md 里"加一个信号要同时改五处"的那条，且在①没被信任之前先做③就是把自报固化成字段。**可计算的部分本轮已确定**：`rig 不计`由构造成立（rig 只写 `/home/shade/stage0/E/store`，正式库 83 条 loop 的 `cwd` 里没有 stage0），所以判据 1 的读数是**上界 11 / 可证下界 0**，差的一段只能由 owner 在账本 §5 标 |
+| AS | `pending_postflight.outstanding` 是**下界**，读成"只剩这么多没闭"会低估一个数量级 | 实测：10-02 有 72 条 loop `final_status=pending` 且 `postflight=null`，而 `store/pending-postflight/` 只有 3 个文件 —— 其中 1 个会话就占 66 条 loop。原因在两处代码：`aos/core/loop/pending.py:39 path_for(session_id)` ⇒ 一个 session 一个文件，同会话下一次 preflight **覆盖**上一次；`clear()` 全文只有 `lifecycle.py:406` 一个调用点 ⇒ 永不回报的 loop 记录永远留着（`oldest_hours` 只会涨，现读 20.5） | **未闭（本轮登记不修）**：修它要么把 pending 改成按 loop 存（一改就多出一份"谁清它们"的债），要么给 `store/` 加删除路径 —— 后者是 AGENTS.md 明令的形状（"撤回一条教训永远不是删数据"）。眼下正确的用法是把这张账当**至少这么多**读；真值用 `store/loops/*.json` 的 `postflight==null` 计数（`stage-1-usage-ledger.md §6` 第二段命令就打印它）。释放侧本身已验证可用：`5d34aba` 之后 10-03 的 6 条 loop 6/6 有 postflight |
 ① **B** 草稿不再回声模板句，改为 `失败于「…」/ 路由 / 改动 N 个文件 / 可证：… / 缺证：… 未上报 / 未归因：…要人补`，截断一律带 `…` 标记；
 ② **A** `review approve --title/--body/--when` 让批准的人写下"因为"（仅 create；对已存在的行请求改正文会被拒 —— 那正是 AC 关掉的第二个写入者），事件记 `authored_by`；
 ③ **C** 插件从 `message.updated` 解析角色后上报助手正文（≤500 字符，无角色则**宁可不报**），草稿以 `模型自述（未核实）：「…」` 引用它，且**判决权重仍为 0.00**（`tests/test_outcome.py` 与缝守卫各钉一次；缝守卫抓到集合变了并要求与合成一起改，就地把权重断言加在了它旁边）。
@@ -574,13 +576,22 @@ reachability 的 allowlist **必须被测试实际执行到**，否则它就成�
 
 **第十六轮把闭环的上半段补上了（缺陷 AJ 闭合）** `[Verified]`（0 次模型调用，屏幕在 scratch 库）："试 A → A 败 → 换 B → B 成"这类**方法级经验**以前在采集第一步就被压成一个整数（`tool_errors` 计数），现在它以 `tool_trace` 有序步骤穿过契约、进 observation、进提案正文、进队列、进注入块，且**记忆身份不含轨迹** ⇒ 同一任务第二次带不同轨迹跑出同一个 `memory_id`（一行记忆、一次决定）。两条边界必须同时写下：① 采集面确实扩大了一点 —— 插件第一次读 `args`，但只读 `command`/`cmd` 两个键名，且只把**规范化后的方法名**送上链路（原命令、参数、路径、引号内的内容一律不出宿主进程；`git commit -m "…"` 那条红屏幕就是逼出引号截断规则的现场）；② 本轮证明到"经验能被形成、能被注入"，**没有**证明"注入之后答案变好"——后者仍缺双臂行为测量，与第 1 节那条未证的收窄同一条。另外登记 **AK**：`user_interrupted` 在插件里读了没人写 ⇒ 契约与合成等着一个永不到来的值，未闭。
 
+**第十七轮（2026-10-03）把判据 1 的读数从"一个数"改成"两个数 + 一个缺的字段"** `[Verified]`（0 次模型调用，全部只读）：
+`hot` 已从基线 5 涨到 11，上面那条"+1 就升级"的触发条件在机械上**已经满足**，但这一轮同时证明了它不能满足得有价值 ——
+主机不给"谁驱动的这次运行"（缺陷 AR：`OPENCODE_CLIENT` 仅 `"acp"` 一处赋值，TUI 不写它 ⇒ 人敲与我驱动 TUI 读出来同为 `cli`），
+所以**上界 11 / 可证"由人敲"下界 0**，中间那段只能由 owner 在 `stage-1-usage-ledger.md §5` 标；
+§11 第十一轮那句"其中 3 条是 rig 提示词"在今天的构造下不再可能（rig 只写 `/home/shade/stage0/E/store`，
+正式库 83 条 loop 的 `cwd` 里 0 条在 stage0 下），它作为当时的读数保留，但**不能沿用成现在的口径**。
+另一半口径修正：`pending_postflight.outstanding` 现读 3，而未闭合的 loop 实际是 72 条（缺陷 AS，按 session 覆盖 +
+只有 postflight 会清）⇒ 表里那一行从此按"**至少**这么多"读。同轮把上表"现为 #24/#25"这类写死的读数一并标注为当时值。
+
 **后续计划：不再主动测试，改为被动观察，由判据自己判定。**
 
 | 时点 | 看什么 | 触发什么 |
 |---|---|---|
 | 每次真实交互会话后 | `./bin/aos doctor` 的 `observations: hot` | +1 ⇒ §9 那条 `[Inferred]` 升 `[Verified]`，判据 1 的窗口才算真开始走；不 +1 ⇒ 立刻查 `chat.message` 在 TUI 里的形态，优先级高于任何新功能 |
 | 窗口内（2026-10-29 到期） | `hot` 是否 ≥ 30；`recall` 行里的"空手"计数 | ≥30 ⇒ 这套层有存在依据；<30 ⇒ 按裁决收缩为 `outcome.py` + 契约层 + `migrations.py` 三件 + 文档 |
-| 同一窗口 | `review` 队列待标注数（现为 #24/#25） | 周均 > 50 或连续两周标注 = 0 ⇒ 触发判据 2，主路径改"回读 + 退出码"，人门只处理 `conflict/create` |
+| 同一窗口 | `review` 队列待标注数（写这句时为 #24/#25；10-03 现读 8 条 pending，其中 #30–#35 是 10-03 的真实会话产生的） | 周均 > 50 或连续两周标注 = 0 ⇒ 触发判据 2，主路径改"回读 + 退出码"，人门只处理 `conflict/create` |
 
 **第十一轮给判据 1 的读数加两个限定** `[Verified]`：真库 `hot` 现在是 5，但其中 3 条是本轮 rig 提示词，
 不是 owner 的日常工作 —— 计数在机械上增长，语义上要打折。更要紧的一条是：**无头 `opencode run` 只要模型
