@@ -74,6 +74,15 @@
   新增一个策略文件会被 `tests/test_config.py` 的"每个文件都必须有对应默认段"钉住（实测红屏幕：
   `external_write.json: no such policy section`）；反向不成立 —— 只加默认段而没有文件是**静默的**。
 
+## CI
+
+- 唯一的 CI 配置是 `.github/workflows/ci.yml`：触发于 `push` 与 `pull_request`，跑在 `ubuntu-latest`。
+- 它只跑本地那两条命令：`python3 -m pytest`（当前 502）与 `node --test tests/js/plugin.test.mjs`（当前 29）；
+  Python 用 3.12、Node 用 20，action 版本钉死（`checkout@v4` / `setup-python@v5` / `setup-node@v4`）。
+- **两条必须常绿**：红了先修代码，不许靠 skip 用例、改断言或放宽门槛让它变绿。
+- CI **不跑** `./bin/aos doctor`：doctor 会开一条 loop 并留下 pending（见「探真库只能只读」），
+  它属于人门，不属于流水线。
+
 ## 往链路上传值的形状
 
 - 只有两种合法形式：在宿主进程内**规范化后丢掉原文**（方法指纹：只留名称形状的 token、≤3 词、
@@ -169,6 +178,20 @@
   交出去的读数一律写成"上界 N / 可证下界 M"两个数，见 `docs/experiment/stage-1-usage-ledger.md §4bis`。
 - 提示词全合成，会话正文不进仓库与文档；插件日志只出现键名/索引/计数，不出现值。
 - 需要改 `~/.config/opencode/**` 或需要 host 没有的钩子 ⇒ 停下汇报，那是 owner 的决定。
+
+## 发版 / 版本号
+
+- 版本号的权威值是 `pyproject.toml` 的 `[project] version`（当前 `0.1.0`）。
+- 引擎里还有一份必须与之相等的硬编码副本：`aos/__init__.py` 的 `__version__`；bump 时两份一起改，漏一份就是漂移。
+- **什么时候 bump**：一次改动若改变了对外的可见行为（命令、契约、召回或门禁语义），就在同一笔提交里 bump；
+  纯文档、纯测试、纯内部重构不 bump。
+
+## 提交与文档
+
+- 提交信息一律用 Conventional Commits + scope（如 `chore(docs):`、`fix(recall):`、`feat(memory):`），
+  scope 取受影响的模块或面。
+- **文档与配置/测试分开提交**：文档改动（`*.md`、`docs/`）不要和配置/测试改动塞进同一笔提交 ——
+  这是「交付节奏」里"一个改动 = 一笔提交"在提交粒度上的落地。
 
 ## 交付节奏
 
