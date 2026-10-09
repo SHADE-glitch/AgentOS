@@ -12,6 +12,16 @@
 ![Tests](https://img.shields.io/badge/pytest-502%20passed-brightgreen)
 [简体中文 README](README.zh-CN.md)
 
+> ⚠️ **Vibe-coded, and it ends here.** This repository was written almost entirely by vibe
+> coding with an AI agent, chasing a far bigger idea: an **Agent OS** — a multi-agent runtime
+> and governance platform built around agent **self-evolution** and **experience
+> accumulation**. That idea was too large and was later cut back to the one small layer you
+> see here (run → verdict → human gate → memory → recall). The author is **no longer
+> developing this** and keeps it as a record of the attempt — the ambition was never proved
+> worth using day to day. The **criterion 1 / 2026-10-29** decision further down was written
+> *before* giving up; this note is the verdict *after*. Read the rest as a snapshot, not a
+> roadmap.
+
 The host (today [OpenCode](https://opencode.ai)) does the work. This engine decides what the
 model should be told **before** it starts, and what the episode taught **after** it finished.
 It never edits code: `auto_modify_code` is `False` on every path.
