@@ -34,6 +34,13 @@ htmlcov/
 .tox/
 .nox/
 
+# Machine-wide runtime ignore (STANDARD.md §7): a stray SQLite database can land
+# anywhere during testing. The store's own copies are listed below; keep the
+# generic names out of `git status` too.
+*.db
+*.db-wal
+*.db-shm
+
 # IDE
 .idea/
 .vscode/
