@@ -53,6 +53,27 @@ def test_both_languages_exist_and_cross_link():
     assert "README.md" in read(ZH), "the Chinese entry must point back"
 
 
+def test_the_chinese_file_drops_exactly_the_english_only_deep_reference():
+    """The Chinese file is a deliberate subset, so this pins a *difference*, not two counts.
+
+    The ZH entry mirrors only the decision facts; the deep reference lives in English
+    alone. Pinning the gap means a section added to *both* sides keeps it and passes,
+    while a section added to one side alone breaks it — the drift this catches. Today
+    the two English-only sections are "The frozen contract" and "Configuration"; if a
+    third is ever made English-only, update the pinned gap on purpose.
+    """
+    en = len(re.findall(r"^## ", read(EN), flags=re.M))
+    zh = len(re.findall(r"^## ", read(ZH), flags=re.M))
+    assert zh <= en, (
+        f"README.zh-CN.md has {zh} '##' sections but README.md has {en} — the Chinese "
+        "mirror must never carry a section the English one does not")
+    assert en - zh == 2, (
+        f"the English README has {en - zh} more '##' sections than the Chinese one "
+        f"(README.md {en}, README.zh-CN.md {zh}); the only English-only sections are "
+        '"The frozen contract" and "Configuration" — if a section was added to one side '
+        "alone, add it to the other, or update this pinned gap on purpose")
+
+
 def test_shared_facts_appear_in_both_files():
     en, zh = read(EN), read(ZH)
     missing = [
