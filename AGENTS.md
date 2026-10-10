@@ -1,210 +1,154 @@
-# AGENTS.md — 这个仓库里不可协商的检查
+# AGENTS.md — the non-negotiable checks in this repository
 
-对象 `<repo>`，按**公开仓库**对待（`github.com/SHADE-glitch/AgentOS`）：一切隐私线按公开标准执行，
-不管此刻可见性开关在哪一边。
-文档里的 `<repo> / <subject-project> / <rig> / <bm-vault> / ses_redactedNN` 是脱敏占位符，含义表在
-`README.md` 末尾"Privacy and placeholders"；公开前必须先脱敏，脱敏后必须复跑两条测试命令。
-它是 opencode 的**外置证据与治理层**：真实运行 → 合成结论 → 人门 → 晋升/降级 → 下次召回改变行为。
-引擎是纯标准库 Python；宿主只经 `bin/aos` + stdin/stdout JSON 契约进入；引擎永不调用 opencode。
-本文件同时约束"用别的 AI agent（如 qoder cn）来开发本仓库"的情形。
+Guidance for AI coding agents working in this repository. This repository is public.
 
-**第一优先级是"证明它值得每天用"，不是"再加一层"。** 新功能默认不做；新增模块前必须能在
-`docs/research/open-source-capability-matrix.md` 指到一列"无人实现"。去留由判据决定
-（`docs/decision/positioning.md §6`）：通电后 4 周内 `source='hot'` 的真实运行 < 30 条 ⇒ 停止加功能。
-**现状与聚合数字不写死在这里**——一律 `./bin/aos doctor --json` 现取，不沿用上一轮的记忆值。
+> **Shared standard.** Root file names, the process-draft location (`docs/reports/`), the
+> `CHANGELOG` entry format, CI version pinning and entry commands, the test entry command, and
+> the runtime ignore list are defined once in the machine-wide `STANDARD.md` (outside this
+> repository) and are not restated here.
+>
+> **Push over SSH, never HTTPS.** Verify `git remote get-url --push origin` starts with `git@`
+> before pushing; if it starts with `https://`, fix it first — never push over HTTPS.
+>
+> **Test entry (project-specific variant of the standard's tool convention).** Tests live in
+> `tests/` (not `scripts/tests/`) and run with `python3 -m pytest`; the JS plugin tests run with
+> `node --test tests/js/plugin.test.mjs`.
+>
+> **Language.** `docs/**` is Chinese by design — a project-specific exception to the standard's
+> "English outside the whitelist" rule. Everything else (code, comments, CLI/TUI text, every
+> other `.md`) is English.
 
-细则、证据与缺陷编号不在这里：判定与数字在 `docs/architecture/agent-os-v2.md` §12/§15，
-执行日志在 `docs/plan/final-plan.md` §11，真机规则在 `integrations/opencode/live/README.md`。
-本文件只放"每次开工都要照做"的形状，且每一条都是**跑过**的。
+Target `<repo>`, treated as a **public repository** (`github.com/SHADE-glitch/AgentOS`): every privacy line is enforced as if public, regardless of where the visibility switch sits right now.
+In the docs, `<repo> / <subject-project> / <rig> / <bm-vault> / ses_redactedNN` are redaction placeholders; the glossary is at the end of `README.md` under "Privacy and placeholders". Redact before publishing, and re-run the two test commands after redacting.
+It is opencode's **external evidence and governance layer**: real run → synthesized verdict → human gate → promote/demote → next recall changes behavior.
+The engine is pure-stdlib Python; the host enters only through `bin/aos` + a stdin/stdout JSON contract; the engine never calls opencode.
+This file also governs the case of "developing this repository with another AI agent (e.g. qoder cn)".
 
-## 开工前先读（别的 agent 尤其）
+**The first priority is "prove it is worth using every day", not "add another layer".** New features are off by default; before adding a module you must be able to point to a column of "nobody implements this" in `docs/research/open-source-capability-matrix.md`. Keep-or-kill is decided by a criterion (`docs/decision/positioning.md §6`): within 4 weeks of power-on, if real runs with `source='hot'` < 30 ⇒ stop adding features.
+**Current state and aggregate numbers are not hard-coded here** — always fetch them live with `./bin/aos doctor --json`; never reuse last round's remembered values.
 
-1. 本文件全文。
-2. `docs/architecture/agent-os-v2.md` §12（缺陷编号）与 §15（已证到哪一层、什么没证）。
-3. `docs/plan/final-plan.md` §11（最近几轮怎么错的、怎么修的）。
-4. `integrations/opencode/live/README.md`（真机怎么跑、隐私线）。
+Details, evidence and defect numbers are not here: verdicts and numbers are in `docs/architecture/agent-os-v2.md` §12/§15, the execution log in `docs/plan/final-plan.md` §11, the real-machine rules in `integrations/opencode/live/README.md`.
+This file holds only the "do this every time you start" shape, and every line is something that was **actually run**.
 
-**为什么**：这个仓库反复出现的病是"声明了但没人写 / 写了但没人读 / 读了但不生效 /
-只在 fixture 里跑过就当真的"。上面四份是这些病的历史记录；不读就会重犯。
+## Read before starting (especially other agents)
 
-## 不要做什么（非目标，别"顺手"加回来）
+1. This file in full.
+2. `docs/architecture/agent-os-v2.md` §12 (defect numbers) and §15 (how far something is proven, what is not).
+3. `docs/plan/final-plan.md` §11 (how recent rounds went wrong and were fixed).
+4. `integrations/opencode/live/README.md` (how to run on the real machine, the privacy line).
 
-- **不建 skill 系统**：不创建/读/写 skill 文件，不碰 `personal-skills`，`content/skills/` 不得复现
-  （`test_skill_boundary` 拦）。skill 属于 host。
-- **不自建遥测写入者**：遥测的唯一写入者是本机 skill-tracker。要接它的库走 `final-plan §7` 的只读规则
-  （列白名单 + `PRAGMA table_info` 先探后读 + 读不到就降级）；**当前零代码**——接之前先证明它真会改变召回。
-- **不加 MCP、不加第三方依赖**（`test_no_third_party_imports` 是执行方式）。**调用已经装在本机的 CLI 走标准库
-  `subprocess` 不算加依赖，也不算加 MCP**（2026-10-03 owner 定；该测试的 docstring 本来就把 subprocess 排除在禁令外）。
-- **不写 `~/.config/opencode/**`**（含 `opencode.json`、`plugin/`、`AGENTS.md`、`skill-stats-registry.json`）；
-  引擎的状态**唯一写处仍是 `store/`**。唯一的例外是一条**单向发布**：`review approve` 把刚批准的教训经
-  basic-memory 自己的 CLI 写成一篇笔记（`aos/core/memory/external_write.py`）——它只在人门批准那一刻发生、
-  只经 CLI、**绝不打开 bm 的 SQLite 或写它的 md 文件**，失败不改变批准（先写 store 再写 bm）。
-- **不把引擎变成会改代码的东西**：recovery 永远 plan-only，`auto_modify_code=False`。
-- **不做编排、不做会话检索、不做代码索引**（与"外置大脑"定位冲突，见 `positioning.md §2/§3`）。
+**Why**: the recurring disease of this repository is "declared but nobody wrote it / written but nobody reads it / read but it doesn't take effect / only ever run against a fixture and taken as real". The four files above are the history of these diseases; not reading them means repeating them.
 
-## 非干扰是硬约束（owner 明确要求）
+## What not to do (non-goals — don't "helpfully" add them back)
 
-- **停用后必须零影响**：`AGENT_OS_ROOT` 不设 ⇒ 插件加载但每个钩子 no-op，`output.system` 与
-  没有这个插件时**逐字节相同**（`tests/js/plugin.test.mjs` 钉住）。
-- **只增强，不改写邻居**：只 push 自己的元素；绝不占 `output.system[0]`、绝不编辑/重排/删除他人
-  元素（DCP 靠 `[0]` 判内部调用），并保留别人追加进我们自己元素的后缀。
-- **不碰其他组件的状态**：不写 `~/.config/opencode/**`，不读写 DCP / skill-tracker / notifier
-  的库或文件；插件源码除 `existsSync` 外不得 import 任何写 API。
-- **判据 3 优先于一切**：任何能力若必须写 `~/.config/opencode/**`、或必须编辑他人写入的
-  `output.system` 元素才能生效 ⇒ **直接放弃，不讨论收益**。
-- 停用方式就是两条可逆动作：删符号链接、去掉 alias/export 里的 `AGENT_OS_ROOT`。
+- **No skill system**: do not create/read/write skill files, do not touch `personal-skills`, `content/skills/` must not be reproduced (`test_skill_boundary` blocks it). Skills belong to the host.
+- **No self-built telemetry writer**: the only telemetry writer is the local skill-tracker. To consume its DB, follow the read-only rules in `final-plan §7` (list the whitelist + probe with `PRAGMA table_info` before reading + degrade if unreadable); **currently zero code** — before wiring it up, first prove it will actually change recall.
+- **No MCP, no third-party dependencies** (`test_no_third_party_imports` is the enforcement). **Calling a CLI already installed on this machine via stdlib `subprocess` does not count as adding a dependency, nor as adding MCP** (owner ruling 2026-10-03; that test's docstring already excludes subprocess from the ban).
+- **Do not write `~/.config/opencode/**`** (including `opencode.json`, `plugin/`, `AGENTS.md`, `skill-stats-registry.json`); the engine's **only** state write location remains `store/`. The one exception is a **one-way publish**: `review approve` writes a just-approved lesson as a note through basic-memory's own CLI (`aos/core/memory/external_write.py`) — it happens only at the moment of human-gate approval, only via the CLI, and **never opens bm's SQLite or writes its md files**; failure does not change the approval (write store first, then bm).
+- **Do not make the engine something that edits code**: recovery is always plan-only, `auto_modify_code=False`.
+- **No orchestration, no session retrieval, no code indexing** (conflicts with the "external brain" positioning, see `positioning.md §2/§3`).
 
-## 什么算绿
+## Non-interference is a hard constraint (explicit owner requirement)
 
-- 两份 README（`README.md` 英文、`README.zh-CN.md` 中文）**只镜像"决定要不要继续做"的那批事实**：
-  深度参考的单一副本在英文那份。共同数字由 `tests/test_readme_bilingual.py` 钉住 —— 改了另一边就是红的，
-  所以任何"502 / 1122→1359 / 8.1–9.2s / 判据 30 条 / 2026-10-29"一类的数变动，必须两边一起改（该测试会告诉你漏了哪一边）。
-- `python3 -m pytest` 与 `node --test tests/js/plugin.test.mjs`，两条都要跑；两者当前 502 / 29（rig 另有 15）。
-  别在这两条后面再补一个 `-q`：`addopts` 已经有一个 `-q`，两个 `-q` 会把汇总行整个吃掉（实测：
-  `python3 -m pytest -q | grep passed` 什么都不打印），计数只能改从 `--collect-only -q` 取。
-- 不要写 `node --test tests/js/`：目录会把 `fake-aos.cjs` 当测试执行，输出 `# tests 1 / # fail 1`，
-  是假红。
-- **信号有两张互相独立的列表**：契约的 `SIGNAL_FIELDS`（`aos/contract/schema.py`）与合成的
-  `_SIGNALS`（`aos/core/outcome.py`）。回显只保留后者 ⇒ 只加契约键的新信号会在**进库之前**被静默丢弃。
-  加一个信号要同时改五处：两张列表、`policy.py` 的默认权重、`content/policies/outcome.json`、
-  缝守卫里那句集合**等号**断言（`tests/test_cli_contract.py`）、以及 `tests/test_outcome.py` 的 `DEFAULTS`。
-  少改任何一处都不会报错，只会什么都没有（缺陷 AJ 的红屏幕就是这个）。
-- 判据与阈值来自 `content/policies/*.json`（八个文件：decay/external/external_write/injection/outcome/promotion/rejection/retrieval），
-  由 `policy.load_policy` 以"内置默认被文件覆盖"的方式合并 ⇒ 要改门槛就改文件，不要在调用处补一个本地数字。
-  新增一个策略文件会被 `tests/test_config.py` 的"每个文件都必须有对应默认段"钉住（实测红屏幕：
-  `external_write.json: no such policy section`）；反向不成立 —— 只加默认段而没有文件是**静默的**。
+- **Zero impact after disabling**: if `AGENT_OS_ROOT` is unset ⇒ the plugin loads but every hook no-ops, and `output.system` is **byte-for-byte identical** to not having the plugin (`tests/js/plugin.test.mjs` pins it).
+- **Enhance only, never rewrite neighbors**: only push your own elements; never occupy `output.system[0]`, never edit/reorder/delete others' elements (DCP judges internal calls by `[0]`), and preserve suffixes others append into our own elements.
+- **Do not touch other components' state**: do not write `~/.config/opencode/**`, do not read or write DCP / skill-tracker / notifier databases or files; apart from `existsSync`, plugin source must not import any write API.
+- **Criterion 3 outranks everything**: if a capability would require writing `~/.config/opencode/**`, or editing elements others wrote into `output.system`, in order to take effect ⇒ **abandon it outright, do not discuss the benefit**.
+- Disabling is two reversible actions: delete the symlink, remove `AGENT_OS_ROOT` from the alias/export.
+
+## What counts as green
+
+- The two READMEs (`README.md` English, `README.zh-CN.md` Chinese) **mirror only the batch of facts that decides "continue or not"**: the single deep-reference copy is the English one. Shared numbers are pinned by `tests/test_readme_bilingual.py` — change one side and it goes red, so any change to a number like "502 / 1122→1359 / 8.1–9.2s / 30 criteria / 2026-10-29" must be made on both sides (the test tells you which side you missed).
+- `python3 -m pytest` and `node --test tests/js/plugin.test.mjs` — both must run; currently 502 / 29 (the rig has 15 more). Do not append a `-q` to either: `addopts` already has one `-q`, and two `-q` swallow the entire summary line (observed: `python3 -m pytest -q | grep passed` prints nothing); take the count only from `--collect-only -q`.
+- Do not write `node --test tests/js/`: the directory makes it execute `fake-aos.cjs` as a test, printing `# tests 1 / # fail 1`, a false red.
+- **Signals have two mutually independent lists**: the contract's `SIGNAL_FIELDS` (`aos/contract/schema.py`) and the synthesis `_SIGNALS` (`aos/core/outcome.py`). Echoing keeps only the latter ⇒ a new signal that only adds a contract key is silently dropped **before entering the store**. Adding a signal requires changing five places at once: the two lists, the default weight in `policy.py`, `content/policies/outcome.json`, the set-**equality** assertion in the seam guard (`tests/test_cli_contract.py`), and `DEFAULTS` in `tests/test_outcome.py`. Missing any one raises no error — it just does nothing (defect AJ's red screen is this).
+- Criteria and thresholds come from `content/policies/*.json` (eight files: decay/external/external_write/injection/outcome/promotion/rejection/retrieval), merged by `policy.load_policy` as "built-in defaults overridden by file" ⇒ to change a threshold, change the file, don't add a local number at the call site. Adding a policy file is pinned by `tests/test_config.py`'s "every file must have a corresponding default section" (observed red screen: `external_write.json: no such policy section`); the reverse does not hold — adding only a default section without a file is **silent**.
 
 ## CI
 
-- 唯一的 CI 配置是 `.github/workflows/ci.yml`：触发于 `push` 与 `pull_request`，跑在 `ubuntu-latest`。
-- 它只跑本地那两条命令：`python3 -m pytest`（当前 502）与 `node --test tests/js/plugin.test.mjs`（当前 29）；
-  Python 用 3.12、Node 用 20，action 版本钉死（`checkout@v4` / `setup-python@v5` / `setup-node@v4`）。
-- **两条必须常绿**：红了先修代码，不许靠 skip 用例、改断言或放宽门槛让它变绿。
-- CI **不跑** `./bin/aos doctor`：doctor 会开一条 loop 并留下 pending（见「探真库只能只读」），
-  它属于人门，不属于流水线。
+- The only CI config is `.github/workflows/ci.yml`: triggered on `push` and `pull_request`, running on `ubuntu-latest`.
+- It runs only the two local commands: `python3 -m pytest` (currently 502) and `node --test tests/js/plugin.test.mjs` (currently 29); Python on a 3.11 / 3.14 matrix (the declared floor `3.11` and the latest, per `STANDARD.md` §5), Node on 20, action versions pinned (`checkout@v4` / `setup-python@v5` / `setup-node@v4`).
+- **Both must stay green**: if red, fix the code first; never make it green by skipping cases, changing assertions, or relaxing a threshold.
+- CI **does not run** `./bin/aos doctor`: doctor opens a loop and leaves a pending (see "Probing the real DB is read-only"); it belongs to the human gate, not the pipeline.
 
-**CI 维护规则**（CI 与代码同源，别让它悄悄过时）：
+**CI maintenance rules** (CI shares a source with the code, don't let it silently go stale):
 
-- **CI 与代码同步改**：让 `.github/workflows/ci.yml` 过时的那次改动，就在**同一次提交里**更新它，不要留作事后清理。
-- **新增/重命名测试不需要动 CI**：CI 跑的是套件命令（`python3 -m pytest` 与 `node --test`），会自动带上新测试。只有**命令本身变了**才需要改 CI。
-- **环境变化**——新增依赖、Python/Node 版本升级、需要新的系统工具——要更新 workflow 的安装/准备步骤。
-- **代码路径变了**：本仓目前没有"记录覆盖"检查器；若将来引入（如 check:log 那类按 CODE_PATHS 核对的检查），被监视的文件改名或移动时要同步改那个清单，否则检查会一直红。
-- **重大重构之后**，确认 CI 仍然在跑真正的代码、覆盖改过的部分。一个"不再碰到改动代码"的绿 CI，比红的更危险。
-- **新增验证层级**（headless / 真机）——明确决定 CI 要不要跑它，别默默加上。
-- CI 跑什么变了，这一节也要跟着改。CI 是信号不是闸门（除非开分支保护）——每次 push 后看一眼结果。
+- **Change CI together with the code**: a change that makes `.github/workflows/ci.yml` stale must update it **in the same commit**, not as later cleanup.
+- **Adding/renaming tests does not require touching CI**: CI runs the suite commands (`python3 -m pytest` and `node --test`), which pick up new tests automatically. Only a change to **the command itself** requires editing CI.
+- **Environment changes** — a new dependency, a Python/Node version bump, a new system tool needed — must update the workflow's install/prepare steps.
+- **Code paths changed**: this repository currently has no "record coverage" checker; if one is introduced later (e.g. a check:log-style check against CODE_PATHS), the watched file list must be updated in sync when those files are renamed or moved, or the check stays red forever.
+- **After a major refactor**, confirm CI still runs the real code and covers the changed part. A green CI that "no longer touches the changed code" is more dangerous than a red one.
+- **Adding a verification layer** (headless / real machine) — explicitly decide whether CI should run it; don't add it silently.
+- When what CI runs changes, this section must change too. CI is a signal, not a gate (unless branch protection is on) — glance at the result after each push.
 
-## 往链路上传值的形状
+## The shape of values passed onto the seam
 
-- 只有两种合法形式：在宿主进程内**规范化后丢掉原文**（方法指纹：只留名称形状的 token、≤3 词、
-  `-m` 仅对解释器保留、遇引号即终止该段），或**截断并标明来源**（`response_summary`、`session_error`）。
-- 原命令、参数、路径、env、stderr 一律不过缝；`note()` 继续只打键名/索引/计数，不打值。
-- 一个值上了链路就是采集面扩大 ⇒ 那是 owner 的决定，写进 §12/§15 并说明边界，不能只在代码里悄悄加。
+- Only two legal forms: **normalize in the host process and drop the original text** (method fingerprint: keep only name-shaped tokens, ≤3 words, `-m` retained only for the interpreter, terminate the segment at any quote), or **truncate and mark the source** (`response_summary`, `session_error`).
+- Raw commands, arguments, paths, env, stderr never cross the seam; `note()` keeps logging only key names/indices/counts, never values.
+- A value on the seam widens the collection surface ⇒ that is the owner's decision, to be written into §12/§15 with the boundary stated, not quietly added in code.
 
-## 探真库只能只读
+## Probing the real DB is read-only
 
-- `aos preflight` **会开一条 loop 并留下 pending**（实测：一次 preflight ⇒
-  `doctor.pending_postflight.outstanding` 从 1 变 2）⇒ 拿真库做打分/对照一律走
-  `retrieve(query, k=5, store=MemoryStore(<db 路径>), log=False)`，`log=False` 是关键，否则写 `retrieval_log`。
-- 需要跑完整引擎路径（router/scope/gate 全链路）时，先把 `AOS_STORE_DIR` 指到 scratch 副本，
-  不要"就用真库试一下"。
-- `retrieve()` 是只读的，`compute_all_decay()` / `memory refresh` **不是**：后者写 `decay_factor`，
-  而且写的是"新旧里更低的那个"（人的降级不许被重算抬回去）⇒ **降下去就再也升不回来**，没有对称的命令。
-  第十五轮就是在"只读检验"的口号下调了它，把真库 3 条种子从 0.85 永久降到 0.5。
-- **basic-memory 的库也只读**：`AOS_BM_DB`（默认 `~/.basic-memory/memory.db`）用 `mode=ro` + `PRAGMA query_only=ON`
-  打开，`external.py` 里不许出现任何写语句（`test_the_reader_issues_no_write_statement_and_leaves_the_bytes_alone`
-  同时钉源码与文件字节）。`tests/conftest.py` 把它指到一个不存在的 tmp 路径 ⇒ 测试不会偶然读到真笔记；
-  要测召回就在 `tmp_path` 里造一份 fixture 库。**任何真实运行/实验也一样**：跑 AOS 时 `AOS_STORE_DIR`/`AOS_DB_PATH`/`AOS_BM_DB`
-  三个都指 scratch，别拿真笔记当测试数据。
-- **写 bm 只有一条路：`basic-memory tool write-note` 子进程**（`external_write.py`）。那颗"源码里没有写语句"的针
-  只钉在 `external.py` 上，所以写侧另钉一条：`external_write.py` 里不许出现 `sqlite3`，也不许对 vault 文件以写模式打开
-  （`test_the_engine_never_opens_the_vault_or_the_db_for_writing` 同时钉源码、邻居库字节与 argv）。
-  **`AOS_BM_CONFIG_DIR` 在 conftest 里是唯一的护栏**：它指到一个没有 `config.json` 的目录 ⇒ 解析不出 vault ⇒
-  `skipped`，在任何 spawn 之前停下；只把 `AOS_BM_BIN` 换成假命令是不够的（那样"命令不存在"会替我们假装安全）。
-- **真要跑带 basic-memory 的端到端，两个 env 必须一起指 scratch**：`BASIC_MEMORY_CONFIG_DIR`（bm 自己用它定位
-  config **和它的 `memory.db`**）与 `AOS_BM_CONFIG_DIR`（引擎读同一份 `config.json` 来定位 vault）。只设后者 ⇒
-  邻居的常驻库会被写。实测：2026-10-03 一轮真 CLI 跑完后 `~/.basic-memory/memory.db` 的 sha 与 mtime 一字未动
-  （`a090864c…`，10-01 08:27:45）。另记两条邻居事实：CLI 一次 spawn 约 **8–9 s**（默认超时 30s 因此是 3 倍余量）；
-  全新 bm 库里 `project` 表是空的，`tool write-note` 会 404 ⇒ 这类失败只是 `failed`，批准照旧。
-- `store/` 没有任何删除命令。退出召回只有两条路：`aos memory retire <id> --reason …`（人敲一次，
-  无 reason 不写）与证据阶梯（5 次可归因失败 + 5 次批准，§12 行 Z）；两条都保留行与事件，
-  所以"撤回一条教训"永远不是删数据，是改状态。
+- `aos preflight` **opens a loop and leaves a pending** (observed: one preflight ⇒ `doctor.pending_postflight.outstanding` goes from 1 to 2) ⇒ scoring/comparison against the real DB always goes through `retrieve(query, k=5, store=MemoryStore(<db path>), log=False)`; `log=False` is the key, otherwise it writes `retrieval_log`.
+- When you need the full engine path (router/scope/gate whole chain), first point `AOS_STORE_DIR` at a scratch copy — don't "just try it against the real DB".
+- `retrieve()` is read-only, `compute_all_decay()` / `memory refresh` are **not**: the latter writes `decay_factor`, and writes "the lower of old and new" (a human demotion must not be raised back by recomputation) ⇒ **once lowered it can never rise again**, there is no symmetric command. Round fifteen did exactly this under the banner of a "read-only check", permanently dropping 3 real-DB seeds from 0.85 to 0.5.
+- **basic-memory's DB is also read-only**: `AOS_BM_DB` (default `~/.basic-memory/memory.db`) is opened with `mode=ro` + `PRAGMA query_only=ON`, and no write statement may appear in `external.py` (`test_the_reader_issues_no_write_statement_and_leaves_the_bytes_alone` pins both the source and the file bytes). `tests/conftest.py` points it at a nonexistent tmp path ⇒ tests won't accidentally read real notes; to test recall, build a fixture DB in `tmp_path`. **Any real run/experiment is the same**: when running AOS, point all three of `AOS_STORE_DIR`/`AOS_DB_PATH`/`AOS_BM_DB` at scratch — don't use real notes as test data.
+- **The only path that writes bm is a `basic-memory tool write-note` subprocess** (`external_write.py`). That "no write statement in the source" pin is only on `external.py`, so the write side pins another: `external_write.py` must not contain `sqlite3`, nor open a vault file in write mode (`test_the_engine_never_opens_the_vault_or_the_db_for_writing` pins the source, the neighbor DB bytes, and argv together). **`AOS_BM_CONFIG_DIR` is the only guardrail in conftest**: it points at a directory with no `config.json` ⇒ vault resolution fails ⇒ `skipped`, stopping before any spawn; merely swapping `AOS_BM_BIN` for a fake command is not enough (that way "command not found" pretends to be safe for us).
+- **To actually run an end-to-end with basic-memory, both envs must point at scratch together**: `BASIC_MEMORY_CONFIG_DIR` (bm itself uses it to locate the config **and its `memory.db`**) and `AOS_BM_CONFIG_DIR` (the engine reads the same `config.json` to locate the vault). Setting only the latter ⇒ the neighbor's resident DB gets written. Observed: after one real CLI run on 2026-10-03, `~/.basic-memory/memory.db`'s sha and mtime were unchanged by a single character (`a090864c…`, 10-01 08:27:45). Two more neighbor facts: one CLI spawn is about **8–9 s** (the default 30s timeout is therefore a 3× margin); in a brand-new bm DB the `project` table is empty and `tool write-note` returns 404 ⇒ such a failure is merely `failed`, and the approval proceeds as before.
+- `store/` has no delete command. Exiting recall has only two paths: `aos memory retire <id> --reason …` (a human types it once; no reason, no write) and the evidence ladder (5 attributable failures + 5 approvals, §12 row Z); both keep the row and the events, so "retracting a lesson" is never deleting data, it is changing state.
 
-## 写之前先量
+## Measure before writing
 
-- 声称"修好了"之前：先有一条**会红的具名测试**，红屏幕留得住，再改代码。
-- 聚合数（测试数、`observations.hot`、pending 数、提交数）一律重跑命令取；不沿用上一轮的记忆值。
-- 借来的证据要写明它够到哪一层（`docs/architecture/agent-os-v2.md §1`）；"我没遇到"不能写成"不会发生"。
-- 行为判定要在**调用之前**固定规则（grep 什么、阈值多少），不许事后解释结果。
-- 正文里任何"必须活到最后一句"的分句都要**预留额度**，不能拿剩余空间给它
-  （`缺证 → 模型自述 → 绝不删 未归因`、轨迹的 170 字符额度是同一手法）。实测过一次：
-  八个长路径把剩余空间压成负数，整节 `过程` 被静默丢弃。
+- Before claiming "fixed": first have a **named test that goes red**, let the red screen stand, then change the code.
+- Aggregate numbers (test count, `observations.hot`, pending count, commit count) are always re-fetched by re-running the command; never reuse last round's remembered value.
+- Borrowed evidence must state how far it reaches (`docs/architecture/agent-os-v2.md §1`); "I didn't hit it" must not be written as "it can't happen".
+- Behavior verdicts must fix the rule **before the call** (what to grep, what threshold), not explain the result afterward.
+- Any clause in the body that "must survive to the last sentence" must **reserve budget** — you can't give it the leftover space (`missing-evidence → model self-report → never delete unattributed` and the trajectory's 170-character budget are the same trick). Observed once: eight long paths pushed the remaining space negative and the whole "process" section was silently dropped.
 
-## 编辑之后必须重读
+## Re-read after editing
 
-`Edit` 的 `old_string` 只锚一行时，会吞掉相邻行：表格行的行首、段落小标题、赋值语句都已被吞过
-（第十四、十五、十六轮各一次，都在重读时发现并补回；第十六轮吞掉的是 `proposed = 0` 一行）。
-改 markdown 表格/段落后，立刻把被改区域读一遍；改聚合数先 grep 全部出现处再改。
+When `Edit`'s `old_string` anchors only one line, it swallows adjacent lines: table-row starts, paragraph sub-headings, and assignment statements have all been swallowed (rounds fourteen, fifteen, sixteen, once each, all found and restored on re-read; round sixteen swallowed the `proposed = 0` line).
+After editing a markdown table/paragraph, immediately read the changed region; before changing an aggregate number, grep every occurrence first.
 
-自动折行同样属于"编辑"：按字符数硬切会把 code span 和 `**` 切断（`aos/core/outcome.py\n` 被切成两半）。
-换行只能落在标点或词之间，改完必须回读整段。
+Automatic line-wrapping also counts as "editing": hard-wrapping by character count can cut a code span and `**` in half (`aos/core/outcome.py\n` was split in two). A wrap must land only at punctuation or between words, and the whole paragraph must be re-read after the change.
 
-## 改召回与门禁的语义
+## Changing the semantics of recall and gating
 
-- **收紧一条匹配，必须同批给出"人怎么让该被找到的东西仍被找到"的口**，否则修复等于消失（AH 两半同批）。
-- **过程叙述进 body，但不进身份**：`fact_key` 吃 body 全文 ⇒ 轨迹写进正文而身份照原样算，
-  同一件事第二次发生才是"一次决定"而不是"一次新评审"。key 只能由**同一个** `fact_key` 函数算出来
-  （`test_dedupe.py` 钉住"声明的 key 等于 store 自己会推导的结果"），另起一个键生成器就是 AD 那一类病。
-- **一个 run 只出一份经验提案**：结果、过程、候选经验在同一条评审里给
-  （`should_propose` 放宽时最容易把它裂成两条 ask）。
-- 内容列（`title`/`body`/`when_to_apply`/`tags`）只有一个写入者：作者。`review approve` 的内容类 flag
-  仅在 create 时接受，对已存在的行一律拒绝；空值在写任何东西之前拒绝且不留行。
-- 排序有**两条独立入口**都能过 0.15 的门槛（真库只读实测）：
-  ① 路由说中 category —— 单这一项就正好 0.15，**题面零重叠也能召回**，中文也不例外；
-  ② 题面字面命中 tag —— 一个 = 0.08（不够），两个 = 0.16（过门）。
-  消毒兜底桶之后，"路由放弃"那一半任务只剩 ② 可走 ⇒ "至少两个 tag 字面命中"是**路由不知道主题时**
-  的前提，不是普遍前提；对外解释时别把它说过头。
-- 路由的兜底桶（`fallback`）不是主题，它是"什么都没分类"的自白 ⇒ 查询侧一律消毒：category 置空、
-  桶名从 domains/keywords 剔除、放弃时唯一会给的 role 也清掉。**只动查询侧**，真讲 fallback 的记忆
-  仍靠自己的 tag 与题面被找到（这个不对称是故意的，别"顺手"改成两侧）。
+- **Tightening a match must ship, in the same batch, the door by which a human can still make the thing-that-should-be-found be found** — otherwise the fix equals disappearance (AH's two halves in one batch).
+- **Process narrative goes into body, not into identity**: `fact_key` consumes the whole body text ⇒ the trajectory is written into the body while the identity is computed as before, so the same thing happening a second time is "one decision", not "a new review". The key can only be computed by the **same** `fact_key` function (`test_dedupe.py` pins "the declared key equals what the store itself would derive"); spinning up another key generator is AD's disease.
+- **One run produces one experience proposal**: result, process, and candidate experience are given in the same review (widening `should_propose` most easily splits it into two asks).
+- Content columns (`title`/`body`/`when_to_apply`/`tags`) have exactly one writer: the author. `review approve`'s content flags are accepted only at create time, and are always rejected for an existing row; empty values are rejected before anything is written and leave no row.
+- Ranking has **two independent entry points** that can both clear the 0.15 threshold (real-DB read-only observed):
+  ① the router names the category — this item alone is exactly 0.15, **recall works even with zero surface overlap**, Chinese included;
+  ② the surface literally hits a tag — one = 0.08 (not enough), two = 0.16 (clears the bar).
+  After sanitizing the fallback bucket, the "router gave up" half of tasks has only ② left ⇒ "at least two literal tag hits" is the precondition **when the router doesn't know the topic**, not a general precondition; don't overstate it when explaining to others.
+- The router's fallback bucket (`fallback`) is not a topic, it is a confession of "nothing was classified" ⇒ the query side always sanitizes it: category blanked, bucket name removed from domains/keywords, and the role that is given only on giving up is also cleared. **Only touch the query side**; a memory that genuinely talks about fallback is still found by its own tags and surface (this asymmetry is deliberate, don't "helpfully" make it both sides).
 
-## 真机测试（opencode）——含"别的 agent 驱动"的情形
+## Real-machine testing (opencode) — including the case of "another agent driving it"
 
-- **绝不用 `opencode` 这个 shell alias**：本机 `~/.zshrc` 的 alias 注入 `--auto` 和一个内联的
-  `AGENT_OS_ROOT`，你分不清哪个 env 生效，而 `--auto` 会**自动批准当前 cwd 下的编辑与任意 bash**
-  （官方标注 dangerous）。驱动真机一律用绝对路径 `~/.opencode/bin/opencode` + 显式 `AGENT_OS_ROOT`
-  + **指向 scratch 的 `AOS_STORE_DIR`**。
-- **任何测试运行都必须把 store 指到 scratch**（`AOS_STORE_DIR` / `AOS_DB_PATH`）；真库只由 owner 的
-  交互会话增长。`live/run.sh` 会拒绝真库，除非 `AOS_RIG_ALLOW_REAL_STORE=1` 并说清楚。
-- 模型只用 `opencode/space-bunny-free`；`--auto` 需 owner 授权并记录批准范围（cwd/库/批次/模型/日期）；
-  `~/.config/opencode/**` 零写入。
-- 无头 `opencode run` 在 `permission.bash=ask` 且无 TTY 时，模型一想调工具就必然失败 ⇒ 要测工具行为
-  必须用真 TUI（tmux 驱动，方法见 `live/README.md`），或只问"知识可答"的问题；**不要用 `--auto` 去修这个**。
-- 驱动真 TUI 时遇到权限弹窗**停下来问 owner**，默认只选 Allow once。
-- 判据 1 的 `hot` 只数 owner 的交互会话，rig / agent 产生的观测不计。
-  **这条目前只靠"每次调用都带 scratch env"这一条纪律撑着**：`AGENT_OS_ROOT` 已 export 进 `~/.zshrc`，
-  忘记 `AOS_STORE_DIR` 的那一次就直接写进正式库，而写进去之后**没有任何字段能看出是谁驱动的**
-  （缺陷 AR：主机的 `OPENCODE_CLIENT` 只有 `"acp"` 一处赋值，TUI 不写它 ⇒ 人与 agent 同为 `cli`）。
-  ⇒ 不要为了补这个洞去写一个来源字段（那是假的），也不要把 `doctor` 的 `hot` 直接说成"owner 在用了几次"；
-  交出去的读数一律写成"上界 N / 可证下界 M"两个数，见 `docs/experiment/stage-1-usage-ledger.md §4bis`。
-- 提示词全合成，会话正文不进仓库与文档；插件日志只出现键名/索引/计数，不出现值。
-- 需要改 `~/.config/opencode/**` 或需要 host 没有的钩子 ⇒ 停下汇报，那是 owner 的决定。
+- **Never use the `opencode` shell alias**: this machine's `~/.zshrc` alias injects `--auto` and an inline `AGENT_OS_ROOT`, so you can't tell which env wins, and `--auto` **auto-approves edits and arbitrary bash in the current cwd** (officially flagged dangerous). Driving the real machine always uses the absolute path `~/.opencode/bin/opencode` + an explicit `AGENT_OS_ROOT` + a **scratch-pointing `AOS_STORE_DIR`**.
+- **Any test run must point the store at scratch** (`AOS_STORE_DIR` / `AOS_DB_PATH`); the real DB grows only through the owner's interactive sessions. `live/run.sh` refuses the real DB unless `AOS_RIG_ALLOW_REAL_STORE=1` and it is stated clearly.
+- The model is only `opencode/space-bunny-free`; `--auto` requires owner authorization with the approval scope recorded (cwd/db/batch/model/date); zero writes to `~/.config/opencode/**`.
+- Headless `opencode run` with `permission.bash=ask` and no TTY must fail the moment the model wants to call a tool ⇒ to test tool behavior you must use a real TUI (tmux-driven, method in `live/README.md`), or ask only "answerable-from-knowledge" questions; **don't fix this with `--auto`**.
+- When driving the real TUI and a permission dialog appears, **stop and ask the owner**; default to Allow once only.
+- Criterion 1's `hot` counts only the owner's interactive sessions; rig/agent-produced observations don't count.
+  **This currently rests on the single discipline of "always carry the scratch env on every call"**: `AGENT_OS_ROOT` is already exported into `~/.zshrc`, so the one time you forget `AOS_STORE_DIR` it writes straight into the production DB, and after it's written **no field can tell who drove it** (defect AR: the host's `OPENCODE_CLIENT` has only one assignment, `"acp"`, and the TUI doesn't write it ⇒ human and agent are both `cli`).
+  ⇒ don't write a source field to patch this hole (that would be fake), and don't describe `doctor`'s `hot` directly as "how many times the owner used it"; always report the reading as two numbers, "upper bound N / provable lower bound M", see `docs/experiment/stage-1-usage-ledger.md §4bis`.
+- Prompts are fully synthetic; session bodies never enter the repo or the docs; plugin logs show only key names/indices/counts, never values.
+- If you need to change `~/.config/opencode/**` or need a hook the host lacks ⇒ stop and report; that is the owner's decision.
 
-## 发版 / 版本号
+## Release / version numbers
 
-- 版本号的权威值是 `pyproject.toml` 的 `[project] version`（当前 `0.1.0`）。
-- 引擎里还有一份必须与之相等的硬编码副本：`aos/__init__.py` 的 `__version__`；bump 时两份一起改，漏一份就是漂移。
-- **什么时候 bump**：一次改动若改变了对外的可见行为（命令、契约、召回或门禁语义），就在同一笔提交里 bump；
-  纯文档、纯测试、纯内部重构不 bump。
+- The authoritative version number is `pyproject.toml`'s `[project] version` (currently `0.1.0`).
+- The engine has another hard-coded copy that must equal it: `aos/__init__.py`'s `__version__`; bump both together, missing one is drift.
+- **When to bump**: a change that alters externally visible behavior (command, contract, recall, or gating semantics) is bumped in the same commit; pure docs, pure tests, pure internal refactors are not bumped.
 
-## 提交与文档
+## Commits and docs
 
-- 提交信息一律用 Conventional Commits + scope（如 `chore(docs):`、`fix(recall):`、`feat(memory):`），
-  scope 取受影响的模块或面。
-- **文档与配置/测试分开提交**：文档改动（`*.md`、`docs/`）不要和配置/测试改动塞进同一笔提交 ——
-  这是「交付节奏」里"一个改动 = 一笔提交"在提交粒度上的落地。
+- Commit messages always use Conventional Commits + scope (e.g. `chore(docs):`, `fix(recall):`, `feat(memory):`), with the scope being the affected module or surface.
+- **Docs and config/tests are committed separately**: doc changes (`*.md`, `docs/`) must not be bundled into the same commit as config/test changes — this is "one change = one commit" applied at commit granularity.
 
-## 交付节奏
+## Delivery cadence
 
-一个改动 = 一笔提交；汇报固定五项：改了哪些文件、测试结果（前后计数 + 新增用例名）、
-行为变化 before→after（含**刻意没变**的部分）、风险与回滚（能否单提交 revert）、是否破坏既有契约。
-skip 掉某一步时必须能证明那一步仍然可执行。
+One change = one commit; the report has five fixed items: which files changed, test results (before/after counts + new case names), behavior change before→after (including the part **deliberately left unchanged**), risk and rollback (can it be reverted as a single commit), whether an existing contract was broken.
+When a step is skipped, you must be able to prove that step is still executable.
