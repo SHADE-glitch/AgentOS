@@ -1,3 +1,5 @@
+<p align="right"><a href="README.md"><b>English</b></a> | <a href="README.zh-CN.md">简体中文</a></p>
+
 # 🧠 Agent OS
 
 > **An external evidence and governance layer for a coding agent.**
@@ -10,7 +12,6 @@
 ![Host contract](https://img.shields.io/badge/host%20contract-1.2-informational)
 ![SQLite schema](https://img.shields.io/badge/SQLite%20schema-v5-informational)
 ![Tests](https://img.shields.io/badge/pytest-502%20passed-brightgreen)
-[简体中文 README](README.zh-CN.md)
 
 > ⚠️ **Vibe-coded, and it ends here.** This repository was written almost entirely by vibe
 > coding with an AI agent, chasing a far bigger idea: an **Agent OS** — a multi-agent runtime

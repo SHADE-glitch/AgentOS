@@ -1,3 +1,5 @@
+<p align="right"><a href="README.md">English</a> | <a href="README.zh-CN.md"><b>简体中文</b></a></p>
+
 # 🧠 Agent OS
 
 > **编码智能体的外置证据与治理层。**
@@ -9,7 +11,6 @@
 ![宿主契约](https://img.shields.io/badge/%E5%AE%BF%E4%B8%BB%E5%A5%91%E7%BA%A6-1.2-informational)
 ![SQLite schema](https://img.shields.io/badge/SQLite%20schema-v5-informational)
 ![测试](https://img.shields.io/badge/pytest-502%20passed-brightgreen)
-[English README](README.md)
 
 > ⚠️ **Vibe coding 产物，就停在这里。** 本仓库几乎全部由 AI agent 的 vibe coding 写成，最初追的
 > 是一个更大的想法：一套 **Agent OS** —— 多 Agent 的运行与治理平台，核心是 agent 的**自我进化**与
