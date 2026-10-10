@@ -145,7 +145,7 @@ Automatic line-wrapping also counts as "editing": hard-wrapping by character cou
 
 ## Commits and docs
 
-- Commit messages always use Conventional Commits + scope (e.g. `chore(docs):`, `fix(recall):`, `feat(memory):`), with the scope being the affected module or surface.
+- Commit messages are **English** and always use Conventional Commits + scope (e.g. `chore(docs):`, `fix(recall):`, `feat(memory):`), with the scope being the affected module or surface.
 - **Docs and config/tests are committed separately**: doc changes (`*.md`, `docs/`) must not be bundled into the same commit as config/test changes — this is "one change = one commit" applied at commit granularity.
 
 ## Delivery cadence
