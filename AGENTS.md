@@ -152,3 +152,20 @@ Automatic line-wrapping also counts as "editing": hard-wrapping by character cou
 
 One change = one commit; the report has five fixed items: which files changed, test results (before/after counts + new case names), behavior change before→after (including the part **deliberately left unchanged**), risk and rollback (can it be reverted as a single commit), whether an existing contract was broken.
 When a step is skipped, you must be able to prove that step is still executable.
+
+## Listed on the GitHub profile
+
+This repo is listed on the owner's profile front page (`SHADE-glitch/SHADE-glitch`). That page lives
+in a **separate repository and never updates itself** — when a fact it states about this repo
+changes, update the profile README in the same round. The profile's own `AGENTS.md` is the
+authoritative rulebook; its guard `scripts/check-profile.mjs` must keep passing.
+
+- **Rename / transfer / delete** — the profile link dies; fix the row.
+- **Purpose drift** — the profile's one-line description must still be true. The claims it copies —
+  *"zero third-party deps"*, *"never edits code"* — are **promises**: if one stops holding, change
+  the profile line that makes it.
+- **LICENSE change** — the profile's license badge must equal this repo's `LICENSE`.
+- **Version / runtime declaration change** — the matching badge must equal this repo's declaration.
+- **Freeze / archive / upstream-frozen** — say so on the profile; never leave a stale "maintained".
+- **Public ↔ private** — a repo that goes private must be **delisted** (only the two whitelisted
+  private apps may stay, and they are not this one).
