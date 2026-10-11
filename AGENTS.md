@@ -14,9 +14,13 @@ Guidance for AI coding agents working in this repository. This repository is pub
 > `tests/` (not `scripts/tests/`) and run with `python3 -m pytest`; the JS plugin tests run with
 > `node --test tests/js/plugin.test.mjs`.
 >
-> **Language.** `docs/**` is Chinese by design — a project-specific exception to the standard's
-> "English outside the whitelist" rule. Everything else (code, comments, CLI/TUI text, every
-> other `.md`) is English.
+> **Language (documented bilingual exception, STANDARD.md §2).** This repository is
+> intentionally bilingual. Chinese by design: `docs/**`, the CLI output text
+> (`aos/cli/main.py`), product templates (`aos/core/memory/record.py`), seed data
+> (`content/memory/seed/agentos.json`) and CJK test fixtures — retrieval is measured to need
+> Chinese tags (a Chinese-phrased task against English-only tags recalls nothing). English:
+> `README.md`, `AGENTS.md`, `CHANGELOG.md`, `MAINTENANCE*`. Do not "translate" the product
+> strings — the tests pin them.
 
 Target `<repo>`, treated as a **public repository** (`github.com/SHADE-glitch/AgentOS`): every privacy line is enforced as if public, regardless of where the visibility switch sits right now.
 In the docs, `<repo> / <subject-project> / <rig> / <bm-vault> / ses_redactedNN` are redaction placeholders; the glossary is at the end of `README.md` under "Privacy and placeholders". Redact before publishing, and re-run the two test commands after redacting.
