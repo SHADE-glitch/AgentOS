@@ -17,7 +17,7 @@ Guidance for AI coding agents working in this repository. This repository is pub
 > `tests/` (not `scripts/tests/`) and run with `python3 -m pytest`; the JS plugin tests run with
 > `node --test tests/js/plugin.test.mjs`.
 >
-> **Language (documented bilingual exception, STANDARD.md §2).** This repository is
+> **Language (documented bilingual exception, `~/.agents/standards/dimensions/a.md` §1).** This repository is
 > intentionally bilingual. Chinese by design: `docs/**`, the CLI output text
 > (`aos/cli/main.py`), product templates (`aos/core/memory/record.py`), seed data
 > (`content/memory/seed/agentos.json`) and CJK test fixtures — retrieval is measured to need
@@ -74,7 +74,7 @@ This file holds only the "do this every time you start" shape, and every line is
 ## CI
 
 - The only CI config is `.github/workflows/ci.yml`: triggered on `push` and `pull_request`, running on `ubuntu-latest`.
-- It runs only the two local commands: `python3 -m pytest` (currently 502) and `node --test tests/js/plugin.test.mjs` (currently 29); Python on a 3.11 / 3.14 matrix (the declared floor `3.11` and the latest, per `STANDARD.md` §5), Node on 20, action versions pinned (`checkout@v4` / `setup-python@v5` / `setup-node@v4`).
+- It runs only the two local commands: `python3 -m pytest` (currently 502) and `node --test tests/js/plugin.test.mjs` (currently 29); Python on a 3.11 / 3.14 matrix (the declared floor `3.11` and the latest, per `~/.agents/standards/dimensions/a.md` §2), Node on 20, action versions pinned (`checkout@v4` / `setup-python@v5` / `setup-node@v4`).
 - **Both must stay green**: if red, fix the code first; never make it green by skipping cases, changing assertions, or relaxing a threshold.
 - CI **does not run** `./bin/aos doctor`: doctor opens a loop and leaves a pending (see "Probing the real DB is read-only"); it belongs to the human gate, not the pipeline.
 

@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         # Declared floor (pyproject `requires-python >=3.11`, README badge "3.11+") and the latest,
-        # so the support range is covered at both ends (STANDARD.md §5).
+        # so the support range is covered at both ends (~/.agents/standards/dimensions/a.md §2).
         python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v4
