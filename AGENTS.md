@@ -2,18 +2,10 @@
 
 Guidance for AI coding agents working in this repository. This repository is public.
 
-> **Dimension.** This repository is dimension **A — open source, strict** in the machine-wide
-> `CONVENTIONS.md` (outside this repository); the shared rules live in `STANDARD.md` and the
-> dimension-A detail in `~/.agents/standards/dimensions/a.md`.
->
-> **Shared standard.** Root file names, the process-draft location (`docs/reports/`), the
-> `CHANGELOG` entry format and the runtime ignore list are defined once in the machine-wide
-> `STANDARD.md` (outside this repository); the dimension-A rules — the language policy, CI
-> version pinning and entry commands, and the test entry command — live in
+> **Dimension.** A — open source (strict), per `CONVENTIONS.md` §0; the shared rules live once in
+> `~/.agents/standards/STANDARD.md` (§1 root files, §2 process drafts, §3 CHANGELOG entries,
+> §4 runtime ignore list, §6 remotes/pushing, §8 profile listing) and the dimension-A detail in
 > `~/.agents/standards/dimensions/a.md`. Neither is restated here.
->
-> **Push over SSH, never HTTPS.** Verify `git remote get-url --push origin` starts with `git@`
-> before pushing; if it starts with `https://`, fix it first — never push over HTTPS.
 >
 > **Test entry (project-specific variant of the standard's tool convention).** Tests live in
 > `tests/` (not `scripts/tests/`) and run with `python3 -m pytest`; the JS plugin tests run with
@@ -152,7 +144,7 @@ Automatic line-wrapping also counts as "editing": hard-wrapping by character cou
 - The engine has another hard-coded copy that must equal it: `aos/__init__.py`'s `__version__`; bump both together, missing one is drift.
 - **When to bump**: a change that alters externally visible behavior (command, contract, recall, or gating semantics) is bumped in the same commit; pure docs, pure tests, pure internal refactors are not bumped.
 
-## Commits and docs
+## Docs & commits
 
 - Commit messages are **English** and always use Conventional Commits + scope (e.g. `chore(docs):`, `fix(recall):`, `feat(memory):`), with the scope being the affected module or surface.
 - **Docs and config/tests are committed separately**: doc changes (`*.md`, `docs/`) must not be bundled into the same commit as config/test changes — this is "one change = one commit" applied at commit granularity.
@@ -164,17 +156,8 @@ When a step is skipped, you must be able to prove that step is still executable.
 
 ## Listed on the GitHub profile
 
-This repo is listed on the owner's profile front page (`SHADE-glitch/SHADE-glitch`). That page lives
-in a **separate repository and never updates itself** — when a fact it states about this repo
-changes, update the profile README in the same round. The profile's own `AGENTS.md` is the
-authoritative rulebook; its guard `scripts/check-profile.mjs` must keep passing.
+See `STANDARD.md` §8 for the shared profile-listing triggers. This repo's own additions:
 
-- **Rename / transfer / delete** — the profile link dies; fix the row.
 - **Purpose drift** — the profile's one-line description must still be true. The claims it copies —
   *"zero third-party deps"*, *"never edits code"* — are **promises**: if one stops holding, change
   the profile line that makes it.
-- **LICENSE change** — the profile's license badge must equal this repo's `LICENSE`.
-- **Version / runtime declaration change** — the matching badge must equal this repo's declaration.
-- **Freeze / archive / upstream-frozen** — say so on the profile; never leave a stale "maintained".
-- **Public ↔ private** — a repo that goes private must be **delisted** (only the two whitelisted
-  private apps may stay, and they are not this one).
