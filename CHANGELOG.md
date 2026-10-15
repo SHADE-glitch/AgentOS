@@ -59,3 +59,18 @@ Cost     The manifest and ignore lists are hard-coded, so a deliberate second ma
          this file; that gap is D-001's, and it is recorded rather than quietly closed here.
 
 Commit   9e40999
+
+### D-003 · 2026-10-15 · chore
+Symptom  The two READMEs opened straight into their own prose: a first-time reader met the idea,
+         the research note and the snapshot warning before being told, in one place, what the
+         repository is, what it replaces and how to run it. Those four answers existed — scattered
+         between the hero note and Quick start — and had to be assembled by hand.
+Change   Both `README.md` and `README.zh-CN.md` open with the four-part house opening the
+         machine-wide standard asks for — **What it is** / **What it solves** / **How to run** /
+         **Where to look**, and **是什么** / **解决什么** / **怎么跑** / **去哪看** — placed after
+         the title and badges and before the repository's own prose. Nothing below the four items
+         moved; the switcher, the title and the badges are untouched.
+Evidence 2026-10-15 local: `python3 -m pytest tests/test_readme_bilingual.py tests/test_conventions.py`
+         17 passed, run with the final content of this entry in the tree. Each of the four items was
+         distilled from text already in the READMEs (the hero summary and Quick start), not invented.
+Cost     None to runtime behaviour — documentation only.

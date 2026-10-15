@@ -12,6 +12,14 @@
 ![SQLite schema](https://img.shields.io/badge/SQLite%20schema-v5-informational)
 ![测试](https://img.shields.io/badge/pytest-502%20passed-brightgreen)
 
+**是什么** —— 编码智能体的外置证据与治理层：真实运行 → 合成判决 → 人门 → 晋升为记忆 → 召回改变**下一次**喂给模型的内容。
+
+**解决什么** —— 让模型自述「我学到了什么」就自动晋升，会攒下自信而错误的记忆；AgentOS 把人留在回路里，一条经验只有经过人门才会成为耐久知识。
+
+**怎么跑** —— `python3 -m pytest`，然后 `./bin/aos doctor --json`。
+
+**去哪看** —— 见 [AGENTS.md](AGENTS.md) 与 [MAINTENANCE.md](MAINTENANCE.md)。
+
 > ⚠️ **Vibe coding 产物，就停在这里。** 本仓库几乎全部由 AI agent 的 vibe coding 写成，最初追的
 > 是一个更大的想法：一套 **Agent OS** —— 多 Agent 的运行与治理平台，核心是 agent 的**自我进化**与
 > **经验沉淀**。这个想法太大，后来被砍成你现在看到的这一小块（真实运行 → 合成判决 → 人门 →

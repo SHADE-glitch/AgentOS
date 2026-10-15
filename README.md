@@ -13,6 +13,14 @@
 ![SQLite schema](https://img.shields.io/badge/SQLite%20schema-v5-informational)
 ![Tests](https://img.shields.io/badge/pytest-502%20passed-brightgreen)
 
+**What it is** — An external evidence-and-governance layer for a coding agent: a run → a verdict → a human gate → promoted memory → recall that changes what the agent is told next time.
+
+**What it solves** — Auto-promoting whatever a model says it learned produces confidently wrong memories; AgentOS keeps a person in the loop so a lesson only becomes durable through the human gate.
+
+**How to run** — `python3 -m pytest`, then `./bin/aos doctor --json`.
+
+**Where to look** — See [AGENTS.md](AGENTS.md) and [MAINTENANCE.md](MAINTENANCE.md).
+
 > ⚠️ **Vibe-coded, and it ends here.** This repository was written almost entirely by vibe
 > coding with an AI agent, chasing a far bigger idea: an **Agent OS** — a multi-agent runtime
 > and governance platform built around agent **self-evolution** and **experience
