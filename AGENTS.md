@@ -40,7 +40,9 @@ This file holds only the "do this every time you start" shape, and every line is
 
 **Why**: the recurring disease of this repository is "declared but nobody wrote it / written but nobody reads it / read but it doesn't take effect / only ever run against a fixture and taken as real". The four files above are the history of these diseases; not reading them means repeating them.
 
-## What not to do (non-goals — don't "helpfully" add them back)
+## Hard rules
+
+### What not to do (non-goals — don't "helpfully" add them back)
 
 - **No skill system**: do not create/read/write skill files, do not touch `personal-skills`, `content/skills/` must not be reproduced (`test_skill_boundary` blocks it). Skills belong to the host.
 - **No self-built telemetry writer**: the only telemetry writer is the local skill-tracker. To consume its DB, follow the read-only rules in `final-plan §7` (list the whitelist + probe with `PRAGMA table_info` before reading + degrade if unreadable); **currently zero code** — before wiring it up, first prove it will actually change recall.
@@ -49,7 +51,7 @@ This file holds only the "do this every time you start" shape, and every line is
 - **Do not make the engine something that edits code**: recovery is always plan-only, `auto_modify_code=False`.
 - **No orchestration, no session retrieval, no code indexing** (conflicts with the "external brain" positioning, see `positioning.md §2/§3`).
 
-## Non-interference is a hard constraint (explicit owner requirement)
+### Non-interference is a hard constraint (explicit owner requirement)
 
 - **Zero impact after disabling**: if `AGENT_OS_ROOT` is unset ⇒ the plugin loads but every hook no-ops, and `output.system` is **byte-for-byte identical** to not having the plugin (`tests/js/plugin.test.mjs` pins it).
 - **Enhance only, never rewrite neighbors**: only push your own elements; never occupy `output.system[0]`, never edit/reorder/delete others' elements (DCP judges internal calls by `[0]`), and preserve suffixes others append into our own elements.
