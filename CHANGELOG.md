@@ -74,3 +74,23 @@ Evidence 2026-10-15 local: `python3 -m pytest tests/test_readme_bilingual.py tes
          17 passed, run with the final content of this entry in the tree. Each of the four items was
          distilled from text already in the READMEs (the hero summary and Quick start), not invented.
 Cost     None to runtime behaviour — documentation only.
+
+### D-004 · 2026-10-15 · chore
+Symptom  `STANDARD.md` §1 named two `AGENTS.md` sections (`Hard rules`, `Docs & commits`), but the
+         nine sibling dimension-A repositories also carry a third, `## Recording conventions` — the
+         repository's own additions to the shared `CHANGELOG` rules. This repository carried neither
+         the heading nor a place for those additions, so its record-writing rules lived only in the
+         `CHANGELOG` header.
+Change   Add `## Recording conventions` to `AGENTS.md`, between `## Delivery cadence` and
+         `## Listed on the GitHub profile`. Its four bullets are distilled from rules already in this
+         repository — the "no coverage gate" note in `CHANGELOG.md`, the `feat` exclusion, the
+         "fetch numbers live, never reuse a remembered value" rule, and the privacy line (counts and
+         key names, never raw values). No new rule is introduced and no code is touched.
+         `STANDARD.md` §1 was amended in the same round to name this section as dimension A's third.
+Evidence 2026-10-15 local: `python3 -m pytest tests/test_conventions.py tests/test_readme_bilingual.py`
+         17 passed, run with the final content of this entry in the tree; the layout guard does not
+         list `Recording conventions` among the standard's own headings, so the new section does not
+         trip it.
+Cost     Documentation only; the heading is descriptive and is not itself a gate. The four bullets
+         restate rules that already lived in `CHANGELOG.md`, kept short so they do not become a second
+         source of truth.

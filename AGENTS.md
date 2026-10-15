@@ -156,6 +156,15 @@ Automatic line-wrapping also counts as "editing": hard-wrapping by character cou
 One change = one commit; the report has five fixed items: which files changed, test results (before/after counts + new case names), behavior change before→after (including the part **deliberately left unchanged**), risk and rollback (can it be reverted as a single commit), whether an existing contract was broken.
 When a step is skipped, you must be able to prove that step is still executable.
 
+## Recording conventions
+
+Common CHANGELOG rules: `STANDARD.md` §3. This repo's own additions:
+
+- **No coverage gate.** Unlike the sibling tool repositories there is no `check:log`-style record-coverage checker, so nothing enforces that a code-path commit appears in `CHANGELOG.md`; the record is maintained by hand, and a missing entry is a gap to close, not permission.
+- Commits whose subject starts with `feat` are the product, not a droppable deviation — they are documented in the READMEs, not recorded here.
+- An entry's aggregate numbers are re-fetched live (`./bin/aos doctor --json`, `python3 -m pytest --collect-only -q`), never copied from a previous round or from another entry.
+- The record obeys the same privacy line as the code: counts and key names, never raw commands, arguments, paths, env or stderr; the redaction placeholders stay.
+
 ## Listed on the GitHub profile
 
 See `STANDARD.md` §8 for the shared profile-listing triggers. This repo's own additions:
