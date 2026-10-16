@@ -94,3 +94,16 @@ Evidence 2026-10-15 local: `python3 -m pytest tests/test_conventions.py tests/te
 Cost     Documentation only; the heading is descriptive and is not itself a gate. The four bullets
          restate rules that already lived in `CHANGELOG.md`, kept short so they do not become a second
          source of truth.
+
+### D-005 · 2026-10-16 · chore
+Symptom  The pointer in AGENTS.md is followed only by an agent that chooses to; nothing made the
+         standard reach the context, and the section list had drifted — §5 (the conflict rule) was
+         missing.
+Change   End the pointer block with two bare `@` imports and add `opencode.json` naming the same two
+         files in its `instructions` array; add `§5 conflict rule`. `tests/test_conventions.py`'s
+         `ROOT_FILES` gains `opencode.json`.
+Evidence 2026-10-16: CodeBuddy CLI with every tool disabled printed the tokens the imports carried;
+         opencode `run` printed the token its `instructions` named, with no tool call.
+         `python3 -m pytest tests/test_conventions.py -q` 9 passed.
+Cost     Both hooks name `~/.agents`, absent in another clone, so they are skipped there — the
+         pointer stays the portable part.
