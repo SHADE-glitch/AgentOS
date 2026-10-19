@@ -190,7 +190,7 @@ Agent OS 现在的 `evidence_level`（6 档，只由验证升）+ `decay_factor`
 |---|---|---|
 | svtter | SQL `LIKE '%triggers[0]%' OR LIKE '%name%' LIMIT 3`（`skill-store.ts:106-113`）；命中即**覆盖首个匹配并把 version+1**（`:90-104`）| 极弱；last-write-wins，无冲突概念 `[Verified·一手]` |
 | okdk | **无算法**，只有 prompt 里让模型"先查碰撞"（`index.ts:583`；`skills/skill-distiller/SKILL.md:35`）；`absorbed_into` 字段存在（`:179`）但只被写成字面量 `"(deleted)"`（`:253`） | 无 `[Verified·代理读源]` |
-| opencore | LLM 四值裁决 `ADD|UPDATE|DELETE|SKIP`（`memory.ts:144-187`），解析失败**fail open 到 ADD**（`:175,178,181`） | 每次写多一次 LLM 成本；且"失败即新增"正是漂移源 `[Verified·代理读源]` |
+| opencore | LLM 四值裁决 `ADD\|UPDATE\|DELETE\|SKIP`（`memory.ts:144-187`），解析失败**fail open 到 ADD**（`:175,178,181`） | 每次写多一次 LLM 成本；且"失败即新增"正是漂移源 `[Verified·代理读源]` |
 | autolearn | 名字/slug 相等判重（`registry.py:189`；promote 时存在即跳过 `:446`）；矛盾检测借用 AgentMemory 的 Jaccard（`docs/designs/memory-insight/LLD.md:191`）；**合并/整合是 prompt-only**（`references/curator.md:60-72`，无代码） | 部分 `[Verified·代理读源]` |
 
 ⇒ **没有任何一个项目实现了"同一事实不同表述"的可靠去重。**
@@ -261,7 +261,7 @@ Agent OS 的对应物目前只有：`_can_auto_promote`（`evolve.py:504-522`：
 | svtter | 同一钩子，`output.system.push(injected.slice(context.length).trim())`（`index.ts:49-56`）—— 只推 delta | **top-3 条**，无字符预算；正文在创建时截 500 字符（`subagent-runner.ts:59`） | 每次 LLM 调用 | `[Verified·一手]` |
 | okdk | 两个通道：同一 system 钩子推**一整块** evergreen 韩文文本（`index.ts:672-744`，无 item/字符预算、无相关性排序，每轮同文）；**外加合成一条 `role:"user"` 消息**（`experimental.chat.messages.transform`，`:749-787`，`synthetic: true`） | 无 | 每轮 | `[Verified·一手]` |
 | autolearn | **不用钩子**：改写 `~/.config/opencode/opencode.json` 的 `instructions` 数组，指向生成的 `memory.context.md`（`plugin/autolearn-core.mjs:418-449` + `install.sh:108-127`，`writeFileSync` 整份重写） | 3000 字符 compose 预算，pinned 可超（`composer.py:67-77`） | 插件加载时 fire-and-forget 重新生成 | `[Verified·一手]` |
-| opencore | 同一 system 钩子推一行 `[opencore mem] type:text | …`（`memory.ts:410-415`），**并在 `experimental.session.compacting` 里把它塞进 `output.context`，让它在压缩后存活**（`:419-426`） | 5 条常显（`memory.ts:54`）vs 整合取 8（`memory-store.ts:453`）**两处不一致**；无字符/无 token 预算 | 每轮 + 压缩时 | `[Verified·代理读源]` |
+| opencore | 同一 system 钩子推一行 `[opencore mem] type:text \| …`（`memory.ts:410-415`），**并在 `experimental.session.compacting` 里把它塞进 `output.context`，让它在压缩后存活**（`:419-426`） | 5 条常显（`memory.ts:54`）vs 整合取 8（`memory-store.ts:453`）**两处不一致**；无字符/无 token 预算 | 每轮 + 压缩时 | `[Verified·代理读源]` |
 | 本机 DCP 3.2.0 | `output.system[length-1] += "\n\n" + newPrompt`（`lib/hooks.ts:101-105`），空数组时才 push | 按 `input.model.limit.context` 与 tokenizer 计 token | 每轮 | `[Verified·一手]` |
 
 ### 6.2 干扰判定（这是本轮唯一能拿本机实文件验证的部分）
@@ -323,7 +323,7 @@ Agent OS 现状（字符预算 + 条数 + 裁剪记入 `truncated/dropped`）比
 | svtter | `skill_usage_log` 表 + `incrementUsage`/`logUsage` | **调用者为 0** ⇒ 表永远空；`use_count` 只进注入排序、不进修剪（Q3） `[Verified·一手]` |
 | okdk | `skill_outcomes.json{ok,fail,fail_signals,sessions}` | **改**：决定 `[진화 후보]` 提醒与 `optimize_skill` 排序（`index.ts:337-376,1124`）。但见 Q1 —— 它的 fail 信号来自三个正则而非工具状态，因此实际只在用户改口时触发 `[Verified·一手]` |
 | autolearn | `tool_outcome`（每条 tool part 一行，含 `gt_strength`）+ `step_cost` | **改，且改得最克制**：`use_count` 从索引 `GROUP BY` 派生（`outcomes.py:390-414`）再 `repair` 回 `.usage.json`（`autolearn.py:272-348`）；证伪失败才降级（Q1） `[Verified·一手]` |
-| 本机基线 | `skill_usage`（含 `status ∈ success|error|denied|ask|unknown`、`trigger_type`、`duration_ms`、`session_id`、`project_path`、`metadata.model/agent/branch`）+ `mcp_usage`/`plugin_usage`/`plugin_inventory` | 目前到 **TUI/统计**（`skill-stats.py`、`skill-tui.py`）为止；状态单调修正使 success/error 计数可信，但**尚未反哺任何行为** `[Verified·一手]` |
+| 本机基线 | `skill_usage`（含 `status ∈ success\|error\|denied\|ask\|unknown`、`trigger_type`、`duration_ms`、`session_id`、`project_path`、`metadata.model/agent/branch`）+ `mcp_usage`/`plugin_usage`/`plugin_inventory` | 目前到 **TUI/统计**（`skill-stats.py`、`skill-tui.py`）为止；状态单调修正使 success/error 计数可信，但**尚未反哺任何行为** `[Verified·一手]` |
 
 **"某 MCP 零使用是修剪候选、某 skill 高频但反复失败是进化候选"** —— 用户提的这两种推断，在四个项目里：
 - 前者：opencore 实现了**清单**（`unused_days`）但无动作；svtter 用 interval 删低分（与使用无关）。⇒ **无人做成闭环。**
@@ -339,11 +339,11 @@ Agent OS 现状（字符预算 + 条数 + 裁剪记入 `truncated/dropped`）比
 
 | 项目 | 人门位置 | 形式 | 是否被代码强制 |
 |---|---|---|---|
-| autolearn | proposal → skill 晋升；memory 候选；淘汰 | Inspector（stdlib `ThreadingHTTPServer` 127.0.0.1:4321）只有两个写操作：`POST /api/memory/{id}/strengthen`、`POST /api/candidate/{id}/confirm|dismiss`（`inspector_server.py:229-258`）；CLI 侧 `proposals confirm/dismiss`、各命令 `--dry-run` | **自动晋升被证伪替代**（`proposer.py:302-330`），不是人；而"HARD GATE 必须先复发≥3"在 `cmd_skill_create` 里**没有调用 `is_recurrent`** —— 纯 prompt `[Verified·代理读源]` |
+| autolearn | proposal → skill 晋升；memory 候选；淘汰 | Inspector（stdlib `ThreadingHTTPServer` 127.0.0.1:4321）只有两个写操作：`POST /api/memory/{id}/strengthen`、`POST /api/candidate/{id}/confirm\|dismiss`（`inspector_server.py:229-258`）；CLI 侧 `proposals confirm/dismiss`、各命令 `--dry-run` | **自动晋升被证伪替代**（`proposer.py:302-330`），不是人；而"HARD GATE 必须先复发≥3"在 `cmd_skill_create` 里**没有调用 `is_recurrent`** —— 纯 prompt `[Verified·代理读源]` |
 | svtter | 无 | 无 dry-run、无审批，`DELETE` 硬删 | 无 `[Verified·一手]` |
 | okdk | 文档写"Never auto-commit / No data, no evolution"（`skills/optimize-skill/SKILL.md:86-91`） | 无 | **无强制**：插件没注册 `permission.ask`，格式合法的 edit 一律接受 `[Verified·一手]` |
 | opencore | 无 | 无；`DELETE` 静默销毁 | 无 `[Verified·代理读源]` |
-| Agent OS | `learning_reviews`：`promotion` / `outcome_label` 两类；`aos review list|label|approve|reject`；`apply_effect` 比对 `before` 失败即 `stale` 拒绝写 | CLI（`store.py:558,563`、`evolve.py:580,771,850`） | **是，代码强制**（`evolve.py:522` create/weaken 永不自动；`evolve.py:425,470` CAS） `[Verified·一手]` |
+| Agent OS | `learning_reviews`：`promotion` / `outcome_label` 两类；`aos review list\|label\|approve\|reject`；`apply_effect` 比对 `before` 失败即 `stale` 拒绝写 | CLI（`store.py:558,563`、`evolve.py:580,771,850`） | **是，代码强制**（`evolve.py:522` create/weaken 永不自动；`evolve.py:425,470` CAS） `[Verified·一手]` |
 
 **结论 `[Judgment]`**：
 1. 「人门写在 prompt 里、代码不强制」是这批项目最普遍的失效模式（okdk 最典型：它甚至在文档里写了纪律）。

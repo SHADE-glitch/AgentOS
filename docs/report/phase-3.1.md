@@ -19,7 +19,7 @@ Phase 3.1 是"观测纵切面"：冷启动 → 召回 → 注入 → 标注 → 
 | **3.1a 注入渲染器** | `8c8d7c7` | 新增 `aos/core/memory/inject.py`（187 行，纯函数）；`stages.build_prompt` 改用它（此前自己拼英文标题 + 恒空的 `content` 字段，注入在观测上与"没接线"不可区分）；`policy.py` 加 `injection` 默认段；+`tests/test_inject.py` |
 | **3.1b 契约 1.1** | `c63f74c` | `contract/schema.py`（`CONTRACT_VERSION="1.1"`、`SUPPORTED_VERSIONS=("1.0","1.1")`、`validate_request`）、`preflight.py`（`memory.injection{structured,text,…}`、`memory.status`）、`postflight.py`（`aos_error`、`recovery.final_status` 不再伪造）、`lifecycle.py`（渲染注入块）、README；+`tests/test_contract.py` 双向键集守卫 |
 | **3.1c CLI 全字段转发** | `f4ec9ed` | `cli/main.py` 显式白名单转发 postflight 全字段（此前只转 `task_id/loop_id/session_id/cwd`，**静默丢弃 host 的 outcome —— 断点 3 的根因**）；`schema.py` 的 `REQUEST_FIELDS`/`unread_request_fields` ⇒ 未知键进 `warnings`；`_rejected()` + 退出码 3 |
-| **3.1d/e 作者面与冷启动** | `26c7881` | 新增 `memory/authoring.py`（枚举校验、`verified` 门、`seed_from_dir`）、`content/memory/seed/agentos.json`（首批种子）；`cli/main.py` 的 `memory add|seed|show|inspect|list` |
+| **3.1d/e 作者面与冷启动** | `26c7881` | 新增 `memory/authoring.py`（枚举校验、`verified` 门、`seed_from_dir`）、`content/memory/seed/agentos.json`（首批种子）；`cli/main.py` 的 `memory add\|seed\|show\|inspect\|list` |
 | **3.1f 生命周期与迁移机制** | `f108c84` | 新增 `memory/migrations.py`（461 行，`PRAGMA user_version` 为唯一权威 + 镜像交叉校验 + `_rebuild_table` + `Connection.backup()`）；`schema.sql` 冻结为 v1 基线；`store.py` 29 列 `upsert_memory` + `_PROMOTABLE_FIELDS`；`retrieve.py`/`evolve.py`/`inject.py`/`authoring.py` 词汇切到 6 type / 7 status / lane；`contract/schema.py` 枚举同源；CLI `memory migrate/inspect` |
 | （穿插）删除死 host 树 | `ffb2880` | `hosts/` 7 文件（2361 行）与所有指向它的记录：`contract/legacy.py`、`ENV_LEGACY_HOME`、README env 行、`roles.json` 误导注、`.freebuff/` |
 
