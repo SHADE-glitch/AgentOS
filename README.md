@@ -11,7 +11,7 @@
 ![Third-party dependencies](https://img.shields.io/badge/third--party%20dependencies-0-green)
 ![Host contract](https://img.shields.io/badge/host%20contract-1.2-informational)
 ![SQLite schema](https://img.shields.io/badge/SQLite%20schema-v5-informational)
-![Tests](https://img.shields.io/badge/pytest-502%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/pytest-513%20passed-brightgreen)
 
 **What it is** — An external evidence-and-governance layer for a coding agent: a run → a verdict → a human gate → promoted memory → recall that changes what the agent is told next time.
 
@@ -100,7 +100,7 @@ Claims are graded, the same way the docs grade them:
 
 ```bash
 git clone https://github.com/SHADE-glitch/AgentOS && cd AgentOS
-python3 -m pytest                       # 502 passed — the suite is the specification
+python3 -m pytest                       # 513 passed — the suite is the specification
 node --test tests/js/plugin.test.mjs    # 29 pass  — the host seam
 
 ./bin/aos doctor --json                 # what this checkout has actually done
@@ -236,7 +236,7 @@ first and remains the only thing recall reads.
 ## 🧪 Tests
 
 ```bash
-python3 -m pytest                              # 502 passed
+python3 -m pytest                              # 513 passed
 node --test tests/js/plugin.test.mjs           # 29 pass / 0 fail
 ```
 

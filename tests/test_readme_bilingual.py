@@ -35,7 +35,7 @@ SHARED_CLAIMS = [
     ("criterion 1 threshold", "30", "30"),
     ("criterion 1 deadline", "2026-10-29", "2026-10-29"),
     ("license", "MIT", "MIT"),
-    ("test suite size", "502", "502"),
+    ("test suite size", "513", "513"),
     ("open defect: no run driver", "AR", "AR"),
     ("open defect: no interrupt source", "AK", "AK"),
 ]
