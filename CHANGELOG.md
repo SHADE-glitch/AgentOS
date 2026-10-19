@@ -107,3 +107,15 @@ Evidence 2026-10-16: CodeBuddy CLI with every tool disabled printed the tokens t
          `python3 -m pytest tests/test_conventions.py -q` 9 passed.
 Cost     Both hooks name `~/.agents`, absent in another clone, so they are skipped there — the
          pointer stays the portable part.
+
+### D-006 · 2026-10-19 · chore
+
+Symptom  Four places claimed "502 passed" while python3 -m pytest collects and passes 513;
+         docs/audit/current-state.md still described v4 / 13 memories as the present state.
+Change   The badge, both READMEs and AGENTS.md now say 513, and test_readme_bilingual.py pins
+         513 so the pair cannot drift. The audit snapshot carries a banner: it is a 2026-09-30
+         reading, current values come from ./bin/aos doctor --json.
+Evidence 2026-10-19: python3 -m pytest 513 passed; tests/test_readme_bilingual.py passes with
+         the updated pin.
+Cost     The banner leaves the historical numbers in place instead of rewriting them.
+Commit   b682430
