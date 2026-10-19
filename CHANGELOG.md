@@ -119,3 +119,17 @@ Evidence 2026-10-19: python3 -m pytest 513 passed; tests/test_readme_bilingual.p
          the updated pin.
 Cost     The banner leaves the historical numbers in place instead of rewriting them.
 Commit   b682430
+
+### D-007 · 2026-10-19 · fix
+
+Symptom  Six table rows carried a bare `|` inside a code span — CLI flag lists (`memory add|seed|…`,
+         `aos review list|label|…`), the four-value verdict (`ADD|UPDATE|DELETE|SKIP`), a telemetry
+         type string (`type:text | …`), a status enum and a route pair. GFM reads a bare pipe as a
+         cell separator even inside backticks, so each row rendered with extra cells.
+Change   Every one of those pipes is escaped as `\|`. The rendered text is unchanged: GFM turns
+         `\|` back into `|` inside the code span. No prose, number or row order was touched.
+Evidence 2026-10-19: every table block in the two touched files now has a uniform pipe count;
+         `python3 -m pytest` — exit 0.
+Cost     None; docs only, committed on its own per AGENTS.md's doc/commit split.
+
+Commit   d3c0c57
