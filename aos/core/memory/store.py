@@ -53,7 +53,14 @@ def hypothesis_lane(memory: Optional[dict[str, Any]], memory_id: str = "") -> bo
 class MemoryStore:
     """A thin, explicit wrapper around the Agent OS SQLite database."""
 
-    def __init__(self, db_path: str | Path | None = None):
+    def __init__(self, db_path: str | Path | None = None, *, auto_migrate: bool = True):
+        """Open the store, migrating it on the way in unless told not to.
+
+        ``auto_migrate=False`` is for the one caller that must decide the target
+        version itself: ``aos memory migrate``. Opening a store normally runs
+        every pending migration, so a command that goes through one can never
+        honour ``--dry-run`` or ``--to``.
+        """
         if db_path is None:
             paths = get_paths()
             paths.ensure_store()
@@ -63,7 +70,8 @@ class MemoryStore:
         self._conn = sqlite3.connect(str(self.db_path))
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON")
-        self._ensure_schema()
+        if auto_migrate:
+            self._ensure_schema()
 
     # ── lifecycle ──────────────────────────────────────────────────
 

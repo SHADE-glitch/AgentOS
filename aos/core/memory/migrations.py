@@ -100,12 +100,15 @@ def installed_version(conn: sqlite3.Connection) -> int:
     """
     version = current_version(conn)
     if version == 0:
-        conn.execute(f"PRAGMA user_version = {BASELINE_VERSION}")
-        conn.execute(
-            "INSERT OR IGNORE INTO schema_meta(key, value) VALUES ('schema_version', ?)",
-            (str(BASELINE_VERSION),),
-        )
-        conn.commit()
+        # An unstamped file that already has the baseline tables. Stamp both
+        # records in one transaction so the pragma and its mirror cannot disagree.
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            _stamp(conn, BASELINE_VERSION)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
         return BASELINE_VERSION
     if version > latest_version():
         raise SchemaError(
@@ -128,6 +131,43 @@ def _backup(conn: sqlite3.Connection, target: Path) -> Path:
     finally:
         destination.close()
     return Path(target)
+
+
+def _execute_script(conn: sqlite3.Connection, script: str) -> None:
+    """Run a multi-statement script inside the caller's transaction.
+
+    ``Connection.executescript()`` issues an implicit COMMIT before it runs, so a
+    migration that used it could not be rolled back: the DDL that had already run
+    stayed on disk while the version stamp that failed after it did not. Splitting
+    the script with ``sqlite3.complete_statement()`` (which understands string
+    literals and comments, unlike a naive ``split(";")``) and executing statement
+    by statement keeps every DDL under the caller's ``BEGIN IMMEDIATE``.
+    """
+    buffer = ""
+    for line in script.splitlines(keepends=True):
+        buffer += line
+        if sqlite3.complete_statement(buffer):
+            conn.execute(buffer)
+            buffer = ""
+    # A trailing comment-only remainder is harmless to execute; a truncated
+    # statement without a semicolon is a script bug worth raising, not skipping.
+    if buffer.strip():
+        conn.execute(buffer)
+
+
+def _stamp(conn: sqlite3.Connection, version: int) -> None:
+    """Write both version records inside the caller's transaction.
+
+    ``PRAGMA user_version`` lives in the file header and commits or rolls back
+    with the transaction that holds it, which is why it is the authority and
+    ``schema_meta`` is only its readable mirror.
+    """
+    conn.execute(f"PRAGMA user_version = {version}")
+    conn.execute(
+        "INSERT INTO schema_meta(key, value) VALUES ('schema_version', ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (str(version),),
+    )
 
 
 def _db_file(conn: sqlite3.Connection) -> Optional[str]:
@@ -206,12 +246,7 @@ def migrate(
         conn.execute("BEGIN IMMEDIATE")
         try:
             migration.apply(conn)
-            conn.execute(f"PRAGMA user_version = {migration.version}")
-            conn.execute(
-                "INSERT INTO schema_meta(key, value) VALUES ('schema_version', ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (str(migration.version),),
-            )
+            _stamp(conn, migration.version)
             conn.commit()
         except Exception as exc:
             conn.rollback()
@@ -244,6 +279,25 @@ def _has_baseline(conn: sqlite3.Connection) -> bool:
     )
 
 
+def ensure_baseline(conn: sqlite3.Connection) -> None:
+    """Create the v1 tables when the file does not have them yet, in one transaction.
+
+    The baseline is DDL for a *new* database, and a crash part way through must
+    leave nothing behind: a file that still answers ``memories`` would be stamped
+    v1 on the next open and then migrated over tables that were never created.
+    """
+    if _has_baseline(conn):
+        return
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        _execute_script(conn, _SCHEMA_PATH.read_text(encoding="utf-8"))
+        _stamp(conn, BASELINE_VERSION)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
 def ensure_schema(conn: sqlite3.Connection, *, db_path: Optional[Path] = None) -> dict[str, Any]:
     """Build the baseline if needed, then bring the database up to date.
 
@@ -254,9 +308,7 @@ def ensure_schema(conn: sqlite3.Connection, *, db_path: Optional[Path] = None) -
     rewritten: a production store should be backed up and migrated deliberately,
     by hand, at a chosen moment.
     """
-    if not _has_baseline(conn):
-        conn.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
-        conn.commit()
+    ensure_baseline(conn)
 
     version = installed_version(conn)
     _check_mirror(conn, version)
@@ -408,7 +460,8 @@ def _expect_v1_shape(conn: sqlite3.Connection) -> None:
 def _v2_memory_lifecycle(conn: sqlite3.Connection) -> None:
     _expect_v1_shape(conn)
     _rebuild_table(conn, "memories", _memories_ddl("memories_v2_new"), _V2_COLUMNS)
-    conn.executescript(
+    _execute_script(
+        conn,
         """
         CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type);
         CREATE INDEX IF NOT EXISTS idx_memories_category ON memories(category);
@@ -431,7 +484,8 @@ def _v3_learning_signals(conn: sqlite3.Connection) -> None:
     ``failure`` cannot tell whether the tests failed or the model simply gave up,
     and the engine cannot tell a synthesized verdict from one the host reported.
     """
-    conn.executescript(
+    _execute_script(
+        conn,
         """
         ALTER TABLE observations ADD COLUMN confidence   REAL NOT NULL DEFAULT 1.0;
         ALTER TABLE observations ADD COLUMN signals_json TEXT NOT NULL DEFAULT '{}';
@@ -462,7 +516,8 @@ def _v4_review_loop(conn: sqlite3.Connection) -> None:
     snapshot with ``LIKE``. A column the query can use is cheaper than that
     query, and it is what makes the sweep that opens them idempotent.
     """
-    conn.executescript(
+    _execute_script(
+        conn,
         """
         ALTER TABLE learning_reviews ADD COLUMN loop_id TEXT NOT NULL DEFAULT '';
 
@@ -511,7 +566,8 @@ def _v5_backfill_source(conn: sqlite3.Connection) -> None:
     "real runs" (the stop criterion in docs/decision/positioning.md §6) has to be
     able to tell them apart without parsing a loop id.
     """
-    conn.executescript(
+    _execute_script(
+        conn,
         """
         ALTER TABLE observations ADD COLUMN source TEXT NOT NULL DEFAULT 'hot';
         CREATE INDEX IF NOT EXISTS idx_obs_source ON observations(source);

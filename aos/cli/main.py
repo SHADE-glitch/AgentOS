@@ -548,23 +548,58 @@ def _memory_seed(args: argparse.Namespace, store) -> int:
     return 1 if report["errors"] and not report["seeded"] else 0
 
 
-def _memory_migrate(args: argparse.Namespace, store) -> int:
+def _migrate_and_report(conn: sqlite3.Connection, db_path, target: int, *, dry_run: bool) -> int:
     from aos.core.memory import migrations
 
     try:
-        report = migrations.migrate(
-            store.conn,
-            to=args.to if args.to is not None else migrations.LATEST_VERSION,
-            dry_run=args.dry_run,
-            db_path=store.db_path,
-        )
+        report = migrations.migrate(conn, to=target, dry_run=dry_run, db_path=db_path)
     except migrations.SchemaError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    if args.dry_run:
+    if dry_run:
         report["would_apply"] = report.pop("planned")
     _emit(report)
     return 0
+
+
+def _memory_migrate(args: argparse.Namespace) -> int:
+    """Migrate the store without letting a store open migrate it first.
+
+    ``MemoryStore()`` runs every pending migration in its constructor, so this
+    command cannot go through one: ``--dry-run`` would already have written, and
+    ``--to`` would already be at the ceiling. A dry run therefore reads the file
+    through a read-only connection, and a real run opens the store with
+    ``auto_migrate=False`` so the target version is the one on the command line.
+    """
+    from aos.core.memory import migrations
+    from aos.core.memory.store import MemoryStore
+
+    db_path = get_paths().db_path
+    target = args.to if args.to is not None else migrations.LATEST_VERSION
+
+    if args.dry_run:
+        try:
+            # A file that has not been built yet is an empty schema, not an
+            # error: report what a first open would apply without creating it.
+            conn = (
+                sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+                if db_path.exists()
+                else sqlite3.connect(":memory:")
+            )
+        except sqlite3.Error as exc:
+            print(f"error: cannot read {db_path}: {exc}", file=sys.stderr)
+            return 1
+        try:
+            return _migrate_and_report(conn, db_path, target, dry_run=True)
+        finally:
+            conn.close()
+
+    store = MemoryStore(db_path, auto_migrate=False)
+    try:
+        migrations.ensure_baseline(store.conn)
+        return _migrate_and_report(store.conn, store.db_path, target, dry_run=False)
+    finally:
+        store.close()
 
 
 def _memory_show(args: argparse.Namespace, store) -> int:
@@ -707,6 +742,12 @@ def cmd_memory(args: argparse.Namespace) -> int:
     if handler is None:
         print("usage: aos memory list|add|seed|refresh|retire|migrate|show|inspect", file=sys.stderr)
         return 1
+
+    # `migrate` is the one command that must not open a store first: opening one
+    # runs every pending migration, which would make `--dry-run` a write and
+    # leave `--to` at the ceiling before it was ever read.
+    if handler is _memory_migrate:
+        return handler(args)
 
     store = MemoryStore()
     try:

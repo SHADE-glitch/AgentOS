@@ -560,5 +560,85 @@ def test_v4_lets_a_review_belong_to_a_loop(tmp_path):
     assert rows["promotion"]["loop_id"] == ""
 
 
+# ── atomicity: the DDL and the version stamp land together, or not at all ──
+def test_a_failure_after_the_ddl_has_run_rolls_the_schema_back(tmp_path, monkeypatch):
+    """A migration that dies after its statements must leave no columns behind.
+
+    ``executescript()`` commits before it runs, so a migration that used it had
+    already written its columns when the version stamp failed. The file then read
+    as v2 with v3 columns in it, and the retry failed forever with ``duplicate
+    column name``. Injecting the failure *after* the DDL is what makes this red.
+    """
+    db = tmp_path / "aos.db"
+    conn = _v1_connection(db)
+    _insert_v1_memory(conn, "M1")
+    conn.commit()
+
+    def crash_after_the_ddl(connection):
+        migrations._v3_learning_signals(connection)
+        raise RuntimeError("crash before the version stamp")
+
+    monkeypatch.setattr(
+        migrations,
+        "MIGRATIONS",
+        (migrations.MIGRATIONS[0], migrations.Migration(3, "half_way", crash_after_the_ddl)),
+    )
+
+    with pytest.raises(SchemaError, match="half_way"):
+        migrate(conn, db_path=db)
+
+    assert current_version(conn) == 2
+    assert "confidence" not in _columns_of(conn, "observations")
+    # The rollback is on disk, not only in this connection: reopen the file.
+    conn.close()
+    reopened = sqlite3.connect(str(db))
+    assert reopened.execute("PRAGMA user_version").fetchone()[0] == 2
+    assert "confidence" not in {row[1] for row in reopened.execute("PRAGMA table_info(observations)")}
+    reopened.close()
+
+
+# ── the command line: a dry run is a read, and --to is a ceiling ───────
+def test_memory_migrate_dry_run_leaves_the_file_untouched(tmp_path, capsys):
+    """``--dry-run`` must not be a euphemism for "migrate on open".
+
+    The store migrates in its constructor, so the command used to complete the
+    whole v2–v5 walk before it ever read the flag, then report "nothing to do".
+    """
+    from aos.cli.main import main as cli_main
+
+    db = tmp_path / "store" / "aos.db"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    _v1_connection(db).close()
+    before = db.read_bytes()
+    modified = db.stat().st_mtime_ns
+
+    assert cli_main(["memory", "migrate", "--dry-run"]) == 0
+
+    report = json.loads(capsys.readouterr().out)
+    assert report["from"] == BASELINE_VERSION
+    assert report["would_apply"] == [m.describe() for m in migrations.MIGRATIONS]
+    assert db.read_bytes() == before
+    assert db.stat().st_mtime_ns == modified
+    assert list(db.parent.glob("*.bak")) == []
+
+
+def test_memory_migrate_to_stops_at_the_requested_version(tmp_path, capsys):
+    """``--to`` used to arrive after the automatic walk, so it could only refuse."""
+    from aos.cli.main import main as cli_main
+
+    db = tmp_path / "store" / "aos.db"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    _v1_connection(db).close()
+
+    assert cli_main(["memory", "migrate", "--to", "3"]) == 0
+    capsys.readouterr()
+
+    conn = sqlite3.connect(str(db))
+    assert current_version(conn) == 3
+    assert "confidence" in _columns_of(conn, "observations")
+    assert "loop_id" not in _columns_of(conn, "learning_reviews")
+    conn.close()
+
+
 def _columns_of(conn: sqlite3.Connection, table: str) -> set[str]:
     return {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
