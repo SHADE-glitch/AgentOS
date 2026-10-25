@@ -94,7 +94,7 @@
 
 ```bash
 git clone https://github.com/SHADE-glitch/AgentOS && cd AgentOS
-python3 -m pytest                       # 513 passed —— 测试套件就是规格说明
+python3 -m pytest                       # 516 passed —— 测试套件就是规格说明
 node --test tests/js/plugin.test.mjs    # 29 pass  —— 宿主接缝
 
 ./bin/aos doctor --json                 # 这份 checkout 到底做过什么
@@ -174,7 +174,7 @@ AgentOS/
 ## 🧪 测试
 
 ```bash
-python3 -m pytest                              # 513 passed
+python3 -m pytest                              # 516 passed
 node --test tests/js/plugin.test.mjs           # 29 pass / 0 fail
 ```
 

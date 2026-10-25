@@ -133,3 +133,35 @@ Evidence 2026-10-19: every table block in the two touched files now has a unifor
 Cost     None; docs only, committed on its own per AGENTS.md's doc/commit split.
 
 Commit   d3c0c57
+
+### D-008 · 2026-10-25 · fix
+
+Symptom  `migrations.py` ran each version's DDL through `executescript()`, which commits the open
+         transaction before the script runs. A failure halfway through left a database whose schema
+         had moved while `user_version` had not, and the retry then failed permanently on the
+         duplicate column — a half-migrated store with no way forward. Separately,
+         `aos memory migrate --dry-run` built a `MemoryStore` before dispatching, and the
+         constructor migrates, so asking to look at a plan could rebuild the database.
+Change   `_execute_script` splits a script with `sqlite3.complete_statement` — semicolons inside
+         string literals and comments are not separators — and runs the statements one at a time
+         inside the caller's `BEGIN IMMEDIATE`. All four `executescript` sites (v2–v5) use it, and
+         `ensure_baseline` is one transaction for the same reason. `_stamp` writes
+         `PRAGMA user_version` and the `schema_meta` mirror together. `MemoryStore` takes
+         `auto_migrate=False`, which the migrate path uses: `--dry-run` reads through
+         `file:...?mode=ro` (or an in-memory empty database when the file is absent, creating
+         nothing), and a real `--to` no longer gets raised to v5 by the constructor.
+         `cmd_memory` dispatches migrate before any store is built.
+Evidence 2026-10-25: `python3 -m pytest` — exit 0; `node --test tests/js/plugin.test.mjs` 29 pass.
+         Three cases added: a failure after v3's DDL rolls back (`user_version` stays 2, no
+         `confidence` column, checked again after reopening the file); `--dry-run` on a v1 index
+         leaves the file's bytes and `mtime_ns` unchanged and writes no `.bak`; `--to 3` stops at
+         v3. Against a `git archive` snapshot of the pre-fix tree all three go red for exactly
+         those reasons.
+Cost     A migration now holds the write lock for its whole length instead of releasing it between
+         statements, so a concurrent writer waits or reads `database is locked`. A database left
+         half-migrated by the old code is still not repaired automatically; it fails cleanly and
+         rolls back. `_has_baseline` still looks at `memories` alone on purpose: tightening it
+         would send an old half-built database back through the baseline and into a duplicate-index
+         error.
+
+Commit   f39cf6d
