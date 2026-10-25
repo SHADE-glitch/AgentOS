@@ -165,3 +165,25 @@ Cost     A migration now holds the write lock for its whole length instead of re
          error.
 
 Commit   f39cf6d
+
+### D-009 · 2026-10-25 · chore
+Symptom  The 2026-10-25 read-only deep audit of this repository existed only as a one-off session
+         report: P0 × 2 (migration atomicity broken by executescript(); --dry-run migrating first —
+         both since fixed in f39cf6d), P1 × 10, P2 × 9, plus a 15-row test-gap list, five next steps
+         and the audit's evidence and limitations. Nothing in the repository pointed a reader at it,
+         and the audit's own numbers (513 collected cases) would go stale the moment the suite moved.
+Change   File the report as `docs/audit/2026-10-25.md` — Chinese, per the documented bilingual
+         exception that keeps `docs/**` Chinese; the banner follows `docs/audit/current-state.md`'s
+         snapshot convention (numbers are a 2026-10-25 reading, current values come from
+         `./bin/aos doctor --json` or the suites). The two P0 entries are annotated fixed in
+         `f39cf6d`; every other finding keeps its severity, `file:line` evidence, impact and fix
+         direction, prose compressed but no finding dropped and no number changed.
+Evidence `python3 -m pytest` and `node --test tests/js/plugin.test.mjs` both pass on the final tree;
+         the new document is a pure addition under `docs/audit/` and adds no test, no code and no
+         root-file change, so the layout and bilingual guards are unaffected.
+Cost     Records only — no engine, contract, policy or test file touched. The audit's line numbers
+         describe the 2026-10-25 tree, not HEAD; the document says so in its banner. The AGENTS.md
+         502-vs-513 drift recorded as P2-9 is left open here on purpose: fixing it edits a root file
+         and belongs in its own commit.
+
+Commit   e1a5396
