@@ -2,10 +2,15 @@
 
 Guidance for AI coding agents working in this repository. This repository is public.
 
+> ⚠️ **Retired — archived, no longer developed.** The README's opening note says why: the ambition
+> was cut back to the one layer here, and the author stopped developing it. **Do not start new work
+> in this repository.** Fix something only if the owner asks for that exact fix, and say in the
+> `D-###` entry that the repository is retired. `STANDARD.md` §9 is the procedure that got it here.
+
 > **Dimension.** A — open source (strict), per `CONVENTIONS.md` §0; the shared rules live once in
 > `~/.agents/standards/STANDARD.md` (§1 root files, §2 process drafts, §3 CHANGELOG entries,
-> §4 runtime ignore list, §5 conflict rule, §6 remotes/pushing, §8 profile listing) and the
-> dimension-A detail in `~/.agents/standards/dimensions/a.md`. Neither is restated here.
+> §4 runtime ignore list, §5 conflict rule, §6 remotes/pushing, §8 profile listing, §9 retirement)
+> and the dimension-A detail in `~/.agents/standards/dimensions/a.md`. Neither is restated here.
 >
 > **Read these before the first edit** (bare `@` imports — CodeBuddy expands them; opencode reads
 > the same two from `opencode.json`):
