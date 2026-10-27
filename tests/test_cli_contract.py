@@ -712,7 +712,10 @@ def test_the_plugin_test_suite_runs_and_passes():
     )
 
     assert finished.returncode == 0, finished.stdout[-4000:] + finished.stderr[-2000:]
-    assert "# fail 0" in finished.stdout
+    # The summary line is the reporter's, and its prefix moved: TAP printed `# fail 0`,
+    # the spec reporter newer Node defaults to prints `ℹ fail 0`. Pin the line, not the
+    # toolchain — pinning the prefix is how this test went red on a green suite.
+    assert re.search(r"(?m)^[#ℹ] fail 0$", finished.stdout), finished.stdout[-2000:]
 
 
 def _js_without_comments(source: str) -> str:
