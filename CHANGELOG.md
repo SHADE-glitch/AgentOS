@@ -207,3 +207,21 @@ Cost     Records only. The archive flag stays on: this entry documents the retir
          account, and this entry is the ledger line beside it, not a replacement.
 
 Commit   6c8f948
+
+---
+
+### D-011 · 2026-10-27 · fix
+Symptom  CI had been red since 2026-10-25 on a suite that passes locally: `tests/test_cli_contract.py`
+         asserted `"# fail 0" in stdout`, and the spec reporter newer Node defaults to prints the same
+         summary line with a `ℹ` prefix. All 29 plugin tests passed in both runs; only the string did
+         not match. A red badge on a retired repository reads as "broken", not "the toolchain moved".
+Change   Match the summary line rather than its prefix: `re.search(r"(?m)^[#ℹ] fail 0$", stdout)`.
+         `returncode == 0` already guards the outcome; this assertion only checks that the reporter
+         printed a summary at all, so the prefix was never the thing worth pinning.
+Evidence `python3 -m pytest` 516 passed, `node --test tests/js/plugin.test.mjs` 29 pass / 0 fail on
+         the final tree; the local reporter prints `# fail 0` while CI prints `ℹ fail 0`, so the
+         pattern is exercised against both shapes.
+Cost     A test change in a retired repository, made because the owner asked for this exact fix
+         (`STANDARD.md` §9 step 5). No engine, contract or policy file touched.
+
+Commit   2fa5732
