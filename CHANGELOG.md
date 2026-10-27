@@ -187,3 +187,23 @@ Cost     Records only — no engine, contract, policy or test file touched. The 
          and belongs in its own commit.
 
 Commit   e1a5396
+
+---
+
+### D-010 · 2026-10-27 · chore
+Symptom  The repository has said "frozen — kept as a record" in its README and in the GitHub About for
+         a while, but nowhere in the repository itself was there a record of *the decision*: which
+         entry took it, when, or why. `AGENTS.md` still read as a live rulebook, so an agent landing
+         here would start new work in a repository nobody maintains. (The decision predates this
+         entry and its date was never written down; this entry records the state as of 2026-10-27.)
+Change   Open `AGENTS.md` with a retired banner: do not start new work, fix only what the owner asks
+         for, and say in the `D-###` entry that the repository is retired. Point the dimension block
+         at `STANDARD.md` §9, the procedure that produced this state, and record that state here so
+         the ledger has an entry for the retirement rather than only a README note.
+Evidence `python3 -m pytest` and `node --test tests/js/plugin.test.mjs` both pass on the final tree;
+         no test, engine, contract or policy file is touched, so the counts are unchanged.
+Cost     Records only. The archive flag stays on: this entry documents the retirement, it does not
+         reopen the project. The README's own note is left exactly as written — it is the original
+         account, and this entry is the ledger line beside it, not a replacement.
+
+Commit   6c8f948
